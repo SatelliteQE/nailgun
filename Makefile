@@ -6,7 +6,7 @@ help:
 
 lint:
 	flake8 .
-	pylint --reports=n --disable=I nailgun
+	pylint --reports=n --disable=I nailgun tests
 
 test:
 	python -m unittest discover --start-directory tests --top-level-directory .

@@ -201,6 +201,11 @@ class ClientTestCase(TestCase):
 @ddt.ddt
 class ArgTestCase(TestCase):
     """Tests which inspect function arguments."""
+
+    # (too-few-public-methods) pylint:disable=R0903
+    # It's OK that there is only one public method here. The DDT lib uses this
+    # one test over and over. And when the `_call_requests_*` methods are
+    # dropped (they should be), this entire test case will disappear.
     @ddt.data(
         (requests.delete, client._call_requests_delete),
         (requests.delete, client.delete),
