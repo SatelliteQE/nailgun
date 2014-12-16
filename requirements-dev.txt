@@ -1,0 +1,8 @@
+# For executing unit tests
+ddt
+fauxfactory
+mock
+
+# For linting
+flake8
+pylint

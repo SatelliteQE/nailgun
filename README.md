@@ -50,15 +50,28 @@ code](https://github.com/SatelliteQE/robottelo), especially the
 directory For a glimpse into the design of NailGun, see [this blog
 post](http://www.ichimonji10.name/blog/4/).
 
+Contributing
+------------
+
 Contributions are encouraged. The easiest way to contribute is to submit a pull
-request on GitHub, but patches are welcome no matter how they arrive. Please
-adhere to the following guidelines:
+request on GitHub, but patches are welcome no matter how they arrive.
+
+You can use pip and make to quickly set up a development environment:
+
+    pip install -r requirements-dev.txt
+    make lint
+    make test
+
+Please adhere to the following guidelines:
 
 * Lint your code with flake8 and pylint. The former linter must pass with zero
-  warnings, and warnings from the latter linter should be minimized.
-* All code must be documented, and use of Sphinx directives is encouraged.
+  warnings, and warnings from the latter linter should be minimized. This can be
+  done easily by executing `make lint`.
+* Check for errors by running the unit test suite. This can be done easily by
+  executing `make test`.
+* Document your code. The use of Sphinx directives is encouraged.
 * Unit tests are _very_ highly recommended.
-* All typical commit guidelines apply:
+* Adhere to typical commit guidelines:
   * Commits should not cause NailGun to break.
   * Commits should be small and coherent. One commit should address one issue.
   * Commits should have [good commit
