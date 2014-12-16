@@ -6,3 +6,6 @@ mock
 # For linting
 flake8
 pylint
+
+# For documentation
+sphinx

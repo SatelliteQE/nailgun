@@ -4,7 +4,7 @@ from setuptools import find_packages, setup  # prefer setuptools over distutils
 
 setup(
     name='nailgun',
-    version='0.0.1',
+    version='0.0.1',  # Should be identical to the version in docs/conf.py!
     description='A library that facilitates easy usage of the Satellite 6 API',
     url='https://github.com/SatelliteQE/nailgun',
     author='Jeremy Audet',

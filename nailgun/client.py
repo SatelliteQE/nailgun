@@ -13,7 +13,7 @@ Each function is modified with the following behaviours:
 The various ``_call_requests_*`` functions in this module are extremely simple
 wrapper functions. They sit in the call chain between this module's public
 wrappers and the `Requests`_ functions being wrapped. For example,
-``_call_requests_post`` is called by :func:`post`, and it calls
+``_call_requests_post`` is called by :func:`nailgun.client.post`, and it calls
 ``requests.post``. The ``_call_requests_*`` functions do not alter the
 arguments passed to them in any way, nor do they do anything else such as
 logging. They exist soley to ease unit testing: each one can be overridden in a
