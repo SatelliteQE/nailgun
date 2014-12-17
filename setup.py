@@ -2,10 +2,15 @@
 from setuptools import find_packages, setup  # prefer setuptools over distutils
 
 
+with open('README.rst') as handle:
+    LONG_DESCRIPTION = handle.read()
+
+
 setup(
     name='nailgun',
     version='0.0.1',  # Should be identical to the version in docs/conf.py!
     description='A library that facilitates easy usage of the Satellite 6 API',
+    long_description=LONG_DESCRIPTION,
     url='https://github.com/SatelliteQE/nailgun',
     author='Jeremy Audet',
     author_email='ichimonji10@gmail.com',
