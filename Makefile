@@ -14,7 +14,7 @@ docs-clean:
 
 lint:
 	flake8 .
-	pylint --reports=n --disable=I nailgun tests setup.py docs/conf.py
+	pylint --reports=n --disable=I --ignore-imports=y nailgun tests setup.py docs/conf.py
 
 test:
 	python -m unittest discover --start-directory tests --top-level-directory .

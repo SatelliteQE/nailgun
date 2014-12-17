@@ -1,11 +1,18 @@
+# -*- coding: utf-8 -*-
 """Unit tests for :mod:`nailgun.client`."""
 from fauxfactory import gen_alpha
 from nailgun import client
 from unittest import TestCase
-from urllib import urlencode
 import inspect
 import mock
 import requests
+
+from sys import version_info
+if version_info[0] == 2:
+    # (no-name-in-module) pylint:disable=E0611
+    from urllib import urlencode
+else:
+    from urllib.parse import urlencode  # pylint:disable=E0611,F0401
 # (accessing private members) pylint: disable=W0212
 # (too many public methods) pylint: disable=R0904
 
@@ -92,39 +99,36 @@ class CurlArgDataTestCase(TestCase):
     """Tests for function ``_curl_arg_data``."""
 
     def setUp(self):
-        """Provide test data for use by other methods in this class."""
-        self.to_encode = {'foo': 9001, 'bar': '!@#$% ^&*()'}
+        """Provide test data for use by other methods in this class.
+
+        Dictionary ordering is not guaranteed. It follows that
+        ``urlencode({…})`` is only guaranteed if ``{…}`` has a single item. To
+        deal with this issue, two separate encodable dicts are provided, rather
+        than a single large encodable dict with multiple items.
+
+        """
+        self.to_encode = ({'bar': '!@#$% ^&*()'}, {'foo': 9001})
         self.to_ignore = {'auth': ('alice', 'password'), 'verify': True}
 
     def test_null(self):
-        """Do not provide any data to be encoded."""
-        self.assertEqual(
-            client._curl_arg_data({}),
-            urlencode({}),
-        )
+        """Provide no URL parameters."""
+        self.assertEqual(urlencode({}), client._curl_arg_data({}))
 
     def test_ignored_opts(self):
-        """Provide data which should be ignored."""
-        self.assertEqual(
-            client._curl_arg_data(self.to_ignore),
-            urlencode({}),
-        )
+        """Provide URL parameters which should not be encoded."""
+        self.assertEqual(urlencode({}), client._curl_arg_data(self.to_ignore))
 
     def test_valid_opts(self):
-        """Provide data which should be encoded."""
-        self.assertEqual(
-            client._curl_arg_data(self.to_encode),
-            urlencode(self.to_encode),
-        )
+        """Provide URL parameters which should be encoded."""
+        for params in self.to_encode:
+            self.assertEqual(urlencode(params), client._curl_arg_data(params))
 
     def test_both_opts(self):
         """Provide data which should be ignored and which should be encoded."""
-        self.assertEqual(
-            client._curl_arg_data(dict(
-                self.to_encode.items() + self.to_ignore.items()
-            )),
-            urlencode(self.to_encode),
-        )
+        for target in self.to_encode:
+            source = target.copy()
+            source.update(self.to_ignore)
+            self.assertEqual(urlencode(target), client._curl_arg_data(source))
 
 
 class ClientTestCase(TestCase):
@@ -132,7 +136,7 @@ class ClientTestCase(TestCase):
 
     def setUp(self):
         self.bogus_url = gen_alpha()
-        self.mock_response = mock.Mock()
+        self.mock_response = mock.Mock(status_code=200)
 
     def test_clients(self):
         """Test all the wrappers except :func:`nailgun.client.request`.

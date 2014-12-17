@@ -16,9 +16,15 @@ Each function is modified with the following behaviours:
 
 """
 from json import dumps
-from urllib import urlencode
 import logging
 import requests
+
+from sys import version_info
+if version_info[0] == 2:
+    # (no-name-in-module) pylint:disable=E0611
+    from urllib import urlencode
+else:
+    from urllib.parse import urlencode  # pylint:disable=E0611,F0401
 
 
 logger = logging.getLogger(__name__)  # (invalid-name) pylint: disable=C0103
