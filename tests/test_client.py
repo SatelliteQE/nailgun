@@ -3,7 +3,6 @@ from fauxfactory import gen_alpha
 from nailgun import client
 from unittest import TestCase
 from urllib import urlencode
-import ddt
 import inspect
 import mock
 import requests
@@ -11,43 +10,48 @@ import requests
 # (too many public methods) pylint: disable=R0904
 
 
-@ddt.ddt
 class ContentTypeIsJsonTestCase(TestCase):
     """Tests for function ``_content_type_is_json``."""
-    def test_true(self):
-        """Ensure function returns ``True`` when appropriate."""
-        mock_kwargs = {'headers': {'content-type': 'appLICatiON/JSoN'}}
-        self.assertTrue(client._content_type_is_json(mock_kwargs))
 
-    @ddt.data(
-        {'headers': {'content-type': 'application-json'}},
-        {'headers': {'content-type': ''}},
-    )
-    def test_false(self, mock_kwargs):
-        """Ensure function returns ``False`` when given ``mock_kwargs``."""
-        self.assertFalse(client._content_type_is_json(mock_kwargs))
+    def test_true(self):
+        """Assert ``True`` is returned when content-type is JSON."""
+        for kwargs in (
+                {'headers': {'content-type': 'application/json'}},
+                {'headers': {'content-type': 'appLICatiON/JSoN'}},
+                {'headers': {'content-type': 'APPLICATION/JSON'}}):
+            self.assertTrue(client._content_type_is_json(kwargs))
+
+    def test_false(self):
+        """Assert ``True`` is returned when content-type is not JSON."""
+        for kwargs in (
+                {'headers': {'content-type': ''}},
+                {'headers': {'content-type': 'application-json'}},
+                {'headers': {'content-type': 'application/pson'}}):
+            self.assertFalse(client._content_type_is_json(kwargs))
 
 
 class SetContentTypeTestCase(TestCase):
     """Tests for function ``_set_content_type``."""
+
     def test_no_value(self):
-        """Ensure 'content-type' is set if no existing value is provided."""
-        mock_kwargs = {'headers': {}}
-        client._set_content_type(mock_kwargs)
+        """Assert that a content-type is provided if none is set."""
+        kwargs = {'headers': {}}
+        client._set_content_type(kwargs)
         self.assertEqual(
-            mock_kwargs,
+            kwargs,
             {'headers': {'content-type': 'application/json'}},
         )
 
     def test_existing_value(self):
-        """Ensure 'content-type' is not set if a value is provided."""
-        mock_kwargs = {'headers': {'content-type': ''}}
-        client._set_content_type(mock_kwargs)
-        self.assertEqual(mock_kwargs, {'headers': {'content-type': ''}})
+        """Assert that an existing content-type is not overridden."""
+        kwargs = {'headers': {'content-type': ''}}
+        client._set_content_type(kwargs)
+        self.assertEqual(kwargs, {'headers': {'content-type': ''}})
 
 
 class CurlArgUserTestCase(TestCase):
     """Tests for function ``_curl_arg_user``."""
+
     def test_null(self):
         """Do not provide any authentication information."""
         self.assertEqual(client._curl_arg_user({}), '')
@@ -64,6 +68,7 @@ class CurlArgUserTestCase(TestCase):
 
 class CurlArgInsecureTestCase(TestCase):
     """Tests for function ``_curl_arg_insecure``."""
+
     def test_null(self):
         """Do not specify whether SSL connections should be verified."""
         self.assertEqual(client._curl_arg_insecure({}), '')
@@ -85,6 +90,7 @@ class CurlArgInsecureTestCase(TestCase):
 
 class CurlArgDataTestCase(TestCase):
     """Tests for function ``_curl_arg_data``."""
+
     def setUp(self):
         """Provide test data for use by other methods in this class."""
         self.to_encode = {'foo': 9001, 'bar': '!@#$% ^&*()'}
@@ -129,44 +135,46 @@ class ClientTestCase(TestCase):
         self.mock_response = mock.Mock()
 
     def test_clients(self):
-        """Test ``delete``, ``get``, ``head``, ``patch``, ``post`` and ``put``.
+        """Test all the wrappers except :func:`nailgun.client.request`.
+
+        The following functions are tested:
+
+        * :func:`nailgun.client.delete`
+        * :func:`nailgun.client.get`
+        * :func:`nailgun.client.head`
+        * :func:`nailgun.client.patch`
+        * :func:`nailgun.client.post`
+        * :func:`nailgun.client.put`
 
         Assert that:
 
-        * The outer function (e.g. ``delete``) returns whatever the inner
-          function (e.g. ``_call_requests_delete``) returns.
-        * The outer function passes the correct parameters to the inner
-          function.
+        * The wrapper function passes the correct parameters to requests.
+        * The wrapper function returns whatever requests returns.
 
         """
-        for outer, inner in (
-                (client.delete, 'nailgun.client._call_requests_delete'),
-                (client.get, 'nailgun.client._call_requests_get'),
-                (client.head, 'nailgun.client._call_requests_head'),
-                (client.patch, 'nailgun.client._call_requests_patch'),
-                (client.post, 'nailgun.client._call_requests_post'),
-                (client.put, 'nailgun.client._call_requests_put')):
-            with mock.patch(
-                inner,
-                return_value=self.mock_response
-            ) as mock_inner:
-                # outer calls inner, inner returns self.mock_response, and
-                # outer returns the same.
-                self.assertIs(outer(self.bogus_url), self.mock_response)
-                # Let's make sure that outer gives the right params to inner.
-                if outer in (client.delete, client.get, client.head):
-                    mock_inner.assert_called_once_with(
+        for meth in ('delete', 'get', 'head', 'patch', 'post', 'put'):
+            with mock.patch.object(requests, meth) as requests_meth:
+                # Does the wrapper function return whatever requests returns?
+                requests_meth.return_value = self.mock_response
+                self.assertIs(
+                    getattr(client, meth)(self.bogus_url),
+                    self.mock_response
+                )
+
+                # Did the wrapper function pass the correct params to requests?
+                if meth in ('delete', 'get', 'head'):
+                    requests_meth.assert_called_once_with(
                         self.bogus_url,
                         headers={'content-type': 'application/json'}
                     )
-                elif outer in (client.patch, client.put):
-                    mock_inner.assert_called_once_with(
+                elif meth in ('patch', 'put'):
+                    requests_meth.assert_called_once_with(
                         self.bogus_url,
                         None,
                         headers={'content-type': 'application/json'}
                     )
-                else:  # outer is client.post
-                    mock_inner.assert_called_once_with(
+                else:  # meth is 'post'
+                    requests_meth.assert_called_once_with(
                         self.bogus_url,
                         None,
                         None,
@@ -176,55 +184,31 @@ class ClientTestCase(TestCase):
     def test_client_request(self):
         """Test :func:`nailgun.client.request`.
 
-        Assert that:
-
-        * ``request`` returns whatever ``_call_requests_request`` returns.
-        * ``request`` passes the correct parameters to
-          ``_call_requests_request``.
+        Make the same assertions as
+        :meth:`nailgun.tests.test_client.ClientTestCase.test_clients`.
 
         """
-        with mock.patch(
-            'nailgun.client._call_requests_request',
-            return_value=self.mock_response
-        ) as mock_inner:
+        with mock.patch.object(requests, 'request') as requests_request:
+            requests_request.return_value = self.mock_response
             self.assertIs(
                 client.request('foo', self.bogus_url),
                 self.mock_response,
             )
-            mock_inner.assert_called_once_with(
+            requests_request.assert_called_once_with(
                 'foo',
                 self.bogus_url,
                 headers={'content-type': 'application/json'}
             )
 
+    def test_identical_args(self):
+        """Check that the wrapper functions have the correct signatures.
 
-@ddt.ddt
-class ArgTestCase(TestCase):
-    """Tests which inspect function arguments."""
+        For example, :func:`nailgun.client.delete` should have the same
+        signature as ``requests.delete``.
 
-    # (too-few-public-methods) pylint:disable=R0903
-    # It's OK that there is only one public method here. The DDT lib uses this
-    # one test over and over. And when the `_call_requests_*` methods are
-    # dropped (they should be), this entire test case will disappear.
-    @ddt.data(
-        (requests.delete, client._call_requests_delete),
-        (requests.delete, client.delete),
-        (requests.get, client._call_requests_get),
-        (requests.get, client.get),
-        (requests.head, client._call_requests_head),
-        (requests.head, client.head),
-        (requests.patch, client._call_requests_patch),
-        (requests.patch, client.patch),
-        (requests.post, client._call_requests_post),
-        (requests.post, client.post),
-        (requests.put, client._call_requests_put),
-        (requests.put, client.put),
-        (requests.request, client._call_requests_request),
-        (requests.request, client.request),
-    )
-    def test_identical_args(self, functions):
-        """Assert that both ``functions`` accept identical arguments."""
-        self.assertEqual(
-            inspect.getargspec(functions[0]),
-            inspect.getargspec(functions[1]),
-        )
+        """
+        for meth in ('delete', 'get', 'head', 'patch', 'post', 'put'):
+            self.assertEqual(
+                inspect.getargspec(getattr(client, meth)),
+                inspect.getargspec(getattr(requests, meth)),
+            )

@@ -1,5 +1,4 @@
 # For executing unit tests
-ddt
 fauxfactory
 mock
 
