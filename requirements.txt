@@ -1,0 +1,7 @@
+# "Now your `pip install -r requirements.txt` will work just as before. It will
+# first install the library located at the file path `.` and then move on to
+# its abstract dependencies"
+#
+# See: https://caremad.io/2013/07/setup-vs-requirement/
+
+--editable .

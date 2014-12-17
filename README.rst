@@ -7,6 +7,5 @@ Satellite 6 API.
 The `full documentation <http://nailgun.readthedocs.org/en/latest/>`_ is
 available on ReadTheDocs. It can also be generated locally::
 
-    pip install requests
-    pip install -r requirements-dev.txt
+    pip install -r requirements.txt -r requirements-dev.txt
     make docs-html
