@@ -10,15 +10,6 @@ Each function is modified with the following behaviours:
 3. It logs information about the request before it is sent.
 4. It logs information about the response when it is received.
 
-The various ``_call_requests_*`` functions in this module are extremely simple
-wrapper functions. They sit in the call chain between this module's public
-wrappers and the `Requests`_ functions being wrapped. For example,
-``_call_requests_post`` is called by :func:`nailgun.client.post`, and it calls
-``requests.post``. The ``_call_requests_*`` functions do not alter the
-arguments passed to them in any way, nor do they do anything else such as
-logging. They exist soley to ease unit testing: each one can be overridden in a
-unit test for mocking purposes.
-
 .. _Requests: http://docs.python-requests.org/en/latest/
 .. _functions from:
     http://docs.python-requests.org/en/latest/api/#main-interface
@@ -176,48 +167,13 @@ def _log_response(response):
         logger.debug(message)
 
 
-def _call_requests_request(method, url, **kwargs):
-    """Call ``requests.request``."""
-    return requests.request(method, url, **kwargs)
-
-
-def _call_requests_head(url, **kwargs):
-    """Call ``requests.head``."""
-    return requests.head(url, **kwargs)
-
-
-def _call_requests_get(url, **kwargs):
-    """Call ``requests.get``."""
-    return requests.get(url, **kwargs)
-
-
-def _call_requests_post(url, data=None, json=None, **kwargs):
-    """Call ``requests.post``."""
-    return requests.post(url, data, json, **kwargs)
-
-
-def _call_requests_put(url, data=None, **kwargs):
-    """Call ``requests.put``."""
-    return requests.put(url, data, **kwargs)
-
-
-def _call_requests_patch(url, data=None, **kwargs):
-    """Call ``requests.patch``."""
-    return requests.patch(url, data, **kwargs)
-
-
-def _call_requests_delete(url, **kwargs):
-    """Call ``requests.delete``."""
-    return requests.delete(url, **kwargs)
-
-
 def request(method, url, **kwargs):
     """A wrapper for ``requests.request``."""
     _set_content_type(kwargs)
     if _content_type_is_json(kwargs) and kwargs.get('data') is not None:
         kwargs['data'] = dumps(kwargs['data'])
     _log_request(method, url, kwargs)
-    response = _call_requests_request(method, url, **kwargs)
+    response = requests.request(method, url, **kwargs)
     _log_response(response)
     return response
 
@@ -228,7 +184,7 @@ def head(url, **kwargs):
     if _content_type_is_json(kwargs) and kwargs.get('data') is not None:
         kwargs['data'] = dumps(kwargs['data'])
     _log_request('HEAD', url, kwargs)
-    response = _call_requests_head(url, **kwargs)
+    response = requests.head(url, **kwargs)
     _log_response(response)
     return response
 
@@ -239,7 +195,7 @@ def get(url, **kwargs):
     if _content_type_is_json(kwargs) and kwargs.get('data') is not None:
         kwargs['data'] = dumps(kwargs['data'])
     _log_request('GET', url, kwargs)
-    response = _call_requests_get(url, **kwargs)
+    response = requests.get(url, **kwargs)
     _log_response(response)
     return response
 
@@ -250,7 +206,7 @@ def post(url, data=None, json=None, **kwargs):
     if _content_type_is_json(kwargs) and data is not None:
         data = dumps(data)
     _log_request('POST', url, kwargs, data)
-    response = _call_requests_post(url, data, json, **kwargs)
+    response = requests.post(url, data, json, **kwargs)
     _log_response(response)
     return response
 
@@ -261,7 +217,7 @@ def put(url, data=None, **kwargs):
     if _content_type_is_json(kwargs) and data is not None:
         data = dumps(data)
     _log_request('PUT', url, kwargs, data)
-    response = _call_requests_put(url, data, **kwargs)
+    response = requests.put(url, data, **kwargs)
     _log_response(response)
     return response
 
@@ -272,7 +228,7 @@ def patch(url, data=None, **kwargs):
     if _content_type_is_json(kwargs) and data is not None:
         data = dumps(data)
     _log_request('PATCH', url, kwargs, data)
-    response = _call_requests_patch(url, data, **kwargs)
+    response = requests.patch(url, data, **kwargs)
     _log_response(response)
     return response
 
@@ -283,6 +239,6 @@ def delete(url, **kwargs):
     if _content_type_is_json(kwargs) and kwargs.get('data') is not None:
         kwargs['data'] = dumps(kwargs['data'])
     _log_request('DELETE', url, kwargs)
-    response = _call_requests_delete(url, **kwargs)
+    response = requests.delete(url, **kwargs)
     _log_response(response)
     return response
