@@ -21,13 +21,13 @@ import requests
 
 from sys import version_info
 if version_info[0] == 2:
-    # (no-name-in-module) pylint:disable=E0611
+    # pylint:disable=no-name-in-module
     from urllib import urlencode
 else:
     from urllib.parse import urlencode  # pylint:disable=E0611,F0401
 
 
-logger = logging.getLogger(__name__)  # (invalid-name) pylint: disable=C0103
+logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
 
 
 def _content_type_is_json(kwargs):

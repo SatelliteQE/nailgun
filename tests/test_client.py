@@ -9,12 +9,11 @@ import requests
 
 from sys import version_info
 if version_info[0] == 2:
-    # (no-name-in-module) pylint:disable=E0611
+    # pylint:disable=no-name-in-module
     from urllib import urlencode
 else:
     from urllib.parse import urlencode  # pylint:disable=E0611,F0401
-# (accessing private members) pylint: disable=W0212
-# (too many public methods) pylint: disable=R0904
+# pylint:disable=protected-access,too-many-public-methods
 
 
 class ContentTypeIsJsonTestCase(TestCase):
