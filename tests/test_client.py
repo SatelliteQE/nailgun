@@ -188,7 +188,7 @@ class ClientTestCase(TestCase):
         """Test :func:`nailgun.client.request`.
 
         Make the same assertions as
-        :meth:`nailgun.tests.test_client.ClientTestCase.test_clients`.
+        :meth:`tests.test_client.ClientTestCase.test_clients`.
 
         """
         with mock.patch.object(requests, 'request') as requests_request:
