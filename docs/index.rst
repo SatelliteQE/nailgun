@@ -4,6 +4,14 @@ NailGun
 NailGun is a GPL-licensed Python library that facilitates easy usage of the
 Satellite 6 API.
 
+Documentation contents:
+
+.. toctree::
+    :maxdepth: 1
+
+    examples
+    api/index
+
 Why NailGun?
 ------------
 
@@ -11,7 +19,7 @@ NailGun exists to make working with the Satellite 6 API easier.
 
 * Existing libraries, such as the Python `Requests`_ library, are general
   purpose tools. As a result, client code can easily become excessively
-  verbose. For example, see the ``get_org_envs.py`` script.
+  verbose. See the :doc:`examples` document for an example.
 * The Satellite 6 API is not RESTful in its design.
 * The Satellite 6 API is not consistent in its implementation. For example, see
   the "Payload Generation" section of `this blog post`_.
@@ -48,11 +56,6 @@ directory. For a glimpse into the design of NailGun, see `this blog post`_.
 
 For information on the internals of NailGun itself, see the :doc:`API
 documentation </api/index>`.
-
-.. toctree::
-   :hidden:
-
-   api/index
 
 Contributing
 ------------
