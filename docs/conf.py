@@ -23,7 +23,7 @@ sys.path.insert(
 
 project = 'NailGun'
 copyright = '2014, Jeremy Audet'  # pylint:disable=redefined-builtin
-version = '0.0.3'
+version = '0.1.0'
 release = version
 
 # General Configuration -------------------------------------------------------

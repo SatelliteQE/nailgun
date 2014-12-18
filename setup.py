@@ -8,7 +8,7 @@ with open('README.rst') as handle:
 
 setup(
     name='nailgun',
-    version='0.0.3',  # Should be identical to the version in docs/conf.py!
+    version='0.1.0',  # Should be identical to the version in docs/conf.py!
     description='A library that facilitates easy usage of the Satellite 6 API',
     long_description=LONG_DESCRIPTION,
     url='https://github.com/SatelliteQE/nailgun',
