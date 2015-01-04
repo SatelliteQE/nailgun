@@ -8,3 +8,9 @@
 
 .. automodule:: tests.test_client
    :members:
+
+:mod:`tests.test_config`
+========================
+
+.. automodule:: tests.test_config
+   :members:
