@@ -35,6 +35,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 exclude_patterns = ['_build']
 nitpicky = True
+nitpick_ignore = [
+    ('py:obj', 'str'),
+]
 
 # Format-Specific Options -----------------------------------------------------
 
