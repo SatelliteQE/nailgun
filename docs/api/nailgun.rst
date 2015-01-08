@@ -14,3 +14,4 @@
 
 .. automodule:: nailgun.config
    :members:
+   :private-members:
