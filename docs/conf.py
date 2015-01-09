@@ -36,8 +36,10 @@ master_doc = 'index'
 exclude_patterns = ['_build']
 nitpicky = True
 nitpick_ignore = [
+    ('py:obj', 'bool'),
     ('py:obj', 'str'),
 ]
+autodoc_default_flags = ['members', 'special-members']
 
 # Format-Specific Options -----------------------------------------------------
 
