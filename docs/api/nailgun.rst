@@ -7,10 +7,9 @@
 =====================
 
 .. automodule:: nailgun.client
-   :members:
 
 :mod:`nailgun.config`
 =====================
 
 .. automodule:: nailgun.config
-   :members:
+   :private-members:
