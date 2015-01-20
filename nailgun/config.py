@@ -55,29 +55,26 @@ def _get_config_file_path(xdg_config_dir, xdg_config_file):
 class BaseServerConfig(object):
     """A minimal set of facts for communicating with a Satellite server.
 
+    :param str url: What is the URL Of the server? For example,
+        `https://example.com/250`.
+    :param auth: Credentials to use when communicating with the server. For
+        example, `('username', 'password')`. No object attribute is created if
+        no value is provided.
+
     .. WARNING:: This class will likely be moved to a separate Python package
         in a future release of NailGun. Be careful about making references to
         this class, as those references will likely need to be changed.
 
     """
-    #: Used to lock access to the configuration file when performing certain
-    #: operations, such as saving.
+    # Used to lock access to the configuration file when performing certain
+    # operations, such as saving.
     _file_lock = Lock()
-    #: The name of the directory appended to ``XDG_CONFIG_DIRS``.
+    # The name of the directory appended to ``XDG_CONFIG_DIRS``.
     _xdg_config_dir = 'librobottelo'
-    #: The name of the file in which settings are stored.
+    # The name of the file in which settings are stored.
     _xdg_config_file = 'settings.json'
 
     def __init__(self, url, auth=None):
-        """Create a server configuration object.
-
-        :param str url: What is the URL Of the server? For example,
-            `https://example.com/250`.
-        :param auth: Credentials to use when communicating with the server. For
-            example, `('username', 'password')`. No object attribute is created
-            if no value is provided.
-
-        """
         self.url = url
         if auth is not None:
             self.auth = auth
@@ -187,7 +184,15 @@ class BaseServerConfig(object):
 
 
 class ServerConfig(BaseServerConfig):
-    """Facts for communicating with a server's API."""
+    """Facts for communicating with a server's API.
+
+    This class inherits from :class:`nailgun.config.BaseServerConfig`. Other
+    constructor parameters are documented there.
+
+    :param bool verify: Should SSL be verified when communicating with the
+        server? No object attribute is created if no value is provided.
+
+    """
     # pylint:disable=too-few-public-methods
     # It's OK that this class has only one public method. This class is
     # intentionally small so that the parent class can be re-used.
@@ -195,15 +200,6 @@ class ServerConfig(BaseServerConfig):
     _xdg_config_file = 'server_configs.json'
 
     def __init__(self, url, auth=None, verify=None):
-        """Create a server configuration object.
-
-        See the parent class for information on the ``url`` and ``auth``
-        attributes.
-
-        :param bool verify: Should SSL be verified when communicating with the
-            server? No object attribute is created if no value is provided.
-
-        """
         super(ServerConfig, self).__init__(url, auth)
         if verify is not None:
             self.verify = verify
