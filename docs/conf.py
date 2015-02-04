@@ -38,6 +38,7 @@ nitpicky = True
 nitpick_ignore = [
     ('py:obj', 'bool'),
     ('py:obj', 'str'),
+    ('py:obj', 'tuple'),
 ]
 autodoc_default_flags = ['members']
 
