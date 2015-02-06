@@ -14,3 +14,9 @@
 
 .. automodule:: tests.test_config
    :members:
+
+:mod:`tests.test_entity_fields`
+===============================
+
+.. automodule:: tests.test_entity_fields
+   :members:
