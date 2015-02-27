@@ -46,6 +46,8 @@ UTF-8 values, which is unpleasant to work with.
 from fauxfactory import (
     gen_boolean,
     gen_choice,
+    gen_date,
+    gen_datetime,
     gen_email,
     gen_integer,
     gen_ipaddr,
@@ -198,9 +200,27 @@ class StringField(Field):
 class DateField(Field):
     """Field that represents a date"""
 
+    def __init__(self, min_date=None, max_date=None):
+        # If ``None`` is passed then ``FauxFactory`` will deal with it.
+        self.min_date = min_date
+        self.max_date = max_date
+
+    def gen_value(self):
+        """Return a value suitable for a :class:`DateField`."""
+        return gen_date(self.min_date, self.max_date)
+
 
 class DateTimeField(Field):
     """Field that represents a datetime"""
+
+    def __init__(self, min_date=None, max_date=None):
+        # If ``None`` is passed then ``FauxFactory`` will deal with it.
+        self.min_date = min_date
+        self.max_date = max_date
+
+    def gen_value(self):
+        """Return a value suitable for a :class:`DateTimeField`."""
+        return gen_datetime(self.min_date, self.max_date)
 
 
 class DictField(Field):

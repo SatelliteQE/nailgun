@@ -3,6 +3,7 @@ from nailgun import entity_fields
 from random import randint
 from sys import version_info
 from unittest import TestCase
+import datetime
 import socket
 
 
@@ -45,6 +46,18 @@ class GenValueTestCase(TestCase):
     def test_boolean_field(self):
         """Test :class:`nailgun.entity_fields.BooleanField`."""
         self.assertIn(entity_fields.BooleanField().gen_value(), (True, False))
+
+    def test_date_field(self):
+        """Test :class:`nailgun.entity_fields.DateField`."""
+        self.assertIsInstance(
+            entity_fields.DateField().gen_value(), datetime.date
+        )
+
+    def test_datetime_field(self):
+        """Test :class:`nailgun.entity_fields.DateTimeField`."""
+        self.assertIsInstance(
+            entity_fields.DateTimeField().gen_value(), datetime.datetime
+        )
 
     def test_email_field(self):
         """Test :class:`nailgun.entity_fields.EmailField`.
