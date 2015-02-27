@@ -200,10 +200,11 @@ class StringField(Field):
 class DateField(Field):
     """Field that represents a date"""
 
-    def __init__(self, min_date=None, max_date=None):
+    def __init__(self, min_date=None, max_date=None, *args, **kwargs):
         # If ``None`` is passed then ``FauxFactory`` will deal with it.
         self.min_date = min_date
         self.max_date = max_date
+        super(DateField, self).__init__(*args, **kwargs)
 
     def gen_value(self):
         """Return a value suitable for a :class:`DateField`."""
@@ -213,10 +214,11 @@ class DateField(Field):
 class DateTimeField(Field):
     """Field that represents a datetime"""
 
-    def __init__(self, min_date=None, max_date=None):
+    def __init__(self, min_date=None, max_date=None, *args, **kwargs):
         # If ``None`` is passed then ``FauxFactory`` will deal with it.
         self.min_date = min_date
         self.max_date = max_date
+        super(DateTimeField, self).__init__(*args, **kwargs)
 
     def gen_value(self):
         """Return a value suitable for a :class:`DateTimeField`."""

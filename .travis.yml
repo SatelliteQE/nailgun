@@ -6,7 +6,7 @@ python:
 install:
     - pip install -r requirements.txt -r requirements-dev.txt
 script:
-    - flake8 .
+    - make lint
     - make test
     - make docs-html
 notifications:
