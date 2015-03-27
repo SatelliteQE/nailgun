@@ -24,9 +24,6 @@ CONFIGS2.update({
     'Abeloth': {'url': 'bogus value', 'verify': True},
     'Admiral Gial Ackbar': {'url': 'bogus', 'auth': [], 'verify': False},
 })
-# The pylint star-args warning is disabled for several tests. This is because
-# star args make the relevant tests _so_ much more compact than any
-# alternatives, and the dicts in question are hardcoded right here.
 
 
 class BaseServerConfigTestCase(TestCase):
@@ -39,7 +36,6 @@ class BaseServerConfigTestCase(TestCase):
 
         """
         for config in CONFIGS.values():
-            # pylint:disable=star-args
             self.assertEqual(config, vars(BaseServerConfig(**config)))
 
     def test_get(self):
@@ -129,7 +125,6 @@ class ServerConfigTestCase(TestCase):
 
         """
         for config in CONFIGS2.values():
-            # pylint:disable=star-args
             self.assertEqual(config, vars(ServerConfig(**config)))
 
     def test_get_client_kwargs(self):
@@ -142,7 +137,6 @@ class ServerConfigTestCase(TestCase):
         for config in CONFIGS2.values():
             out = config.copy()
             out.pop('url')
-            # pylint:disable=star-args
             self.assertEqual(out, ServerConfig(**config).get_client_kwargs())
 
 
