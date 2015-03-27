@@ -221,3 +221,27 @@ class ServerConfig(BaseServerConfig):
         config = vars(self)
         config.pop('url')
         return config
+
+    @classmethod
+    def get(cls, label='default', path=None):
+        """If ``auth`` is a two element list, convert it to a tuple.
+
+        The entity classes rely on the requests library to be a transport
+        mechanism. The methods provided by that library, such as ``get`` and
+        ``post``, accept an ``auth`` argument. That argument must be a tuple:
+
+            Auth tuple to enable Basic/Digest/Custom HTTP Auth.
+
+        However, the JSON decoder does not recognize a tuple as a type, and
+        represents sequences of elements as a tuple. Compensate for that.
+
+        This override is done here, and not in the base class, because the base
+        class may be extracted out into a separate library and used in other
+        contexts. In those contexts, the presence of a list may not matter or
+        may be desireable.
+
+        """
+        config = super(ServerConfig, cls).get(label, path)
+        if hasattr(config, 'auth') and isinstance(config.auth, list):
+            config.auth = tuple(config.auth)
+        return config

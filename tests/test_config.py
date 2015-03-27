@@ -43,7 +43,8 @@ class BaseServerConfigTestCase(TestCase):
 
         Assert that the method extracts the asked-for section from a
         configuration file and correctly populates a new ``BaseServerConfig``
-        object.
+        object. Also assert that the ``auth`` attribute is a list. (See the
+        docstring for :meth:`nailgun.config.ServerConfig.get`.)
 
         """
         for label, config in CONFIGS.items():
@@ -52,6 +53,8 @@ class BaseServerConfigTestCase(TestCase):
                 server_config = BaseServerConfig.get(label, FILE_PATH)
             self.assertEqual(vars(server_config), config)
             open_.assert_called_once_with(FILE_PATH)
+            if hasattr(server_config, 'auth'):
+                self.assertIsInstance(server_config.auth, list)
 
     def test_get_labels(self):
         """Test :meth:`nailgun.config.BaseServerConfig.get_labels`.
@@ -138,6 +141,19 @@ class ServerConfigTestCase(TestCase):
             out = config.copy()
             out.pop('url')
             self.assertEqual(out, ServerConfig(**config).get_client_kwargs())
+
+    def test_get(self):
+        """Test :meth:`nailgun.config.ServerConfig.get`.
+
+        Assert that the ``auth`` attribute is a tuple.
+
+        """
+        for label in CONFIGS.keys():
+            open_ = mock_open(read_data=json.dumps(CONFIGS))
+            with patch.object(builtins, 'open', open_):
+                server_config = ServerConfig.get(label, FILE_PATH)
+            if hasattr(server_config, 'auth'):
+                self.assertIsInstance(server_config.auth, tuple)
 
 
 def _get_written_json(mock_obj):
