@@ -16,7 +16,11 @@ docs-clean:
 
 lint:
 	flake8 .
-	pylint --reports=n --disable=I --ignore-imports=y nailgun tests setup.py docs/conf.py
+	pylint --reports=n --disable=I --ignore-imports=y \
+		nailgun tests setup.py docs/conf.py
+	pylint --reports=n --disable=I --ignore-imports=y --disable=similarities \
+		docs/create_organization_nailgun.py docs/create_organization_plain.py \
+		docs/create_user_nailgun.py docs/create_user_plain.py
 
 test:
 	python -m unittest discover --start-directory tests --top-level-directory .

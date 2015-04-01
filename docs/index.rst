@@ -4,7 +4,8 @@ NailGun
 NailGun is a GPL-licensed Python library that facilitates easy usage of the
 Satellite 6 API.
 
-Documentation contents:
+This page provides a summary of information about NailGun. You can find more
+in-depth information by visiting one of the other sections:
 
 .. toctree::
     :maxdepth: 1
@@ -15,17 +16,20 @@ Documentation contents:
 Why NailGun?
 ------------
 
-NailGun exists to make working with the Satellite 6 API easier.
+NailGun exists to make working with the Satellite 6 API easier. Here are some of
+the challenges developers face:
 
 * Existing libraries, such as the Python `Requests`_ library, are general
   purpose tools. As a result, client code can easily become excessively
   verbose. See the :doc:`examples` document for an example.
-* The Satellite 6 API is not RESTful in its design.
+* The Satellite 6 API is not RESTful in its design. As a result, even
+  experienced developers may find the API hard to work with.
 * The Satellite 6 API is not consistent in its implementation. For example, see
   the "Payload Generation" section of `this blog post`_.
-* The Satellite 6 API contains bugs which are often long-lived. For example, it
-  is impossible to definitively know whether a given activation key exists, due
-  to `Foreman bug #4638`_.
+* The Satellite 6 API contains bugs. For example, `Foreman bug #4638`_ describes
+  how it is impossible to definitively know whether a given activation key
+  exists. (Method ``nailgun.entities.ActivationKey.read_raw`` contains a
+  work-around.)
 
 All of the above issues are compounded by the size of the Satellite 6 API. As of
 this writing, there are 405 paths. This makes it tough to design compact and
@@ -42,6 +46,14 @@ NailGun is not an officially supported product. NailGun is a Python-only
 library, and integration with other languages such as Java or Ruby is not
 currently a consideration. Although NailGun is developed with a broad audience
 in mind, it targets `Robottelo`_ first and foremost.
+
+NailGun was originally conceived as a set of helper routines internal to
+`Robottelo`_. It is in the process of being extracted out from that code base
+and turned in to an independently useful library.
+
+.. WARNING:: Until version 1.0 is released, functionality will be incomplete,
+    and breaking changes may be introduced. Users are advised to read the
+    release notes closely.
 
 Resources
 ---------
@@ -65,7 +77,7 @@ request on GitHub, but patches are welcome no matter how they arrive.
 
 You can use pip and make to quickly set up a development environment::
 
-    pip install -r requirements-dev.txt
+    pip install -r requirements.txt -r requirements-dev.txt
     make lint
     make test
     make docs-html
