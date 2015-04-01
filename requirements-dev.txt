@@ -1,10 +1,13 @@
-# For executing unit tests
+# For `make test`
 fauxfactory
 mock
 
-# For linting
+# For `make lint`
 flake8
 pylint
 
-# For documentation
+# For `make docs-html` and `make docs-clean`
 sphinx
+
+# For `make package`
+wheel

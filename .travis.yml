@@ -9,5 +9,8 @@ script:
     - make lint
     - make test
     - make docs-html
+    - make docs-clean
+    - make package
+    - make package-clean
 notifications:
     irc: "chat.freenode.net#robottelo"

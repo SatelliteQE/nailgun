@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """A setuptools-based script for installing NailGun."""
 from setuptools import find_packages, setup  # prefer setuptools over distutils
 
