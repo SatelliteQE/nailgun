@@ -31,12 +31,11 @@ def _get_config_file_path(xdg_config_dir, xdg_config_file):
     that by the time client code attempts to open the file, it may be gone or
     otherwise inaccessible.
 
-    :param str xdg_config_dir: The name of the directory that is suffixed to
-        the end of each of the ``XDG_CONFIG_DIRS`` paths.
-    :param str xdg_config_file: The name of the configuration file that is
-        being searched for.
-    :returns: A path to a configuration file.
-    :rtype: str
+    :param xdg_config_dir: A string. The name of the directory that is suffixed
+        to the end of each of the ``XDG_CONFIG_DIRS`` paths.
+    :param xdg_config_file: A string. The name of the configuration file that
+        is being searched for.
+    :returns: A ``str`` path to a configuration file.
     :raises nailgun.config.ConfigFileError: When no configuration file can be
         found.
 
@@ -55,11 +54,11 @@ def _get_config_file_path(xdg_config_dir, xdg_config_file):
 class BaseServerConfig(object):
     """A minimal set of facts for communicating with a Satellite server.
 
-    :param str url: What is the URL Of the server? For example,
-        `https://example.com/250`.
+    :param url: A string. The URL of a server. For example:
+        `'https://example.com:250'`.
     :param auth: Credentials to use when communicating with the server. For
-        example, `('username', 'password')`. No object attribute is created if
-        no value is provided.
+        example: `('username', 'password')`. No instance attribute is created
+        if no value is provided.
 
     .. WARNING:: This class will likely be moved to a separate Python package
         in a future release of NailGun. Be careful about making references to
@@ -85,11 +84,12 @@ class BaseServerConfig(object):
 
         This method is thread safe.
 
-        :param str label: The configuration identified by ``label`` is deleted.
-        :param str path: The configuration file to be manipulated. Defaults to
-            what is returned by :func:`nailgun.config._get_config_file_path`.
-        :returns: Nothing.
-        :rtype: None
+        :param label: A string. The configuration identified by ``label`` is
+            deleted.
+        :param path: A string. The configuration file to be manipulated.
+            Defaults to what is returned by
+            :func:`nailgun.config._get_config_file_path`.
+        :returns: ``None``
 
         """
         if path is None:
@@ -111,9 +111,11 @@ class BaseServerConfig(object):
     def get(cls, label='default', path=None):
         """Get a server configuration.
 
-        :param str label: The configuration identified by ``label`` is read.
-        :param str path: The configuration file to be manipulated. Defaults to
-            what is returned by :func:`nailgun.config._get_config_file_path`.
+        :param label: A string. The configuration identified by ``label`` is
+            read.
+        :param path: A string. The configuration file to be manipulated.
+            Defaults to what is returned by
+            :func:`nailgun.config._get_config_file_path`.
         :returns: A brand new :class:`nailgun.config.ServerConfig` object whose
             attributes have been populated as appropriate.
         :rtype: ServerConfig
@@ -131,10 +133,10 @@ class BaseServerConfig(object):
     def get_labels(cls, path=None):
         """Get all server configuration labels.
 
-        :param str path: The configuration file to be manipulated. Defaults to
-            what is returned by :func:`nailgun.config._get_config_file_path`.
+        :param path: A string. The configuration file to be manipulated.
+            Defaults to what is returned by
+            :func:`nailgun.config._get_config_file_path`.
         :returns: Server configuration labels, where each label is a string.
-        :rtype: tuple
 
         """
         if path is None:
@@ -151,15 +153,15 @@ class BaseServerConfig(object):
 
         This method is thread safe.
 
-        :param str label: An identifier for the current configuration. This
-            allows multiple configurations with unique labels to be saved in a
-            single file. If a configuration identified by ``label`` already
-            exists in the destination configuration file, it is replaced.
-        :param str path: The configuration file to be manipulated. By default,
-            an XDG-compliant configuration file is used. A configuration file
-            is created if one does not exist already.
-        :returns: Nothing.
-        :rtype: None
+        :param label: A string. An identifier for the current configuration.
+            This allows multiple configurations with unique labels to be saved
+            in a single file. If a configuration identified by ``label``
+            already exists in the destination configuration file, it is
+            replaced.
+        :param path: A string. The configuration file to be manipulated. By
+            default, an XDG-compliant configuration file is used. A
+            configuration file is created if one does not exist already.
+        :returns: ``None``
 
         """
         if path is None:
@@ -189,8 +191,8 @@ class ServerConfig(BaseServerConfig):
     This class inherits from :class:`nailgun.config.BaseServerConfig`. Other
     constructor parameters are documented there.
 
-    :param bool verify: Should SSL be verified when communicating with the
-        server? No object attribute is created if no value is provided.
+    :param verify: A boolean. Should SSL be verified when communicating with
+        the server? No instance attribute is created if no value is provided.
 
     """
     # pylint:disable=too-few-public-methods
@@ -205,7 +207,7 @@ class ServerConfig(BaseServerConfig):
             self.verify = verify
 
     def get_client_kwargs(self):
-        """Get a dict of object attributes, but with "url" omitted.
+        """Get a dict of instance attributes, but with "url" omitted.
 
         This method makes working with :mod:`nailgun.client` more pleasant.
         Code such as the following can be written::

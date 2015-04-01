@@ -35,14 +35,6 @@ source_suffix = '.rst'
 master_doc = 'index'
 exclude_patterns = ['_build']
 nitpicky = True
-nitpick_ignore = [
-    ('py:obj', 'None'),
-    ('py:obj', 'bool'),
-    ('py:obj', 'dict'),
-    ('py:obj', 'list'),
-    ('py:obj', 'str'),
-    ('py:obj', 'tuple'),
-]
 autodoc_default_flags = ['members']
 
 # Format-Specific Options -----------------------------------------------------

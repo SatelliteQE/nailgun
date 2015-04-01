@@ -33,10 +33,9 @@ logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
 def _content_type_is_json(kwargs):
     """Check whether the content-type in ``kwargs`` is 'application/json'.
 
-    :param dict kwargs: The keyword args supplied to :func:`request` or one of
-        the convenience functions like it.
+    :param kwargs: A ``dict``. The keyword args supplied to :func:`request` or
+        one of the convenience functions like it.
     :returns: ``True`` or ``False``
-    :rtype: bool
 
     """
     if 'headers' in kwargs and 'content-type' in kwargs['headers']:
@@ -51,8 +50,8 @@ def _set_content_type(kwargs):
     The 'content-type' will not be set if doing a file upload as requests will
     automatically set it.
 
-    :param dict kwargs: The keyword args supplied to :func:`request` or one of
-        the convenience functions like it.
+    :param kwargs: A ``dict``. The keyword args supplied to :func:`request` or
+        one of the convenience functions like it.
     :return: Nothing. ``kwargs`` is modified in-place.
 
     """
@@ -70,10 +69,9 @@ def _curl_arg_user(kwargs):
     ``kwargs['auth']`` is used to construct the equivalent curl option, if
     present.
 
-    :param dict kwargs: Keyword arguments, such as one might pass to the
+    :param kwargs: A ``dict``. Keyword arguments, such as one might pass to the
         ``request`` method.
     :return: Either ``'--user <user:password> '`` or ``''``.
-    :rtype: str
 
     """
     # By default, auth is `None`. The user may provide credentials in a variety
@@ -87,7 +85,7 @@ def _curl_arg_user(kwargs):
             isinstance(kwargs['auth'], tuple) and
             len(kwargs['auth']) is 2):
         return u'--user {0}:{1} '.format(kwargs['auth'][0], kwargs['auth'][1])
-    return ''
+    return u''
 
 
 def _curl_arg_insecure(kwargs):
@@ -96,15 +94,14 @@ def _curl_arg_insecure(kwargs):
     Return the curl option for disabling SSL verification if ``kwargs``
     contains an equivalent option. Return no curl option otherwise.
 
-    :param dict kwargs: Keyword arguments, such as one might pass to the
+    :param kwargs: A ``dict``. Keyword arguments, such as one might pass to the
         ``request`` method.
     :return: Either ``'--insecure '`` or ``''``.
-    :rtype: str
 
     """
     if 'verify' in kwargs and kwargs['verify'] is False:
-        return '--insecure '
-    return ''
+        return u'--insecure '
+    return u''
 
 
 def _curl_arg_data(kwargs):
@@ -113,10 +110,9 @@ def _curl_arg_data(kwargs):
     Return the curl ``--data <data>`` option, and use ``kwargs`` as ``<data>``.
     Ignore the ``'auth'`` and ``'verify'`` keys when assembling ``<data>``.
 
-    :param dict kwargs: Keyword arguments, such as one might pass to the
+    :param kwargs: A ``dict``. Keyword arguments, such as one might pass to the
         ``request`` method.
     :return: The curl ``--data <data>`` option.
-    :rtype: str
 
     """
     trimmed_kwargs = kwargs.copy()
@@ -132,7 +128,6 @@ def _log_request(method, url, kwargs, data=None):
     one can pass to ``requests.request``.
 
     :return: Nothing is returned.
-    :rtype: None
 
     """
     logger.debug(
@@ -160,7 +155,6 @@ def _log_response(response):
     the object returned is logged.
 
     :return: Nothing is returned.
-    :rtype: None
 
     """
     message = u'Received HTTP {0} response: {1}'.format(

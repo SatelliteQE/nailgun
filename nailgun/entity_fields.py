@@ -84,13 +84,13 @@ class Field(object):
 
     Record this field's attributes.
 
-    :param bool required: Determines whether a value must be submitted to the
-        server when creating or updating an entity.
-    :param tuple choices: Legal values that this field may be populated with.
+    :param required: A boolean. Determines whether a value must be submitted to
+        the server when creating or updating an entity.
+    :param choices: A tuple of values that this field may be populated with.
     :param default: Entity classes that inherit from ``EntityCreateMixin`` make
         use of this field.
-    :param bool null: Determines whether a null value can be submitted to the
-        server when creating or updating an entity.
+    :param null: A boolean. Determines whether a null value can be submitted to
+        the server when creating or updating an entity.
 
     """
 
@@ -269,7 +269,7 @@ class OneToOneField(Field):
     All parameters not documented here are passed to :class:`Field`.
 
     :param entity: Either a class or the name of a class.
-    :param str module: A dotted module name. Used by
+    :param module: A string. A dotted module name. Used by
         :meth:`OneToOneField.gen_value`. See that method for more details.
 
     """
@@ -333,7 +333,7 @@ def _get_class(class_or_name, module=None):
     searched for a class by that name and returned.
 
     :param class_or_name: Either a class or the name of a class.
-    :param str module: A dotted module name.
+    :param module: A string. A dotted module name.
     :return: Either the class passed in or a class from ``module``.
 
     """

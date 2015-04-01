@@ -103,10 +103,10 @@ def _make_entity_from_id(entity_cls, entity_obj_or_id, server_config):
     object.
 
     :param entity_cls: An :class:`Entity` subclass.
-    :param entity_obj_or_id: Either an ``entity_obj_or_id`` object or an entity
-        ID.
+    :param entity_obj_or_id: Either a :class:`nailgun.entity_mixins.Entity`
+        object or an entity ID.
     :returns: An ``entity_cls`` object.
-    :rtype: Entity
+    :rtype: nailgun.entity_mixins.Entity
 
     """
     if isinstance(entity_obj_or_id, entity_cls):
@@ -118,10 +118,9 @@ def _make_entities_from_ids(entity_cls, entity_objs_and_ids, server_config):
     """Given an iterable of entities and/or IDs, return a list of entities.
 
     :param entity_cls: An :class:`Entity` subclass.
-    :param entity_objs_and_ids: An iterable of entity objects and/or entity
-        IDs.
+    :param entity_obj_or_id: An iterable of
+        :class:`nailgun.entity_mixins.Entity` objects and/or entity IDs.
     :returns: A list of ``entity_cls`` objects.
-    :rtype: list
 
     """
     return [
@@ -274,9 +273,9 @@ class Entity(object):
         This will allow the extending method to accept a custom parameter
         without accidentally raising a :class:`NoSuchPathError`.
 
-        :param str which: Optional. Valid arguments are 'self' and 'base'.
-        :return: A fully qualified URL.
-        :rtype: str
+        :param which: A string. Optional. Valid arguments are 'self' and
+            'base'.
+        :return: A string. A fully qualified URL.
         :raises nailgun.entity_mixins.NoSuchPathError: If no path can be built.
 
         """
@@ -304,7 +303,6 @@ class Entity(object):
         """Return all fields defined on the current class.
 
         :return: A dict mapping class attribute names to ``Field`` objects.
-        :rtype: dict
 
         """
         # When `dir` is called on "a type or class object, the list contains
@@ -332,7 +330,6 @@ class Entity(object):
         returned dict.
 
         :return: A dict mapping class attribute names to field values.
-        :rtype: dict
 
         """
         attrs = vars(self).copy()
@@ -364,12 +361,11 @@ class EntityDeleteMixin(object):
         Return either the JSON-decoded response or information about a
         completed foreman task.
 
-        :param bool synchronous: What should happen if the server returns an
-            HTTP 202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return a response otherwise.
-        :returns: Either the JSON-decoded response or information about a
-            foreman task.
-        :rtype: dict
+        :param synchronous: A boolean. What should happen if the server returns
+            an HTTP 202 (accepted) status code? Wait for the task to complete
+            if ``True``. Immediately return a response otherwise.
+        :returns: A dict. Either the JSON-decoded response or information about
+            a foreman task.
         :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP
             4XX or 5XX status code.
         :raises: ``ValueError`` If an HTTP 202 response is received and the
@@ -416,8 +412,7 @@ class EntityReadMixin(object):
         Call :meth:`read_raw`. Check the response status code, decode JSON and
         return the decoded JSON as a dict.
 
-        :return: The server's response, with all JSON decoded.
-        :rtype: dict
+        :return: A dict. The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP
             4XX or 5XX status code.
         :raises: ``ValueError`` If the response JSON can not be decoded.
@@ -454,9 +449,10 @@ class EntityReadMixin(object):
 
         :param nailgun.entity_mixins.Entity entity: The object to be populated
             and returned. An object of type ``type(self)`` by default.
-        :param dict attrs: Data used to populate the object's attributes. The
-            response from ``read_json`` by default.
-        :param tuple ignore: Attributes which should not be read from the
+        :param attrs: A dict. Data used to populate the object's attributes.
+            The response from
+            :meth:`nailgun.entity_mixins.EntityReadMixin.read_json` by default.
+        :param ignore: A tuple of attributes which should not be read from the
             server. This is mainly useful for attributes like a password which
             are not returned.
         :return: An instance of type ``type(self)``.
@@ -566,9 +562,8 @@ class EntityCreateMixin(object):
         is a dict.) Rename keys using ``self.Meta.api_names`` if it is present
         and append "_id" and "_ids" as appropriate.
 
-        :return: A copy of the instance attributes on ``self``, with key names
-            adjusted as appropriate.
-        :rtype: dict
+        :return: A dict. A copy of the instance attributes on ``self``, with
+            key names adjusted as appropriate.
 
         """
         data = self.get_values().copy()
@@ -594,8 +589,9 @@ class EntityCreateMixin(object):
         Then make an HTTP POST call to ``self.path('base')``. Return the
         response received from the server.
 
-        :param bool create_missing: Should :meth:`create_missing` be called? In
-            other words, should values be generated for required, empty fields?
+        :param create_missing: A boolean. Should :meth:`create_missing` be
+            called? In other words, should values be generated for required,
+            empty fields?
         :return: A ``requests.response`` object.
 
         """
@@ -614,8 +610,7 @@ class EntityCreateMixin(object):
         Call :meth:`create_raw`. Check the response status code, decode JSON
         and return the decoded JSON as a dict.
 
-        :return: The server's response, with all JSON decoded.
-        :rtype: dict
+        :return: A dict. The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP
             4XX or 5XX status code.
         :raises: ``ValueError`` If the response JSON can not be decoded.
