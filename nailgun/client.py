@@ -19,13 +19,6 @@ from json import dumps
 import logging
 import requests
 
-from sys import version_info
-if version_info[0] == 2:
-    # pylint:disable=no-name-in-module
-    from urllib import urlencode
-else:
-    from urllib.parse import urlencode  # pylint:disable=E0611,F0401
-
 
 logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
 
@@ -63,64 +56,6 @@ def _set_content_type(kwargs):
     kwargs['headers'] = headers
 
 
-def _curl_arg_user(kwargs):
-    """Return the curl ``--user <user:password>`` option, if appropriate.
-
-    ``kwargs['auth']`` is used to construct the equivalent curl option, if
-    present.
-
-    :param kwargs: A ``dict``. Keyword arguments, such as one might pass to the
-        ``request`` method.
-    :return: Either ``'--user <user:password> '`` or ``''``.
-
-    """
-    # By default, auth is `None`. The user may provide credentials in a variety
-    # for forms, such as:
-    #
-    # * ('Alice', 'hackme')
-    # * ()
-    # * HTTPBasicAuth('Bob', 'gandalf')
-    #
-    if ('auth' in kwargs and
-            isinstance(kwargs['auth'], tuple) and
-            len(kwargs['auth']) is 2):
-        return u'--user {0}:{1} '.format(kwargs['auth'][0], kwargs['auth'][1])
-    return u''
-
-
-def _curl_arg_insecure(kwargs):
-    """Return the curl ``--insecure`` option, if appropriate.
-
-    Return the curl option for disabling SSL verification if ``kwargs``
-    contains an equivalent option. Return no curl option otherwise.
-
-    :param kwargs: A ``dict``. Keyword arguments, such as one might pass to the
-        ``request`` method.
-    :return: Either ``'--insecure '`` or ``''``.
-
-    """
-    if 'verify' in kwargs and kwargs['verify'] is False:
-        return u'--insecure '
-    return u''
-
-
-def _curl_arg_data(kwargs):
-    """Return the curl ``--data <data>`` option.
-
-    Return the curl ``--data <data>`` option, and use ``kwargs`` as ``<data>``.
-    Ignore the ``'auth'`` and ``'verify'`` keys when assembling ``<data>``.
-
-    :param kwargs: A ``dict``. Keyword arguments, such as one might pass to the
-        ``request`` method.
-    :return: The curl ``--data <data>`` option.
-
-    """
-    trimmed_kwargs = kwargs.copy()
-    for key in ('auth', 'verify'):
-        trimmed_kwargs.pop(key, None)
-    return urlencode(trimmed_kwargs)
-
-
 def _log_request(method, url, kwargs, data=None):
     """Log out information about the arguments given.
 
@@ -136,14 +71,6 @@ def _log_request(method, url, kwargs, data=None):
         url,
         'options {0}'.format(kwargs) if len(kwargs) > 0 else 'no options',
         'data {0}'.format(data) if data is not None else 'no data',
-    )
-    logger.debug(
-        'Equivalent curl command: curl -X %s %s%s%s %s',
-        method,
-        _curl_arg_user(kwargs),
-        _curl_arg_insecure(kwargs),
-        _curl_arg_data(kwargs),
-        url,
     )
 
 

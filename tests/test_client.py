@@ -7,14 +7,6 @@ import inspect
 import mock
 import requests
 
-from sys import version_info
-if version_info[0] == 2:
-    # pylint:disable=no-name-in-module
-    from urllib import urlencode
-else:
-    from urllib.parse import urlencode  # pylint:disable=E0611,F0401
-# pylint:disable=protected-access,too-many-public-methods
-
 
 class ContentTypeIsJsonTestCase(TestCase):
     """Tests for function ``_content_type_is_json``."""
@@ -25,6 +17,7 @@ class ContentTypeIsJsonTestCase(TestCase):
                 {'headers': {'content-type': 'application/json'}},
                 {'headers': {'content-type': 'appLICatiON/JSoN'}},
                 {'headers': {'content-type': 'APPLICATION/JSON'}}):
+            # pylint:disable=protected-access
             self.assertTrue(client._content_type_is_json(kwargs))
 
     def test_false(self):
@@ -33,6 +26,7 @@ class ContentTypeIsJsonTestCase(TestCase):
                 {'headers': {'content-type': ''}},
                 {'headers': {'content-type': 'application-json'}},
                 {'headers': {'content-type': 'application/pson'}}):
+            # pylint:disable=protected-access
             self.assertFalse(client._content_type_is_json(kwargs))
 
 
@@ -42,7 +36,7 @@ class SetContentTypeTestCase(TestCase):
     def test_no_value(self):
         """Assert that a content-type is provided if none is set."""
         kwargs = {'headers': {}}
-        client._set_content_type(kwargs)
+        client._set_content_type(kwargs)  # pylint:disable=protected-access
         self.assertEqual(
             kwargs,
             {'headers': {'content-type': 'application/json'}},
@@ -51,83 +45,8 @@ class SetContentTypeTestCase(TestCase):
     def test_existing_value(self):
         """Assert that an existing content-type is not overridden."""
         kwargs = {'headers': {'content-type': ''}}
-        client._set_content_type(kwargs)
+        client._set_content_type(kwargs)  # pylint:disable=protected-access
         self.assertEqual(kwargs, {'headers': {'content-type': ''}})
-
-
-class CurlArgUserTestCase(TestCase):
-    """Tests for function ``_curl_arg_user``."""
-
-    def test_null(self):
-        """Do not provide any authentication information."""
-        self.assertEqual(client._curl_arg_user({}), '')
-
-    def test_non_null(self):
-        """Provide authentication information."""
-        self.assertEqual(
-            client._curl_arg_user({
-                'auth': ('alice', 'hackme')
-            }),
-            '--user alice:hackme ',  # there should be trailing whitespace
-        )
-
-
-class CurlArgInsecureTestCase(TestCase):
-    """Tests for function ``_curl_arg_insecure``."""
-
-    def test_null(self):
-        """Do not specify whether SSL connections should be verified."""
-        self.assertEqual(client._curl_arg_insecure({}), '')
-
-    def test_positive(self):
-        """Ask for SSL connections to be verified."""
-        self.assertEqual(
-            client._curl_arg_insecure({'verify': True}),
-            '',
-        )
-
-    def test_negative(self):
-        """Ask for SSL connections to not be verified."""
-        self.assertEqual(
-            client._curl_arg_insecure({'verify': False}),
-            '--insecure ',  # there should be trailing whitespace
-        )
-
-
-class CurlArgDataTestCase(TestCase):
-    """Tests for function ``_curl_arg_data``."""
-
-    def setUp(self):
-        """Provide test data for use by other methods in this class.
-
-        Dictionary ordering is not guaranteed. It follows that
-        ``urlencode({…})`` is only guaranteed if ``{…}`` has a single item. To
-        deal with this issue, two separate encodable dicts are provided, rather
-        than a single large encodable dict with multiple items.
-
-        """
-        self.to_encode = ({'bar': '!@#$% ^&*()'}, {'foo': 9001})
-        self.to_ignore = {'auth': ('alice', 'password'), 'verify': True}
-
-    def test_null(self):
-        """Provide no URL parameters."""
-        self.assertEqual(urlencode({}), client._curl_arg_data({}))
-
-    def test_ignored_opts(self):
-        """Provide URL parameters which should not be encoded."""
-        self.assertEqual(urlencode({}), client._curl_arg_data(self.to_ignore))
-
-    def test_valid_opts(self):
-        """Provide URL parameters which should be encoded."""
-        for params in self.to_encode:
-            self.assertEqual(urlencode(params), client._curl_arg_data(params))
-
-    def test_both_opts(self):
-        """Provide data which should be ignored and which should be encoded."""
-        for target in self.to_encode:
-            source = target.copy()
-            source.update(self.to_ignore)
-            self.assertEqual(urlencode(target), client._curl_arg_data(source))
 
 
 class ClientTestCase(TestCase):
