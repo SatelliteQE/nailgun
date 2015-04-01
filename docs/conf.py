@@ -38,6 +38,8 @@ nitpicky = True
 nitpick_ignore = [
     ('py:obj', 'None'),
     ('py:obj', 'bool'),
+    ('py:obj', 'dict'),
+    ('py:obj', 'list'),
     ('py:obj', 'str'),
     ('py:obj', 'tuple'),
 ]

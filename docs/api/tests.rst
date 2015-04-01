@@ -20,3 +20,9 @@
 
 .. automodule:: tests.test_entity_fields
    :members:
+
+:mod:`tests.test_entity_mixins`
+===============================
+
+.. automodule:: tests.test_entity_mixins
+   :members:
