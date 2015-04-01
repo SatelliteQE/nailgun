@@ -218,7 +218,7 @@ class ServerConfig(BaseServerConfig):
         :mod:`nailgun.client` knows nothing about this class.
 
         """
-        config = vars(self)
+        config = vars(self).copy()
         config.pop('url')
         return config
 

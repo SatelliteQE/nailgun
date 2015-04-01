@@ -133,14 +133,22 @@ class ServerConfigTestCase(TestCase):
     def test_get_client_kwargs(self):
         """Test :meth:`nailgun.config.ServerConfig.get_client_kwargs`.
 
-        Assert that all attributes passed in are returned, but with "url"
-        omitted.
+        Assert that:
+
+        * ``get_client_kwargs`` returns all of the instance attributes from its
+          object except the "url" attribute, and
+        * no instance attributes from the object are removed.
 
         """
         for config in CONFIGS2.values():
-            out = config.copy()
-            out.pop('url')
-            self.assertEqual(out, ServerConfig(**config).get_client_kwargs())
+            target = config.copy()
+            target.pop('url')
+            server_config = ServerConfig(**config)
+            self.assertDictEqual(target, server_config.get_client_kwargs())
+            self.assertDictEqual(
+                vars(ServerConfig(**config)),
+                vars(server_config)
+            )
 
     def test_get(self):
         """Test :meth:`nailgun.config.ServerConfig.get`.
