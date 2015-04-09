@@ -256,6 +256,25 @@ class EntityDeleteMixinTestCase(unittest.TestCase):
                     poller.return_value
                 )
 
+    def test__poll_task_failed_task(self):
+        """Test what happens when an asynchronous task completes and fails.
+
+        Assert that a :class:`nailgun.entity_mixins.TaskFailedError` exception
+        is raised.
+
+        """
+        get_return = mock.Mock()
+        get_return.json.return_value = {
+            'state': 'not running',
+            'result': 'not success',
+            'humanized': {'errors': 'bogus error'},
+        }
+        with mock.patch.object(client, 'get') as client_get:
+            client_get.return_value = get_return
+            with self.assertRaises(entity_mixins.TaskFailedError):
+                # pylint:disable=protected-access
+                entity_mixins._poll_task(gen_integer(), self.server_config)
+
     def test_read(self):
         """Test :meth:`nailgun.entity_mixins.EntityReadMixin.read`  and
         :meth:`nailgun.entity_mixins.EntityReadMixin.read_json`.

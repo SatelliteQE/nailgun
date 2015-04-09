@@ -41,6 +41,10 @@ class TaskTimeout(Exception):
     """Indicates that a task did not finish before the timout limit."""
 
 
+class TaskFailedError(Exception):
+    """Indicates that a task finished with a result other than "success"."""
+
+
 def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
     """Implement ``robottelo.entities.ForemanTask.poll``.
 
@@ -84,7 +88,7 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
             response.raise_for_status()
             task_info = response.json()
             if task_info['state'] != 'running':
-                return task_info
+                break
             time.sleep(poll_rate)
     except KeyboardInterrupt:
         # raise_task_timeout will raise a KeyboardInterrupt when the timeout
@@ -92,6 +96,17 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
         raise TaskTimeout("Timed out polling task {0}".format(task_id))
     finally:
         timer.cancel()
+
+    # Check for task success or failure.
+    if task_info['result'] != 'success':
+        raise TaskFailedError(
+            'Task {0} completed with result {1}. Error message(s): {2}'.format(
+                task_id,
+                task_info['result'],
+                task_info['humanized']['errors']
+            )
+        )
+    return task_info
 
 
 def _make_entity_from_id(entity_cls, entity_obj_or_id, server_config):
