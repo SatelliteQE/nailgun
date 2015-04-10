@@ -65,6 +65,23 @@ class EntityWithRead(entity_mixins.Entity, entity_mixins.EntityReadMixin):
         api_path = ''
 
 
+class EntityWithCreateRead(
+        entity_mixins.Entity,
+        entity_mixins.EntityCreateMixin,
+        entity_mixins.EntityReadMixin):
+    """
+    An entity inheriting from :class:`nailgun.entity_mixins.EntityCreateMixin`
+    and :class:`nailgun.entity_mixins.EntityReadMixin`.
+    """
+    integer_field = IntegerField()
+    # pylint:disable=too-few-public-methods
+
+    class Meta(object):
+        """Non-field attributes for this entity."""
+        # pylint:disable=too-few-public-methods
+        api_path = ''
+
+
 # -----------------------------------------------------------------------------
 
 
@@ -320,3 +337,25 @@ class EntityDeleteMixinTestCase(unittest.TestCase):
             for entity_ in entity.one_to_many:
                 self.assertIsInstance(entity_, SampleEntity)
                 self.assertIn(entity_.id, [234, 345])
+
+    def test_create(self):
+        """Test :meth:`nailgun.entity_mixins.EntityCreateMixin.create`.
+
+        Assert that the object returned is a specialized object and that it has
+        the attributes returned by
+        :meth:`nailgun.entity_mixins.EntityCreateMixin.create_json`.
+
+        """
+        arbitrary_integer = gen_integer()
+        with mock.patch.object(
+            entity_mixins.EntityCreateMixin,
+            'create_json'
+        ) as create_json:
+            create_json.return_value = {
+                u'id': self.entity_id,
+                u'integer_field': arbitrary_integer,
+            }
+            entity = EntityWithCreateRead(self.server_config).create()
+            self.assertIsInstance(entity, EntityWithCreateRead)
+            self.assertEqual(entity.id, self.entity_id)
+            self.assertEqual(entity.integer_field, arbitrary_integer)

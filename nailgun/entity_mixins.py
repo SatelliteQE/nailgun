@@ -637,11 +637,29 @@ class EntityCreateMixin(object):
         return response.json()
 
     def create(self, create_missing=True):
-        """Call :meth:`create_json`.
+        """Create an entity.
 
-        This method exists for compatibility. It should be rewritten to match
-        to act like :meth:`EntityReadMixin.read` after existing code is changed
-        to use :meth:`create_json`.
+        Call :meth:`create_json`. Use this information to populate an object of
+        type ``type(self)`` and return that object.
+
+        This method requires that a method named "read" be available on the
+        current object. A method named "read" will be available if
+        :class:`EntityReadMixin` is present in the inheritance tree, and using
+        the method provided by that mixin is the recommended technique for
+        making a "read" method available.
+
+        This method makes use of :meth:`EntityReadMixin.read` for two reasons.
+        First, calling that method is simply convenient. Second, the server
+        frequently returns weirdly structured, inconsistently named or
+        straight-up broken responses, and quite a bit of effort has gone in to
+        decoding server responses so :meth:`EntityReadMixin.read` can function
+        correctly. Calling ``read`` allows this method to re-use the decoding
+        work that has been done for that method.
+
+        :return: An instance of type ``type(self)``.
+        :rtype: nailgun.entity_mixins.Entity
+        :raises: ``AttributeError`` if a method named "read" is not available
+            on the current object.
 
         """
-        return self.create_json(create_missing)
+        return self.read(attrs=self.create_json(create_missing))
