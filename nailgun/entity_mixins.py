@@ -37,7 +37,7 @@ TASK_TIMEOUT = 300
 DEFAULT_SERVER_CONFIG = None
 
 
-class TaskTimeout(Exception):
+class TaskTimedOutError(Exception):
     """Indicates that a task did not finish before the timout limit."""
 
 
@@ -92,8 +92,8 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
             time.sleep(poll_rate)
     except KeyboardInterrupt:
         # raise_task_timeout will raise a KeyboardInterrupt when the timeout
-        # expires. Catch the exception and raise TaskTimeout
-        raise TaskTimeout("Timed out polling task {0}".format(task_id))
+        # expires. Catch the exception and raise TaskTimedOutError
+        raise TaskTimedOutError('Timed out polling task {0}'.format(task_id))
     finally:
         timer.cancel()
 
@@ -385,8 +385,9 @@ class EntityDeleteMixin(object):
             4XX or 5XX status code.
         :raises: ``ValueError`` If an HTTP 202 response is received and the
             response JSON can not be decoded.
-        :raises nailgun.entity_mixins.TaskTimeout: If an HTTP 202 response is
-            received, ``synchronous is True`` and the task times out.
+        :raises nailgun.entity_mixins.TaskTimedOutError: If an HTTP 202
+            response is received, ``synchronous is True`` and the task times
+            out.
 
         """
         response = self.delete_raw()
