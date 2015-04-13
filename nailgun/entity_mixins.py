@@ -4,7 +4,6 @@ from fauxfactory import gen_choice
 from nailgun import client, config
 from nailgun.entity_fields import (
     Field,
-    _get_class,
     IntegerField,
     OneToManyField,
     OneToOneField,
@@ -237,13 +236,13 @@ class Entity(object):
             field = fields[field_name]  # e.g. A BooleanField object
             if isinstance(field, OneToOneField):
                 setattr(self, field_name, _make_entity_from_id(
-                    _get_class(field.entity, 'robottelo.entities'),
+                    field.gen_value(),
                     field_value,
                     self._server_config
                 ))
             elif isinstance(field, OneToManyField):
                 setattr(self, field_name, _make_entities_from_ids(
-                    _get_class(field.entity, 'robottelo.entities'),
+                    field.gen_value(),
                     field_value,
                     self._server_config
                 ))
@@ -495,15 +494,15 @@ class EntityReadMixin(object):
                 continue
             if isinstance(field_type, OneToOneField):
                 if attrs[field_name] is None:
-                    setattr(entity, field_name, None)
+                    referenced_entity = None
                 else:
-                    referenced_entity = _get_class(
-                        field_type.entity,
-                        'robottelo.entities'
-                    )(self._server_config, id=attrs[field_name]['id'])
-                    setattr(entity, field_name, referenced_entity)
+                    referenced_entity = field_type.gen_value()(
+                        self._server_config,
+                        id=attrs[field_name]['id']
+                    )
+                setattr(entity, field_name, referenced_entity)
             elif isinstance(field_type, OneToManyField):
-                other_cls = _get_class(field_type.entity, 'robottelo.entities')
+                other_cls = field_type.gen_value()
                 referenced_entities = [
                     other_cls(self._server_config, id=referenced_entity['id'])
                     for referenced_entity
@@ -546,26 +545,26 @@ class EntityCreateMixin(object):
             if field.required and field_name not in vars(self):
                 # Most `gen_value` methods return a value such as an integer,
                 # string or dictionary, but OneTo{One,Many}Field.gen_value
-                # returns an instance of the referenced class.
+                # returns the referenced class. Thus, for foreign key fields,
+                # this is possible:
                 #
-                # When populating a foreign key field, this is inadvisable:
+                #     value = field.gen_value()().create()
                 #
-                #     value = entity_obj = field.gen_value()
-                #     entity_obj.id = entity_obj.create_json()['id']
-                #
-                # The problem is that the values that entity_obj populates
-                # itself with (via `create_missing`) may be different from the
-                # values that are read back from the server, e.g. `Host.name`.
+                # However, `create` is more susceptible to unexpected data
+                # returned by the server. This is expecially problematic so
+                # long as NailGun has no facility for dealing with different
+                # server API versions. Until then, the more kludgy
+                # `create_json` is used.
                 if hasattr(field, 'default'):
                     value = field.default
                 elif hasattr(field, 'choices'):
                     value = gen_choice(field.choices)
                 elif isinstance(field, OneToOneField):
-                    value = field.gen_value()
-                    value.id = field.gen_value().create_json()['id']
+                    value = field.gen_value()()
+                    value.id = field.gen_value()().create_json()['id']
                 elif isinstance(field, OneToManyField):
-                    value = [field.gen_value()]
-                    value[0].id = field.gen_value().create_json()['id']
+                    value = [field.gen_value()()]
+                    value[0].id = field.gen_value()().create_json()['id']
                 else:
                     value = field.gen_value()
                 setattr(self, field_name, value)

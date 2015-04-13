@@ -280,19 +280,14 @@ class OneToOneField(Field):
         super(OneToOneField, self).__init__(*args, **kwargs)
 
     def gen_value(self):
-        """Return an instance of the class that this field references.
+        """Return the class that this field references.
 
-        If ``self.entity`` is a class, return an instance of that class.
-
-        If ``self.entity`` is a string, find a class by that name and return an
-        instance of it:
-
-        * By default, search :data:`ENTITIES_MODULE` for the class.
-        * If ``self.module`` is a string (e.g. ``'robottelo.entities'``), then
-          search that module instead.
+        If ``self.entity`` is a class, return that class. Otherwise, search
+        ``self.module`` (default: :data:`ENTITIES_MODULE`) for a class named
+        ``self.entity`` and return it.
 
         """
-        return _get_class(self.entity, self.module)()
+        return _get_class(self.entity, self.module)
 
 
 class OneToManyField(Field):
@@ -309,12 +304,12 @@ class OneToManyField(Field):
         super(OneToManyField, self).__init__(*args, **kwargs)
 
     def gen_value(self):
-        """Return an instance of the class that this field references.
+        """Return the class that this field references.
 
         This method behaves exactly like :meth:`OneToOneField.gen_value`.
 
         """
-        return _get_class(self.entity, self.module)()
+        return _get_class(self.entity, self.module)
 
 
 class URLField(StringField):
