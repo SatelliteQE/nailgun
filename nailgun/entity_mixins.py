@@ -47,17 +47,15 @@ class TaskFailedError(Exception):
 def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
     """Implement ``robottelo.entities.ForemanTask.poll``.
 
-    See ``robottelo.entities.ForemanTask.poll`` for a full description of how
-    this method acts. Other methods may also call this method, such as
+    See method ``ForemanTask.poll`` for a full description of how this method
+    acts. Other methods may also call this method, such as
     :meth:`nailgun.entity_mixins.EntityDeleteMixin.delete`.
 
-    This function has been placed in this module to keep the import tree sane.
-    This function could also be placed in ``robottelo.api.utils``. However,
-    doing so precludes ``robottelo.api.utils`` from importing
-    ``robottelo.entities``, which may be desirable in the future.
-
-    This function is private because only entity mixins should use this.
-    ``robottelo.entities.ForemanTask`` is, for obvious reasons, an exception.
+    Certain mixins benefit from being able to poll the server after performing
+    an operation. However, this module cannot use ``ForemanTask.poll``, as that
+    would be a circular import. Placing the implementation of
+    ``ForemanTask.poll`` here allows both that method and the mixins in this
+    module to use the same logic.
 
     """
     if poll_rate is None:
@@ -111,7 +109,7 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
 def _make_entity_from_id(entity_cls, entity_obj_or_id, server_config):
     """Given an entity object or an ID, return an entity object.
 
-    If the value passed in is an object that is a subclass of class ``Entity``,
+    If the value passed in is an object that is a subclass of :class:`Entity`,
     return that value. Otherwise, create an object of the type that ``field``
     references, give that object an ID of ``field_value``, and return that
     object.
@@ -195,15 +193,15 @@ class Entity(object):
         User(name='Alice', supervisor=1, subordinate=[3, 4])
 
     An entity object is useless if you are unable to use it to communicate with
-    a server. The solution is to provide a ``nailgun.config.ServerConfig`` when
-    instantiating a new entity. This configuration object is stored as an
+    a server. The solution is to provide a :class:`nailgun.config.ServerConfig`
+    when instantiating a new entity. This configuration object is stored as an
     instance variable named ``_server_config`` and used by methods such as
     :meth:`nailgun.entity_mixins.Entity.path`.
 
     1. If the ``server_config`` argument is specified, then that is used.
     2. Otherwise, if :data:`nailgun.entity_mixins.DEFAULT_SERVER_CONFIG` is
        set, then that is used.
-    3. Otherwise, call ``nailgun.config.ServerConfig.get()``.
+    3. Otherwise, call :meth:`nailgun.config.ServerConfig.get`.
 
     """
     # The id() builtin is still available within instance methods, class
@@ -316,7 +314,8 @@ class Entity(object):
     def get_fields(cls):
         """Return all fields defined on the current class.
 
-        :return: A dict mapping class attribute names to ``Field`` objects.
+        :return: A dict mapping class attribute names to
+            :class`nailgun.entity_fields.Field` objects.
 
         """
         # When `dir` is called on "a type or class object, the list contains
@@ -533,10 +532,11 @@ class EntityCreateMixin(object):
     def create_missing(self):
         """Automagically populate all required instance attributes.
 
-        Iterate through the set of all required class ``Field`` defined on
-        ``type(self)`` and create a corresponding instance attribute if none
-        exists. Subclasses should override this method if there is some
-        relationship between two required fields.
+        Iterate through the set of all required class
+        :class:`nailgun.entity_fields.Field` defined on ``type(self)`` and
+        create a corresponding instance attribute if none exists. Subclasses
+        should override this method if there is some relationship between two
+        required fields.
 
         :return: Nothing. This method relies on side-effects.
 

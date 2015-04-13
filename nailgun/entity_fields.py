@@ -1,8 +1,8 @@
 """The basic components of the NailGun ORM.
 
 Each of the fields in this module corresponds to some type of information that
-Satellite tracks. When paired the classes in ``nailgun.entity_mixins``, it is
-possible to represent the entities that Satellite manages. For example,
+Satellite tracks. When paired the classes in :class:`nailgun.entity_mixins`, it
+is possible to represent the entities that Satellite manages. For example,
 consider this abbreviated class definition::
 
     class User(
@@ -27,14 +27,14 @@ and the mixins provide useful methods.
 
 Fields are intended to be used declaratively. You probably should not be
 interacting with the field classes or their methods directly. Instead, they are
-used by the various mixins. For example, method ``EntityReadMixin.read`` can be
-used like this::
+used by the various mixins. For example,
+:meth:`nailgun.entity_mixins.EntityReadMixin.read` can be used like this::
 
     user = User(id=5).read()
 
-``EntityReadMixin.read`` creates a new ``User`` object and populates it. The
-method knows how to deal with the data returned by the server because of the
-fields on the ``User`` class.
+:meth:`nailgun.entity_mixins.EntityReadMixin.read` creates a new ``User``
+object and populates it. The method knows how to deal with the data returned by
+the server because of the fields on the ``User`` class.
 
 A secondary use of fields is to generate random data. For example, you could
 call ``User.login.gen_value()`` (implemented at :meth:`StringField.gen_value`)
@@ -87,8 +87,8 @@ class Field(object):
     :param required: A boolean. Determines whether a value must be submitted to
         the server when creating or updating an entity.
     :param choices: A tuple of values that this field may be populated with.
-    :param default: Entity classes that inherit from ``EntityCreateMixin`` make
-        use of this field.
+    :param default: Entity classes that inherit from
+        :class:`nailgun.entity_mixins.EntityCreateMixin` use this field.
     :param null: A boolean. Determines whether a null value can be submitted to
         the server when creating or updating an entity.
 

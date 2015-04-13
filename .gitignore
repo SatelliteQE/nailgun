@@ -4,3 +4,9 @@ __pycache__/
 
 # Generated documentation
 /docs/_build/
+
+# Created by `make package`. `nailgun.egg_info` is also used when another
+# package does a `pip install -e …/nailgun`.
+/build/
+/dist/
+/nailgun.egg-info/

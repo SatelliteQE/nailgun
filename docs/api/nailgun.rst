@@ -18,7 +18,6 @@
 ============================
 
 .. automodule:: nailgun.entity_fields
-   :private-members:
 
 :mod:`nailgun.entity_mixins`
 ============================
