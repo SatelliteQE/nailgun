@@ -13,6 +13,11 @@
 
 .. automodule:: tests.test_config
 
+:mod:`tests.test_entities`
+==========================
+
+.. automodule:: tests.test_entities
+
 :mod:`tests.test_entity_fields`
 ===============================
 

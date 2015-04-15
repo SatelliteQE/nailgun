@@ -45,17 +45,18 @@ class TaskFailedError(Exception):
 
 
 def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
-    """Implement ``robottelo.entities.ForemanTask.poll``.
+    """Implement :meth:`nailgun.entities.ForemanTask.poll`.
 
-    See method ``ForemanTask.poll`` for a full description of how this method
-    acts. Other methods may also call this method, such as
+    See :meth:`nailgun.entities.ForemanTask.poll` for a full description of how
+    this method acts. Other methods may also call this method, such as
     :meth:`nailgun.entity_mixins.EntityDeleteMixin.delete`.
 
     Certain mixins benefit from being able to poll the server after performing
-    an operation. However, this module cannot use ``ForemanTask.poll``, as that
-    would be a circular import. Placing the implementation of
-    ``ForemanTask.poll`` here allows both that method and the mixins in this
-    module to use the same logic.
+    an operation. However, this module cannot use
+    :meth:`nailgun.entities.ForemanTask.poll`, as that would be a circular
+    import. Placing the implementation of
+    :meth:`nailgun.entities.ForemanTask.poll` here allows both that method and
+    the mixins in this module to use the same logic.
 
     """
     if poll_rate is None:

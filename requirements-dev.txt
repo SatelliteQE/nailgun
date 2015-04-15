@@ -1,4 +1,5 @@
 # For `make test`
+ddt
 fauxfactory
 mock
 

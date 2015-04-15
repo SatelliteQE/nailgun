@@ -159,7 +159,7 @@ class StringField(Field):
     1. Foreman's database backend limits many fields to 255 bytes in length. As
        a result, ``length`` should be no longer than 85 characters long, as 85
        unicode characters may be up to 255 bytes long.
-    2. Humans have to read through the error messages produced by Robottelo.
+    2. Humans have to read through the error messages produced by this library.
        Long error messages are hard to read through, and that hurts
        productivity. Thus, a ``length`` even shorter than 85 chars is
        desirable.

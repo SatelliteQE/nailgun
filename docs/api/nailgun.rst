@@ -14,6 +14,11 @@
 .. automodule:: nailgun.config
    :private-members:
 
+:mod:`nailgun.entities`
+=======================
+
+.. automodule:: nailgun.entities
+
 :mod:`nailgun.entity_fields`
 ============================
 
