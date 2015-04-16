@@ -6,19 +6,19 @@ Use NailGun to accomplish this task.
 
 """
 from nailgun.config import ServerConfig
+from nailgun.entities import Organization
 from pprint import PrettyPrinter
-from robottelo import entities  # pylint:disable=import-error
 
 
 def main():
     """Create an organization, print out its attributes and delete it."""
     server_config = ServerConfig(
-        url='https://sat1.example.com',  # Talk to this server…
-        auth=('admin', 'changeme'),      # using these credentials.
+        auth=('admin', 'changeme'),      # Use these credentials…
+        url='https://sat1.example.com',  # …to talk to this server.
     )
-    attrs = entities.Organization(server_config, name='junk org').create_json()
-    PrettyPrinter().pprint(attrs)  # create_json returns a dict of attributes
-    entities.Organization(server_config, id=attrs['id']).delete()
+    org = Organization(server_config, name='junk org').create()
+    PrettyPrinter().pprint(org.get_values())
+    org.delete()
 
 
 if __name__ == '__main__':

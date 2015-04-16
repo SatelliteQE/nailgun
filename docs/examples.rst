@@ -4,18 +4,8 @@ Examples
 This page contains several examples of how to use NailGun. The examples progress
 from simple to more advanced.
 
-You can run any of the scripts presented in this document. Unfortunately,
-NailGun is in the process of being extracted from `Robottelo`_. As a result,
-the set-up procedure is a slight hassle::
-
-    git clone https://github.com/SatelliteQE/robottelo.git
-    cd robottelo/
-    virtualenv --python python2 env  # robottelo requires Python 2
-    source env/bin/activate
-    pip install -r requirements.txt
-    ./some_script.py  # some script of your choice
-
-The set-up procedure will simplify to the following no later than version 1.0::
+You can run any of the scripts presented in this document. For example scripts
+that use NailGun, this is the set-up procedure::
 
     virtualenv env
     source env/bin/activate

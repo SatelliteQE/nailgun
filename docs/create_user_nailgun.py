@@ -4,8 +4,8 @@
 from __future__ import print_function
 from nailgun import client
 from nailgun.config import ServerConfig
+from nailgun.entities import Organization, User
 from pprint import PrettyPrinter
-from robottelo import entities  # pylint:disable=import-error
 
 
 def main():
@@ -18,9 +18,9 @@ def main():
     for server_config in server_configs:
         # The LDAP authentication source with an ID of 1 is internal. It is
         # nearly guaranteed to exist and be functioning.
-        PrettyPrinter().pprint(entities.User(
+        PrettyPrinter().pprint(User(
             server_config,
-            auth_source=1,  # or: entities.AuthSourceLDAP(server_config, id=1),
+            auth_source=1,  # or: AuthSourceLDAP(server_config, id=1),
             login='Alice',
             mail='alice@example.com',
             organization=[
@@ -45,7 +45,7 @@ def get_organization(server_config, label):
 
     """
     response = client.get(
-        entities.Organization(server_config).path(),
+        Organization(server_config).path(),
         auth=server_config.auth,
         data={'search': 'label={}'.format(label)},
         verify=server_config.verify,
@@ -58,7 +58,7 @@ def get_organization(server_config, label):
             'results: {1}'.format(decoded['subtotal'], decoded['results'])
         )
         exit(1)
-    return entities.Organization(
+    return Organization(
         server_config,
         id=decoded['results'][0]['id']
     ).read()
