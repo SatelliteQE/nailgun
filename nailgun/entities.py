@@ -341,7 +341,7 @@ class ComputeResource(
         # generate an URL pointing to a docker server
         if provider.lower() == 'docker':
             if 'url' not in vars(self):
-                self.url = self._server_config.url
+                self.url = '{0}:2375'.format(self._server_config.url)
 
         # Now is good to call super create_missing
         super(ComputeResource, self).create_missing()
