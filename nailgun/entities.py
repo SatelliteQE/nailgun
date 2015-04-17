@@ -115,17 +115,23 @@ class ActivationKey(
 
         The format of the returned path depends on the value of ``which``:
 
-        releases
-            /activation_keys/<id>/releases
         add_subscriptions
             /activation_keys/<id>/add_subscriptions
+        content_override
+            /activation_keys/<id>/content_override
+        releases
+            /activation_keys/<id>/releases
         remove_subscriptions
             /activation_keys/<id>/remove_subscriptions
 
         ``super`` is called otherwise.
 
         """
-        if which in ('releases', 'add_subscriptions', 'remove_subscriptions'):
+        if which in (
+                'add_subscriptions',
+                'content_override',
+                'releases',
+                'remove_subscriptions'):
             return '{0}/{1}'.format(
                 super(ActivationKey, self).path(which='self'),
                 which
@@ -146,6 +152,28 @@ class ActivationKey(
         response = client.put(
             self.path('add_subscriptions'),
             params,
+            auth=self._server_config.auth,
+            verify=self._server_config.verify,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def content_override(self, content_label, value):
+        """Override the content of an activation key.
+
+        :param content_label: Label for the new content.
+        :param value: The new content for this activation key.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        response = client.put(
+            self.path('content_override'),
+            {'content_override': {
+                'content_label': content_label,
+                'value': value,
+            }},
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )

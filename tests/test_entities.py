@@ -55,8 +55,9 @@ class PathTestCase(TestCase):
     @data(
         (entities.AbstractDockerContainer, 'containers', 'logs'),
         (entities.AbstractDockerContainer, 'containers', 'power'),
-        (entities.ActivationKey, '/activation_keys', 'releases'),
         (entities.ActivationKey, '/activation_keys', 'add_subscriptions'),
+        (entities.ActivationKey, '/activation_keys', 'content_override'),
+        (entities.ActivationKey, '/activation_keys', 'releases'),
         (entities.ActivationKey, '/activation_keys', 'remove_subscriptions'),
         (entities.ContentView, '/content_views', 'available_puppet_module_names'),  # noqa pylint:disable=C0301
         (entities.ContentView, '/content_views', 'content_view_puppet_modules'),  # noqa pylint:disable=C0301
@@ -64,15 +65,15 @@ class PathTestCase(TestCase):
         (entities.ContentView, '/content_views', 'copy'),
         (entities.ContentView, '/content_views', 'publish'),
         (entities.ContentViewVersion, '/content_view_versions', 'promote'),
+        (entities.Organization, '/organizations', 'products'),
         (entities.Organization, '/organizations', 'subscriptions'),
         (entities.Organization, '/organizations', 'subscriptions/delete_manifest'),  # noqa pylint:disable=C0301
         (entities.Organization, '/organizations', 'subscriptions/refresh_manifest'),  # noqa pylint:disable=C0301
         (entities.Organization, '/organizations', 'subscriptions/upload'),
         (entities.Organization, '/organizations', 'sync_plans'),
-        (entities.Organization, '/organizations', 'products'),
         (entities.Product, '/products', 'repository_sets'),
-        (entities.Product, '/products', 'repository_sets/2396/enable'),
         (entities.Product, '/products', 'repository_sets/2396/disable'),
+        (entities.Product, '/products', 'repository_sets/2396/enable'),
         (entities.Repository, '/repositories', 'sync'),
         (entities.Repository, '/repositories', 'upload_content'),
     )
