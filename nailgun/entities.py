@@ -801,7 +801,8 @@ class ContentViewPuppetModule(
     def create_payload(self):
         """Rename the ``puppet_module_id`` field to ``uuid``."""
         payload = super(ContentViewPuppetModule, self).create_payload()
-        payload['uuid'] = payload.pop('puppet_module_id')
+        if 'puppet_module_id' in payload:
+            payload['uuid'] = payload.pop('puppet_module_id')
         return payload
 
 
@@ -1426,7 +1427,8 @@ class LifecycleEnvironment(
 
         """
         data = super(LifecycleEnvironment, self).create_payload()
-        data['prior'] = data.pop('prior_id')
+        if 'prior_id' in data:
+            data['prior'] = data.pop('prior_id')
         return data
 
     def create_missing(self):
@@ -2517,7 +2519,8 @@ class SyncPlan(
 
         """
         data = super(SyncPlan, self).create_payload()
-        data['sync_date'] = data['sync_date'].strftime('%Y-%m-%d %H:%M:%S')
+        if 'sync_date' in data:
+            data['sync_date'] = data['sync_date'].strftime('%Y-%m-%d %H:%M:%S')
         return data
 
     def path(self, which=None):

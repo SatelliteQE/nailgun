@@ -215,6 +215,66 @@ class PathTestCase(TestCase):
 
 
 @ddt
+class CreatePayloadTestCase(TestCase):
+    """Tests for extensions of ``create_payload``.
+
+    Several classes extend the ``create_payload`` method and make it do things
+    like rename attributes or wrap the submitted dict of data in a second hash.
+    It is possible to mess this up in a variety of ways. For example, an
+    extended method could could try to rename an attribute that does not exist.
+    This class attempts to find such issues by creating an entity, calling
+    :meth:`nailgun.entity_mixins.EntityCreateMixin.create_payload` and
+    asserting that a ``dict`` is returned.
+
+    """
+
+    @classmethod
+    def setUpClass(cls):  # pylint:disable=invalid-name
+        """Set ``cls.server_config``."""
+        cls.server_config = config.ServerConfig('http://example.com')
+
+    @data(
+        entities.Architecture,
+        entities.ConfigTemplate,
+        entities.AbstractDockerContainer,
+        entities.Domain,
+        entities.HostCollection,
+        entities.Host,
+        entities.LifecycleEnvironment,
+        entities.Media,
+        entities.OperatingSystem,
+        entities.UserGroup,
+        entities.User,
+    )
+    def test_no_attributes(self, entity):
+        """Create an entity with no attributes."""
+        self.assertIsInstance(
+            entity(self.server_config).create_payload(),
+            dict
+        )
+
+    def test_sync_plan(self):
+        """Create a :class:`nailgun.entities.SyncPlan`."""
+        self.assertIsInstance(
+            entities.SyncPlan(
+                self.server_config,
+                organization=1,
+            ).create_payload(),
+            dict
+        )
+
+    def test_content_view_puppet_module(self):
+        """Create a :class:`nailgun.entities.ContentViewPuppetModule`."""
+        self.assertIsInstance(
+            entities.ContentViewPuppetModule(
+                self.server_config,
+                content_view=1,
+            ).create_payload(),
+            dict
+        )
+
+
+@ddt
 class OrganizationTestCase(TestCase):
     """Tests for :class:`nailgun.entities.Organization`."""
 
