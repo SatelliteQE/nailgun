@@ -50,10 +50,6 @@ else:
 # mixins and fields, and cutting the file down in size further would simply
 # obfuscate the design of the entities.
 
-# This has the same effect as passing `module='nailgun.entities'` to every
-# single OneToOneField and OneToManyField.
-entity_fields.ENTITIES_MODULE = 'nailgun.entities'
-
 
 _FAKE_YUM_REPO = 'http://inecas.fedorapeople.org/fakerepos/zoo3/'
 _OPERATING_SYSTEMS = (
