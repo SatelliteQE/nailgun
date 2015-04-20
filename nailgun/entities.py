@@ -50,6 +50,18 @@ else:
 # mixins and fields, and cutting the file down in size further would simply
 # obfuscate the design of the entities.
 
+# pylint:disable=attribute-defined-outside-init
+# NailGun aims to be like a traditional database ORM and allow uses of the dot
+# operator such as these:
+#
+#     product = Product(server_config, id=5).read()
+#     product.name
+#     product.organization.id
+#
+# Unfortunately, these fields cannot simply be initialized with `None`, as the
+# server considers "nil" to be different from the absence of a value. This
+# inevitably means that instance attributes will be defined outside __init__.
+
 
 _FAKE_YUM_REPO = 'http://inecas.fedorapeople.org/fakerepos/zoo3/'
 _OPERATING_SYSTEMS = (
@@ -76,15 +88,23 @@ class HostCreateMissingError(Exception):
 class ActivationKey(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Activtion Key entity."""
-    auto_attach = entity_fields.BooleanField()
-    content_view = entity_fields.OneToOneField('ContentView')
-    description = entity_fields.StringField()
-    environment = entity_fields.OneToOneField('Environment')
-    host_collection = entity_fields.OneToManyField('HostCollection')
-    max_content_hosts = entity_fields.IntegerField()
-    name = entity_fields.StringField(required=True)
-    organization = entity_fields.OneToOneField('Organization', required=True)
-    unlimited_content_hosts = entity_fields.BooleanField()
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'auto_attach': entity_fields.BooleanField(),
+            'content_view': entity_fields.OneToOneField(ContentView),
+            'description': entity_fields.StringField(),
+            'environment': entity_fields.OneToOneField(Environment),
+            'host_collection': entity_fields.OneToManyField(HostCollection),
+            'max_content_hosts': entity_fields.IntegerField(),
+            'name': entity_fields.StringField(required=True),
+            'organization': entity_fields.OneToOneField(
+                Organization,
+                required=True,
+            ),
+            'unlimited_content_hosts': entity_fields.BooleanField(),
+        }
+        super(ActivationKey, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -184,11 +204,16 @@ class ActivationKey(
 class Architecture(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Architecture entity."""
-    name = entity_fields.StringField(required=True)
-    operatingsystem = entity_fields.OneToManyField(
-        'OperatingSystem',
-        null=True,
-    )
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+            'operatingsystem': entity_fields.OneToManyField(
+                OperatingSystem,
+                null=True,
+            ),
+        }
+        super(Architecture, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -208,21 +233,26 @@ class Architecture(
 class AuthSourceLDAP(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a AuthSourceLDAP entity."""
-    account = entity_fields.StringField(null=True)
-    attr_photo = entity_fields.StringField(null=True)
-    base_dn = entity_fields.StringField(null=True)
-    host = entity_fields.StringField(required=True, length=(1, 60))
-    name = entity_fields.StringField(required=True, length=(1, 60))
-    onthefly_register = entity_fields.BooleanField(null=True)
-    port = entity_fields.IntegerField(null=True)
-    tls = entity_fields.BooleanField(null=True)
 
-    # required if onthefly_register is true
-    account_password = entity_fields.StringField(null=True)
-    attr_firstname = entity_fields.StringField(null=True)
-    attr_lastname = entity_fields.StringField(null=True)
-    attr_login = entity_fields.StringField(null=True)
-    attr_mail = entity_fields.EmailField(null=True)
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'account': entity_fields.StringField(null=True),
+            'attr_photo': entity_fields.StringField(null=True),
+            'base_dn': entity_fields.StringField(null=True),
+            'host': entity_fields.StringField(required=True, length=(1, 60)),
+            'name': entity_fields.StringField(required=True, length=(1, 60)),
+            'onthefly_register': entity_fields.BooleanField(null=True),
+            'port': entity_fields.IntegerField(null=True),
+            'tls': entity_fields.BooleanField(null=True),
+
+            # required if onthefly_register is true,
+            'account_password': entity_fields.StringField(null=True),
+            'attr_firstname': entity_fields.StringField(null=True),
+            'attr_lastname': entity_fields.StringField(null=True),
+            'attr_login': entity_fields.StringField(null=True),
+            'attr_mail': entity_fields.EmailField(null=True),
+        }
+        super(AuthSourceLDAP, self).__init__(server_config, **kwargs)
 
     def create_missing(self):
         """Possibly set several extra instance attributes.
@@ -238,13 +268,14 @@ class AuthSourceLDAP(
 
         """
         super(AuthSourceLDAP, self).create_missing()
-        cls = type(self)
-        if vars(self).get('onthefly_register', False) is True:
-            self.account_password = cls.account_password.gen_value()
-            self.attr_firstname = cls.attr_firstname.gen_value()
-            self.attr_lastname = cls.attr_lastname.gen_value()
-            self.attr_login = cls.attr_login.gen_value()
-            self.attr_mail = cls.attr_mail.gen_value()
+        if getattr(self, 'onthefly_register', False) is True:
+            self.account_password = (
+                self._fields['account_password'].gen_value()
+            )
+            self.attr_firstname = self._fields['attr_firstname'].gen_value()
+            self.attr_lastname = self._fields['attr_lastname'].gen_value()
+            self.attr_login = self._fields['attr_login'].gen_value()
+            self.attr_mail = self._fields['attr_mail'].gen_value()
 
     def read(self, entity=None, attrs=None, ignore=('account_password',)):
         """Do not read the ``account_password`` attribute from the server."""
@@ -258,10 +289,15 @@ class AuthSourceLDAP(
 
 class Bookmark(Entity):
     """A representation of a Bookmark entity."""
-    controller = entity_fields.StringField(required=True)
-    name = entity_fields.StringField(required=True)
-    public = entity_fields.BooleanField(null=True)
-    query = entity_fields.StringField(required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'controller': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(required=True),
+            'public': entity_fields.BooleanField(null=True),
+            'query': entity_fields.StringField(required=True),
+        }
+        super(Bookmark, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -271,8 +307,13 @@ class Bookmark(Entity):
 
 class CommonParameter(Entity):
     """A representation of a Common Parameter entity."""
-    name = entity_fields.StringField(required=True)
-    value = entity_fields.StringField(required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+            'value': entity_fields.StringField(required=True),
+        }
+        super(CommonParameter, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -282,14 +323,19 @@ class CommonParameter(Entity):
 
 class ComputeAttribute(Entity):
     """A representation of a Compute Attribute entity."""
-    compute_profile = entity_fields.OneToOneField(
-        'ComputeProfile',
-        required=True,
-    )
-    compute_resource = entity_fields.OneToOneField(
-        'ComputeResource',
-        required=True,
-    )
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'compute_profile': entity_fields.OneToOneField(
+                ComputeProfile,
+                required=True,
+            ),
+            'compute_resource': entity_fields.OneToOneField(
+                ComputeResource,
+                required=True,
+            ),
+        }
+        super(ComputeAttribute, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -300,7 +346,12 @@ class ComputeAttribute(Entity):
 class ComputeProfile(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Compute Profile entity."""
-    name = entity_fields.StringField(required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+        }
+        super(ComputeProfile, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -311,35 +362,40 @@ class ComputeProfile(
 class ComputeResource(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Compute Resource entity."""
-    description = entity_fields.StringField(null=True)
-    location = entity_fields.OneToManyField('Location')
-    name = entity_fields.StringField(
-        required=True,
-        str_type=('alphanumeric', 'cjk'),  # name cannot contain whitespace
-    )
-    organization = entity_fields.OneToManyField('Organization')
-    password = entity_fields.StringField(null=True)
-    provider = entity_fields.StringField(
-        choices=(
-            'Docker',
-            'EC2',
-            'GCE',
-            'Libvirt',
-            'Openstack',
-            'Ovirt',
-            'Rackspace',
-            'Vmware',
-        ),
-        null=True,
-        required=True,
-    )
-    region = entity_fields.StringField(null=True)
-    server = entity_fields.StringField(null=True)
-    set_console_password = entity_fields.BooleanField(null=True)
-    tenant = entity_fields.StringField(null=True)
-    url = entity_fields.URLField(required=True)
-    user = entity_fields.StringField(null=True)
-    uuid = entity_fields.StringField(null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'description': entity_fields.StringField(null=True),
+            'location': entity_fields.OneToManyField(Location),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type=('alphanumeric', 'cjk'),  # cannot contain whitespace
+            ),
+            'organization': entity_fields.OneToManyField(Organization),
+            'password': entity_fields.StringField(null=True),
+            'provider': entity_fields.StringField(
+                choices=(
+                    'Docker',
+                    'EC2',
+                    'GCE',
+                    'Libvirt',
+                    'Openstack',
+                    'Ovirt',
+                    'Rackspace',
+                    'Vmware',
+                ),
+                null=True,
+                required=True,
+            ),
+            'region': entity_fields.StringField(null=True),
+            'server': entity_fields.StringField(null=True),
+            'set_console_password': entity_fields.BooleanField(null=True),
+            'tenant': entity_fields.StringField(null=True),
+            'url': entity_fields.URLField(required=True),
+            'user': entity_fields.StringField(null=True),
+            'uuid': entity_fields.StringField(null=True),
+        }
+        super(ComputeResource, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -355,16 +411,14 @@ class ComputeResource(
         .. WARNING: This method is fragile and needs significant work.
 
         """
-        cls = type(self)
-        provider = vars(self).get('provider')
-        if provider is None:
-            self.provider = provider = cls.provider.gen_value()
+        if not hasattr(self, 'provider'):
+            self.provider = self._fields['provider'].gen_value()
 
         # Deal with docker provider before calling super create_missing in
         # order to check if an URL is provided by the user and, if not,
         # generate an URL pointing to a docker server
-        if provider.lower() == 'docker':
-            if 'url' not in vars(self):
+        if self.provider.lower() == 'docker':
+            if not hasattr(self, 'url'):
                 self.url = '{0}:2375'.format(self._server_config.url)
 
         # Now is good to call super create_missing
@@ -372,14 +426,14 @@ class ComputeResource(
 
         # Generate required fields according to the provider. First check if
         # the field is already set by the user, if not generate a random value
-        if provider == 'EC2' or provider == 'Ovirt' or provider == 'Openstack':
+        if self.provider in ('EC2', 'Ovirt', 'Openstack'):
             for field in ('password', 'user'):
-                if field not in vars(self):
-                    setattr(self, field, getattr(cls, field).gen_value())
-        elif provider == 'GCE':
-            # self.email = cls.email.gen_value()
-            # self.key_path = cls.key_path.gen_value()
-            # self.project = cls.project.gen_value()
+                if not hasattr(self, field):
+                    setattr(self, field, self._fields[field].gen_value())
+        elif self.provider == 'GCE':
+            # self.email = self._fields['email'].gen_value()
+            # self.key_path = self._fields['key_path'].gen_value()
+            # self.project = self._fields['project'].gen_value()
             #
             # NOTE: These three pieces of data are required. However, the API
             # docs don't even mention their existence!
@@ -388,7 +442,7 @@ class ComputeResource(
             # 2. Uncomment the above.
             # 3. File an issue on bugzilla asking for the docs to be expanded.
             pass
-        elif provider == 'Rackspace':
+        elif self.provider == 'Rackspace':
             # NOTE: Foreman always returns this error:
             #
             #     undefined method `upcase' for nil:NilClass
@@ -396,15 +450,20 @@ class ComputeResource(
             # 1. File a bugzilla issue asking for a fix.
             # 2. Figure out what data is necessary and add it here.
             pass
-        elif provider == 'Vmware':
+        elif self.provider == 'Vmware':
             for field in ('password', 'user', 'uuid'):
-                if field not in vars(self):
-                    setattr(self, field, getattr(cls, field).gen_value())
+                if not hasattr(self, field):
+                    setattr(self, field, self._fields[field].gen_value())
 
 
 class ConfigGroup(Entity):
     """A representation of a Config Group entity."""
-    name = entity_fields.StringField(required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+        }
+        super(ConfigGroup, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -415,18 +474,29 @@ class ConfigGroup(Entity):
 class ConfigTemplate(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Config Template entity."""
-    audit_comment = entity_fields.StringField(null=True)
-    locked = entity_fields.BooleanField(null=True)
-    name = entity_fields.StringField(required=True)
-    operatingsystem = entity_fields.OneToManyField(
-        'OperatingSystem',
-        null=True,
-    )
-    organization = entity_fields.OneToManyField('Organization', null=True)
-    snippet = entity_fields.BooleanField(null=True, required=True)
-    template = entity_fields.StringField(required=True)
-    template_combinations = entity_fields.ListField(null=True)
-    template_kind = entity_fields.OneToOneField('TemplateKind', null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'audit_comment': entity_fields.StringField(null=True),
+            'locked': entity_fields.BooleanField(null=True),
+            'name': entity_fields.StringField(required=True),
+            'operatingsystem': entity_fields.OneToManyField(
+                OperatingSystem,
+                null=True,
+            ),
+            'organization': entity_fields.OneToManyField(
+                Organization,
+                null=True,
+            ),
+            'snippet': entity_fields.BooleanField(null=True, required=True),
+            'template': entity_fields.StringField(required=True),
+            'template_combinations': entity_fields.ListField(null=True),
+            'template_kind': entity_fields.OneToOneField(
+                TemplateKind,
+                null=True,
+            ),
+        }
+        super(ConfigTemplate, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -443,8 +513,8 @@ class ConfigTemplate(
 
         """
         super(ConfigTemplate, self).create_missing()
-        if (vars(self).get('snippet') is False and
-                'template_kind' not in vars(self)):
+        if (getattr(self, 'snippet', None) is False and
+                not hasattr(self, 'template_kind')):
             # A server is pre-populated with exactly eight template kinds. We
             # use one of those instead of creating a new one on the fly.
             self.template_kind = TemplateKind(
@@ -506,20 +576,35 @@ class AbstractDockerContainer(
         docker container.
 
     """
-    attach_stderr = entity_fields.BooleanField(null=True)
-    attach_stdin = entity_fields.BooleanField(null=True)
-    attach_stdout = entity_fields.BooleanField(null=True)
-    command = entity_fields.StringField(required=True, str_type='latin1')
-    compute_resource = entity_fields.OneToOneField('ComputeResource')
-    cpu_set = entity_fields.StringField(null=True)
-    cpu_shares = entity_fields.StringField(null=True)
-    entrypoint = entity_fields.StringField(null=True)
-    location = entity_fields.OneToManyField('Location', null=True)
-    memory = entity_fields.StringField(null=True)
-    # "alphanumeric" is a subset of the legal chars for "name": a-zA-Z0-9_.-
-    name = entity_fields.StringField(required=True, str_type='alphanumeric')
-    organization = entity_fields.OneToManyField('Organization', null=True)
-    tty = entity_fields.BooleanField(null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'attach_stderr': entity_fields.BooleanField(null=True),
+            'attach_stdin': entity_fields.BooleanField(null=True),
+            'attach_stdout': entity_fields.BooleanField(null=True),
+            'command': entity_fields.StringField(
+                required=True,
+                str_type='latin1',
+            ),
+            'compute_resource': entity_fields.OneToOneField(ComputeResource),
+            'cpu_set': entity_fields.StringField(null=True),
+            'cpu_shares': entity_fields.StringField(null=True),
+            'entrypoint': entity_fields.StringField(null=True),
+            'location': entity_fields.OneToManyField(Location, null=True),
+            'memory': entity_fields.StringField(null=True),
+            # The "name" field may be any of a-zA-Z0-9_.-,
+            # "alphanumeric" is a subset of those legal characters.
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alphanumeric',
+            ),
+            'organization': entity_fields.OneToManyField(
+                Organization,
+                null=True,
+            ),
+            'tty': entity_fields.BooleanField(null=True),
+        }
+        super(AbstractDockerContainer, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -625,16 +710,29 @@ class AbstractDockerContainer(
 
 class DockerHubContainer(AbstractDockerContainer):
     """A docker container that comes from Docker Hub."""
-    repository_name = entity_fields.StringField(
-        default='busybox',
-        required=True,
-    )
-    tag = entity_fields.StringField(required=True, default='latest')
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'repository_name': entity_fields.StringField(
+                default='busybox',
+                required=True,
+            ),
+            'tag': entity_fields.StringField(required=True, default='latest'),
+        },
+        super(DockerHubContainer, self).__init__(server_config, **kwargs)
 
 
 class ContentUpload(Entity):
     """A representation of a Content Upload entity."""
-    repository = entity_fields.OneToOneField('Repository', required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'repository': entity_fields.OneToOneField(
+                Repository,
+                required=True,
+            )
+        }
+        super(ContentUpload, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -699,18 +797,23 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
 
 class ContentViewFilterRule(Entity):
     """A representation of a Content View Filter Rule entity."""
-    content_view_filter = entity_fields.OneToOneField(
-        'ContentViewFilter',
-        required=True
-    )
-    end_date = entity_fields.DateField()
-    errata = entity_fields.OneToOneField('Errata')
-    max_version = entity_fields.StringField()
-    min_version = entity_fields.StringField()
-    name = entity_fields.StringField()
-    start_date = entity_fields.DateField()
-    types = entity_fields.ListField()
-    version = entity_fields.StringField()
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'content_view_filter': entity_fields.OneToOneField(
+                ContentViewFilter,
+                required=True
+            ),
+            'end_date': entity_fields.DateField(),
+            'errata': entity_fields.OneToOneField(Errata),
+            'max_version': entity_fields.StringField(),
+            'min_version': entity_fields.StringField(),
+            'name': entity_fields.StringField(),
+            'start_date': entity_fields.DateField(),
+            'types': entity_fields.ListField(),
+            'version': entity_fields.StringField(),
+        }
+        super(ContentViewFilterRule, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -721,12 +824,20 @@ class ContentViewFilterRule(Entity):
 
 class ContentViewFilter(Entity):
     """A representation of a Content View Filter entity."""
-    content_view = entity_fields.OneToOneField('ContentView', required=True)
-    filter_type = entity_fields.StringField(required=True)
-    inclusion = entity_fields.BooleanField()
-    name = entity_fields.StringField(required=True)
-    original_packages = entity_fields.BooleanField()
-    repositories = entity_fields.OneToManyField('Repository')
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'content_view': entity_fields.OneToOneField(
+                ContentView,
+                required=True
+            ),
+            'filter_type': entity_fields.StringField(required=True),
+            'inclusion': entity_fields.BooleanField(),
+            'name': entity_fields.StringField(required=True),
+            'original_packages': entity_fields.BooleanField(),
+            'repositories': entity_fields.OneToManyField(Repository),
+        }
+        super(ContentViewFilter, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -740,22 +851,24 @@ class ContentViewFilter(Entity):
 
 class ContentViewPuppetModule(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
-    """A representation of a Content View Puppet Module entity."""
-    author = entity_fields.StringField()
-    content_view = entity_fields.OneToOneField('ContentView', required=True)
-    name = entity_fields.StringField()
-    puppet_module = entity_fields.OneToOneField('PuppetModule')
+    """A representation of a Content View Puppet Module entity.
 
-    class Meta(object):
-        """Non-field information about this entity."""
-        server_modes = ('sat')
+    ``content_view`` must be passed in when this entity is instantiated.
+
+    :raises: ``TypeError`` if ``content_view`` is not passed in.
+
+    """
 
     def __init__(self, server_config=None, **kwargs):
-        """Ensure ``content_view`` is passed in and set ``self.Meta.api_path``.
-
-        :raises TypeError: If ``content_view`` is not passed in.
-
-        """
+        self._fields = {
+            'author': entity_fields.StringField(),
+            'content_view': entity_fields.OneToOneField(
+                ContentView,
+                required=True,
+            ),
+            'name': entity_fields.StringField(),
+            'puppet_module': entity_fields.OneToOneField(PuppetModule),
+        }
         if 'content_view' not in kwargs:
             raise TypeError(
                 'The "content_view" parameter must be provided.'
@@ -764,6 +877,10 @@ class ContentViewPuppetModule(
         self.Meta.api_path = '{0}/content_view_puppet_modules'.format(
             self.content_view.path('self')  # pylint:disable=no-member
         )
+
+    class Meta(object):
+        """Non-field information about this entity."""
+        server_modes = ('sat')
 
     def read(self, entity=None, attrs=None, ignore=('content_view',)):
         """Provide a default value for ``entity``.
@@ -809,13 +926,21 @@ class ContentViewPuppetModule(
 class ContentView(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Content View entity."""
-    component = entity_fields.OneToManyField('ContentView')
-    composite = entity_fields.BooleanField()
-    description = entity_fields.StringField()
-    label = entity_fields.StringField()
-    name = entity_fields.StringField(required=True)
-    organization = entity_fields.OneToOneField('Organization', required=True)
-    repository = entity_fields.OneToManyField('Repository')
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'component': entity_fields.OneToManyField(ContentView),
+            'composite': entity_fields.BooleanField(),
+            'description': entity_fields.StringField(),
+            'label': entity_fields.StringField(),
+            'name': entity_fields.StringField(required=True),
+            'organization': entity_fields.OneToOneField(
+                Organization,
+                required=True,
+            ),
+            'repository': entity_fields.OneToManyField(Repository),
+        }
+        super(ContentView, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -875,7 +1000,7 @@ class ContentView(
         """
         response = client.post(
             self.path('publish'),
-            {u'id': self.id},
+            {u'id': self.id},  # pylint:disable=no-member
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
@@ -945,7 +1070,7 @@ class ContentView(
         """
         response = client.post(
             self.path('copy'),
-            {u'id': self.id, u'name': name},
+            {u'id': self.id, u'name': name},  # pylint:disable=no-member
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
@@ -988,11 +1113,19 @@ class ContentView(
 class Domain(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Domain entity."""
-    domain_parameters_attributes = entity_fields.ListField(null=True)
-    fullname = entity_fields.StringField(null=True)
-    location = entity_fields.OneToManyField('Location', null=True)
-    name = entity_fields.StringField(required=True)
-    organization = entity_fields.OneToManyField('Organization', null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'domain_parameters_attributes': entity_fields.ListField(null=True),
+            'fullname': entity_fields.StringField(null=True),
+            'location': entity_fields.OneToManyField(Location, null=True),
+            'name': entity_fields.StringField(required=True),
+            'organization': entity_fields.OneToManyField(
+                Organization,
+                null=True,
+            ),
+        }
+        super(Domain, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1007,7 +1140,7 @@ class Domain(
         names must be unique.
 
         """
-        if 'name' not in vars(self):
+        if not hasattr(self, 'name'):
             self.name = gen_alphanumeric().lower()
         super(Domain, self).create_missing()
 
@@ -1038,10 +1171,15 @@ class Domain(
 class Environment(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Environment entity."""
-    name = entity_fields.StringField(
-        required=True,
-        str_type=('alpha', 'numeric', 'alphanumeric'),
-    )
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(
+                required=True,
+                str_type=('alpha', 'numeric', 'alphanumeric'),
+            ),
+        }
+        super(Environment, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1062,11 +1200,19 @@ class Errata(Entity):
 class Filter(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Filter entity."""
-    location = entity_fields.OneToManyField('Location', null=True)
-    organization = entity_fields.OneToManyField('Organization', null=True)
-    permission = entity_fields.OneToManyField('Permission', null=True)
-    role = entity_fields.OneToOneField('Role', required=True)
-    search = entity_fields.StringField(null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'location': entity_fields.OneToManyField(Location, null=True),
+            'organization': entity_fields.OneToManyField(
+                Organization,
+                null=True,
+            ),
+            'permission': entity_fields.OneToManyField(Permission, null=True),
+            'role': entity_fields.OneToOneField(Role, required=True),
+            'search': entity_fields.StringField(null=True),
+        }
+        super(Filter, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1126,15 +1272,28 @@ class ForemanTask(Entity, EntityReadMixin):
         # pylint:disable=protected-access
         # See nailgun.entity_mixins._poll_task for an explanation of why a
         # private method is called.
-        return _poll_task(self.id, self._server_config, poll_rate, timeout)
+        return _poll_task(
+            self.id,  # pylint:disable=no-member
+            self._server_config,
+            poll_rate,
+            timeout
+        )
 
 
 class GPGKey(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a GPG Key entity."""
-    content = entity_fields.StringField(required=True)
-    name = entity_fields.StringField(required=True)
-    organization = entity_fields.OneToOneField('Organization', required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'content': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(required=True),
+            'organization': entity_fields.OneToOneField(
+                Organization,
+                required=True,
+            ),
+        }
+        super(GPGKey, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1144,8 +1303,16 @@ class GPGKey(
 
 class HostClasses(Entity):
     """A representation of a Host Class entity."""
-    host = entity_fields.OneToOneField('Host', required=True)
-    puppetclass = entity_fields.OneToOneField('PuppetClass', required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'host': entity_fields.OneToOneField(Host, required=True),
+            'puppetclass': entity_fields.OneToOneField(
+                PuppetClass,
+                required=True,
+            ),
+        }
+        super(HostClasses, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1155,7 +1322,12 @@ class HostClasses(Entity):
 
 class HostCollectionErrata(Entity):
     """A representation of a Host Collection Errata entity."""
-    errata = entity_fields.OneToManyField('Errata', required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'errata': entity_fields.OneToManyField(Errata, required=True),
+        }
+        super(HostCollectionErrata, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1166,8 +1338,13 @@ class HostCollectionErrata(Entity):
 
 class HostCollectionPackage(Entity):
     """A representation of a Host Collection Package entity."""
-    groups = entity_fields.ListField()
-    packages = entity_fields.ListField()
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'groups': entity_fields.ListField(),
+            'packages': entity_fields.ListField(),
+        }
+        super(HostCollectionPackage, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1179,12 +1356,20 @@ class HostCollectionPackage(Entity):
 class HostCollection(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Host Collection entity."""
-    description = entity_fields.StringField()
-    max_content_hosts = entity_fields.IntegerField()
-    name = entity_fields.StringField(required=True)
-    organization = entity_fields.OneToOneField('Organization', required=True)
-    system = entity_fields.OneToManyField('System')
-    unlimited_content_hosts = entity_fields.BooleanField()
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'description': entity_fields.StringField(),
+            'max_content_hosts': entity_fields.IntegerField(),
+            'name': entity_fields.StringField(required=True),
+            'organization': entity_fields.OneToOneField(
+                Organization,
+                required=True,
+            ),
+            'system': entity_fields.OneToManyField(System),
+            'unlimited_content_hosts': entity_fields.BooleanField(),
+        }
+        super(HostCollection, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1222,8 +1407,16 @@ class HostCollection(
 
 class HostGroupClasses(Entity):
     """A representation of a Host Group Classes entity."""
-    hostgroup = entity_fields.OneToOneField('HostGroup', required=True)
-    puppetclass = entity_fields.OneToOneField('PuppetClass', required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'hostgroup': entity_fields.OneToOneField(HostGroup, required=True),
+            'puppetclass': entity_fields.OneToOneField(
+                PuppetClass,
+                required=True,
+            ),
+        }
+        super(HostGroupClasses, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1233,16 +1426,27 @@ class HostGroupClasses(Entity):
 
 class HostGroup(Entity, EntityCreateMixin):
     """A representation of a Host Group entity."""
-    architecture = entity_fields.OneToOneField('Architecture', null=True)
-    domain = entity_fields.OneToOneField('Domain', null=True)
-    environment = entity_fields.OneToOneField('Environment', null=True)
-    medium = entity_fields.OneToOneField('Media', null=True)
-    name = entity_fields.StringField(required=True)
-    operatingsystem = entity_fields.OneToOneField('OperatingSystem', null=True)
-    parent = entity_fields.OneToOneField('HostGroup', null=True)
-    ptable = entity_fields.OneToOneField('PartitionTable', null=True)
-    realm = entity_fields.OneToOneField('Realm', null=True)
-    subnet = entity_fields.OneToOneField('Subnet', null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'architecture': entity_fields.OneToOneField(
+                Architecture,
+                null=True,
+            ),
+            'domain': entity_fields.OneToOneField(Domain, null=True),
+            'environment': entity_fields.OneToOneField(Environment, null=True),
+            'medium': entity_fields.OneToOneField(Media, null=True),
+            'name': entity_fields.StringField(required=True),
+            'operatingsystem': entity_fields.OneToOneField(
+                OperatingSystem,
+                null=True,
+            ),
+            'parent': entity_fields.OneToOneField(HostGroup, null=True),
+            'ptable': entity_fields.OneToOneField(PartitionTable, null=True),
+            'realm': entity_fields.OneToOneField(Realm, null=True),
+            'subnet': entity_fields.OneToOneField(Subnet, null=True),
+        }
+        super(HostGroup, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1253,42 +1457,62 @@ class HostGroup(Entity, EntityCreateMixin):
 class Host(  # pylint:disable=too-many-instance-attributes
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Host entity."""
-    architecture = entity_fields.OneToOneField('Architecture', null=True)
-    build_ = entity_fields.BooleanField(null=True)
-    capabilities = entity_fields.StringField(null=True)
-    compute_profile = entity_fields.OneToOneField('ComputeProfile', null=True)
-    compute_resource = entity_fields.OneToOneField(
-        'ComputeResource',
-        null=True
-    )
-    domain = entity_fields.OneToOneField('Domain', null=True)
-    enabled = entity_fields.BooleanField(null=True)
-    environment = entity_fields.OneToOneField('Environment', null=True)
-    hostgroup = entity_fields.OneToOneField('HostGroup', null=True)
-    host_parameters_attributes = entity_fields.ListField(null=True)
-    image = entity_fields.OneToOneField('Image', null=True)
-    ip = entity_fields.StringField(null=True)  # pylint:disable=invalid-name
-    location = entity_fields.OneToOneField('Location', required=True)
-    mac = entity_fields.MACAddressField(null=True)
-    managed = entity_fields.BooleanField(null=True)
-    medium = entity_fields.OneToOneField('Media', null=True)
-    model = entity_fields.OneToOneField('Model', null=True)
-    name = entity_fields.StringField(required=True, str_type='alpha')
-    operatingsystem = entity_fields.OneToOneField('OperatingSystem', null=True)
-    organization = entity_fields.OneToOneField('Organization', required=True)
-    owner = entity_fields.OneToOneField('User', null=True)
-    owner_type = entity_fields.StringField(
-        choices=('User', 'Usergroup'),
-        null=True,
-    )
-    provision_method = entity_fields.StringField(null=True)
-    ptable = entity_fields.OneToOneField('PartitionTable', null=True)
-    puppet_classes = entity_fields.OneToManyField('PuppetClass', null=True)
-    puppet_proxy = entity_fields.OneToOneField('SmartProxy', null=True)
-    realm = entity_fields.OneToOneField('Realm', null=True)
-    root_pass = entity_fields.StringField(length=(8, 30))
-    sp_subnet = entity_fields.OneToOneField('Subnet', null=True)
-    subnet = entity_fields.OneToOneField('Subnet', null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'architecture': entity_fields.OneToOneField(
+                Architecture,
+                null=True,
+            ),
+            'build_': entity_fields.BooleanField(null=True),
+            'capabilities': entity_fields.StringField(null=True),
+            'compute_profile': entity_fields.OneToOneField(
+                ComputeProfile,
+                null=True,
+            ),
+            'compute_resource': entity_fields.OneToOneField(
+                ComputeResource,
+                null=True,
+            ),
+            'domain': entity_fields.OneToOneField(Domain, null=True),
+            'enabled': entity_fields.BooleanField(null=True),
+            'environment': entity_fields.OneToOneField(Environment, null=True),
+            'hostgroup': entity_fields.OneToOneField(HostGroup, null=True),
+            'host_parameters_attributes': entity_fields.ListField(null=True),
+            'image': entity_fields.OneToOneField(Image, null=True),
+            'ip': entity_fields.StringField(null=True),
+            'location': entity_fields.OneToOneField(Location, required=True),
+            'mac': entity_fields.MACAddressField(null=True),
+            'managed': entity_fields.BooleanField(null=True),
+            'medium': entity_fields.OneToOneField(Media, null=True),
+            'model': entity_fields.OneToOneField(Model, null=True),
+            'name': entity_fields.StringField(required=True, str_type='alpha'),
+            'operatingsystem': entity_fields.OneToOneField(
+                OperatingSystem,
+                null=True,
+            ),
+            'organization': entity_fields.OneToOneField(
+                Organization,
+                required=True,
+            ),
+            'owner': entity_fields.OneToOneField(User, null=True),
+            'owner_type': entity_fields.StringField(
+                choices=('User', 'Usergroup'),
+                null=True,
+            ),
+            'provision_method': entity_fields.StringField(null=True),
+            'ptable': entity_fields.OneToOneField(PartitionTable, null=True),
+            'puppet_classes': entity_fields.OneToManyField(
+                PuppetClass,
+                null=True,
+            ),
+            'puppet_proxy': entity_fields.OneToOneField(SmartProxy, null=True),
+            'realm': entity_fields.OneToOneField(Realm, null=True),
+            'root_pass': entity_fields.StringField(length=(8, 30)),
+            'sp_subnet': entity_fields.OneToOneField(Subnet, null=True),
+            'subnet': entity_fields.OneToOneField(Subnet, null=True),
+        }
+        super(Host, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1327,8 +1551,8 @@ class Host(  # pylint:disable=too-many-instance-attributes
                 'Found instance attributes: {0}'.format(self.get_values())
             )
         super(Host, self).create_missing()
-        self.mac = self.mac.gen_value()
-        self.root_pass = self.root_pass.gen_value()
+        self.mac = self._fields['mac'].gen_value()
+        self.root_pass = self._fields['root_pass'].gen_value()
 
         # Flesh out the dependency graph shown in the docstring.
         self.domain = Domain(
@@ -1397,18 +1621,26 @@ class Host(  # pylint:disable=too-many-instance-attributes
 
 class Image(Entity):
     """A representation of a Image entity."""
-    architecture = entity_fields.OneToOneField('Architecture', required=True)
-    compute_resource = entity_fields.OneToOneField(
-        'ComputeResource',
-        required=True
-    )
-    name = entity_fields.StringField(required=True)
-    operatingsystem = entity_fields.OneToOneField(
-        'OperatingSystem',
-        required=True
-    )
-    username = entity_fields.StringField(required=True)
-    uuid = entity_fields.StringField(required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'architecture': entity_fields.OneToOneField(
+                Architecture,
+                required=True
+            ),
+            'compute_resource': entity_fields.OneToOneField(
+                ComputeResource,
+                required=True
+            ),
+            'name': entity_fields.StringField(required=True),
+            'operatingsystem': entity_fields.OneToOneField(
+                OperatingSystem,
+                required=True
+            ),
+            'username': entity_fields.StringField(required=True),
+            'uuid': entity_fields.StringField(required=True),
+        }
+        super(Image, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1418,16 +1650,21 @@ class Image(Entity):
 
 class Interface(Entity):
     """A representation of a Interface entity."""
-    domain = entity_fields.OneToOneField('Domain', null=True)
-    host = entity_fields.OneToOneField('Host', required=True)
-    interface_type = entity_fields.StringField(required=True)
-    ip = entity_fields.IPAddressField(required=True)  # pylint:disable=C0103
-    mac = entity_fields.MACAddressField(required=True)
-    name = entity_fields.StringField(required=True)
-    password = entity_fields.StringField(null=True)
-    provider = entity_fields.StringField(null=True)
-    subnet = entity_fields.OneToOneField('Subnet', null=True)
-    username = entity_fields.StringField(null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'domain': entity_fields.OneToOneField(Domain, null=True),
+            'host': entity_fields.OneToOneField(Host, required=True),
+            'interface_type': entity_fields.StringField(required=True),
+            'ip': entity_fields.IPAddressField(required=True),
+            'mac': entity_fields.MACAddressField(required=True),
+            'name': entity_fields.StringField(required=True),
+            'password': entity_fields.StringField(null=True),
+            'provider': entity_fields.StringField(null=True),
+            'subnet': entity_fields.OneToOneField(Subnet, null=True),
+            'username': entity_fields.StringField(null=True),
+        }
+        super(Interface, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1439,11 +1676,19 @@ class Interface(Entity):
 class LifecycleEnvironment(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Lifecycle Environment entity."""
-    description = entity_fields.StringField()
-    name = entity_fields.StringField(required=True)
-    organization = entity_fields.OneToOneField('Organization', required=True)
-    prior = entity_fields.OneToOneField('LifecycleEnvironment')
-    # NOTE: The "prior" field is unusual. See the `create_missing` docstring.
+
+    def __init__(self, server_config=None, **kwargs):
+        # NOTE: The "prior" field is unusual. See `create_missing`'s docstring.
+        self._fields = {
+            'description': entity_fields.StringField(),
+            'name': entity_fields.StringField(required=True),
+            'organization': entity_fields.OneToOneField(
+                Organization,
+                required=True,
+            ),
+            'prior': entity_fields.OneToOneField(LifecycleEnvironment),
+        }
+        super(LifecycleEnvironment, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1482,9 +1727,10 @@ class LifecycleEnvironment(
         not done if the current lifecycle environment has a name of 'Library'.
 
         """
-        # Create self.name and self.organization if missing.
         super(LifecycleEnvironment, self).create_missing()
-        if self.name != 'Library' and 'prior' not in vars(self):
+        # `super` creates all missing required fields, such as `name`.
+        if (self.name != 'Library' and  # pylint:disable=no-member
+                not hasattr(self, 'prior')):
             response = client.get(
                 self.path('base'),
                 auth=self._server_config.auth,
@@ -1501,7 +1747,7 @@ class LifecycleEnvironment(
                 raise APIResponseError(
                     'Could not find the "Library" lifecycle environment for '
                     'organization {0}. Search results: {1}'
-                    .format(self.organization, results)
+                    .format(self.organization, results)  # pylint:disable=E1101
                 )
             self.prior = LifecycleEnvironment(
                 self._server_config,
@@ -1511,7 +1757,12 @@ class LifecycleEnvironment(
 
 class Location(Entity, EntityCreateMixin):
     """A representation of a Location entity."""
-    name = entity_fields.StringField(required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+        }
+        super(Location, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1522,20 +1773,36 @@ class Location(Entity, EntityCreateMixin):
 class Media(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Media entity."""
-    media_path = entity_fields.URLField(required=True)
-    name = entity_fields.StringField(required=True)
-    operatingsystem = entity_fields.OneToManyField(
-        'OperatingSystem',
-        null=True,
-    )
-    organization = entity_fields.OneToManyField('Organization', null=True)
-    os_family = entity_fields.StringField(
-        choices=(
-            'AIX', 'Archlinux', 'Debian', 'Freebsd', 'Gentoo', 'Junos',
-            'Redhat', 'Solaris', 'Suse', 'Windows',
-        ),
-        null=True,
-    )
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'media_path': entity_fields.URLField(required=True),
+            'name': entity_fields.StringField(required=True),
+            'operatingsystem': entity_fields.OneToManyField(
+                OperatingSystem,
+                null=True,
+            ),
+            'organization': entity_fields.OneToManyField(
+                Organization,
+                null=True,
+            ),
+            'os_family': entity_fields.StringField(
+                choices=(
+                    'AIX',
+                    'Archlinux',
+                    'Debian',
+                    'Freebsd',
+                    'Gentoo',
+                    'Junos',
+                    'Redhat',
+                    'Solaris',
+                    'Suse',
+                    'Windows',
+                ),
+                null=True,
+            ),
+        }
+        super(Media, self).__init__(server_config, **kwargs)
 
     def create_missing(self):
         """Give the 'media_path' instance attribute a value if it is unset.
@@ -1545,7 +1812,7 @@ class Media(
         have a unique path.
 
         """
-        if 'media_path' not in vars(self):
+        if not hasattr(self, 'media_path'):
             self.media_path = gen_url(subdomain=gen_alpha())
         return super(Media, self).create_missing()
 
@@ -1568,10 +1835,15 @@ class Media(
 class Model(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Model entity."""
-    hardware_model = entity_fields.StringField(null=True)
-    info = entity_fields.StringField(null=True)
-    name = entity_fields.StringField(required=True)
-    vendor_class = entity_fields.StringField(null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'hardware_model': entity_fields.StringField(null=True),
+            'info': entity_fields.StringField(null=True),
+            'name': entity_fields.StringField(required=True),
+            'vendor_class': entity_fields.StringField(null=True),
+        }
+        super(Model, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1594,23 +1866,31 @@ class OperatingSystem(
     * ptable
 
     """
-    architecture = entity_fields.OneToManyField('Architecture')
-    description = entity_fields.StringField(null=True)
-    family = entity_fields.StringField(choices=_OPERATING_SYSTEMS, null=True)
-    major = entity_fields.StringField(
-        length=(1, 5),
-        required=True,
-        str_type='numeric',
-    )
-    media = entity_fields.OneToManyField('Media')
-    minor = entity_fields.StringField(
-        length=(1, 16),
-        null=True,
-        str_type='numeric',
-    )
-    name = entity_fields.StringField(required=True)
-    ptable = entity_fields.OneToManyField('PartitionTable')
-    release_name = entity_fields.StringField(null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'architecture': entity_fields.OneToManyField(Architecture),
+            'description': entity_fields.StringField(null=True),
+            'family': entity_fields.StringField(
+                choices=_OPERATING_SYSTEMS,
+                null=True,
+            ),
+            'major': entity_fields.StringField(
+                length=(1, 5),
+                required=True,
+                str_type='numeric',
+            ),
+            'media': entity_fields.OneToManyField(Media),
+            'minor': entity_fields.StringField(
+                length=(1, 16),
+                null=True,
+                str_type='numeric',
+            ),
+            'name': entity_fields.StringField(required=True),
+            'ptable': entity_fields.OneToManyField(PartitionTable),
+            'release_name': entity_fields.StringField(null=True),
+        }
+        super(OperatingSystem, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1638,21 +1918,23 @@ class OperatingSystem(
 
 class OperatingSystemParameter(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
-    """A representation of a parameter for an operating system."""
-    name = entity_fields.StringField(required=True)
-    operatingsystem = entity_fields.OneToOneField(
-        'OperatingSystem',
-        required=True,
-    )
-    value = entity_fields.StringField(required=True)
+    """A representation of a parameter for an operating system.
+
+    ``organization`` must be passed in when this entity is instantiated.
+
+    :raises: ``TypeError`` if ``operatingsystem`` is not passed in.
+
+    """
 
     def __init__(self, server_config=None, **kwargs):
-        """Ensure ``operatingsystem`` is passed in and set
-        ``self.Meta.api_path``.
-
-        :raises TypeError: If ``content_view`` is not passed in.
-
-        """
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+            'operatingsystem': entity_fields.OneToOneField(
+                OperatingSystem,
+                required=True,
+            ),
+            'value': entity_fields.StringField(required=True),
+        }
         if 'operatingsystem' not in kwargs:
             raise TypeError(
                 'The "operatingsystem" parameter must be provided.'
@@ -1694,10 +1976,15 @@ class OperatingSystemParameter(
 class Organization(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of an Organization entity."""
-    description = entity_fields.StringField()
-    label = entity_fields.StringField(str_type='alpha')
-    name = entity_fields.StringField(required=True)
-    title = entity_fields.StringField()
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'description': entity_fields.StringField(),
+            'label': entity_fields.StringField(str_type='alpha'),
+            'name': entity_fields.StringField(required=True),
+            'title': entity_fields.StringField(),
+        }
+        super(Organization, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1894,9 +2181,22 @@ class Organization(
 
 class OSDefaultTemplate(Entity):
     """A representation of a OS Default Template entity."""
-    config_template = entity_fields.OneToOneField('ConfigTemplate', null=True)
-    operatingsystem = entity_fields.OneToOneField('OperatingSystem')
-    template_kind = entity_fields.OneToOneField('TemplateKind', null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'config_template': entity_fields.OneToOneField(
+                ConfigTemplate,
+                null=True,
+            ),
+            'operatingsystem': entity_fields.OneToOneField(
+                OperatingSystem
+            ),
+            'template_kind': entity_fields.OneToOneField(
+                TemplateKind,
+                null=True
+            ),
+        }
+        super(OSDefaultTemplate, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1907,9 +2207,14 @@ class OSDefaultTemplate(Entity):
 
 class OverrideValue(Entity):
     """A representation of a Override Value entity."""
-    match = entity_fields.StringField(null=True)
-    smart_variable = entity_fields.OneToOneField('SmartVariable')
-    value = entity_fields.StringField(null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'match': entity_fields.StringField(null=True),
+            'smart_variable': entity_fields.OneToOneField(SmartVariable),
+            'value': entity_fields.StringField(null=True),
+        }
+        super(OverrideValue, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1926,8 +2231,13 @@ class OverrideValue(Entity):
 
 class Permission(Entity, EntityReadMixin):
     """A representation of a Permission entity."""
-    name = entity_fields.StringField(required=True)
-    resource_type = entity_fields.StringField(required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+            'resource_type': entity_fields.StringField(required=True),
+        }
+        super(Permission, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -1959,9 +2269,10 @@ class Permission(Entity, EntityReadMixin):
 
         """
         search_terms = {u'per_page': per_page}
-        if 'name' in vars(self):
-            search_terms[u'name'] = self.name
-        if 'resource_type' in vars(self):
+        if hasattr(self, 'name'):
+            search_terms[u'name'] = self.name  # pylint:disable=no-member
+        if hasattr(self, 'resource_type'):
+            # pylint:disable=no-member
             search_terms[u'resource_type'] = self.resource_type
 
         response = client.get(
@@ -1986,12 +2297,23 @@ class Ping(Entity):
 class Product(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Product entity."""
-    description = entity_fields.StringField()
-    gpg_key = entity_fields.OneToOneField('GPGKey')
-    label = entity_fields.StringField()
-    name = entity_fields.StringField(required=True)
-    organization = entity_fields.OneToOneField('Organization', required=True)
-    sync_plan = entity_fields.OneToOneField('SyncPlan', null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'description': entity_fields.StringField(),
+            'gpg_key': entity_fields.OneToOneField(GPGKey),
+            'label': entity_fields.StringField(),
+            'name': entity_fields.StringField(required=True),
+            'organization': entity_fields.OneToOneField(
+                Organization,
+                required=True
+            ),
+            'sync_plan': entity_fields.OneToOneField(
+                SyncPlan,
+                null=True
+            ),
+        }
+        super(Product, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2186,12 +2508,17 @@ class Product(
 class PartitionTable(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Partition Table entity."""
-    layout = entity_fields.StringField(required=True)
-    name = entity_fields.StringField(required=True)
-    os_family = entity_fields.StringField(
-        choices=_OPERATING_SYSTEMS,
-        null=True,
-    )
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'layout': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(required=True),
+            'os_family': entity_fields.StringField(
+                choices=_OPERATING_SYSTEMS,
+                null=True,
+            ),
+        }
+        super(PartitionTable, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2202,7 +2529,12 @@ class PartitionTable(
 class PuppetClass(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Puppet Class entity."""
-    name = entity_fields.StringField(required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+        }
+        super(PuppetClass, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2212,17 +2544,22 @@ class PuppetClass(
 
 class PuppetModule(Entity, EntityReadMixin):
     """A representation of a Puppet Module entity."""
-    author = entity_fields.StringField()
-    checksums = entity_fields.ListField()
-    dependencies = entity_fields.ListField()
-    description = entity_fields.StringField()
-    license = entity_fields.StringField()
-    name = entity_fields.StringField()
-    project_page = entity_fields.URLField()
-    repository = entity_fields.OneToManyField('Repository')
-    source = entity_fields.URLField()
-    summary = entity_fields.StringField()
-    version = entity_fields.StringField()
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'author': entity_fields.StringField(),
+            'checksums': entity_fields.ListField(),
+            'dependencies': entity_fields.ListField(),
+            'description': entity_fields.StringField(),
+            'license': entity_fields.StringField(),
+            'name': entity_fields.StringField(),
+            'project_page': entity_fields.URLField(),
+            'repository': entity_fields.OneToManyField(Repository),
+            'source': entity_fields.URLField(),
+            'summary': entity_fields.StringField(),
+            'version': entity_fields.StringField(),
+        }
+        super(PuppetModule, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2238,8 +2575,13 @@ class PuppetModule(Entity, EntityReadMixin):
 
 class Realm(Entity):
     """A representation of a Realm entity."""
-    name = entity_fields.StringField(required=True)
-    realm_type = entity_fields.StringField(required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+            'realm_type': entity_fields.StringField(required=True),
+        }
+        super(Realm, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2249,9 +2591,14 @@ class Realm(Entity):
 
 class Report(Entity):
     """A representation of a Report entity."""
-    host = entity_fields.StringField(required=True)
-    logs = entity_fields.ListField(null=True)
-    reported_at = entity_fields.DateTimeField(required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'host': entity_fields.StringField(required=True),
+            'logs': entity_fields.ListField(null=True),
+            'reported_at': entity_fields.DateTimeField(required=True),
+        }
+        super(Report, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2262,21 +2609,33 @@ class Report(Entity):
 class Repository(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Repository entity."""
-    checksum_type = entity_fields.StringField(choices=('sha1', 'sha256'))
-    content_type = entity_fields.StringField(
-        choices=('puppet', 'yum', 'file', 'docker'),
-        default='yum',
-        required=True,
-    )
-    # Just setting `str_type='alpha'` will fail with this error:
-    # {"docker_upstream_name":["must be a valid docker name"]}}
-    docker_upstream_name = entity_fields.StringField(default='busybox')
-    gpg_key = entity_fields.OneToOneField('GPGKey')
-    label = entity_fields.StringField()
-    name = entity_fields.StringField(required=True)
-    product = entity_fields.OneToOneField('Product', required=True)
-    unprotected = entity_fields.BooleanField()
-    url = entity_fields.URLField(default=_FAKE_YUM_REPO, required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'checksum_type': entity_fields.StringField(
+                choices=('sha1', 'sha256'),
+            ),
+            'content_type': entity_fields.StringField(
+                choices=('puppet', 'yum', 'file', 'docker'),
+                default='yum',
+                required=True,
+            ),
+            # Just setting `str_type='alpha'` will fail with this error:
+            # {"docker_upstream_name":["must be a valid docker name"]}}
+            'docker_upstream_name': entity_fields.StringField(
+                default='busybox'
+            ),
+            'gpg_key': entity_fields.OneToOneField(GPGKey),
+            'label': entity_fields.StringField(),
+            'name': entity_fields.StringField(required=True),
+            'product': entity_fields.OneToOneField(Product, required=True),
+            'unprotected': entity_fields.BooleanField(),
+            'url': entity_fields.URLField(
+                default=_FAKE_YUM_REPO,
+                required=True,
+            ),
+        }
+        super(Repository, self).__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -2305,8 +2664,8 @@ class Repository(
         "docker".
 
         """
-        if self.content_type == 'docker':
-            type(self).docker_upstream_name.required = True
+        if getattr(self, 'content_type', '') == 'docker':
+            self._fields['docker_upstream_name'].required = True
         super(Repository, self).create_missing()
 
     def sync(self, synchronous=True):
@@ -2387,7 +2746,7 @@ class Repository(
         if response_json['status'] != 'success':
             raise APIResponseError(
                 'Received error when uploading file {0} to repository {1}: {2}'
-                .format(handle, self.id, response_json)
+                .format(handle, self.id, response_json)  # pylint:disable=E1101
             )
         return response_json
 
@@ -2399,7 +2758,12 @@ class Repository(
 
 class RoleLDAPGroups(Entity):
     """A representation of a Role LDAP Groups entity."""
-    name = entity_fields.StringField(required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+        }
+        super(RoleLDAPGroups, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2410,11 +2774,16 @@ class RoleLDAPGroups(Entity):
 class Role(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Role entity."""
-    name = entity_fields.StringField(
-        required=True,
-        str_type='alphanumeric',
-        length=(2, 30),  # min length is 2 and max length is arbitrary
-    )
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alphanumeric',
+                length=(2, 30),  # min length is 2 and max length is arbitrary
+            )
+        }
+        super(Role, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2424,8 +2793,13 @@ class Role(
 
 class SmartProxy(Entity):
     """A representation of a Smart Proxy entity."""
-    name = entity_fields.StringField(required=True)
-    url = entity_fields.URLField(required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+            'url': entity_fields.URLField(required=True),
+        }
+        super(SmartProxy, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2435,14 +2809,19 @@ class SmartProxy(Entity):
 
 class SmartVariable(Entity):
     """A representation of a Smart Variable entity."""
-    default_value = entity_fields.StringField(null=True)
-    description = entity_fields.StringField(null=True)
-    override_value_order = entity_fields.StringField(null=True)
-    puppetclass = entity_fields.OneToOneField('PuppetClass', null=True)
-    validator_rule = entity_fields.StringField(null=True)
-    validator_type = entity_fields.StringField(null=True)
-    variable = entity_fields.StringField(required=True)
-    variable_type = entity_fields.StringField(null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'default_value': entity_fields.StringField(null=True),
+            'description': entity_fields.StringField(null=True),
+            'override_value_order': entity_fields.StringField(null=True),
+            'puppetclass': entity_fields.OneToOneField(PuppetClass, null=True),
+            'validator_rule': entity_fields.StringField(null=True),
+            'validator_type': entity_fields.StringField(null=True),
+            'variable': entity_fields.StringField(required=True),
+            'variable_type': entity_fields.StringField(null=True),
+        }
+        super(SmartVariable, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2462,16 +2841,21 @@ class Status(Entity):
 class Subnet(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Subnet entity."""
-    dns_primary = entity_fields.IPAddressField(null=True)
-    dns_secondary = entity_fields.IPAddressField(null=True)
-    domain = entity_fields.OneToManyField('Domain', null=True)
-    from_ = entity_fields.IPAddressField(null=True)
-    gateway = entity_fields.StringField(null=True)
-    mask = entity_fields.NetmaskField(required=True)
-    name = entity_fields.StringField(required=True)
-    network = entity_fields.IPAddressField(required=True)
-    to = entity_fields.IPAddressField(null=True)  # pylint:disable=invalid-name
-    vlanid = entity_fields.StringField(null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'dns_primary': entity_fields.IPAddressField(null=True),
+            'dns_secondary': entity_fields.IPAddressField(null=True),
+            'domain': entity_fields.OneToManyField(Domain, null=True),
+            'from_': entity_fields.IPAddressField(null=True),
+            'gateway': entity_fields.StringField(null=True),
+            'mask': entity_fields.NetmaskField(required=True),
+            'name': entity_fields.StringField(required=True),
+            'network': entity_fields.IPAddressField(required=True),
+            'to': entity_fields.IPAddressField(null=True),
+            'vlanid': entity_fields.StringField(null=True),
+        }
+        super(Subnet, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2482,11 +2866,16 @@ class Subnet(
 
 class Subscription(Entity):
     """A representation of a Subscription entity."""
-    activation_key = entity_fields.OneToOneField('ActivationKey')
-    pool_uuid = entity_fields.StringField()
-    quantity = entity_fields.IntegerField()
-    subscriptions = entity_fields.OneToManyField('Subscription')
-    system = entity_fields.OneToOneField('System')
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'activation_key': entity_fields.OneToOneField(ActivationKey),
+            'pool_uuid': entity_fields.StringField(),
+            'quantity': entity_fields.IntegerField(),
+            'subscriptions': entity_fields.OneToManyField(Subscription),
+            'system': entity_fields.OneToOneField(System),
+        }
+        super(Subscription, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2497,22 +2886,29 @@ class Subscription(Entity):
 
 class SyncPlan(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
-    """A representation of a Sync Plan entity."""
-    description = entity_fields.StringField()
-    enabled = entity_fields.BooleanField(required=True)
-    interval = entity_fields.StringField(
-        choices=('hourly', 'daily', 'weekly'),
-        required=True,
-    )
-    name = entity_fields.StringField(required=True)
-    organization = entity_fields.OneToOneField('Organization', required=True)
-    sync_date = entity_fields.DateTimeField(required=True)
+    """A representation of a Sync Plan entity.
+
+    ``organization`` must be passed in when this entity is instantiated.
+
+    :raises: ``TypeError`` if ``organization`` is not passed in.
+
+    """
 
     def __init__(self, server_config=None, **kwargs):
-        """Ensure ``organization`` has been passed in and set
-        ``self.Meta.api_path``.
-
-        """
+        self._fields = {
+            'description': entity_fields.StringField(),
+            'enabled': entity_fields.BooleanField(required=True),
+            'interval': entity_fields.StringField(
+                choices=('hourly', 'daily', 'weekly'),
+                required=True,
+            ),
+            'name': entity_fields.StringField(required=True),
+            'organization': entity_fields.OneToOneField(
+                Organization,
+                required=True,
+            ),
+            'sync_date': entity_fields.DateTimeField(required=True),
+        }
         if 'organization' not in kwargs:
             raise TypeError('The "organization" parameter must be provided.')
         super(SyncPlan, self).__init__(server_config, **kwargs)
@@ -2633,9 +3029,14 @@ class SyncPlan(
 
 class SystemPackage(Entity):
     """A representation of a System Package entity."""
-    groups = entity_fields.ListField()
-    packages = entity_fields.ListField()
-    system = entity_fields.OneToOneField('System', required=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'groups': entity_fields.ListField(),
+            'packages': entity_fields.ListField(),
+            'system': entity_fields.OneToOneField(System, required=True),
+        }
+        super(SystemPackage, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2646,28 +3047,37 @@ class SystemPackage(Entity):
 class System(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a System entity."""
-    content_view = entity_fields.OneToOneField('ContentView')
-    description = entity_fields.StringField()
-    environment = entity_fields.OneToOneField('Environment')
-    facts = entity_fields.DictField(
-        default={u'uname.machine': u'unknown'},
-        null=True,
-        required=True,
-    )
-    host_collection = entity_fields.OneToManyField('HostCollection')
-    installed_products = entity_fields.ListField(null=True)
-    last_checkin = entity_fields.DateTimeField()
-    location = entity_fields.StringField()
-    name = entity_fields.StringField(required=True)
-    organization = entity_fields.OneToOneField('Organization', required=True)
-    release_ver = entity_fields.StringField()
-    service_level = entity_fields.StringField(null=True)
-    uuid = entity_fields.StringField()
 
-    # The type() builtin is still available within instance methods, class
-    # methods, static methods, inner classes, and so on. However, type() is
-    # *not* available at the current level of lexical scoping after this point.
-    type = entity_fields.StringField(default='system', required=True)
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'content_view': entity_fields.OneToOneField(ContentView),
+            'description': entity_fields.StringField(),
+            'environment': entity_fields.OneToOneField(Environment),
+            'facts': entity_fields.DictField(
+                default={u'uname.machine': u'unknown'},
+                null=True,
+                required=True,
+            ),
+            'host_collection': entity_fields.OneToManyField(HostCollection),
+            'installed_products': entity_fields.ListField(null=True),
+            'last_checkin': entity_fields.DateTimeField(),
+            'location': entity_fields.StringField(),
+            'name': entity_fields.StringField(required=True),
+            'organization': entity_fields.OneToOneField(
+                Organization,
+                required=True,
+            ),
+            'release_ver': entity_fields.StringField(),
+            'service_level': entity_fields.StringField(null=True),
+            'uuid': entity_fields.StringField(),
+
+            # The type() builtin is still available within instance methods,
+            # class methods, static methods, inner classes, and so on. However,
+            # type() is *not* available at the current level of lexical scoping
+            # after this point.
+            'type': entity_fields.StringField(default='system', required=True),
+        }
+        super(System, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2696,10 +3106,10 @@ class System(
             https://bugzilla.redhat.com/show_bug.cgi?id=1202917
 
         """
-        if 'uuid' in vars(self) and (which is None or which == 'self'):
+        if hasattr(self, 'uuid') and (which is None or which == 'self'):
             return '{0}/{1}'.format(
                 super(System, self).path(which='base'),
-                self.uuid
+                self.uuid  # pylint:disable=no-member
             )
         return super(System, self).path(which)
 
@@ -2720,12 +3130,17 @@ class System(
 
 class TemplateCombination(Entity):
     """A representation of a Template Combination entity."""
-    config_template = entity_fields.OneToOneField(
-        'ConfigTemplate',
-        required=True,
-    )
-    environment = entity_fields.OneToOneField('Environment', null=True)
-    hostgroup = entity_fields.OneToOneField('HostGroup', null=True)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'config_template': entity_fields.OneToOneField(
+                ConfigTemplate,
+                required=True,
+            ),
+            'environment': entity_fields.OneToOneField(Environment, null=True),
+            'hostgroup': entity_fields.OneToOneField(HostGroup, null=True),
+        }
+        super(TemplateCombination, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2751,11 +3166,16 @@ class TemplateKind(Entity, EntityReadMixin):
 class UserGroup(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a User Group entity."""
-    admin = entity_fields.BooleanField()
-    name = entity_fields.StringField(required=True)
-    role = entity_fields.OneToManyField('Role')
-    user = entity_fields.OneToManyField('User', required=True)
-    usergroup = entity_fields.OneToManyField('UserGroup')
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'admin': entity_fields.BooleanField(),
+            'name': entity_fields.StringField(required=True),
+            'role': entity_fields.OneToManyField(Role),
+            'user': entity_fields.OneToManyField(User, required=True),
+            'usergroup': entity_fields.OneToManyField(UserGroup),
+        }
+        super(UserGroup, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field information about this entity."""
@@ -2806,30 +3226,40 @@ class User(
     authentication than to spawn LDAP authentication servers for each new user.
 
     """
-    admin = entity_fields.BooleanField(null=True)
-    # NOTE: `auth_source` is modified in __init__.
-    auth_source = entity_fields.OneToOneField('AuthSourceLDAP', required=True)
-    default_location = entity_fields.OneToOneField('Location', null=True)
-    default_organization = entity_fields.OneToOneField(
-        'Organization',
-        null=True,
-    )
-    firstname = entity_fields.StringField(null=True, length=(1, 50))
-    lastname = entity_fields.StringField(null=True, length=(1, 50))
-    location = entity_fields.OneToManyField('Location', null=True)
-    login = entity_fields.StringField(
-        length=(1, 100),
-        required=True,
-        str_type=('alpha', 'alphanumeric', 'cjk', 'latin1', 'utf8'),
-    )
-    mail = entity_fields.EmailField(required=True)
-    organization = entity_fields.OneToManyField('Organization', null=True)
-    password = entity_fields.StringField(required=True)
 
     def __init__(self, server_config=None, **kwargs):
-        """Set a default value for the ``auth_source`` field."""
+        self._fields = {
+            'admin': entity_fields.BooleanField(null=True),
+            # NOTE: `auth_source` is modified in __init__.
+            'auth_source': entity_fields.OneToOneField(
+                AuthSourceLDAP,
+                default=AuthSourceLDAP(server_config, id=1),
+                required=True,
+            ),
+            'default_location': entity_fields.OneToOneField(
+                Location,
+                null=True,
+            ),
+            'default_organization': entity_fields.OneToOneField(
+                Organization,
+                null=True,
+            ),
+            'firstname': entity_fields.StringField(null=True, length=(1, 50)),
+            'lastname': entity_fields.StringField(null=True, length=(1, 50)),
+            'location': entity_fields.OneToManyField(Location, null=True),
+            'login': entity_fields.StringField(
+                length=(1, 100),
+                required=True,
+                str_type=('alpha', 'alphanumeric', 'cjk', 'latin1', 'utf8'),
+            ),
+            'mail': entity_fields.EmailField(required=True),
+            'organization': entity_fields.OneToManyField(
+                Organization,
+                null=True,
+            ),
+            'password': entity_fields.StringField(required=True),
+        }
         super(User, self).__init__(server_config, **kwargs)
-        self.auth_source.default = AuthSourceLDAP(self._server_config, id=1)
 
     class Meta(object):
         """Non-field information about this entity."""

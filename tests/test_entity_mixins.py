@@ -18,9 +18,10 @@ import unittest
 
 class SampleEntity(entity_mixins.Entity):
     """Sample entity to be used in the tests"""
-    # pylint:disable=too-few-public-methods
-    name = StringField()
-    value = IntegerField()
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {'name': StringField(), 'number': IntegerField()}
+        super(SampleEntity, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field attributes for this entity."""
@@ -35,15 +36,16 @@ class ManyRelatedEntity(entity_mixins.Entity):
     :class:`tests.test_entity_mixins.SampleEntity`.
 
     """
-    # pylint:disable=too-few-public-methods
-    entities = OneToManyField(SampleEntity)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {'entities': OneToManyField(SampleEntity)}
+        super(ManyRelatedEntity, self).__init__(server_config, **kwargs)
 
 
 class EntityWithDelete(entity_mixins.Entity, entity_mixins.EntityDeleteMixin):
     """
     An entity inheriting from :class:`nailgun.entity_mixins.EntityDeleteMixin`.
     """
-    # pylint:disable=too-few-public-methods
 
     class Meta(object):
         """Non-field attributes for this entity."""
@@ -55,9 +57,13 @@ class EntityWithRead(entity_mixins.Entity, entity_mixins.EntityReadMixin):
     """
     An entity inheriting from :class:`nailgun.entity_mixins.EntityReadMixin`.
     """
-    # pylint:disable=too-few-public-methods
-    one_to_one = OneToOneField(SampleEntity)
-    one_to_many = OneToManyField(SampleEntity)
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'one_to_one': OneToOneField(SampleEntity),
+            'one_to_many': OneToManyField(SampleEntity),
+        }
+        super(EntityWithRead, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field attributes for this entity."""
@@ -73,8 +79,10 @@ class EntityWithCreateRead(
     An entity inheriting from :class:`nailgun.entity_mixins.EntityCreateMixin`
     and :class:`nailgun.entity_mixins.EntityReadMixin`.
     """
-    integer_field = IntegerField()
-    # pylint:disable=too-few-public-methods
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {'integer_field': IntegerField()}
+        super(EntityWithCreateRead, self).__init__(server_config, **kwargs)
 
     class Meta(object):
         """Non-field attributes for this entity."""
@@ -113,7 +121,7 @@ class MakeEntityFromIdTestCase(unittest.TestCase):
             self.server_config
         )
         self.assertIsInstance(entity_obj, SampleEntity)
-        self.assertEqual(entity_obj.id, entity_id)
+        self.assertEqual(entity_obj.id, entity_id)  # pylint:disable=no-member
 
 
 class MakeEntitiesFromIdsTestCase(unittest.TestCase):
@@ -195,10 +203,26 @@ class EntityTestCase(unittest.TestCase):
         fields = SampleEntity(self.server_config).get_fields()
 
         self.assertIn('name', fields)
-        self.assertIn('value', fields)
+        self.assertIn('number', fields)
 
         self.assertIsInstance(fields['name'], StringField)
-        self.assertIsInstance(fields['value'], IntegerField)
+        self.assertIsInstance(fields['number'], IntegerField)
+
+    def test_entity_get_values(self):
+        """Test :meth:`nailgun.entity_mixins.Entity.get_values`."""
+        self.assertEqual(SampleEntity(self.server_config).get_values(), {})
+        self.assertEqual(
+            SampleEntity(self.server_config, name='Alice').get_values(),
+            {'name': 'Alice'}
+        )
+        self.assertDictEqual(
+            SampleEntity(self.server_config, name='Ed', number=2).get_values(),
+            {'name': 'Ed', 'number': 2}
+        )
+        self.assertDictEqual(
+            SampleEntity(self.server_config, number=3).get_values(),
+            {'number': 3}
+        )
 
     def test_path(self):
         """Test :meth:`nailgun.entity_mixins.Entity.path`."""

@@ -56,8 +56,6 @@ from fauxfactory import (
     gen_string,
     gen_url,
 )
-from importlib import import_module
-from inspect import isclass
 import random
 # pylint:disable=too-few-public-methods
 # The classes in this module serve a declarative role. It is OK that they don't
@@ -73,10 +71,6 @@ import random
 
 # A sentinel object, used when `None` does not suffice.
 _SENTINEL = object()
-
-#: The default module that will be searched when an entity class needs to be
-#: found. Used by at least :class:`OneToOneField` and `OneToManyField`.
-ENTITIES_MODULE = 'nailgun.entities'
 
 
 class Field(object):
@@ -280,14 +274,8 @@ class OneToOneField(Field):
         super(OneToOneField, self).__init__(*args, **kwargs)
 
     def gen_value(self):
-        """Return the class that this field references.
-
-        If ``self.entity`` is a class, return that class. Otherwise, search
-        ``self.module`` (default: :data:`ENTITIES_MODULE`) for a class named
-        ``self.entity`` and return it.
-
-        """
-        return _get_class(self.entity, self.module)
+        """Return the class that this field references."""
+        return self.entity
 
 
 class OneToManyField(Field):
@@ -304,12 +292,8 @@ class OneToManyField(Field):
         super(OneToManyField, self).__init__(*args, **kwargs)
 
     def gen_value(self):
-        """Return the class that this field references.
-
-        This method behaves exactly like :meth:`OneToOneField.gen_value`.
-
-        """
-        return _get_class(self.entity, self.module)
+        """Return the class that this field references."""
+        return self.entity
 
 
 class URLField(StringField):
@@ -318,22 +302,3 @@ class URLField(StringField):
     def gen_value(self):
         """Return a value suitable for a :class:`URLField`."""
         return gen_url()
-
-
-def _get_class(class_or_name, module=None):
-    """Return a class object.
-
-    If ``class_or_name`` is a class, it is returned untouched. Otherwise,
-    ``class_or_name`` is assumed to be a string. In this case, ``module`` is
-    searched for a class by that name and returned.
-
-    :param class_or_name: Either a class or the name of a class.
-    :param module: A string. A dotted module name.
-    :return: Either the class passed in or a class from ``module``.
-
-    """
-    if isclass(class_or_name):
-        return class_or_name
-    if module is None:
-        module = ENTITIES_MODULE
-    return getattr(import_module(module), class_or_name)

@@ -2,12 +2,7 @@
 """Defines a set of mixins that provide tools for interacting with entities."""
 from fauxfactory import gen_choice
 from nailgun import client, config
-from nailgun.entity_fields import (
-    Field,
-    IntegerField,
-    OneToManyField,
-    OneToOneField,
-)
+from nailgun.entity_fields import IntegerField, OneToManyField, OneToOneField
 import threading
 import time
 
@@ -167,31 +162,41 @@ class Entity(object):
 
     Fields are represented by setting class attributes, and metadata is
     represented by settings attributes on the inner class named ``Meta``. For
-    example, consider this class declaration::
+    example, consider this class declaration:
 
-        class User(Entity):
-            name = StringField()
-            supervisor = OneToOneField('User')
-            subordinate = OneToManyField('User')
-
-            class Meta(object):
-                api_path = 'api/users'
+    >>> class User(Entity):
+    ...     def __init__(self, server_config=None, **kwargs):
+    ...         fields = {
+    ...             'name': StringField(),
+    ...             'supervisor': OneToOneField('User'),
+    ...             'subordinate': OneToManyField('User'),
+    ...         }
+    ...     class Meta(object):
+    ...         api_path = 'api/users'
 
     In the example above, the class attributes of ``User`` are fields, and the
     class attributes of ``Meta`` are metadata. Here is one way to instantiate
-    the ``User`` object shown above::
+    the ``User`` object shown above:
 
-        User(
-            name='Alice',
-            supervisor=User(id=1),
-            subordinate=[User(id=3), User(id=4)],
-        )
+    >>> user = User(
+    ...     name='Alice',
+    ...     supervisor=User(id=1),
+    ...     subordinate=[User(id=3), User(id=4)],
+    ... )
+    >>> user.name == 'Alice'
+    True
+    >>> user.supervisor.id = 1
+    True
 
     The canonical procedure for initializing foreign key fields, shown above,
     is powerful but verbose. As an alternative, the following convenience is
     offered:
 
-        User(name='Alice', supervisor=1, subordinate=[3, 4])
+    >>> User(name='Alice', supervisor=1, subordinate=[3, 4])
+    >>> user.name == 'Alice'
+    True
+    >>> user.supervisor.id = 1
+    True
 
     An entity object is useless if you are unable to use it to communicate with
     a server. The solution is to provide a :class:`nailgun.config.ServerConfig`
@@ -205,10 +210,6 @@ class Entity(object):
     3. Otherwise, call :meth:`nailgun.config.ServerConfig.get`.
 
     """
-    # The id() builtin is still available within instance methods, class
-    # methods, static methods, inner classes, and so on. However, id() is *not*
-    # available at the current level of lexical scoping after this point.
-    id = IntegerField()  # pylint:disable=C0103
 
     def __init__(self, server_config=None, **kwargs):
         # server_config > DEFAULT_SERVER_CONFIG > ServerConfig.get()
@@ -219,12 +220,17 @@ class Entity(object):
         else:
             self._server_config = config.ServerConfig.get()
 
+        # Subclasses usually define a set of fields before calling `super`, but
+        # that's not always the case.
+        if not hasattr(self, '_fields'):
+            self._fields = {}
+        self._fields.setdefault('id', IntegerField())
+
         # Check that a valid set of field values has been passed in.
-        fields = self.get_fields()
-        if not set(kwargs.keys()).issubset(fields.keys()):
+        if not set(kwargs.keys()).issubset(self._fields.keys()):
             raise NoSuchFieldError(
                 'Valid fields are {0}, but received {1} instead.'.format(
-                    fields.keys(), kwargs.keys()
+                    self._fields.keys(), kwargs.keys()
                 )
             )
 
@@ -232,7 +238,7 @@ class Entity(object):
         # variable to `self`. Make sure to transform entity IDs into entity
         # objects. (This feature is described in the docstring.)
         for field_name, field_value in kwargs.items():  # e.g. ('admin', True)
-            field = fields[field_name]  # e.g. A BooleanField object
+            field = self._fields[field_name]  # e.g. A BooleanField object
             if isinstance(field, OneToOneField):
                 setattr(self, field_name, _make_entity_from_id(
                     field.gen_value(),
@@ -248,7 +254,7 @@ class Entity(object):
             else:
                 setattr(self, field_name, field_value)
 
-    class Meta(object):  # (too-few-public-methods) pylint:disable=R0903
+    class Meta(object):  # pylint:disable=too-few-public-methods
         """Non-field information about this entity.
 
         This class is a convenient place to store any non-field information
@@ -305,49 +311,34 @@ class Entity(object):
             self._server_config.url + '/',
             self.Meta.api_path  # pylint:disable=no-member
         )
-        if which == 'base' or (which is None and 'id' not in vars(self)):
+        if which == 'base' or (which is None and not hasattr(self, 'id')):
             return base
-        elif (which == 'self' or which is None) and 'id' in vars(self):
-            return urljoin(base + '/', str(self.id))
+        elif (which == 'self' or which is None) and hasattr(self, 'id'):
+            return urljoin(base + '/', str(self.id))  # pylint:disable=E1101
         raise NoSuchPathError
 
-    @classmethod
-    def get_fields(cls):
-        """Return all fields defined on the current class.
+    def get_fields(self):
+        """Return a copy of the fields on the current object.
 
-        :return: A dict mapping class attribute names to
+        :return: A dict mapping field names to
             :class`nailgun.entity_fields.Field` objects.
 
         """
-        # When `dir` is called on "a type or class object, the list contains
-        # the names of its attributes, and recursively of the attributes of its
-        # bases." In constrast, `vars(cls)` returns only the attributes of
-        # `cls` while ignoring all parent classes. Thus, this fails for child
-        # classes:
-        #
-        #     for key, val in vars(cls).items():
-        #         if isinstance(val, Field):
-        #             attrs[key] = val
-        #
-        attrs = {}
-        for field_name in dir(cls):
-            field = getattr(cls, field_name)
-            if isinstance(field, Field):
-                attrs[field_name] = field
-        return attrs
+        return self._fields.copy()
 
     def get_values(self):
-        """Return the value of each field on the current object.
+        """Return a copy of field values on the current object.
 
         This method is almost identical to ``vars(self).copy()``. However, only
         instance attributes that correspond to a field are included in the
         returned dict.
 
-        :return: A dict mapping class attribute names to field values.
+        :return: A dict mapping field names to user-provided values.
 
         """
         attrs = vars(self).copy()
         attrs.pop('_server_config')
+        attrs.pop('_fields')
         return attrs
 
 
@@ -543,7 +534,7 @@ class EntityCreateMixin(object):
 
         """
         for field_name, field in self.get_fields().items():
-            if field.required and field_name not in vars(self):
+            if field.required and not hasattr(self, field_name):
                 # Most `gen_value` methods return a value such as an integer,
                 # string or dictionary, but OneTo{One,Many}Field.gen_value
                 # returns the referenced class. Thus, for foreign key fields,
@@ -584,7 +575,7 @@ class EntityCreateMixin(object):
         """
         data = self.get_values().copy()
         api_names = getattr(self.Meta, 'api_names', {})
-        for field_name, field in type(self).get_fields().items():
+        for field_name, field in self.get_fields().items():
             if field_name in data:
                 if field_name in api_names:
                     # e.g. rename filter_type to type for ContentViewFilter
