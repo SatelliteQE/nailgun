@@ -37,9 +37,9 @@ import random
 
 from sys import version_info
 if version_info.major == 2:
-    from httplib import ACCEPTED  # pylint:disable=import-error
+    from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
 else:
-    from http.client import ACCEPTED  # pylint:disable=import-error
+    from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
 
 # pylint:disable=too-few-public-methods
 # See NailGun issue #30: https://github.com/SatelliteQE/nailgun/issues/30
@@ -643,7 +643,7 @@ class ContentUpload(Entity):
         server_modes = ('sat')
 
 
-class ContentViewVersion(Entity, EntityReadMixin):
+class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
     """A representation of a Content View Version non-entity."""
 
     class Meta(object):
@@ -950,6 +950,38 @@ class ContentView(
             verify=self._server_config.verify,
         )
         response.raise_for_status()
+        return response.json()
+
+    def delete_from_environment(self, environment, synchronous=True):
+        """Delete this content view version from an environment.
+
+        This method acts much like
+        :meth:`nailgun.entity_mixins.EntityDeleteMixin.delete`.  The
+        documentation on that method describes how the deletion procedure works
+        in general. This method differs only in accepting an ``environment``
+        parameter.
+
+        :param environment: A :class:`nailgun.entities.Environment` object. The
+            environment's ``id`` parameter *must* be specified. As a
+            convenience, an environment ID may be passed in instead of an
+            ``Environment`` object.
+
+        """
+        if isinstance(environment, Environment):
+            environment_id = environment.id
+        else:
+            environment_id = environment
+        response = client.delete(
+            '{0}/environments/{1}'.format(self.path(), environment_id),
+            auth=self._server_config.auth,
+            verify=self._server_config.verify,
+        )
+        response.raise_for_status()
+        if (synchronous is True and
+                response.status_code == ACCEPTED):
+            return _poll_task(response.json()['id'], self._server_config)
+        if response.status_code == NO_CONTENT:
+            return
         return response.json()
 
 
