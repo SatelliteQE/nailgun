@@ -2167,7 +2167,8 @@ class PartitionTable(
         server_modes = ('sat')
 
 
-class PuppetClass(Entity):
+class PuppetClass(
+        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Puppet Class entity."""
     name = entity_fields.StringField(required=True)
 
