@@ -152,7 +152,7 @@ class NoSuchFieldError(Exception):
 
 
 class Entity(object):
-    """A logical representation of a Foreman entity.
+    """A representation of a logically related set of API paths.
 
     This class is rather useless as is, and it is intended to be subclassed.
     Subclasses can specify two useful types of information:
@@ -160,23 +160,24 @@ class Entity(object):
     * fields
     * metadata
 
-    Fields are represented by setting class attributes, and metadata is
-    represented by settings attributes on the inner class named ``Meta``. For
-    example, consider this class declaration:
+    Fields are represented by populating the ``_fields`` instance attribute,
+    and metadata is represented by settings attributes on the inner class named
+    ``Meta``. For example, consider this class definition:
 
     >>> class User(Entity):
     ...     def __init__(self, server_config=None, **kwargs):
-    ...         fields = {
+    ...         self._fields = {
     ...             'name': StringField(),
     ...             'supervisor': OneToOneField('User'),
     ...             'subordinate': OneToManyField('User'),
     ...         }
+    ...         return super(User, self).__init__(server_config, **kwargs)
     ...     class Meta(object):
     ...         api_path = 'api/users'
 
-    In the example above, the class attributes of ``User`` are fields, and the
-    class attributes of ``Meta`` are metadata. Here is one way to instantiate
-    the ``User`` object shown above:
+    In the example above, instance attribute ``User._fields`` defines fields
+    and class attribute ``Meta`` defines metadata. Here is one way to
+    instantiate the ``User`` object shown above:
 
     >>> user = User(
     ...     name='Alice',
@@ -200,14 +201,17 @@ class Entity(object):
 
     An entity object is useless if you are unable to use it to communicate with
     a server. The solution is to provide a :class:`nailgun.config.ServerConfig`
-    when instantiating a new entity. This configuration object is stored as an
-    instance variable named ``_server_config`` and used by methods such as
-    :meth:`nailgun.entity_mixins.Entity.path`.
+    when instantiating a new entity.
 
     1. If the ``server_config`` argument is specified, then that is used.
     2. Otherwise, if :data:`nailgun.entity_mixins.DEFAULT_SERVER_CONFIG` is
        set, then that is used.
     3. Otherwise, call :meth:`nailgun.config.ServerConfig.get`.
+
+    This configuration object is stored as a private instance variable and is
+    used by mixin methods, such as :meth:`nailgun.entity_mixins.Entity.path`.
+    For more information on server configuration objects, see
+    :class:`nailgun.config.BaseServerConfig`.
 
     """
 

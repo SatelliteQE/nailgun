@@ -9,10 +9,6 @@ entity. For example, the ``Host.name`` class attribute represents the name of a
 host. These class attributes are used by the various mixins, such as
 ``nailgun.entity_mixins.EntityCreateMixin``.
 
-Each class contains an inner class named ``Meta``. This inner class contains
-any information about an entity that is not encoded in the JSON payload when
-creating an entity. That is, the inner class contains non-field information.
-
 Several classes contain work-arounds for bugs. These bugs often affect only
 specific server releases, and ideally, the work-arounds should only be
 attempted if communicating with an affected server. However, work-arounds can
@@ -20,6 +16,9 @@ only be conditionally triggered if NailGun has a facility for determining which
 software version the server is running. Until then, the safe route will be
 taken, and all work-arounds will be attempted all the time. Each method that
 makes use of a work-around notes so in its docstring.
+
+:class:`nailgun.entity_mixins.Entity` provides more insight into the inner
+workings of entity classes.
 
 """
 from datetime import datetime
@@ -32,6 +31,7 @@ from nailgun.entity_mixins import (
     EntityReadMixin,
     _poll_task,
 )
+from pkg_resources import parse_version
 from time import sleep
 import random
 
@@ -2347,29 +2347,32 @@ class Product(
         if attrs is None:
             attrs = self.read_json()
 
-        # The `organization` hash does not include an ID.
-        org_label = attrs.pop('organization')['label']
-        response = client.get(
-            Organization(self._server_config).path(),
-            auth=self._server_config.auth,
-            data={'search': 'label={0}'.format(org_label)},
-            verify=self._server_config.verify,
-        )
-        response.raise_for_status()
-        results = response.json()['results']
-        if len(results) != 1:
-            raise APIResponseError(
-                'Could not find exactly one organization with label "{0}". '
-                'Actual search results: {1}'.format(org_label, results)
+        # Satellite 6.0 does not include an ID in the `organization` hash.
+        if (getattr(self._server_config, 'version', parse_version('6.1')) <
+                parse_version('6.1')):
+            org_label = attrs.pop('organization')['label']
+            response = client.get(
+                Organization(self._server_config).path(),
+                auth=self._server_config.auth,
+                data={'search': 'label={0}'.format(org_label)},
+                verify=self._server_config.verify,
             )
-        attrs['organization'] = {'id': response.json()['results'][0]['id']}
+            response.raise_for_status()
+            results = response.json()['results']
+            if len(results) != 1:
+                raise APIResponseError(
+                    'Could not find exactly one organization with label "{0}".'
+                    ' Actual search results: {1}'.format(org_label, results)
+                )
+            attrs['organization'] = {'id': response.json()['results'][0]['id']}
 
-        # No `gpg_key` hash is returned.
-        gpg_key_id = attrs.pop('gpg_key_id')
-        if gpg_key_id is None:
-            attrs['gpg_key'] = None
-        else:
-            attrs['gpg_key'] = {'id': gpg_key_id}
+        # The server returns IDs for these attrs instead of dicts of data.
+        for attr in ('gpg_key', 'sync_plan'):
+            attr_id = attrs.pop(attr + '_id')
+            if attr_id is None:
+                attrs[attr] = None
+            else:
+                attrs[attr] = {'id': attr_id}
 
         return super(Product, self).read(entity, attrs, ignore)
 
@@ -2635,6 +2638,14 @@ class Repository(
                 required=True,
             ),
         }
+        if (getattr(server_config, 'version', parse_version('6.1')) <
+                parse_version('6.1')):
+            # Adjust for Satellite 6.0
+            del self._fields['docker_upstream_name']
+            self._fields['content_type'].choices = (tuple(
+                set(self._fields['content_type'].choices) - set(['docker'])
+            ))
+            del self._fields['checksum_type']
         super(Repository, self).__init__(server_config, **kwargs)
 
     def path(self, which=None):
@@ -2749,6 +2760,18 @@ class Repository(
                 .format(handle, self.id, response_json)  # pylint:disable=E1101
             )
         return response_json
+
+    def read(self, entity=None, attrs=None, ignore=()):
+        """Compensate for the weird structure of returned data."""
+        if attrs is None:
+            attrs = self.read_json()
+        # The server returns an ID for this attr instead of a dict of data.
+        gpg_key_id = attrs.pop('gpg_key_id')
+        if gpg_key_id is None:
+            attrs['gpg_key'] = None
+        else:
+            attrs['gpg_key'] = {'id': gpg_key_id}
+        return super(Repository, self).read(entity, attrs, ignore)
 
     class Meta(object):
         """Non-field information about this entity."""

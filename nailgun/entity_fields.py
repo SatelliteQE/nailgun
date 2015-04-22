@@ -2,45 +2,20 @@
 
 Each of the fields in this module corresponds to some type of information that
 Satellite tracks. When paired the classes in :class:`nailgun.entity_mixins`, it
-is possible to represent the entities that Satellite manages. For example,
-consider this abbreviated class definition::
+is possible to represent the entities that Satellite manages. For a concrete
+example of how this works, see :class:`nailgun.entity_mixins.Entity`.
 
-    class User(
-            entity_mixins.Entity,
-            entity_mixins.EntityCreateMixin,
-            entity_mixins.EntityDeleteMixin,
-            entity_mixins.EntityReadMixin):
-        entity_fields.login = StringField(
-            length=(1, 100),
-            required=True,
-            str_type=('alpha', 'alphanumeric', 'cjk', 'latin1'),
-        )
-        entity_fields.admin = BooleanField(null=True)
-        entity_fields.firstname = StringField(null=True, length=(1, 50))
-        entity_fields.lastname = StringField(null=True, length=(1, 50))
-        entity_fields.mail = EmailField(required=True)
-        entity_fields.password = StringField(required=True)
-
-The class represents a user account on a Satellite server. Each of the fields
-represents some piece of information that is associated with a user account,
-and the mixins provide useful methods.
-
-Fields are intended to be used declaratively. You probably should not be
-interacting with the field classes or their methods directly. Instead, they are
-used by the various mixins. For example,
-:meth:`nailgun.entity_mixins.EntityReadMixin.read` can be used like this::
-
-    user = User(id=5).read()
-
-:meth:`nailgun.entity_mixins.EntityReadMixin.read` creates a new ``User``
-object and populates it. The method knows how to deal with the data returned by
-the server because of the fields on the ``User`` class.
+Fields are typically used declaratively in an entity's ``__init__`` function
+and are otherwise left untouched, except by the mixin methods. For example,
+:meth:`nailgun.entity_mixins.EntityReadMixin.read` looks at the fields on an
+entity to determine what information it should expect the server to return.
 
 A secondary use of fields is to generate random data. For example, you could
-call ``User.login.gen_value()`` (implemented at :meth:`StringField.gen_value`)
-to generate a random login. Beware that these methods strive to produce the
-most outrageous values that are still legal, so they will often return nonsense
-UTF-8 values, which is unpleasant to work with.
+call ``User.get_fields()['login'].gen_value()`` to generate a random login.
+(``gen_value`` is implemented at :meth:`StringField.gen_value`) Beware that the
+``gen_value`` methods strive to produce the most outrageous values that are
+still legal, so they will often return nonsense UTF-8 values, which is
+unpleasant to work with manually.
 
 """
 from fauxfactory import (
