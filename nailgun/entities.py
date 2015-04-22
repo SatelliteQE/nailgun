@@ -94,7 +94,7 @@ class ActivationKey(
     def read_raw(self):
         """Work around `Redmine #4638`_.
 
-        Poll the server several times upon receiving a 404, just to be _really_
+        Poll the server several times upon receiving a 404, just to be *really*
         sure that the requested activation key is non-existent. Do this because
         elasticsearch can be slow about indexing newly created activation keys,
         especially when the server is under load.

@@ -28,7 +28,7 @@ the challenges developers face:
   the "Payload Generation" section of `this blog post`_.
 * The Satellite 6 API contains bugs. For example, `Foreman bug #4638`_ describes
   how it is impossible to definitively know whether a given activation key
-  exists. (Method ``nailgun.entities.ActivationKey.read_raw`` contains a
+  exists. (:meth:`nailgun.entities.ActivationKey.read_raw` contains a
   work-around.)
 
 All of the above issues are compounded by the size of the Satellite 6 API. As of

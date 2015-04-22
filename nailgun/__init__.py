@@ -2,9 +2,8 @@
 """The root of the NailGun namespace.
 
 NailGun's modules are organized in to a tree of dependencies, where each module
-only knows about the modules below it in the tree. (The ``nailgun.entities``
-module is in the process of being ported over from robottelo.) They can be
-visualized like this::
+only knows about the modules below it in the tree. They can be visualized like
+this::
 
     nailgun.entities
     └── nailgun.entity_mixins
@@ -13,6 +12,6 @@ visualized like this::
         └── nailgun.client
 
 As an end user, you'll typically want to use the classes exposed by
-``nailgun.entities``.
+:mod:`nailgun.entities`.
 
 """

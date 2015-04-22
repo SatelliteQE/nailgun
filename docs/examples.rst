@@ -95,9 +95,7 @@ users. Differences like this abound.
 Sixth, the NailGun script will get better in the future. For example, the
 ``get_organization`` method will be minified or obsoleted when an
 ``EntitySearchMixin`` class is written and made a parent of class
-``Organization``. And when module ``nailgun.entities`` is ported over from
-`Robottelo`_, the list of imports will shrink, and the process of setting up a
-virtualenv and running a NailGun-dependent script will become easier.
+``Organization``.
 
 .. _Requests: http://docs.python-requests.org/en/latest/
 .. _Robottelo: http://robottelo.readthedocs.org/en/latest/
