@@ -2,45 +2,20 @@
 
 Each of the fields in this module corresponds to some type of information that
 Satellite tracks. When paired the classes in :class:`nailgun.entity_mixins`, it
-is possible to represent the entities that Satellite manages. For example,
-consider this abbreviated class definition::
+is possible to represent the entities that Satellite manages. For a concrete
+example of how this works, see :class:`nailgun.entity_mixins.Entity`.
 
-    class User(
-            entity_mixins.Entity,
-            entity_mixins.EntityCreateMixin,
-            entity_mixins.EntityDeleteMixin,
-            entity_mixins.EntityReadMixin):
-        entity_fields.login = StringField(
-            length=(1, 100),
-            required=True,
-            str_type=('alpha', 'alphanumeric', 'cjk', 'latin1'),
-        )
-        entity_fields.admin = BooleanField(null=True)
-        entity_fields.firstname = StringField(null=True, length=(1, 50))
-        entity_fields.lastname = StringField(null=True, length=(1, 50))
-        entity_fields.mail = EmailField(required=True)
-        entity_fields.password = StringField(required=True)
-
-The class represents a user account on a Satellite server. Each of the fields
-represents some piece of information that is associated with a user account,
-and the mixins provide useful methods.
-
-Fields are intended to be used declaratively. You probably should not be
-interacting with the field classes or their methods directly. Instead, they are
-used by the various mixins. For example,
-:meth:`nailgun.entity_mixins.EntityReadMixin.read` can be used like this::
-
-    user = User(id=5).read()
-
-:meth:`nailgun.entity_mixins.EntityReadMixin.read` creates a new ``User``
-object and populates it. The method knows how to deal with the data returned by
-the server because of the fields on the ``User`` class.
+Fields are typically used declaratively in an entity's ``__init__`` function
+and are otherwise left untouched, except by the mixin methods. For example,
+:meth:`nailgun.entity_mixins.EntityReadMixin.read` looks at the fields on an
+entity to determine what information it should expect the server to return.
 
 A secondary use of fields is to generate random data. For example, you could
-call ``User.login.gen_value()`` (implemented at :meth:`StringField.gen_value`)
-to generate a random login. Beware that these methods strive to produce the
-most outrageous values that are still legal, so they will often return nonsense
-UTF-8 values, which is unpleasant to work with.
+call ``User.get_fields()['login'].gen_value()`` to generate a random login.
+(``gen_value`` is implemented at :meth:`StringField.gen_value`) Beware that the
+``gen_value`` methods strive to produce the most outrageous values that are
+still legal, so they will often return nonsense UTF-8 values, which is
+unpleasant to work with manually.
 
 """
 from fauxfactory import (
@@ -56,8 +31,6 @@ from fauxfactory import (
     gen_string,
     gen_url,
 )
-from importlib import import_module
-from inspect import isclass
 import random
 # pylint:disable=too-few-public-methods
 # The classes in this module serve a declarative role. It is OK that they don't
@@ -73,10 +46,6 @@ import random
 
 # A sentinel object, used when `None` does not suffice.
 _SENTINEL = object()
-
-#: The default module that will be searched when an entity class needs to be
-#: found. Used by at least :class:`OneToOneField` and `OneToManyField`.
-ENTITIES_MODULE = 'nailgun.entities'
 
 
 class Field(object):
@@ -280,14 +249,8 @@ class OneToOneField(Field):
         super(OneToOneField, self).__init__(*args, **kwargs)
 
     def gen_value(self):
-        """Return the class that this field references.
-
-        If ``self.entity`` is a class, return that class. Otherwise, search
-        ``self.module`` (default: :data:`ENTITIES_MODULE`) for a class named
-        ``self.entity`` and return it.
-
-        """
-        return _get_class(self.entity, self.module)
+        """Return the class that this field references."""
+        return self.entity
 
 
 class OneToManyField(Field):
@@ -304,12 +267,8 @@ class OneToManyField(Field):
         super(OneToManyField, self).__init__(*args, **kwargs)
 
     def gen_value(self):
-        """Return the class that this field references.
-
-        This method behaves exactly like :meth:`OneToOneField.gen_value`.
-
-        """
-        return _get_class(self.entity, self.module)
+        """Return the class that this field references."""
+        return self.entity
 
 
 class URLField(StringField):
@@ -318,22 +277,3 @@ class URLField(StringField):
     def gen_value(self):
         """Return a value suitable for a :class:`URLField`."""
         return gen_url()
-
-
-def _get_class(class_or_name, module=None):
-    """Return a class object.
-
-    If ``class_or_name`` is a class, it is returned untouched. Otherwise,
-    ``class_or_name`` is assumed to be a string. In this case, ``module`` is
-    searched for a class by that name and returned.
-
-    :param class_or_name: Either a class or the name of a class.
-    :param module: A string. A dotted module name.
-    :return: Either the class passed in or a class from ``module``.
-
-    """
-    if isclass(class_or_name):
-        return class_or_name
-    if module is None:
-        module = ENTITIES_MODULE
-    return getattr(import_module(module), class_or_name)

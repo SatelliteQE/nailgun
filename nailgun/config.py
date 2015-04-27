@@ -8,6 +8,7 @@ presenting that information.
 
 """
 from os.path import isfile, join
+from pkg_resources import parse_version
 from threading import Lock
 from xdg import BaseDirectory
 import json
@@ -52,13 +53,39 @@ def _get_config_file_path(xdg_config_dir, xdg_config_file):
 
 
 class BaseServerConfig(object):
-    """A minimal set of facts for communicating with a Satellite server.
+    """A set of facts for communicating with a Satellite server.
+
+    This object stores a set of facts that can be used when communicating with
+    a Satellite server, regardless of whether that communication takes place
+    via the API, CLI or UI. :class:`nailgun.config.ServerConfig` is more
+    specialized and adds attributes that are useful when communicating with the
+    API.
 
     :param url: A string. The URL of a server. For example:
         `'https://example.com:250'`.
     :param auth: Credentials to use when communicating with the server. For
         example: `('username', 'password')`. No instance attribute is created
         if no value is provided.
+    :param version: A string, such as ``'6.0'`` or ``'6.1'``, indicating the
+        Satellite version the server is running. This version number is parsed
+        by ``pkg_resources.parse_version`` before being stored locally. This
+        allows for version comparisons:
+
+        >>> from nailgun.config import ServerConfig
+        >>> from pkg_resources import parse_version
+        >>> cfg = ServerConfig('http://sat.example.com', version='6.0')
+        >>> cfg.version == parse_version('6.0')
+        True
+        >>> cfg.version == parse_version('6.0.0')
+        True
+        >>> cfg.version < parse_version('10.0')
+        True
+        >>> '6.0' < '10.0'
+        False
+
+        If no version number is provided, then no instance attribute is
+        created, and it is assumed that the server is running an up-to-date
+        nightly build.
 
     .. WARNING:: This class will likely be moved to a separate Python package
         in a future release of NailGun. Be careful about making references to
@@ -73,10 +100,12 @@ class BaseServerConfig(object):
     # The name of the file in which settings are stored.
     _xdg_config_file = 'settings.json'
 
-    def __init__(self, url, auth=None):
+    def __init__(self, url, auth=None, version=None):
         self.url = url
         if auth is not None:
             self.auth = auth
+        if version is not None:
+            self.version = parse_version(version)
 
     @classmethod
     def delete(cls, label='default', path=None):
@@ -164,12 +193,19 @@ class BaseServerConfig(object):
         :returns: ``None``
 
         """
+        # What will we write out?
+        cfg = vars(self)
+        if 'version' in cfg:
+            cfg['version'] = str(cfg['version'])
+
+        # Where is the file we're writing to?
         if path is None:
             path = join(
                 BaseDirectory.save_config_path(self._xdg_config_dir),
                 self._xdg_config_file
             )
         self._file_lock.acquire()
+
         try:
             # Either read an existing config or make an empty one. Then update
             # the config and write it out.
@@ -178,7 +214,7 @@ class BaseServerConfig(object):
                     config = json.load(config_file)
             except IOError:
                 config = {}
-            config[label] = vars(self)
+            config[label] = cfg
             with open(path, 'w') as config_file:
                 json.dump(config, config_file)
         finally:
@@ -186,10 +222,12 @@ class BaseServerConfig(object):
 
 
 class ServerConfig(BaseServerConfig):
-    """Facts for communicating with a server's API.
+    """Extend :class:`nailgun.config.BaseServerConfig`.
 
-    This class inherits from :class:`nailgun.config.BaseServerConfig`. Other
-    constructor parameters are documented there.
+    This class adds functionality that is useful specifically when working with
+    the API. For example, it stores the additional ``verify`` instance
+    attribute and adds logic useful for presenting information to the methods
+    in :mod:`nailgun.client`.
 
     :param verify: A boolean. Should SSL be verified when communicating with
         the server? No instance attribute is created if no value is provided.
@@ -201,8 +239,8 @@ class ServerConfig(BaseServerConfig):
     _xdg_config_dir = 'nailgun'
     _xdg_config_file = 'server_configs.json'
 
-    def __init__(self, url, auth=None, verify=None):
-        super(ServerConfig, self).__init__(url, auth)
+    def __init__(self, url, auth=None, version=None, verify=None):
+        super(ServerConfig, self).__init__(url, auth, version)
         if verify is not None:
             self.verify = verify
 
@@ -222,6 +260,7 @@ class ServerConfig(BaseServerConfig):
         """
         config = vars(self).copy()
         config.pop('url')
+        config.pop('version', None)
         return config
 
     @classmethod

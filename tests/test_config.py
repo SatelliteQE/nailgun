@@ -18,12 +18,29 @@ FILE_PATH = '/tmp/bogus.json'
 CONFIGS = {
     'default': {'url': 'http://example.com'},
     'Ask Aak': {'url': 'bogus value', 'auth': ['username', 'password']},
+    'Acros-Krik': {'url': 'booger', 'version': '1.2.3.4.dev5+67'},
+    'King Adas': {'url': 'burger', 'version': 'silly version'},
 }
 CONFIGS2 = CONFIGS.copy()
 CONFIGS2.update({
     'Abeloth': {'url': 'bogus value', 'verify': True},
     'Admiral Gial Ackbar': {'url': 'bogus', 'auth': [], 'verify': False},
 })
+
+
+def _compare_configs(self, dict_config, server_config):
+    """Compare a server config in two different forms.
+
+    :param dict_config: A dict of values, such as might be returned by
+        ``json.load`` when reading a config file.
+    :param server_config: A :class:`nailgun.config.BaseServerConfig` or a
+        subclass thereof.
+
+    """
+    cfg = vars(server_config).copy()
+    if 'version' in cfg:
+        cfg['version'] = str(cfg['version'])
+    self.assertEqual(dict_config, cfg)
 
 
 class BaseServerConfigTestCase(TestCase):
@@ -36,7 +53,8 @@ class BaseServerConfigTestCase(TestCase):
 
         """
         for config in CONFIGS.values():
-            self.assertEqual(config, vars(BaseServerConfig(**config)))
+            server_config = BaseServerConfig(**config)
+            _compare_configs(self, config, server_config)
 
     def test_get(self):
         """Test :meth:`nailgun.config.BaseServerConfig.get`.
@@ -51,8 +69,8 @@ class BaseServerConfigTestCase(TestCase):
             open_ = mock_open(read_data=json.dumps(CONFIGS))
             with patch.object(builtins, 'open', open_):
                 server_config = BaseServerConfig.get(label, FILE_PATH)
-            self.assertEqual(vars(server_config), config)
             open_.assert_called_once_with(FILE_PATH)
+            _compare_configs(self, config, server_config)
             if hasattr(server_config, 'auth'):
                 self.assertIsInstance(server_config.auth, list)
 
@@ -128,7 +146,7 @@ class ServerConfigTestCase(TestCase):
 
         """
         for config in CONFIGS2.values():
-            self.assertEqual(config, vars(ServerConfig(**config)))
+            _compare_configs(self, config, ServerConfig(**config))
 
     def test_get_client_kwargs(self):
         """Test :meth:`nailgun.config.ServerConfig.get_client_kwargs`.
@@ -143,6 +161,7 @@ class ServerConfigTestCase(TestCase):
         for config in CONFIGS2.values():
             target = config.copy()
             target.pop('url')
+            target.pop('version', None)
             server_config = ServerConfig(**config)
             self.assertDictEqual(target, server_config.get_client_kwargs())
             self.assertDictEqual(

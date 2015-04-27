@@ -23,25 +23,17 @@ class GenValueTestCase(TestCase):
 
     def test_one_to_one_field(self):
         """Test :class:`nailgun.entity_fields.OneToOneField`."""
-        for klass in (
-                entity_fields.OneToOneField(TestClass).gen_value(),
-                entity_fields.OneToOneField(
-                    'TestClass',
-                    'tests.test_entity_fields'
-                ).gen_value(),
-        ):
-            self.assertEqual(klass, TestClass)
+        self.assertEqual(
+            entity_fields.OneToOneField(TestClass).gen_value(),
+            TestClass
+        )
 
     def test_one_to_many_field(self):
         """Test :class:`nailgun.entity_fields.OneToManyField`."""
-        for klass in (
-                entity_fields.OneToManyField(TestClass).gen_value(),
-                entity_fields.OneToManyField(
-                    'TestClass',
-                    'tests.test_entity_fields'
-                ).gen_value(),
-        ):
-            self.assertEqual(klass, TestClass)
+        self.assertEqual(
+            entity_fields.OneToManyField(TestClass).gen_value(),
+            TestClass
+        )
 
     def test_boolean_field(self):
         """Test :class:`nailgun.entity_fields.BooleanField`."""
