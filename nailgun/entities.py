@@ -2081,10 +2081,7 @@ class Product(
         response = client.get(
             self.path(which='base'),
             auth=self._server_config.auth,
-            data={
-                u'organization_id': org_id,
-                u'search': 'name={0}'.format(name),
-            },
+            data={u'organization_id': org_id, u'name': name},
             verify=self._server_config.verify,
         )
         response.raise_for_status()
