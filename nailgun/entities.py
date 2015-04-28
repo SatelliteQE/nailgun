@@ -85,6 +85,31 @@ class HostCreateMissingError(Exception):
     """Indicates that ``Host.create_missing`` was unable to execute."""
 
 
+def _handle_response(response, server_config, synchronous=False):
+    """Handle a server's response in a typical fashion.
+
+    Do the following:
+
+    1. Check the server's response for an HTTP status code indicating an error.
+    2. Poll the server for a foreman task to complete if an HTTP 202 (accepted)
+       status code is returned and ``synchronous is True``.
+    3. Immediately return if an HTTP "NO CONTENT" response is received.
+    4. Return the server's response, with all JSON decoded.
+
+    :param response: A response object as returned by one of the functions in
+        :mod:`nailgun.client` or the requests library.
+    :param server_config: A `nailgun.config.ServerConfig` object.
+    :param synchronous: Should this function poll the server?
+
+    """
+    response.raise_for_status()
+    if synchronous is True and response.status_code == ACCEPTED:
+        return ForemanTask(server_config, id=response.json()['id']).poll()
+    if response.status_code == NO_CONTENT:
+        return
+    return response.json()
+
+
 class ActivationKey(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Activtion Key entity."""
@@ -175,8 +200,7 @@ class ActivationKey(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        return response.json()
+        return _handle_response(response, self._server_config)
 
     def content_override(self, content_label, value):
         """Override the content of an activation key.
@@ -197,8 +221,7 @@ class ActivationKey(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        return response.json()
+        return _handle_response(response, self._server_config)
 
 
 class Architecture(
@@ -678,8 +701,7 @@ class AbstractDockerContainer(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        return response.json()
+        return _handle_response(response, self._server_config)
 
     def logs(self, stdout=None, stderr=None, tail=None):
         """Get logs from this container.
@@ -704,8 +726,7 @@ class AbstractDockerContainer(
             data=data,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        return response.json()
+        return _handle_response(response, self._server_config)
 
 
 class DockerHubContainer(AbstractDockerContainer):
@@ -784,15 +805,7 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-
-        # Poll a task if necessary, then return the JSON response.
-        if synchronous is True and response.status_code == ACCEPTED:
-            return ForemanTask(
-                self._server_config,
-                id=response.json()['id']
-            ).poll()
-        return response.json()
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class ContentViewFilterRule(Entity):
@@ -1004,15 +1017,7 @@ class ContentView(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-
-        # Poll a task if necessary, then return the JSON response.
-        if synchronous is True and response.status_code == ACCEPTED:
-            return ForemanTask(
-                self._server_config,
-                id=response.json()['id']
-            ).poll()
-        return response.json()
+        return _handle_response(response, self._server_config, synchronous)
 
     def set_repository_ids(self, repo_ids):
         """Give this content view some repositories.
@@ -1027,8 +1032,7 @@ class ContentView(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        return response.json()
+        return _handle_response(response, self._server_config)
 
     def available_puppet_modules(self):
         """Get puppet modules available to be added to the content view.
@@ -1041,8 +1045,7 @@ class ContentView(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        return response.json()
+        return _handle_response(response, self._server_config)
 
     def add_puppet_module(self, author, name):
         """Add a puppet module to the content view.
@@ -1058,8 +1061,7 @@ class ContentView(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        return response.json()
+        return _handle_response(response, self._server_config)
 
     def copy(self, name):
         """Clone provided content view.
@@ -1074,8 +1076,7 @@ class ContentView(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        return response.json()
+        return _handle_response(response, self._server_config)
 
     def delete_from_environment(self, environment, synchronous=True):
         """Delete this content view version from an environment.
@@ -1101,13 +1102,7 @@ class ContentView(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        if (synchronous is True and
-                response.status_code == ACCEPTED):
-            return _poll_task(response.json()['id'], self._server_config)
-        if response.status_code == NO_CONTENT:
-            return
-        return response.json()
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class Domain(
@@ -2096,8 +2091,7 @@ class Organization(
         response.raise_for_status()
         return response.json()['results']
 
-    def upload_manifest(self, path, repository_url=None,
-                        synchronous=True):
+    def upload_manifest(self, path, repository_url=None, synchronous=True):
         """Helper method that uploads a subscription manifest file
 
         :param path: Local path of the manifest file
@@ -2127,14 +2121,7 @@ class Organization(
                 files={'content': manifest},
                 verify=self._server_config.verify,
             )
-        response.raise_for_status()
-        # Poll a task if necessary, then return the JSON response.
-        if synchronous is True and response.status_code == ACCEPTED:
-            return ForemanTask(
-                self._server_config,
-                id=response.json()['id']
-            ).poll()
-        return response.json()
+        return _handle_response(response, self._server_config, synchronous)
 
     def delete_manifest(self, synchronous=True):
         """Helper method that deletes an organization's manifest
@@ -2158,14 +2145,7 @@ class Organization(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        # Poll a task if necessary, then return the JSON response.
-        if synchronous is True and response.status_code == ACCEPTED:
-            return ForemanTask(
-                self._server_config,
-                id=response.json()['id']
-            ).poll()
-        return response.json()
+        return _handle_response(response, self._server_config, synchronous)
 
     def refresh_manifest(self, synchronous=True):
         """Helper method that refreshes an organization's manifest
@@ -2189,14 +2169,7 @@ class Organization(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        # Poll a task if necessary, then return the JSON response.
-        if synchronous is True and response.status_code == ACCEPTED:
-            return ForemanTask(
-                self._server_config,
-                id=response.json()['id'],
-            ).poll()
-        return response.json()
+        return _handle_response(response, self._server_config, synchronous)
 
     def sync_plan(self, name, interval):
         """Helper for creating a sync_plan.
@@ -2213,8 +2186,7 @@ class Organization(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        return response.json()
+        return _handle_response(response, self._server_config)
 
     def list_rhproducts(self, per_page=None):
         """Lists all the RedHat Products after the importing of a manifest.
@@ -2518,14 +2490,7 @@ class Product(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        # Poll a task if necessary, then return the JSON response.
-        if synchronous is True and response.status_code == ACCEPTED:
-            return ForemanTask(
-                self._server_config,
-                id=response.json()['id'],
-            ).poll()
-        return response.json()
+        return _handle_response(response, self._server_config, synchronous)
 
     def disable_rhrepo(self, base_arch,
                        release_ver, reposet_id, synchronous=True):
@@ -2548,14 +2513,7 @@ class Product(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        # Poll a task if necessary, then return the JSON response.
-        if synchronous is True and response.status_code == ACCEPTED:
-            return ForemanTask(
-                self._server_config,
-                id=response.json()['id'],
-            ).poll()
-        return response.json()
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class PartitionTable(
@@ -2745,14 +2703,7 @@ class Repository(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        # Poll a task if necessary, then return the JSON response.
-        if synchronous is True and response.status_code == ACCEPTED:
-            return ForemanTask(
-                self._server_config,
-                id=response.json()['id'],
-            ).poll()
-        return response.json()
+        return _handle_response(response, self._server_config, synchronous)
 
     def fetch_repoid(self, org_id, name):
         """Fetch the repository Id.
@@ -3063,13 +3014,7 @@ class SyncPlan(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        if synchronous is True and response.status_code == ACCEPTED:
-            return ForemanTask(
-                self._server_config,
-                id=response.json()['id'],
-            ).poll()
-        return response.json()
+        return _handle_response(response, self._server_config, synchronous)
 
     def remove_products(self, product_ids, synchronous=True):
         """Remove products from this sync plan.
@@ -3091,13 +3036,7 @@ class SyncPlan(
             auth=self._server_config.auth,
             verify=self._server_config.verify,
         )
-        response.raise_for_status()
-        if synchronous is True and response.status_code == ACCEPTED:
-            return ForemanTask(
-                self._server_config,
-                id=response.json()['id'],
-            ).poll()
-        return response.json()
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class SystemPackage(Entity):

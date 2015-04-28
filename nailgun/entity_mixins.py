@@ -30,6 +30,14 @@ TASK_TIMEOUT = 300
 #: Used by :class:`nailgun.entity_mixins.Entity`.
 DEFAULT_SERVER_CONFIG = None
 
+#: Used by :meth:`nailgun.entity_mixins.EntityCreateMixin.create_raw`.
+#:
+#: This is the default value for the ``create_missing`` argument to
+#: :meth:`nailgun.entity_mixins.EntityCreateMixin.create_raw`. Keep in mind
+#: that this variable also affects methods which call ``create_raw``, such as
+#: :meth:`nailgun.entity_mixins.EntityCreateMixin.create_json`.
+CREATE_MISSING = False
+
 
 class TaskTimedOutError(Exception):
     """Indicates that a task did not finish before the timout limit."""
@@ -592,7 +600,7 @@ class EntityCreateMixin(object):
                     ]
         return data
 
-    def create_raw(self, create_missing=True):
+    def create_raw(self, create_missing=None):
         """Create an entity.
 
         Generate values for required, unset fields by calling
@@ -600,12 +608,14 @@ class EntityCreateMixin(object):
         Then make an HTTP POST call to ``self.path('base')``. Return the
         response received from the server.
 
-        :param create_missing: A boolean. Should :meth:`create_missing` be
-            called? In other words, should values be generated for required,
-            empty fields?
+        :param create_missing: Should :meth:`create_missing` be called? In
+            other words, should values be generated for required, empty fields?
+            Defaults to :data:`nailgun.entity_mixins.CREATE_MISSING`.
         :return: A ``requests.response`` object.
 
         """
+        if create_missing is None:
+            create_missing = CREATE_MISSING
         if create_missing:
             self.create_missing()
         return client.post(
@@ -615,7 +625,7 @@ class EntityCreateMixin(object):
             verify=self._server_config.verify,
         )
 
-    def create_json(self, create_missing=True):
+    def create_json(self, create_missing=None):
         """Create an entity.
 
         Call :meth:`create_raw`. Check the response status code, decode JSON
@@ -631,7 +641,7 @@ class EntityCreateMixin(object):
         response.raise_for_status()
         return response.json()
 
-    def create(self, create_missing=True):
+    def create(self, create_missing=None):
         """Create an entity.
 
         Call :meth:`create_json`. Use this information to populate an object of
