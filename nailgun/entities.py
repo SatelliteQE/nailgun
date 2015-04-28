@@ -1755,12 +1755,36 @@ class LifecycleEnvironment(
             )
 
 
-class Location(Entity, EntityCreateMixin):
+class Location(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Location entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'compute_resource': entity_fields.OneToManyField(
+                ComputeResource,
+                null=True,
+            ),
+            'config_template': entity_fields.OneToManyField(
+                ConfigTemplate,
+                null=True,
+            ),
+            'description': entity_fields.StringField(),
+            'domain': entity_fields.OneToManyField(Domain, null=True),
+            'environment': entity_fields.OneToManyField(
+                Environment,
+                null=True,
+            ),
+            'hostgroup': entity_fields.OneToManyField(HostGroup, null=True),
+            'media': entity_fields.OneToManyField(Media, null=True),
             'name': entity_fields.StringField(required=True),
+            'organization': entity_fields.OneToManyField(
+                Organization,
+                null=True,
+            ),
+            # 'realm': entity_fields.OneToManyField(Realm, null=True,),
+            'smart_proxy': entity_fields.OneToManyField(SmartProxy, null=True),
+            'subnet': entity_fields.OneToManyField(Subnet, null=True),
+            'user': entity_fields.OneToManyField(User, null=True),
         }
         super(Location, self).__init__(server_config, **kwargs)
 
@@ -1768,6 +1792,35 @@ class Location(Entity, EntityCreateMixin):
         """Non-field information about this entity."""
         api_path = 'api/v2/locations'
         server_modes = ('sat')
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict.
+
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
+
+        """
+        return {
+            u'location': super(Location, self).create_payload()
+        }
+
+    def create(self, create_missing=True):
+        """Creating a Location does not return a complete set of attributes.
+
+        We need to GET the entity in order to return a complete Location
+        entity.
+
+        """
+        attrs = self.create_json(create_missing)
+        return Location(self._server_config, id=attrs['id']).read()
+
+    def read(self, entity=None, attrs=None, ignore=()):
+        """Compensate for the pluralization of several fields."""
+        if attrs is None:
+            attrs = self.read_json()
+        attrs['smart_proxys'] = attrs.pop('smart_proxies')
+        attrs['medias'] = attrs.pop('media')
+        return super(Location, self).read(entity, attrs, ignore)
 
 
 class Media(
