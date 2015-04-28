@@ -33,6 +33,7 @@ class PathTestCase(TestCase):
         (entities.Organization, '/organizations'),
         (entities.Product, '/products'),
         (entities.Repository, '/repositories'),
+        (entities.SmartProxy, '/smart_proxies'),
         (entities.System, '/systems'),
     )
     @unpack
@@ -130,6 +131,7 @@ class PathTestCase(TestCase):
         (entities.Product, 'repository_sets'),
         (entities.Repository, 'sync'),
         (entities.Repository, 'upload_content'),
+        (entities.SmartProxy, 'refresh'),
         (entities.System, 'self'),
     )
     @unpack
