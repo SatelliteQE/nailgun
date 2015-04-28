@@ -241,6 +241,7 @@ class CreatePayloadTestCase(TestCase):
         entities.HostCollection,
         entities.Host,
         entities.LifecycleEnvironment,
+        entities.Location,
         entities.Media,
         entities.OperatingSystem,
         entities.UserGroup,
