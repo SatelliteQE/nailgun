@@ -2912,6 +2912,44 @@ class Subnet(
             'to': entity_fields.IPAddressField(null=True),
             'vlanid': entity_fields.StringField(null=True),
         }
+        if (getattr(server_config, 'version', parse_version('6.1')) >=
+                parse_version('6.1')):
+            self._fields['boot_mode'] = entity_fields.StringField(
+                choices=('Static', 'DHCP',),
+                default=u'DHCP',
+                null=True,
+            )
+            self._fields['dhcp'] = entity_fields.OneToOneField(
+                SmartProxy,
+                null=True,
+            )
+            # When reading a subnet, no discovery information is
+            # returned by the server. See Bugzilla #1217146.
+            # self._fields['discovery'] = entity_fields.OneToOneField(
+            #     SmartProxy,
+            #     null=True,
+            # )
+            self._fields['dns'] = entity_fields.OneToOneField(
+                SmartProxy,
+                null=True,
+            )
+            self._fields['ipam'] = entity_fields.StringField(
+                choices=('DHCP', 'Internal DB',),
+                default=u'DHCP',
+                null=True,
+            )
+            self._fields['location'] = entity_fields.OneToManyField(
+                Location,
+                null=True,
+            )
+            self._fields['organization'] = entity_fields.OneToManyField(
+                Organization,
+                null=True,
+            )
+            self._fields['tftp'] = entity_fields.OneToOneField(
+                SmartProxy,
+                null=True,
+            )
         super(Subnet, self).__init__(server_config, **kwargs)
 
     class Meta(object):
@@ -2919,6 +2957,15 @@ class Subnet(
         api_path = 'api/v2/subnets'
         api_names = {'from_': 'from'}
         server_modes = ('sat')
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict.
+
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
+
+        """
+        return {u'subnet': super(Subnet, self).create_payload()}
 
 
 class Subscription(Entity):
