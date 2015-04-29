@@ -2815,7 +2815,7 @@ class Role(
         server_modes = ('sat', 'sam')
 
 
-class SmartProxy(Entity):
+class SmartProxy(Entity, EntityReadMixin):
     """A representation of a Smart Proxy entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2829,6 +2829,39 @@ class SmartProxy(Entity):
         """Non-field information about this entity."""
         api_path = 'api/v2/smart_proxies'
         server_modes = ('sat')
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        refresh
+            /katello/api/v2/smart_proxies/:id/refresh
+
+        """
+        if which in ('refresh',):
+            return '{0}/{1}'.format(
+                super(SmartProxy, self).path(which='self'),
+                which
+            )
+        return super(SmartProxy, self).path(which)
+
+    def refresh(self, synchronous=True):
+        """Refresh Capsule features
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's reponse otherwise.
+        :returns: The server's JSON-decoded response.
+
+        """
+        response = client.put(
+            self.path('refresh'),
+            {},
+            auth=self._server_config.auth,
+            verify=self._server_config.verify,
+        )
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class SmartVariable(Entity):
