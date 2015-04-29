@@ -3350,6 +3350,7 @@ class User(
                 null=True,
             ),
             'password': entity_fields.StringField(required=True),
+            'role': entity_fields.OneToManyField(Role, null=True),
         }
         super(User, self).__init__(server_config, **kwargs)
 
