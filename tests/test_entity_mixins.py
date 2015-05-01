@@ -253,6 +253,69 @@ class EntityTestCase(unittest.TestCase):
         with self.assertRaises(entity_mixins.BadValueError):
             ManyRelatedEntity(self.server_config, entities=1)
 
+    def test_repr_v1(self):
+        """Test method ``nailgun.entity_mixins.Entity.__repr__``.
+
+        Assert that ``__repr__`` works correctly when no arguments are passed
+        to an entity.
+
+        """
+        entity = ManyRelatedEntity(self.server_config)
+        target = 'tests.test_entity_mixins.ManyRelatedEntity({0})'.format(
+            repr(self.server_config)
+        )
+        self.assertEqual(repr(entity), target)
+        import nailgun  # noqa pylint:disable=unused-variable
+        import tests  # noqa pylint:disable=unused-variable
+        # pylint:disable=eval-used
+        self.assertEqual(repr(eval(repr(entity))), target)
+
+    def test_repr_v2(self):
+        """Test method ``nailgun.entity_mixins.Entity.__repr__``.
+
+        Assert that ``__repr__`` works correctly when an ID is passed to an
+        entity.
+
+        """
+        entity = ManyRelatedEntity(self.server_config, id=gen_integer())
+        target = (
+            'tests.test_entity_mixins.ManyRelatedEntity({0}, id={1})'
+            .format(
+                repr(self.server_config),
+                entity.id  # pylint:disable=no-member
+            )
+        )
+        self.assertEqual(repr(entity), target)
+        import nailgun  # noqa pylint:disable=unused-variable
+        import tests  # noqa pylint:disable=unused-variable
+        # pylint:disable=eval-used
+        self.assertEqual(repr(eval(repr(entity))), target)
+
+    def test_repr_v3(self):
+        """Test method ``nailgun.entity_mixins.Entity.__repr__``.
+
+        Assert that ``__repr__`` works correctly when one entity has a foreign
+        key relationship to a second entity.
+
+        """
+        entity_id = gen_integer()
+        target = (
+            'tests.test_entity_mixins.ManyRelatedEntity('
+            '{0}, '
+            'entities=[tests.test_entity_mixins.SampleEntity({0}, id={1})]'
+            ')'
+            .format(self.server_config, entity_id)
+        )
+        entity = ManyRelatedEntity(
+            self.server_config,
+            entities=[SampleEntity(self.server_config, id=entity_id)]
+        )
+        self.assertEqual(repr(entity), target)
+        import nailgun  # noqa pylint:disable=unused-variable
+        import tests  # noqa pylint:disable=unused-variable
+        # pylint:disable=eval-used
+        self.assertEqual(repr(eval(repr(entity))), target)
+
 
 class EntityDeleteMixinTestCase(unittest.TestCase):
     """Tests for entity mixin classes."""
