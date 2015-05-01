@@ -241,6 +241,18 @@ class EntityTestCase(unittest.TestCase):
         with self.assertRaises(entity_mixins.NoSuchPathError):
             SampleEntity(self.server_config).path('self')
 
+    def test_no_such_field_error(self):
+        """Try to raise a :class:`nailgun.entity_mixins.NoSuchFieldError`."""
+        SampleEntity(self.server_config, name='Alice')
+        with self.assertRaises(entity_mixins.NoSuchFieldError):
+            SampleEntity(self.server_config, namee='Alice')
+
+    def test_bad_value_error(self):
+        """Try to raise a :class:`nailgun.entity_mixins.BadValueError`."""
+        ManyRelatedEntity(self.server_config, entities=[1])
+        with self.assertRaises(entity_mixins.BadValueError):
+            ManyRelatedEntity(self.server_config, entities=1)
+
 
 class EntityDeleteMixinTestCase(unittest.TestCase):
     """Tests for entity mixin classes."""
