@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
 """Defines a set of mixins that provide tools for interacting with entities."""
+from collections import Iterable
 from fauxfactory import gen_choice
 from nailgun import client, config
 from nailgun.entity_fields import IntegerField, OneToManyField, OneToOneField
@@ -135,7 +136,8 @@ def _make_entities_from_ids(entity_cls, entity_objs_and_ids, server_config):
 
     :param entity_cls: An :class:`Entity` subclass.
     :param entity_obj_or_id: An iterable of
-        :class:`nailgun.entity_mixins.Entity` objects and/or entity IDs.
+        :class:`nailgun.entity_mixins.Entity` objects and/or entity IDs. All of
+        the entities in this iterable should be of type ``entity_cls``.
     :returns: A list of ``entity_cls`` objects.
 
     """
@@ -157,6 +159,10 @@ class NoSuchPathError(Exception):
 
 class NoSuchFieldError(Exception):
     """Indicates that the assigned-to :class:`Entity` field does not exist."""
+
+
+class BadValueError(Exception):
+    """Indicates that an inappropriate value was assigned to an entity."""
 
 
 class Entity(object):
@@ -221,6 +227,11 @@ class Entity(object):
     For more information on server configuration objects, see
     :class:`nailgun.config.BaseServerConfig`.
 
+    :raises nailgun.entity_mixins.NoSuchFieldError: If a value is assigned to a
+        non-existent field.
+    :raises nailgun.entity_mixins.BadValueError: If an inappropriate value is
+        assigned to a field.
+
     """
 
     def __init__(self, server_config=None, **kwargs):
@@ -241,9 +252,8 @@ class Entity(object):
         # Check that a valid set of field values has been passed in.
         if not set(kwargs.keys()).issubset(self._fields.keys()):
             raise NoSuchFieldError(
-                'Valid fields are {0}, but received {1} instead.'.format(
-                    self._fields.keys(), kwargs.keys()
-                )
+                'Valid fields are {0}, but received {1} instead.'
+                .format(self._fields.keys(), kwargs.keys())
             )
 
         # Iterate through the values passed in and assign them as instance
@@ -258,6 +268,17 @@ class Entity(object):
                     self._server_config
                 ))
             elif isinstance(field, OneToManyField):
+                # `try:; …; except TypeError:; raise BadValueError(…)` better
+                # follows the "ask forgiveness" principle. However, a TypeError
+                # could be raised for any number of reasons. For example,
+                # `field_value` could have a faulty __iter__ implementation.
+                if not isinstance(field_value, Iterable):
+                    raise BadValueError(
+                        'An inappropriate value was assigned to the "{0}" '
+                        'field. An iterable of entities and/or entity IDs '
+                        'should be assigned, but the following was given: {1}'
+                        .format(field_name, field_value)
+                    )
                 setattr(self, field_name, _make_entities_from_ids(
                     field.gen_value(),
                     field_value,
