@@ -15,3 +15,7 @@ As an end user, you'll typically want to use the classes exposed by
 :mod:`nailgun.entities`.
 
 """
+from logging import basicConfig
+
+
+basicConfig()

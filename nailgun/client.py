@@ -89,7 +89,7 @@ def _log_response(response):
         response.text
     )
     if response.status_code >= 400:
-        logger.warn(message)
+        logger.warning(message)
     else:
         logger.debug(message)
 
