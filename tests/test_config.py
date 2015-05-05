@@ -1,6 +1,7 @@
 """Unit tests for :mod:`nailgun.config`."""
 from mock import call, mock_open, patch
 from nailgun.config import BaseServerConfig, ServerConfig
+from pkg_resources import parse_version
 from unittest import TestCase
 import json
 
@@ -181,6 +182,123 @@ class ServerConfigTestCase(TestCase):
                 server_config = ServerConfig.get(label, FILE_PATH)
             if hasattr(server_config, 'auth'):
                 self.assertIsInstance(server_config.auth, tuple)
+
+
+class ReprTestCase(TestCase):
+    """Test method ``nailgun.config.BaseServerConfig.__repr__``."""
+
+    def test_bsc_v1(self):
+        """Test :class:`nailgun.config.BaseServerConfig`.
+
+        Assert that ``__repr__`` works correctly when ``url`` is specified.
+
+        """
+        target = "nailgun.config.BaseServerConfig(url='bogus')"
+        self.assertEqual(target, repr(BaseServerConfig('bogus')))
+        import nailgun  # noqa pylint:disable=unused-variable
+        # pylint:disable=eval-used
+        self.assertEqual(target, repr(eval(repr(BaseServerConfig('bogus')))))
+
+    def test_bsc_v2(self):
+        """Test :class:`nailgun.config.BaseServerConfig`.
+
+        Assert that ``__repr__`` works correctly when ``url`` and ``auth`` are
+        specified.
+
+        """
+        targets = (
+            "nailgun.config.BaseServerConfig(url='flim', auth='flam')",
+            "nailgun.config.BaseServerConfig(auth='flam', url='flim')",
+        )
+        self.assertIn(repr(BaseServerConfig('flim', auth='flam')), targets)
+        import nailgun  # noqa pylint:disable=unused-variable
+        # pylint:disable=eval-used
+        self.assertIn(
+            repr(eval(repr(BaseServerConfig('flim', auth='flam')))),
+            targets
+        )
+
+    def test_bsc_v3(self):
+        """Test :class:`nailgun.config.BaseServerConfig`.
+
+        Assert that ``__repr__`` works correctly when ``url`` and ``version``
+        are specified.
+
+        """
+        ver = repr(parse_version('1'))
+        targets = (
+            "nailgun.config.BaseServerConfig(url='flim', version={0})".format(
+                ver
+            ),
+            "nailgun.config.BaseServerConfig(version={0}, url='flim')".format(
+                ver
+            ),
+        )
+        self.assertIn(repr(BaseServerConfig('flim', version='1')), targets)
+
+    def test_sc_v1(self):
+        """Test :class:`nailgun.config.ServerConfig`.
+
+        Assert that ``__repr__`` works correctly when only a URL is passed in.
+
+        """
+        target = "nailgun.config.ServerConfig(url='bogus')"
+        self.assertEqual(target, repr(ServerConfig('bogus')))
+        import nailgun  # noqa pylint:disable=unused-variable
+        # pylint:disable=eval-used
+        self.assertEqual(target, repr(eval(repr(ServerConfig('bogus')))))
+
+    def test_sc_v2(self):
+        """Test :class:`nailgun.config.ServerConfig`.
+
+        Assert that ``__repr__`` works correctly when ``url`` and ``auth`` are
+        specified.
+
+        """
+        targets = (
+            "nailgun.config.ServerConfig(url='flim', auth='flam')",
+            "nailgun.config.ServerConfig(auth='flam', url='flim')",
+        )
+        self.assertIn(repr(ServerConfig('flim', auth='flam')), targets)
+        import nailgun  # noqa pylint:disable=unused-variable
+        # pylint:disable=eval-used
+        self.assertIn(
+            repr(eval(repr(ServerConfig('flim', auth='flam')))),
+            targets
+        )
+
+    def test_sc_v3(self):
+        """Test :class:`nailgun.config.ServerConfig`.
+
+        Assert that ``__repr__`` works correctly when ``url`` and ``version``
+        are specified.
+
+        """
+        ver = repr(parse_version('1'))
+        targets = (
+            "nailgun.config.ServerConfig(url='flim', version={0})".format(ver),
+            "nailgun.config.ServerConfig(version={0}, url='flim')".format(ver),
+        )
+        self.assertIn(repr(ServerConfig('flim', version='1')), targets)
+
+    def test_sc_v4(self):
+        """Test :class:`nailgun.config.ServerConfig`.
+
+        Assert that ``__repr__`` works correctly when ``url`` and ``verify``
+        are specified.
+
+        """
+        targets = (
+            "nailgun.config.ServerConfig(url='flim', verify='flub')",
+            "nailgun.config.ServerConfig(verify='flub', url='flim')",
+        )
+        self.assertIn(repr(ServerConfig('flim', verify='flub')), targets)
+        import nailgun  # noqa pylint:disable=unused-variable
+        # pylint:disable=eval-used
+        self.assertIn(
+            repr(eval(repr(ServerConfig('flim', verify='flub')))),
+            targets
+        )
 
 
 def _get_written_json(mock_obj):

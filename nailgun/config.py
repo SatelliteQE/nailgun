@@ -107,6 +107,17 @@ class BaseServerConfig(object):
         if version is not None:
             self.version = parse_version(version)
 
+    def __repr__(self):
+        return '{0}.{1}({2})'.format(
+            self.__module__,
+            type(self).__name__,
+            ', '.join(
+                '{0}={1}'.format(key, repr(value))
+                for key, value
+                in vars(self).items()
+            )
+        )
+
     @classmethod
     def delete(cls, label='default', path=None):
         """Delete a server configuration.

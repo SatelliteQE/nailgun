@@ -84,12 +84,12 @@ class ClientTestCase(TestCase):
                 )
 
                 # Did the wrapper function pass the correct params to requests?
-                if meth in ('delete', 'get', 'head'):
+                if meth in ('delete', 'head'):
                     requests_meth.assert_called_once_with(
                         self.bogus_url,
                         headers={'content-type': 'application/json'}
                     )
-                elif meth in ('patch', 'put'):
+                elif meth in ('get', 'patch', 'put'):
                     requests_meth.assert_called_once_with(
                         self.bogus_url,
                         None,

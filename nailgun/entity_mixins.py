@@ -374,6 +374,18 @@ class Entity(object):
         attrs.pop('_fields')
         return attrs
 
+    def __repr__(self):
+        return '{0}.{1}({2}{3})'.format(
+            self.__module__,
+            type(self).__name__,
+            repr(self._server_config),
+            ''.join(
+                ', {0}={1}'.format(key, repr(value))
+                for key, value
+                in self.get_values().items()
+            )
+        )
+
 
 class EntityDeleteMixin(object):
     """A mixin that adds the ability to delete an entity."""

@@ -116,13 +116,13 @@ def head(url, **kwargs):
     return response
 
 
-def get(url, **kwargs):
+def get(url, params=None, **kwargs):
     """A wrapper for ``requests.get``."""
     _set_content_type(kwargs)
     if _content_type_is_json(kwargs) and kwargs.get('data') is not None:
         kwargs['data'] = dumps(kwargs['data'])
     _log_request('GET', url, kwargs)
-    response = requests.get(url, **kwargs)
+    response = requests.get(url, params, **kwargs)
     _log_response(response)
     return response
 
