@@ -31,6 +31,64 @@ This script demonstrates how to do the same *without* NailGun:
 
 .. literalinclude:: create_organization_plain.py
 
+Managing Server Configurations
+------------------------------
+
+In the example shown above, a :class:`nailgun.config.ServerConfig` object was
+created in the body of the script. However, inter-mixing configuration data and
+program logic in this manner is problematic:
+
+* Placing sensitive information in to a code-base puts that information at risk
+  of becoming public, especially when the code-base is version-controlled.
+* Server-specific configuration information is likely to change frequently.
+  Placing that information in to a code-base means subjecting that code-base to
+  unnecessary churn, making it harder for developers to find useful information
+  in a repository's change log.
+
+NailGun addresses this issue by providing full support for configuration files.
+Here's a simple example of how to create a pair of configuration objects, save
+them to disk, and read them back again::
+
+    >>> from nailgun.config import ServerConfig
+    >>> ServerConfig('http://sat1.example.com').save('sat1')
+    >>> ServerConfig('http://sat2.example.com').save('sat2')
+    >>> set(ServerConfig.get_labels()) == set(('sat1', 'sat2'))
+    True
+    >>> sat1_cfg = ServerConfig.get('sat1')
+    >>> sat2_cfg = ServerConfig.get('sat2')
+
+A label of "default" is used when saving or reading configuration objects if no
+explicit label is given. As a result, this is valid::
+
+    >>> from nailgun.config import ServerConfig
+    >>> ServerConfig('bogus url').save()
+    >>> ServerConfig.get().url == 'bogus url'
+    True
+
+The use of "default" is especially useful if you have created numerous server
+configurations, but only want to work with one at a time::
+
+    >>> from nailgun.config import ServerConfig
+    >>> ServerConfig.get('sat1').save()  # same as .save(label='default')
+
+In addition, if no server configuration object is specified when instantiating
+an :class:`nailgun.entity_mixins.Entity` object, the server configuration
+labeled "default" is used. With this in mind, here's a revised version of the
+first script in section `Simple`:
+
+.. literalinclude:: create_organization_nailgun_v2.py
+
+This works just fine in many use cases. But what if you do not want to save
+your server configuration to disk? This might be the case if multiple processes
+are using NailGun and each process should default to communicating with a
+different default server, or if you are working with a read-only file system.
+In this case, you can use :data:`nailgun.entity_mixins.DEFAULT_SERVER_CONFIG`.
+
+NailGun handles other use cases, too. For example, the XDG base directory
+specification is obeyed, meaning that you can do things like provide a
+system-wide configuration file or place user configuration data in an alternate
+location. Read :mod:`nailgun.config` for full details.
+
 Advanced
 --------
 
