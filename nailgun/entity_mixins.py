@@ -582,26 +582,17 @@ class EntityCreateMixin(object):
             if field.required and not hasattr(self, field_name):
                 # Most `gen_value` methods return a value such as an integer,
                 # string or dictionary, but OneTo{One,Many}Field.gen_value
-                # returns the referenced class. Thus, for foreign key fields,
-                # this is possible:
-                #
-                #     value = field.gen_value()().create()
-                #
-                # However, `create` is more susceptible to unexpected data
-                # returned by the server. This is expecially problematic so
-                # long as NailGun has no facility for dealing with different
-                # server API versions. Until then, the more kludgy
-                # `create_json` is used.
+                # returns the referenced class.
                 if hasattr(field, 'default'):
                     value = field.default
                 elif hasattr(field, 'choices'):
                     value = gen_choice(field.choices)
                 elif isinstance(field, OneToOneField):
-                    value = field.gen_value()()
-                    value.id = field.gen_value()().create_json()['id']
+                    value = field.gen_value()(self._server_config).create(True)
                 elif isinstance(field, OneToManyField):
-                    value = [field.gen_value()()]
-                    value[0].id = field.gen_value()().create_json()['id']
+                    value = [
+                        field.gen_value()(self._server_config).create(True)
+                    ]
                 else:
                     value = field.gen_value()
                 setattr(self, field_name, value)
