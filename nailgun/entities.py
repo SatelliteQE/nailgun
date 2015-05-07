@@ -1148,8 +1148,20 @@ class Domain(
         """
         return {u'domain': super(Domain, self).create_payload()}
 
+    def create(self, create_missing=True):
+        """Manually fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1219654
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1219654>`_.
+
+        """
+        return Domain(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
+
     def read(self, entity=None, attrs=None, ignore=()):
-        """Deal with weirdly named data returned frmo the server.
+        """Deal with weirdly named data returned from the server.
 
         When creating a domain, the server accepts a list named
         ``domain_parameters_attributes``. When reading a domain, the server
@@ -1171,7 +1183,7 @@ class Environment(
         self._fields = {
             'name': entity_fields.StringField(
                 required=True,
-                str_type=('alpha', 'numeric', 'alphanumeric'),
+                str_type='alphanumeric',  # cannot contain whitespace
             ),
         }
         super(Environment, self).__init__(server_config, **kwargs)
@@ -1531,9 +1543,9 @@ class Host(  # pylint:disable=too-many-instance-attributes
         like this::
 
                  .-> medium --------.
-                 |-> architecture <-V--.
-            host --> operating system -|
-                 |-> partition table <-'
+                 |-> architecture <-V-.
+            host --> operatingsystem -|
+                 |-> ptable <---------'
                  |-> domain
                  '-> environment
 
@@ -1550,37 +1562,19 @@ class Host(  # pylint:disable=too-many-instance-attributes
         self.root_pass = self._fields['root_pass'].gen_value()
 
         # Flesh out the dependency graph shown in the docstring.
-        self.domain = Domain(
-            self._server_config,
-            id=Domain(self._server_config).create_json()['id']
-        )
-        self.environment = Environment(
-            self._server_config,
-            id=Environment(self._server_config).create_json()['id']
-        )
-        self.architecture = Architecture(
-            self._server_config,
-            id=Architecture(self._server_config).create_json()['id']
-        )
-        self.ptable = PartitionTable(
-            self._server_config,
-            id=PartitionTable(self._server_config).create_json()['id']
-        )
+        self.domain = Domain(self._server_config).create(True)
+        self.environment = Environment(self._server_config).create(True)
+        self.architecture = Architecture(self._server_config).create(True)
+        self.ptable = PartitionTable(self._server_config).create(True)
         self.operatingsystem = OperatingSystem(
             self._server_config,
-            id=OperatingSystem(
-                self._server_config,
-                architecture=[self.architecture],
-                ptable=[self.ptable],
-            ).create_json()['id']
-        )
+            architecture=[self.architecture],
+            ptable=[self.ptable],
+        ).create(True)
         self.medium = Media(
             self._server_config,
-            id=Media(
-                self._server_config,
-                operatingsystem=[self.operatingsystem]
-            ).create_json()['id']
-        )
+            operatingsystem=[self.operatingsystem]
+        ).create(True)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -1800,10 +1794,10 @@ class Location(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
         }
 
     def create(self, create_missing=True):
-        """Creating a Location does not return a complete set of attributes.
+        """Manually fetch a complete set of attributes for this entity.
 
-        We need to GET the entity in order to return a complete Location
-        entity.
+        For more information, see `Bugzilla #1216236
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1216236>`_.
 
         """
         attrs = self.create_json(create_missing)
@@ -1872,6 +1866,18 @@ class Media(
 
         """
         return {u'medium': super(Media, self).create_payload()}
+
+    def create(self, create_missing=True):
+        """Manually fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1219653
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1219653>`_.
+
+        """
+        return Media(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
 
     class Meta(object):
         """Non-field information about this entity."""
