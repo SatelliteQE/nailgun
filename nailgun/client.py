@@ -16,11 +16,39 @@ Each function is modified with the following behaviours:
 
 """
 from json import dumps
+from warnings import simplefilter
 import logging
 import requests
 
 
 logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
+
+# The urllib3 module (which requests uses) refuses to make insecure HTTPS
+# connections. You can override this behaviour by passing `verify=False` to any
+# of its methods. For example:
+#
+#     requests.get('https://insecure.example.com', verify=False)
+#
+# However, urllib3 will still raise an InsecureRequestWarning if this is done.
+# This is problematic. If a user has explicitly stated that they want HTTPS
+# connections to be made and we are pestering the user with warnings about that
+# fact, then we are effectively training the user to ignore warnings. The
+# statement below filters out that warning.
+#
+# The urllib3 module will still refuse to make HTTPS connections if
+# `verify=True`. In other words, the use of a warning filter does not affect
+# whether urllib3 enforces the security of HTTPS connections.
+#
+# Unfortunately, Python's warnings system is process-wide. Imagine an
+# application which uses both NailGun and some other library, and imagine that
+# the other library generates `InsecureRequestWarning`s. NailGun will filter
+# out the warnings produced by that library, due to the process-wide nature of
+# Python's warnings and filter system. The `warnings.catch_warnings` context
+# manager is not a good solution to this problem, as it is thread-unsafe.
+simplefilter(
+    'ignore',
+    requests.packages.urllib3.exceptions.InsecureRequestWarning,
+)
 
 
 def _content_type_is_json(kwargs):
