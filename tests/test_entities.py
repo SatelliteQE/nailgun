@@ -14,7 +14,7 @@ class PathTestCase(TestCase):
     """Tests for extensions of :meth:`nailgun.entity_mixins.Entity.path`."""
     longMessage = True
 
-    def setUp(self):  # pylint:disable=invalid-name
+    def setUp(self):
         """Set ``self.server_config`` and ``self.id_``."""
         self.server_config = config.ServerConfig('http://example.com')
         self.id_ = gen_integer(min_value=1)
@@ -231,7 +231,7 @@ class CreatePayloadTestCase(TestCase):
     """
 
     @classmethod
-    def setUpClass(cls):  # pylint:disable=invalid-name
+    def setUpClass(cls):
         """Set ``cls.server_config``."""
         cls.server_config = config.ServerConfig('http://example.com')
 
@@ -282,7 +282,7 @@ class CreatePayloadTestCase(TestCase):
 class OrganizationTestCase(TestCase):
     """Tests for :class:`nailgun.entities.Organization`."""
 
-    def setUp(self):  # pylint:disable=invalid-name
+    def setUp(self):
         """Set ``self.server_config`` and ``self.entity_id``."""
         self.server_config = config.ServerConfig(
             'http://example.com',
@@ -342,3 +342,59 @@ class OrganizationTestCase(TestCase):
                 id=self.entity_id,
             ).subscriptions()
             self.assertEqual(response, [])
+
+
+class VersionTestCase(TestCase):
+    """Tests for entities that vary based on the server's software version."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Create several server configs with different versions."""
+        super(VersionTestCase, cls).setUpClass()
+        cls.cfg_608 = config.ServerConfig('bogus url', version='6.0.8')
+        cls.cfg_610 = config.ServerConfig('bogus url', version='6.1.0')
+
+    def test_repository_fields(self):
+        """Check :class:`nailgun.entities.Repository`'s fields.
+
+        Assert that ``Repository`` has fields named "docker_upstream_name" and
+        "checksum_type", and that "docker" is a choice for the "content_type"
+        field starting with version 6.1.
+
+        """
+        repo_608 = entities.Repository(self.cfg_608)
+        repo_610 = entities.Repository(self.cfg_610)
+        for field_name in ('docker_upstream_name', 'checksum_type'):
+            self.assertNotIn(field_name, repo_608.get_fields())
+            self.assertIn(field_name, repo_610.get_fields())
+        self.assertNotIn(
+            'docker',
+            repo_608.get_fields()['content_type'].choices
+        )
+        self.assertIn('docker', repo_610.get_fields()['content_type'].choices)
+
+    def test_subnet_fields(self):
+        """Check :class:`nailgun.entities.Subnet`'s fields.
+
+        Assert that ``Subnet`` has the following fields starting in version
+        6.1:
+
+        * boot_mode
+        * dhcp
+        * dns
+        * location
+        * organization
+        * tftp
+
+        """
+        subnet_608 = entities.Subnet(self.cfg_608)
+        subnet_610 = entities.Subnet(self.cfg_610)
+        for field_name in (
+                'boot_mode',
+                'dhcp',
+                'dns',
+                'location',
+                'organization',
+                'tftp'):
+            self.assertNotIn(field_name, subnet_608.get_fields())
+            self.assertIn(field_name, subnet_610.get_fields())
