@@ -149,7 +149,7 @@ class BaseServerConfig(object):
 
     @classmethod
     def get(cls, label='default', path=None):
-        """Get a server configuration.
+        """Read a server configuration from a configuration file.
 
         :param label: A string. The configuration identified by ``label`` is
             read.
@@ -276,7 +276,10 @@ class ServerConfig(BaseServerConfig):
 
     @classmethod
     def get(cls, label='default', path=None):
-        """If ``auth`` is a two element list, convert it to a tuple.
+        """Read a server configuration from a configuration file.
+
+        This method extends :meth:`nailgun.config.BaseServerConfig.get`. Please
+        read up on that method before trying to understand this one.
 
         The entity classes rely on the requests library to be a transport
         mechanism. The methods provided by that library, such as ``get`` and
@@ -285,12 +288,13 @@ class ServerConfig(BaseServerConfig):
             Auth tuple to enable Basic/Digest/Custom HTTP Auth.
 
         However, the JSON decoder does not recognize a tuple as a type, and
-        represents sequences of elements as a tuple. Compensate for that.
+        represents sequences of elements as a tuple. Compensate for that by
+        converting ``auth`` to a two element tuple if it is a two element list.
 
         This override is done here, and not in the base class, because the base
         class may be extracted out into a separate library and used in other
         contexts. In those contexts, the presence of a list may not matter or
-        may be desireable.
+        may be desirable.
 
         """
         config = super(ServerConfig, cls).get(label, path)
