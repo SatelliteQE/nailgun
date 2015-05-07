@@ -43,8 +43,10 @@ class ManyRelatedEntity(entity_mixins.Entity):
 
 
 class EntityWithDelete(entity_mixins.Entity, entity_mixins.EntityDeleteMixin):
-    """
-    An entity inheriting from :class:`nailgun.entity_mixins.EntityDeleteMixin`.
+    """An entity that can be deleted.
+
+    This entity inherits from :class:`nailgun.entity_mixins.EntityDeleteMixin`.
+
     """
 
     class Meta(object):
@@ -54,8 +56,10 @@ class EntityWithDelete(entity_mixins.Entity, entity_mixins.EntityDeleteMixin):
 
 
 class EntityWithRead(entity_mixins.Entity, entity_mixins.EntityReadMixin):
-    """
-    An entity inheriting from :class:`nailgun.entity_mixins.EntityReadMixin`.
+    """An entity that can be read.
+
+    This entity inherits from :class:`nailgun.entity_mixins.EntityReadMixin`.
+
     """
 
     def __init__(self, server_config=None, **kwargs):
@@ -75,9 +79,11 @@ class EntityWithCreateRead(
         entity_mixins.Entity,
         entity_mixins.EntityCreateMixin,
         entity_mixins.EntityReadMixin):
-    """
-    An entity inheriting from :class:`nailgun.entity_mixins.EntityCreateMixin`
+    """An entity that can be created and read.
+
+    This entity inherits from :class:`nailgun.entity_mixins.EntityCreateMixin`
     and :class:`nailgun.entity_mixins.EntityReadMixin`.
+
     """
 
     def __init__(self, server_config=None, **kwargs):
@@ -458,3 +464,41 @@ class EntityDeleteMixinTestCase(unittest.TestCase):
             self.assertIsInstance(entity, EntityWithCreateRead)
             self.assertEqual(entity.id, self.entity_id)
             self.assertEqual(entity.integer_field, arbitrary_integer)
+
+    def test_create_missing(self):
+        """Test :meth:`nailgun.entity_mixins.EntityCreateMixin.create_missing`.
+
+        Assert that ``create_missing`` passes ``self._server_config`` to
+        generated entities.
+
+        """
+
+        class FKEntityWithCreateRead(
+                entity_mixins.Entity,
+                entity_mixins.EntityCreateMixin,
+                entity_mixins.EntityReadMixin):
+            """An entity that can be created and read and has a FK field."""
+
+            def __init__(self, server_config=None, **kwargs):
+                self._fields = {
+                    'one_to_many': OneToManyField(SampleEntity, required=True),
+                    'one_to_one': OneToOneField(SampleEntity, required=True),
+                }
+                super(FKEntityWithCreateRead, self).__init__(
+                    server_config,
+                    **kwargs
+                )
+
+        entity = FKEntityWithCreateRead(self.server_config)
+        with mock.patch.object(OneToOneField, 'gen_value') as gen_value_1:
+            with mock.patch.object(OneToManyField, 'gen_value') as gen_value_2:
+                entity.create_missing()
+        for mock_gen_value in (gen_value_1, gen_value_2):
+            self.assertEqual(
+                mock_gen_value.mock_calls,
+                [
+                    mock.call(),  # gen_value() returns a class. The class is
+                    mock.call()(self.server_config),  # instantiated, and
+                    mock.call()().create(True),  # create(True) is called.
+                ]
+            )
