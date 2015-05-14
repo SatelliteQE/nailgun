@@ -515,11 +515,6 @@ class EntityReadMixin(object):
         if attrs is None:
             attrs = self.read_json()
 
-        # Rename fields using entity.Meta.api_names, if present.
-        if hasattr(entity.Meta, 'api_names'):
-            for local_name, remote_name in entity.Meta.api_names.items():
-                attrs[local_name] = attrs.pop(remote_name)
-
         # The server returns OneToOneFields as a hash of attributes, like so:
         #
         #     {'name': 'Alice Hayworth', 'login': 'ahayworth', 'id': 1}
@@ -600,22 +595,18 @@ class EntityCreateMixin(object):
     def create_payload(self):
         """Create a payload that can be POSTed to the server.
 
-        Make a copy of the instance attributes on ``self``. This payload will
-        be POSTed to the server. Then change the payload's keys. (The payload
-        is a dict.) Rename keys using ``self.Meta.api_names`` if it is present
-        and append "_id" and "_ids" as appropriate.
+        Create a payload of values by copying the instance attributes on
+        ``self`` and appending "_id" and "_ids" on to key names for each
+        ``OneToOneField`` and ``OneToManyField``. Then POST this payload to the
+        server.
 
         :return: A dict. A copy of the instance attributes on ``self``, with
             key names adjusted as appropriate.
 
         """
         data = self.get_values().copy()
-        api_names = getattr(self.Meta, 'api_names', {})
         for field_name, field in self.get_fields().items():
             if field_name in data:
-                if field_name in api_names:
-                    # e.g. rename filter_type to type for ContentViewFilter
-                    data[api_names[field_name]] = data.pop(field_name)
                 if isinstance(field, OneToOneField):
                     data[field_name + '_id'] = data.pop(field_name).id
                 elif isinstance(field, OneToManyField):

@@ -844,7 +844,7 @@ class ContentViewFilter(Entity):
                 ContentView,
                 required=True
             ),
-            'filter_type': entity_fields.StringField(required=True),
+            'type': entity_fields.StringField(required=True),
             'inclusion': entity_fields.BooleanField(),
             'name': entity_fields.StringField(required=True),
             'original_packages': entity_fields.BooleanField(),
@@ -854,7 +854,6 @@ class ContentViewFilter(Entity):
 
     class Meta(object):
         """Non-field information about this entity."""
-        api_names = {'filter_type': 'type'}
         api_path = 'katello/api/v2/content_view_filters'
         # Alternative path
         #
@@ -1471,7 +1470,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
                 Architecture,
                 null=True,
             ),
-            'build_': entity_fields.BooleanField(null=True),
+            'build': entity_fields.BooleanField(null=True),
             'capabilities': entity_fields.StringField(null=True),
             'compute_profile': entity_fields.OneToOneField(
                 ComputeProfile,
@@ -1523,7 +1522,6 @@ class Host(  # pylint:disable=too-many-instance-attributes
 
     class Meta(object):
         """Non-field information about this entity."""
-        api_names = {'build_': 'build'}
         api_path = 'api/v2/hosts'
         server_modes = ('sat')
 
@@ -1644,7 +1642,7 @@ class Interface(Entity):
         self._fields = {
             'domain': entity_fields.OneToOneField(Domain, null=True),
             'host': entity_fields.OneToOneField(Host, required=True),
-            'interface_type': entity_fields.StringField(required=True),
+            'type': entity_fields.StringField(required=True),
             'ip': entity_fields.IPAddressField(required=True),
             'mac': entity_fields.MACAddressField(required=True),
             'name': entity_fields.StringField(required=True),
@@ -1657,7 +1655,6 @@ class Interface(Entity):
 
     class Meta(object):
         """Non-field information about this entity."""
-        api_names = {'interface_type': 'type'}
         api_path = 'api/v2/hosts/:host_id/interfaces'
         server_modes = ('sat')
 
@@ -1814,11 +1811,16 @@ class Location(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
 
 class Media(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
-    """A representation of a Media entity."""
+    """A representation of a Media entity.
+
+    .. NOTE:: The ``path_`` field is named as such due to a naming conflict
+        with :meth:`nailgun.entity_mixins.Entity.path`.
+
+    """
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'media_path': entity_fields.URLField(required=True),
+            'path_': entity_fields.URLField(required=True),
             'name': entity_fields.StringField(required=True),
             'operatingsystem': entity_fields.OneToManyField(
                 OperatingSystem,
@@ -1847,25 +1849,28 @@ class Media(
         super(Media, self).__init__(server_config, **kwargs)
 
     def create_missing(self):
-        """Give the 'media_path' instance attribute a value if it is unset.
+        """Give the ``path_`` instance attribute a value if it is unset.
 
         By default, :meth:`nailgun.entity_fields.URLField.gen_value` does not
         return especially unique values. This is problematic, as all media must
         have a unique path.
 
         """
-        if not hasattr(self, 'media_path'):
-            self.media_path = gen_url(subdomain=gen_alpha())
+        if not hasattr(self, 'path_'):
+            self.path_ = gen_url(subdomain=gen_alpha())
         return super(Media, self).create_missing()
 
     def create_payload(self):
-        """Wrap submitted data within an extra dict.
+        """Wrap submitted data within an extra dict and rename ``path_``.
 
-        For more information, see `Bugzilla #1151220
+        For more information on wrapping submitted data, see `Bugzilla #1151220
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {u'medium': super(Media, self).create_payload()}
+        payload = super(Media, self).create_payload()
+        if 'path_' in payload:
+            payload['path'] = payload.pop('path_')
+        return {u'medium': payload}
 
     def create(self, create_missing=True):
         """Manually fetch a complete set of attributes for this entity.
@@ -1879,10 +1884,16 @@ class Media(
             id=self.create_json(create_missing)['id'],
         ).read()
 
+    def read(self, entity=None, attrs=None, ignore=()):
+        """Rename ``path`` to ``path_``."""
+        if attrs is None:
+            attrs = self.read_json()
+        attrs['path_'] = attrs.pop('path')
+        return super(Media, self).read(entity, attrs, ignore)
+
     class Meta(object):
         """Non-field information about this entity."""
         api_path = 'api/v2/media'
-        api_names = {'media_path': 'path'}
         server_modes = ('sat')
 
 
@@ -2910,7 +2921,7 @@ class Subnet(
             'dns_primary': entity_fields.IPAddressField(null=True),
             'dns_secondary': entity_fields.IPAddressField(null=True),
             'domain': entity_fields.OneToManyField(Domain, null=True),
-            'from_': entity_fields.IPAddressField(null=True),
+            'from': entity_fields.IPAddressField(null=True),
             'gateway': entity_fields.StringField(null=True),
             'mask': entity_fields.NetmaskField(required=True),
             'name': entity_fields.StringField(required=True),
@@ -2961,7 +2972,6 @@ class Subnet(
     class Meta(object):
         """Non-field information about this entity."""
         api_path = 'api/v2/subnets'
-        api_names = {'from_': 'from'}
         server_modes = ('sat')
 
     def create_payload(self):
@@ -2978,6 +2988,8 @@ class Subscription(Entity):
     """A representation of a Subscription entity."""
 
     def __init__(self, server_config=None, **kwargs):
+        # NOTE: When making an HTTP POST call, `pool_uuid` must be renamed to
+        # `id`. This logic can be packed in to create_payload().
         self._fields = {
             'activation_key': entity_fields.OneToOneField(ActivationKey),
             'pool_uuid': entity_fields.StringField(),
@@ -2989,7 +3001,6 @@ class Subscription(Entity):
 
     class Meta(object):
         """Non-field information about this entity."""
-        api_names = {'pool_uuid': 'id'}
         api_path = 'katello/api/v2/subscriptions/:id'
         server_modes = ('sat', 'sam')
 
