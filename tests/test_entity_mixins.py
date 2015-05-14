@@ -1,5 +1,5 @@
 """Tests for :mod:`nailgun.entity_mixins`."""
-# (Too many public methods) pylint: disable=R0904
+# pylint:disable=too-many-public-methods
 #
 # Python 3.3 and later includes module `ipaddress` in the standard library. If
 # Robottelo ever moves past Python 2.x, that module should be used instead of
@@ -21,12 +21,8 @@ class SampleEntity(entity_mixins.Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {'name': StringField(), 'number': IntegerField()}
+        self._meta = {'api_path': 'foo'}
         super(SampleEntity, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field attributes for this entity."""
-        # pylint:disable=too-few-public-methods
-        api_path = 'foo'
 
 
 class ManyRelatedEntity(entity_mixins.Entity):
@@ -49,10 +45,9 @@ class EntityWithDelete(entity_mixins.Entity, entity_mixins.EntityDeleteMixin):
 
     """
 
-    class Meta(object):
-        """Non-field attributes for this entity."""
-        # pylint:disable=too-few-public-methods
-        api_path = ''
+    def __init__(self, server_config=None, **kwargs):
+        self._meta = {'api_path': ''}
+        super(EntityWithDelete, self).__init__(server_config, **kwargs)
 
 
 class EntityWithRead(entity_mixins.Entity, entity_mixins.EntityReadMixin):
@@ -67,12 +62,8 @@ class EntityWithRead(entity_mixins.Entity, entity_mixins.EntityReadMixin):
             'one_to_one': OneToOneField(SampleEntity),
             'one_to_many': OneToManyField(SampleEntity),
         }
+        self._meta = {'api_path': ''}
         super(EntityWithRead, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field attributes for this entity."""
-        # pylint:disable=too-few-public-methods
-        api_path = ''
 
 
 class EntityWithCreateRead(
@@ -88,12 +79,8 @@ class EntityWithCreateRead(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {'integer_field': IntegerField()}
+        self._meta = {'api_path': ''}
         super(EntityWithCreateRead, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field attributes for this entity."""
-        # pylint:disable=too-few-public-methods
-        api_path = ''
 
 
 # -----------------------------------------------------------------------------
@@ -103,7 +90,7 @@ class MakeEntityFromIdTestCase(unittest.TestCase):
     """Tests for :func:`nailgun.entity_mixins._make_entity_from_id`."""
     # pylint:disable=protected-access
 
-    def setUp(self):  # noqa pylint:disable=C0103
+    def setUp(self):
         """Set ``self.server_config``."""
         self.server_config = config.ServerConfig('example.com')
 
@@ -134,7 +121,7 @@ class MakeEntitiesFromIdsTestCase(unittest.TestCase):
     """Tests for ``_make_entity_from_ids``."""
     # pylint:disable=protected-access
 
-    def setUp(self):  # noqa pylint:disable=C0103
+    def setUp(self):
         """Set ``self.server_config``."""
         self.server_config = config.ServerConfig('example.com')
 
@@ -196,13 +183,9 @@ class MakeEntitiesFromIdsTestCase(unittest.TestCase):
 class EntityTestCase(unittest.TestCase):
     """Tests for :class:`nailgun.entity_mixins.Entity`."""
 
-    def setUp(self):  # noqa pylint:disable=C0103
-        """Set ``self.server_config`` and ``self.base_path``."""
+    def setUp(self):
+        """Set ``self.server_config``."""
         self.server_config = config.ServerConfig('http://example.com')
-        self.base_path = '{0}/{1}'.format(
-            self.server_config.url,
-            SampleEntity.Meta.api_path
-        )
 
     def test_entity_get_fields(self):
         """Test :meth:`nailgun.entity_mixins.Entity.get_fields`."""
@@ -232,17 +215,19 @@ class EntityTestCase(unittest.TestCase):
 
     def test_path(self):
         """Test :meth:`nailgun.entity_mixins.Entity.path`."""
-        self.assertEqual(
-            SampleEntity(self.server_config).path(),
-            self.base_path,
+        base_path = '{0}/{1}'.format(
+            self.server_config.url,
+            # pylint:disable=protected-access
+            SampleEntity(self.server_config)._meta['api_path']
         )
+        self.assertEqual(SampleEntity(self.server_config).path(), base_path)
         self.assertEqual(
             SampleEntity(self.server_config, id=5).path(),
-            self.base_path + '/5',
+            base_path + '/5',
         )
         self.assertEqual(
             SampleEntity(self.server_config, id=5).path('base'),
-            self.base_path,
+            base_path,
         )
         with self.assertRaises(entity_mixins.NoSuchPathError):
             SampleEntity(self.server_config).path('self')
@@ -326,7 +311,7 @@ class EntityTestCase(unittest.TestCase):
 class EntityDeleteMixinTestCase(unittest.TestCase):
     """Tests for entity mixin classes."""
 
-    def setUp(self):  # noqa pylint:disable=C0103
+    def setUp(self):
         """Set ``self.server_config`` and ``self.entity_id``."""
         # Example usage: SomeEntity(server_config, id=self.entity_id)
         self.server_config = config.ServerConfig(
