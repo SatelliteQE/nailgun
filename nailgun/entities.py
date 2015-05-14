@@ -41,9 +41,6 @@ if version_info.major == 2:
 else:
     from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
 
-# pylint:disable=too-few-public-methods
-# See NailGun issue #30: https://github.com/SatelliteQE/nailgun/issues/30
-
 # pylint:disable=too-many-lines
 # The size of this file is a direct reflection of the size of Satellite's API.
 # This file's size has already been significantly cut down through the use of
@@ -129,12 +126,11 @@ class ActivationKey(
             ),
             'unlimited_content_hosts': entity_fields.BooleanField(),
         }
+        self._meta = {
+            'api_path': 'katello/api/v2/activation_keys',
+            'server_modes': ('sat', 'sam'),
+        }
         super(ActivationKey, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/activation_keys'
-        server_modes = ('sat', 'sam')
 
     def read_raw(self):
         """Work around `Redmine #4638`_.
@@ -236,12 +232,11 @@ class Architecture(
                 null=True,
             ),
         }
+        self._meta = {
+            'api_path': 'api/v2/architectures',
+            'server_modes': ('sat'),
+        }
         super(Architecture, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/architectures'
-        server_modes = ('sat')
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -275,6 +270,10 @@ class AuthSourceLDAP(
             'attr_login': entity_fields.StringField(null=True),
             'attr_mail': entity_fields.EmailField(null=True),
         }
+        self._meta = {
+            'api_path': 'api/v2/auth_source_ldaps',
+            'server_modes': ('sat'),
+        }
         super(AuthSourceLDAP, self).__init__(server_config, **kwargs)
 
     def create_missing(self):
@@ -304,11 +303,6 @@ class AuthSourceLDAP(
         """Do not read the ``account_password`` attribute from the server."""
         return super(AuthSourceLDAP, self).read(entity, attrs, ignore)
 
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/auth_source_ldaps'
-        server_modes = ('sat')
-
 
 class Bookmark(Entity):
     """A representation of a Bookmark entity."""
@@ -320,12 +314,8 @@ class Bookmark(Entity):
             'public': entity_fields.BooleanField(null=True),
             'query': entity_fields.StringField(required=True),
         }
+        self._meta = {'api_path': 'api/v2/bookmarks', 'server_modes': ('sat')}
         super(Bookmark, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/bookmarks'
-        server_modes = ('sat')
 
 
 class CommonParameter(Entity):
@@ -336,12 +326,11 @@ class CommonParameter(Entity):
             'name': entity_fields.StringField(required=True),
             'value': entity_fields.StringField(required=True),
         }
+        self._meta = {
+            'api_path': 'api/v2/common_parameters',
+            'server_modes': ('sat'),
+        }
         super(CommonParameter, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/common_parameters'
-        server_modes = ('sat')
 
 
 class ComputeAttribute(Entity):
@@ -358,12 +347,11 @@ class ComputeAttribute(Entity):
                 required=True,
             ),
         }
+        self._meta = {
+            'api_path': 'api/v2/compute_attributes',
+            'server_modes': ('sat'),
+        }
         super(ComputeAttribute, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/compute_attributes'
-        server_modes = ('sat')
 
 
 class ComputeProfile(
@@ -374,12 +362,11 @@ class ComputeProfile(
         self._fields = {
             'name': entity_fields.StringField(required=True),
         }
+        self._meta = {
+            'api_path': 'api/v2/compute_profiles',
+            'server_modes': ('sat'),
+        }
         super(ComputeProfile, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/compute_profiles'
-        server_modes = ('sat')
 
 
 class ComputeResource(
@@ -418,12 +405,11 @@ class ComputeResource(
             'user': entity_fields.StringField(null=True),
             'uuid': entity_fields.StringField(null=True),
         }
+        self._meta = {
+            'api_path': 'api/v2/compute_resources',
+            'server_modes': ('sat'),
+        }
         super(ComputeResource, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/compute_resources'
-        server_modes = ('sat')
 
     def create_missing(self):
         """Customize the process of auto-generating instance attributes.
@@ -486,12 +472,11 @@ class ConfigGroup(Entity):
         self._fields = {
             'name': entity_fields.StringField(required=True),
         }
+        self._meta = {
+            'api_path': 'api/v2/config_groups',
+            'server_modes': ('sat'),
+        }
         super(ConfigGroup, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/config_groups'
-        server_modes = ('sat')
 
 
 class ConfigTemplate(
@@ -519,12 +504,11 @@ class ConfigTemplate(
                 null=True,
             ),
         }
+        self._meta = {
+            'api_path': 'api/v2/config_templates',
+            'server_modes': ('sat'),
+        }
         super(ConfigTemplate, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/config_templates'
-        server_modes = ('sat')
 
     def create_missing(self):
         """Customize the process of auto-generating instance attributes.
@@ -542,7 +526,10 @@ class ConfigTemplate(
             # use one of those instead of creating a new one on the fly.
             self.template_kind = TemplateKind(
                 self._server_config,
-                id=random.randint(1, TemplateKind.Meta.NUM_CREATED_BY_DEFAULT)
+                id=random.randint(
+                    # pylint:disable=protected-access
+                    1, TemplateKind()._meta['num_created_by_default']
+                )
             )
 
     def create_payload(self):
@@ -627,12 +614,11 @@ class AbstractDockerContainer(
             ),
             'tty': entity_fields.BooleanField(null=True),
         }
+        self._meta = {
+            'api_path': 'docker/api/v2/containers',
+            'server_modes': ('sat'),
+        }
         super(AbstractDockerContainer, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'docker/api/v2/containers'
-        server_modes = ('sat')
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -753,22 +739,27 @@ class ContentUpload(Entity):
                 required=True,
             )
         }
+        self._meta = {
+            'api_path': (
+                'katello/api/v2/repositories/:repository_id/content_uploads'
+            ),
+            'server_modes': ('sat'),
+        }
         super(ContentUpload, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = ('katello/api/v2/repositories/:repository_id/'
-                    'content_uploads')
-        server_modes = ('sat')
 
 
 class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
     """A representation of a Content View Version non-entity."""
 
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/content_view_versions'
-        server_modes = ('sat')
+    def __init__(self, server_config=None, **kwargs):
+        self._meta = {
+            'api_path': 'katello/api/v2/content_view_versions',
+            'server_modes': ('sat'),
+        }
+        super(ContentViewVersion, self).__init__(
+            server_config,
+            **kwargs
+        )
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -826,13 +817,14 @@ class ContentViewFilterRule(Entity):
             'types': entity_fields.ListField(),
             'version': entity_fields.StringField(),
         }
+        self._meta = {
+            'api_path': (
+                'katello/api/v2/content_view_filters/:content_view_filter_id/'
+                'rules'
+            ),
+            'server_modes': ('sat'),
+        }
         super(ContentViewFilterRule, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = ('katello/api/v2/content_view_filters/'
-                    ':content_view_filter_id/rules')
-        server_modes = ('sat')
 
 
 class ContentViewFilter(Entity):
@@ -850,15 +842,11 @@ class ContentViewFilter(Entity):
             'original_packages': entity_fields.BooleanField(),
             'repositories': entity_fields.OneToManyField(Repository),
         }
+        self._meta = {
+            'api_path': 'katello/api/v2/content_view_filters',
+            'server_modes': ('sat'),
+        }
         super(ContentViewFilter, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/content_view_filters'
-        # Alternative path
-        #
-        # '/katello/api/v2/content_views/:content_view_id/filters',
-        server_modes = ('sat')
 
 
 class ContentViewPuppetModule(
@@ -872,6 +860,8 @@ class ContentViewPuppetModule(
     """
 
     def __init__(self, server_config=None, **kwargs):
+        if 'content_view' not in kwargs:
+            raise TypeError('The "content_view" parameter must be provided.')
         self._fields = {
             'author': entity_fields.StringField(),
             'content_view': entity_fields.OneToOneField(
@@ -881,18 +871,13 @@ class ContentViewPuppetModule(
             'name': entity_fields.StringField(),
             'puppet_module': entity_fields.OneToOneField(PuppetModule),
         }
-        if 'content_view' not in kwargs:
-            raise TypeError(
-                'The "content_view" parameter must be provided.'
-            )
         super(ContentViewPuppetModule, self).__init__(server_config, **kwargs)
-        self.Meta.api_path = '{0}/content_view_puppet_modules'.format(
-            self.content_view.path('self')  # pylint:disable=no-member
-        )
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        server_modes = ('sat')
+        self._meta = {
+            'server_modes': ('sat'),
+            'api_path': '{0}/content_view_puppet_modules'.format(
+                self.content_view.path('self')  # pylint:disable=no-member
+            )
+        }
 
     def read(self, entity=None, attrs=None, ignore=('content_view',)):
         """Provide a default value for ``entity``.
@@ -952,15 +937,11 @@ class ContentView(
             ),
             'repository': entity_fields.OneToManyField(Repository),
         }
+        self._meta = {
+            'api_path': 'katello/api/v2/content_views',
+            'server_modes': ('sat'),
+        }
         super(ContentView, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/content_views'
-        # Alternative paths
-        #
-        # '/katello/api/v2/organizations/:organization_id/content_views',
-        server_modes = ('sat')
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -1119,12 +1100,8 @@ class Domain(
                 null=True,
             ),
         }
+        self._meta = {'api_path': 'api/v2/domains', 'server_modes': ('sat')}
         super(Domain, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/domains'
-        server_modes = ('sat')
 
     def create_missing(self):
         """Customize the process of auto-generating instance attributes.
@@ -1185,22 +1162,20 @@ class Environment(
                 str_type='alphanumeric',  # cannot contain whitespace
             ),
         }
+        self._meta = {
+            'api_path': 'api/v2/environments',
+            'server_modes': ('sat'),
+        }
         super(Environment, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/environments'
-        server_modes = ('sat')
 
 
 class Errata(Entity):
     """A representation of an Errata entity."""
     # You cannot create an errata. Errata are a read-only entity.
 
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/errata'
-        server_modes = ('sat')
+    def __init__(self, server_config=None, **kwargs):
+        self._meta = {'api_path': 'api/v2/errata', 'server_modes': ('sat')}
+        super(Errata, self).__init__(server_config, **kwargs)
 
 
 class Filter(
@@ -1218,21 +1193,19 @@ class Filter(
             'role': entity_fields.OneToOneField(Role, required=True),
             'search': entity_fields.StringField(null=True),
         }
+        self._meta = {'api_path': 'api/v2/filters', 'server_modes': ('sat')}
         super(Filter, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/filters'
-        server_modes = ('sat')
 
 
 class ForemanTask(Entity, EntityReadMixin):
     """A representation of a Foreman task."""
 
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'foreman_tasks/api/tasks'
-        server_modes = ('sat')
+    def __init__(self, server_config=None, **kwargs):
+        self._meta = {
+            'api_path': 'foreman_tasks/api/tasks',
+            'server_modes': ('sat'),
+        }
+        super(ForemanTask, self).__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -1299,12 +1272,11 @@ class GPGKey(
                 required=True,
             ),
         }
+        self._meta = {
+            'api_path': 'katello/api/v2/gpg_keys',
+            'server_modes': ('sat'),
+        }
         super(GPGKey, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/gpg_keys'
-        server_modes = ('sat')
 
 
 class HostClasses(Entity):
@@ -1318,12 +1290,11 @@ class HostClasses(Entity):
                 required=True,
             ),
         }
+        self._meta = {
+            'api_path': 'api/v2/hosts/:host_id/puppetclass_ids',
+            'server_modes': ('sat'),
+        }
         super(HostClasses, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/hosts/:host_id/puppetclass_ids'
-        server_modes = ('sat')
 
 
 class HostCollectionErrata(Entity):
@@ -1333,13 +1304,14 @@ class HostCollectionErrata(Entity):
         self._fields = {
             'errata': entity_fields.OneToManyField(Errata, required=True),
         }
+        self._meta = {
+            'api_path': (
+                'katello/api/v2/organizations/:organization_id/'
+                'host_collections/:host_collection_id/errata'
+            ),
+            'server_modes': ('sat'),
+        }
         super(HostCollectionErrata, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = ('katello/api/v2/organizations/:organization_id/'
-                    'host_collections/:host_collection_id/errata')
-        server_modes = ('sat')
 
 
 class HostCollectionPackage(Entity):
@@ -1350,13 +1322,14 @@ class HostCollectionPackage(Entity):
             'groups': entity_fields.ListField(),
             'packages': entity_fields.ListField(),
         }
+        self._meta = {
+            'api_path': (
+                'katello/api/v2/organizations/:organization_id/'
+                'host_collections/:host_collection_id/packages'
+            ),
+            'server_modes': ('sat'),
+        }
         super(HostCollectionPackage, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = ('katello/api/v2/organizations/:organization_id/'
-                    'host_collections/:host_collection_id/packages')
-        server_modes = ('sat')
 
 
 class HostCollection(
@@ -1375,12 +1348,11 @@ class HostCollection(
             'system': entity_fields.OneToManyField(System),
             'unlimited_content_hosts': entity_fields.BooleanField(),
         }
+        self._meta = {
+            'api_path': 'katello/api/v2/host_collections',
+            'server_modes': ('sat', 'sam'),
+        }
         super(HostCollection, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/host_collections'
-        server_modes = ('sat', 'sam')
 
     def read(self, entity=None, attrs=None, ignore=()):
         """Compensate for the unusual format of responses from the server.
@@ -1422,12 +1394,11 @@ class HostGroupClasses(Entity):
                 required=True,
             ),
         }
+        self._meta = {
+            'api_path': 'api/v2/hostgroups/:hostgroup_id/puppetclass_ids',
+            'server_modes': ('sat'),
+        }
         super(HostGroupClasses, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/hostgroups/:hostgroup_id/puppetclass_ids'
-        server_modes = ('sat')
 
 
 class HostGroup(Entity, EntityCreateMixin):
@@ -1452,12 +1423,8 @@ class HostGroup(Entity, EntityCreateMixin):
             'realm': entity_fields.OneToOneField(Realm, null=True),
             'subnet': entity_fields.OneToOneField(Subnet, null=True),
         }
+        self._meta = {'api_path': 'api/v2/hostgroups', 'server_modes': ('sat')}
         super(HostGroup, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/hostgroups'
-        server_modes = ('sat')
 
 
 class Host(  # pylint:disable=too-many-instance-attributes
@@ -1518,12 +1485,8 @@ class Host(  # pylint:disable=too-many-instance-attributes
             'sp_subnet': entity_fields.OneToOneField(Subnet, null=True),
             'subnet': entity_fields.OneToOneField(Subnet, null=True),
         }
+        self._meta = {'api_path': 'api/v2/hosts', 'server_modes': ('sat')}
         super(Host, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/hosts'
-        server_modes = ('sat')
 
     def create_missing(self):
         """Create a bogus managed host.
@@ -1627,12 +1590,11 @@ class Image(Entity):
             'username': entity_fields.StringField(required=True),
             'uuid': entity_fields.StringField(required=True),
         }
+        self._meta = {
+            'api_path': 'api/v2/compute_resources/:compute_resource_id/images',
+            'server_modes': ('sat'),
+        }
         super(Image, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/compute_resources/:compute_resource_id/images'
-        server_modes = ('sat')
 
 
 class Interface(Entity):
@@ -1651,12 +1613,11 @@ class Interface(Entity):
             'subnet': entity_fields.OneToOneField(Subnet, null=True),
             'username': entity_fields.StringField(null=True),
         }
+        self._meta = {
+            'api_path': 'api/v2/hosts/:host_id/interfaces',
+            'server_modes': ('sat'),
+        }
         super(Interface, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/hosts/:host_id/interfaces'
-        server_modes = ('sat')
 
 
 class LifecycleEnvironment(
@@ -1674,12 +1635,11 @@ class LifecycleEnvironment(
             ),
             'prior': entity_fields.OneToOneField(LifecycleEnvironment),
         }
+        self._meta = {
+            'api_path': 'katello/api/v2/environments',
+            'server_modes': ('sat'),
+        }
         super(LifecycleEnvironment, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/environments'
-        server_modes = ('sat')
 
     def create_payload(self):
         """Rename the payload key "prior_id" to "prior".
@@ -1772,12 +1732,8 @@ class Location(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
             'subnet': entity_fields.OneToManyField(Subnet, null=True),
             'user': entity_fields.OneToManyField(User, null=True),
         }
+        self._meta = {'api_path': 'api/v2/locations', 'server_modes': ('sat')}
         super(Location, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/locations'
-        server_modes = ('sat')
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -1846,6 +1802,7 @@ class Media(
                 null=True,
             ),
         }
+        self._meta = {'api_path': 'api/v2/media', 'server_modes': ('sat')}
         super(Media, self).__init__(server_config, **kwargs)
 
     def create_missing(self):
@@ -1891,11 +1848,6 @@ class Media(
         attrs['path_'] = attrs.pop('path')
         return super(Media, self).read(entity, attrs, ignore)
 
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/media'
-        server_modes = ('sat')
-
 
 class Model(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
@@ -1908,12 +1860,8 @@ class Model(
             'name': entity_fields.StringField(required=True),
             'vendor_class': entity_fields.StringField(null=True),
         }
+        self._meta = {'api_path': 'api/v2/models', 'server_modes': ('sat')}
         super(Model, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/models'
-        server_modes = ('sat')
 
 
 class OperatingSystem(
@@ -1955,12 +1903,11 @@ class OperatingSystem(
             'ptable': entity_fields.OneToManyField(PartitionTable),
             'release_name': entity_fields.StringField(null=True),
         }
+        self._meta = {
+            'api_path': 'api/v2/operatingsystems',
+            'server_modes': ('sat'),
+        }
         super(OperatingSystem, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/operatingsystems'
-        server_modes = ('sat')
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -1992,6 +1939,10 @@ class OperatingSystemParameter(
     """
 
     def __init__(self, server_config=None, **kwargs):
+        if 'operatingsystem' not in kwargs:
+            raise TypeError(
+                'The "operatingsystem" parameter must be provided.'
+            )
         self._fields = {
             'name': entity_fields.StringField(required=True),
             'operatingsystem': entity_fields.OneToOneField(
@@ -2000,14 +1951,13 @@ class OperatingSystemParameter(
             ),
             'value': entity_fields.StringField(required=True),
         }
-        if 'operatingsystem' not in kwargs:
-            raise TypeError(
-                'The "operatingsystem" parameter must be provided.'
-            )
         super(OperatingSystemParameter, self).__init__(server_config, **kwargs)
-        self.Meta.api_path = '{0}/parameters'.format(
-            self.operatingsystem.path('self')  # pylint:disable=no-member
-        )
+        self._meta = {
+            'api_path': '{0}/parameters'.format(
+                self.operatingsystem.path('self')  # pylint:disable=no-member
+            ),
+            'server_modes': ('sat'),
+        }
 
     def read(self, entity=None, attrs=None, ignore=('operatingsystem',)):
         """Provide a default value for ``entity``.
@@ -2049,12 +1999,11 @@ class Organization(
             'name': entity_fields.StringField(required=True),
             'title': entity_fields.StringField(),
         }
+        self._meta = {
+            'api_path': 'katello/api/v2/organizations',
+            'server_modes': ('sat', 'sam'),
+        }
         super(Organization, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/organizations'
-        server_modes = ('sat', 'sam')
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -2238,13 +2187,14 @@ class OSDefaultTemplate(Entity):
                 null=True
             ),
         }
+        self._meta = {
+            'api_path': (
+                'api/v2/operatingsystems/:operatingsystem_id/'
+                'os_default_templates'
+            ),
+            'server_modes': ('sat'),
+        }
         super(OSDefaultTemplate, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = ('api/v2/operatingsystems/:operatingsystem_id/'
-                    'os_default_templates')
-        server_modes = ('sat')
 
 
 class OverrideValue(Entity):
@@ -2256,19 +2206,17 @@ class OverrideValue(Entity):
             'smart_variable': entity_fields.OneToOneField(SmartVariable),
             'value': entity_fields.StringField(null=True),
         }
+        self._meta = {
+            'api_path': (
+                # Create an override value for a specific smart_variable
+                '/api/v2/smart_variables/:smart_variable_id/override_values',
+                # Create an override value for a specific smart class parameter
+                '/api/v2/smart_class_parameters/:smart_class_parameter_id/'
+                'override_values',
+            ),
+            'server_modes': ('sat'),
+        }
         super(OverrideValue, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        # NOTE: This is tricky. Overriding path() may be a solution.
-        api_path = (
-            # Create an override value for a specific smart_variable
-            '/api/v2/smart_variables/:smart_variable_id/override_values',
-            # Create an override value for a specific smart class parameter
-            '/api/v2/smart_class_parameters/:smart_class_parameter_id/'
-            'override_values',
-        )
-        server_modes = ('sat')
 
 
 class Permission(Entity, EntityReadMixin):
@@ -2279,12 +2227,11 @@ class Permission(Entity, EntityReadMixin):
             'name': entity_fields.StringField(required=True),
             'resource_type': entity_fields.StringField(required=True),
         }
+        self._meta = {
+            'api_path': 'api/v2/permissions',
+            'server_modes': ('sat', 'sam'),
+        }
         super(Permission, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/permissions'
-        server_modes = ('sat', 'sam')
 
     def search(self, per_page=10000):
         """Searches for permissions using the values for instance name and
@@ -2330,10 +2277,12 @@ class Permission(Entity, EntityReadMixin):
 class Ping(Entity):
     """A representation of a Ping entity."""
 
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/ping'
-        server_modes = ('sat', 'sam')
+    def __init__(self, server_config=None, **kwargs):
+        self._meta = {
+            'api_path': 'katello/api/v2/ping',
+            'server_modes': ('sat', 'sam'),
+        }
+        super(Ping, self).__init__(server_config, **kwargs)
 
 
 class Product(
@@ -2355,12 +2304,11 @@ class Product(
                 null=True
             ),
         }
+        self._meta = {
+            'api_path': 'katello/api/v2/products',
+            'server_modes': ('sat', 'sam'),
+        }
         super(Product, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/products'
-        server_modes = ('sat', 'sam')
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -2546,12 +2494,8 @@ class PartitionTable(
                 null=True,
             ),
         }
+        self._meta = {'api_path': 'api/v2/ptables', 'server_modes': ('sat')}
         super(PartitionTable, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/ptables'
-        server_modes = ('sat')
 
 
 class PuppetClass(
@@ -2562,12 +2506,11 @@ class PuppetClass(
         self._fields = {
             'name': entity_fields.StringField(required=True),
         }
+        self._meta = {
+            'api_path': 'api/v2/puppetclasses',
+            'server_modes': ('sat'),
+        }
         super(PuppetClass, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/puppetclasses'
-        server_modes = ('sat')
 
 
 class PuppetModule(Entity, EntityReadMixin):
@@ -2587,11 +2530,8 @@ class PuppetModule(Entity, EntityReadMixin):
             'summary': entity_fields.StringField(),
             'version': entity_fields.StringField(),
         }
+        self._meta = {'api_path': 'katello/api/v2/puppet_modules'}
         super(PuppetModule, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/puppet_modules'
 
     def read(self, entity=None, attrs=None, ignore=()):
         """Compensate for the pluralization of the ``repository`` field."""
@@ -2609,12 +2549,8 @@ class Realm(Entity):
             'name': entity_fields.StringField(required=True),
             'realm_type': entity_fields.StringField(required=True),
         }
+        self._meta = {'api_path': 'api/v2/realms', 'server_modes': ('sat')}
         super(Realm, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/realms'
-        server_modes = ('sat')
 
 
 class Report(Entity):
@@ -2626,12 +2562,8 @@ class Report(Entity):
             'logs': entity_fields.ListField(null=True),
             'reported_at': entity_fields.DateTimeField(required=True),
         }
+        self._meta = {'api_path': 'api/v2/reports', 'server_modes': ('sat')}
         super(Report, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/reports'
-        server_modes = ('sat')
 
 
 class Repository(
@@ -2671,6 +2603,10 @@ class Repository(
                 set(self._fields['content_type'].choices) - set(['docker'])
             ))
             del self._fields['checksum_type']
+        self._meta = {
+            'api_path': 'katello/api/v2/repositories',
+            'server_modes': ('sat'),
+        }
         super(Repository, self).__init__(server_config, **kwargs)
 
     def path(self, which=None):
@@ -2791,11 +2727,6 @@ class Repository(
             attrs['gpg_key'] = {'id': gpg_key_id}
         return super(Repository, self).read(entity, attrs, ignore)
 
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/repositories'
-        server_modes = ('sat')
-
 
 class RoleLDAPGroups(Entity):
     """A representation of a Role LDAP Groups entity."""
@@ -2804,12 +2735,11 @@ class RoleLDAPGroups(Entity):
         self._fields = {
             'name': entity_fields.StringField(required=True),
         }
+        self._meta = {
+            'api_path': 'katello/api/v2/roles/:role_id/ldap_groups',
+            'server_modes': ('sat', 'sam'),
+        }
         super(RoleLDAPGroups, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/roles/:role_id/ldap_groups'
-        server_modes = ('sat', 'sam')
 
 
 class Role(
@@ -2824,12 +2754,11 @@ class Role(
                 length=(2, 30),  # min length is 2 and max length is arbitrary
             )
         }
+        self._meta = {
+            'api_path': 'api/v2/roles',
+            'server_modes': ('sat', 'sam'),
+        }
         super(Role, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/roles'
-        server_modes = ('sat', 'sam')
 
 
 class SmartProxy(Entity, EntityReadMixin):
@@ -2840,12 +2769,11 @@ class SmartProxy(Entity, EntityReadMixin):
             'name': entity_fields.StringField(required=True),
             'url': entity_fields.URLField(required=True),
         }
+        self._meta = {
+            'api_path': 'api/v2/smart_proxies',
+            'server_modes': ('sat'),
+        }
         super(SmartProxy, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/smart_proxies'
-        server_modes = ('sat')
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -2895,21 +2823,22 @@ class SmartVariable(Entity):
             'variable': entity_fields.StringField(required=True),
             'variable_type': entity_fields.StringField(null=True),
         }
+        self._meta = {
+            'api_path': 'api/v2/smart_variables',
+            'server_modes': ('sat'),
+        }
         super(SmartVariable, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/smart_variables'
-        server_modes = ('sat')
 
 
 class Status(Entity):
     """A representation of a Status entity."""
 
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/status'
-        server_modes = ('sat')
+    def __init__(self, server_config=None, **kwargs):
+        self._meta = {
+            'api_path': 'katello/api/v2/status',
+            'server_modes': ('sat'),
+        }
+        super(Status, self).__init__(server_config, **kwargs)
 
 
 class Subnet(
@@ -2967,12 +2896,8 @@ class Subnet(
                 SmartProxy,
                 null=True,
             )
+        self._meta = {'api_path': 'api/v2/subnets', 'server_modes': ('sat')}
         super(Subnet, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/subnets'
-        server_modes = ('sat')
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -2997,12 +2922,11 @@ class Subscription(Entity):
             'subscriptions': entity_fields.OneToManyField(Subscription),
             'system': entity_fields.OneToOneField(System),
         }
+        self._meta = {
+            'api_path': 'katello/api/v2/subscriptions/:id',
+            'server_modes': ('sat', 'sam'),
+        }
         super(Subscription, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/subscriptions/:id'
-        server_modes = ('sat', 'sam')
 
 
 class SyncPlan(
@@ -3016,6 +2940,8 @@ class SyncPlan(
     """
 
     def __init__(self, server_config=None, **kwargs):
+        if 'organization' not in kwargs:
+            raise TypeError('The "organization" parameter must be provided.')
         self._fields = {
             'description': entity_fields.StringField(),
             'enabled': entity_fields.BooleanField(required=True),
@@ -3030,12 +2956,11 @@ class SyncPlan(
             ),
             'sync_date': entity_fields.DateTimeField(required=True),
         }
-        if 'organization' not in kwargs:
-            raise TypeError('The "organization" parameter must be provided.')
         super(SyncPlan, self).__init__(server_config, **kwargs)
-        self.Meta.api_path = '{0}/sync_plans'.format(
-            self.organization.path()  # pylint:disable=no-member
-        )
+        self._meta = {
+            # pylint:disable=no-member
+            'api_path': '{0}/sync_plans'.format(self.organization.path()),
+        }
 
     def read(self, entity=None, attrs=None, ignore=('organization',)):
         """Provide a default value for ``entity``.
@@ -3145,12 +3070,11 @@ class SystemPackage(Entity):
             'packages': entity_fields.ListField(),
             'system': entity_fields.OneToOneField(System, required=True),
         }
+        self._meta = {
+            'api_path': 'katello/api/v2/systems/:system_id/packages',
+            'server_modes': ('sat'),
+        }
         super(SystemPackage, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/systems/:system_id/packages'
-        server_modes = ('sat')
 
 
 class System(
@@ -3186,15 +3110,11 @@ class System(
             # after this point.
             'type': entity_fields.StringField(default='system', required=True),
         }
+        self._meta = {
+            'api_path': 'katello/api/v2/systems',
+            'server_modes': ('sat', 'sam'),
+        }
         super(System, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'katello/api/v2/systems'
-        # Alternative paths.
-        # '/katello/api/v2/environments/:environment_id/systems'
-        # '/katello/api/v2/host_collections/:host_collection_id/systems'
-        server_modes = ('sat', 'sam')
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -3249,13 +3169,14 @@ class TemplateCombination(Entity):
             'environment': entity_fields.OneToOneField(Environment, null=True),
             'hostgroup': entity_fields.OneToOneField(HostGroup, null=True),
         }
+        self._meta = {
+            'api_path': (
+                'api/v2/config_templates/:config_template_id/'
+                'template_combinations'
+            ),
+            'server_modes': ('sat'),
+        }
         super(TemplateCombination, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = ('api/v2/config_templates/:config_template_id/'
-                    'template_combinations')
-        server_modes = ('sat')
 
 
 class TemplateKind(Entity, EntityReadMixin):
@@ -3264,12 +3185,13 @@ class TemplateKind(Entity, EntityReadMixin):
     Unusually, the ``/api/v2/template_kinds/:id`` path is totally unsupported.
 
     """
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/template_kinds'
-        server_modes = ('sat')
-        NUM_CREATED_BY_DEFAULT = 8
+    def __init__(self, server_config=None, **kwargs):
+        self._meta = {
+            'api_path': 'api/v2/template_kinds',
+            'num_created_by_default': 8,
+            'server_modes': ('sat'),
+        }
+        super(TemplateKind, self).__init__(server_config, **kwargs)
 
 
 class UserGroup(
@@ -3284,12 +3206,8 @@ class UserGroup(
             'user': entity_fields.OneToManyField(User, required=True),
             'usergroup': entity_fields.OneToManyField(UserGroup),
         }
+        self._meta = {'api_path': 'api/v2/usergroups', 'server_modes': ('sat')}
         super(UserGroup, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/usergroups'
-        server_modes = ('sat')
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -3369,12 +3287,11 @@ class User(
             'password': entity_fields.StringField(required=True),
             'role': entity_fields.OneToManyField(Role, null=True),
         }
+        self._meta = {
+            'api_path': 'api/v2/users',
+            'server_modes': ('sat', 'sam'),
+        }
         super(User, self).__init__(server_config, **kwargs)
-
-    class Meta(object):
-        """Non-field information about this entity."""
-        api_path = 'api/v2/users'
-        server_modes = ('sat', 'sam')
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.

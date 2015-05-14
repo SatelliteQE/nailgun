@@ -174,9 +174,9 @@ class Entity(object):
     * fields
     * metadata
 
-    Fields are represented by populating the ``_fields`` instance attribute,
-    and metadata is represented by settings attributes on the inner class named
-    ``Meta``. For example, consider this class definition:
+    Fields and metadata are represented by the ``_fields`` and ``_meta``
+    instance attributes, respectively. Here is an example of how to define and
+    instantiate an entity:
 
     >>> class User(Entity):
     ...     def __init__(self, server_config=None, **kwargs):
@@ -185,14 +185,9 @@ class Entity(object):
     ...             'supervisor': OneToOneField('User'),
     ...             'subordinate': OneToManyField('User'),
     ...         }
+    ...         self._meta = {'api_path': 'api/users'}
     ...         return super(User, self).__init__(server_config, **kwargs)
-    ...     class Meta(object):
-    ...         api_path = 'api/users'
-
-    In the example above, instance attribute ``User._fields`` defines fields
-    and class attribute ``Meta`` defines metadata. Here is one way to
-    instantiate the ``User`` object shown above:
-
+    ...
     >>> user = User(
     ...     name='Alice',
     ...     supervisor=User(id=1),
@@ -204,8 +199,8 @@ class Entity(object):
     True
 
     The canonical procedure for initializing foreign key fields, shown above,
-    is powerful but verbose. As an alternative, the following convenience is
-    offered:
+    is powerful but verbose. It is tiresome to write statements such as
+    ``[User(id=3), User(id=4)]``. As a convenience, entity IDs may be given:
 
     >>> User(name='Alice', supervisor=1, subordinate=[3, 4])
     >>> user.name == 'Alice'
@@ -222,10 +217,10 @@ class Entity(object):
        set, then that is used.
     3. Otherwise, call :meth:`nailgun.config.ServerConfig.get`.
 
-    This configuration object is stored as a private instance variable and is
-    used by mixin methods, such as :meth:`nailgun.entity_mixins.Entity.path`.
-    For more information on server configuration objects, see
-    :class:`nailgun.config.BaseServerConfig`.
+    An entity's server configuration is stored as a private instance variaable
+    and is used by mixin methods, such as
+    :meth:`nailgun.entity_mixins.Entity.path`. For more information on server
+    configuration objects, see :class:`nailgun.config.BaseServerConfig`.
 
     :raises nailgun.entity_mixins.NoSuchFieldError: If a value is assigned to a
         non-existent field.
@@ -243,11 +238,13 @@ class Entity(object):
         else:
             self._server_config = config.ServerConfig.get()
 
-        # Subclasses usually define a set of fields before calling `super`, but
-        # that's not always the case.
+        # Subclasses usually define a set of fields and metadata before calling
+        # `super`, but that's not always the case.
         if not hasattr(self, '_fields'):
             self._fields = {}
         self._fields.setdefault('id', IntegerField())
+        if not hasattr(self, '_meta'):
+            self._meta = {}
 
         # Check that a valid set of field values has been passed in.
         if not set(kwargs.keys()).issubset(self._fields.keys()):
@@ -287,15 +284,6 @@ class Entity(object):
             else:
                 setattr(self, field_name, field_value)
 
-    class Meta(object):  # pylint:disable=too-few-public-methods
-        """Non-field information about this entity.
-
-        This class is a convenient place to store any non-field information
-        about an entity. For example, the ``api_path`` variable is used by
-        :meth:`nailgun.entity_mixins.Entity.path`.
-
-        """
-
     def path(self, which=None):
         """Return the path to the current entity.
 
@@ -331,18 +319,19 @@ class Entity(object):
         :raises nailgun.entity_mixins.NoSuchPathError: If no path can be built.
 
         """
-        # It is OK that member ``self.Meta.api_path`` is not found. Subclasses
-        # are required to set that attribute if they wish to use this method.
+        # It is OK that member ``self._meta`` is not found. Subclasses are
+        # required to set that attribute if they wish to use this method.
         #
         # Beware of leading and trailing slashes:
         #
-        # urljoin('example.com', 'foo') => 'foo'
-        # urljoin('example.com/', 'foo') => 'example.com/foo'
-        # urljoin('example.com', '/foo') => '/foo'
-        # urljoin('example.com/', '/foo') => '/foo'
+        #     urljoin('example.com', 'foo') => 'foo'
+        #     urljoin('example.com/', 'foo') => 'example.com/foo'
+        #     urljoin('example.com', '/foo') => '/foo'
+        #     urljoin('example.com/', '/foo') => '/foo'
+        #
         base = urljoin(
             self._server_config.url + '/',
-            self.Meta.api_path  # pylint:disable=no-member
+            self._meta['api_path']  # pylint:disable=no-member
         )
         if which == 'base' or (which is None and not hasattr(self, 'id')):
             return base
@@ -372,6 +361,7 @@ class Entity(object):
         attrs = vars(self).copy()
         attrs.pop('_server_config')
         attrs.pop('_fields')
+        attrs.pop('_meta')
         return attrs
 
     def __repr__(self):
