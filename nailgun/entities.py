@@ -839,7 +839,7 @@ class ContentViewFilterRule(
         if attrs is None:
             attrs = self.read_json()
         # Field should be present in entity only if it was passed in attributes
-        for entity_field in entity._fields.keys():
+        for entity_field in entity.get_fields().keys():
             if entity_field not in attrs:
                 del entity._fields[entity_field]
         return super(ContentViewFilterRule, self).read(entity, attrs, ignore)
@@ -922,13 +922,14 @@ class ContentViewPuppetModule(
         Also, deal with the weirdly named "uuid" parameter.
 
         """
-        # `entity = self` also succeeds. However, the attributes of the object
-        # passed in will be clobbered. Passing in a new object allows this one
-        # to avoid changing state. The default implementation of `read` follows
-        # the same principle.
+        # read() should not change the state of the object it's called on, but
+        # super() alters the attributes of any entity passed in. Creating a new
+        # object and passing it to super() lets this one avoid changing state.
         if entity is None:
-            # pylint:disable=no-member
-            entity = type(self)(content_view=self.content_view.id)
+            entity = type(self)(
+                self._server_config,
+                content_view=self.content_view,  # pylint:disable=no-member
+            )
         if attrs is None:
             attrs = self.read_json()
         uuid = attrs.pop('uuid')
@@ -2000,13 +2001,14 @@ class OperatingSystemParameter(
             entity = type(self)(operatingsystem=self.operatingsystem.id)
 
         """
-        # `entity = self` also succeeds. However, the attributes of the object
-        # passed in will be clobbered. Passing in a new object allows this one
-        # to avoid changing state. The default implementation of
-        # `read` follows the same principle.
+        # read() should not change the state of the object it's called on, but
+        # super() alters the attributes of any entity passed in. Creating a new
+        # object and passing it to super() lets this one avoid changing state.
         if entity is None:
-            # pylint:disable=no-member
-            entity = type(self)(operatingsystem=self.operatingsystem.id)
+            entity = type(self)(
+                self._server_config,
+                operatingsystem=self.operatingsystem,  # pylint:disable=E1101
+            )
         return super(OperatingSystemParameter, self).read(
             entity,
             attrs,
@@ -3002,13 +3004,14 @@ class SyncPlan(
             entity = type(self)(organization=self.organization.id)
 
         """
-        # `entity = self` also succeeds. However, the attributes of the object
-        # passed in will be clobbered. Passing in a new object allows this one
-        # to avoid changing state. The default implementation of
-        # `read` follows the same principle.
+        # read() should not change the state of the object it's called on, but
+        # super() alters the attributes of any entity passed in. Creating a new
+        # object and passing it to super() lets this one avoid changing state.
         if entity is None:
-            # pylint:disable=no-member
-            entity = type(self)(organization=self.organization.id)
+            entity = type(self)(
+                self._server_config,
+                organization=self.organization,  # pylint:disable=no-member
+            )
         return super(SyncPlan, self).read(entity, attrs, ignore)
 
     def create_payload(self):

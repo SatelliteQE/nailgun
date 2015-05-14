@@ -2,7 +2,7 @@
 from ddt import data, ddt, unpack
 from fauxfactory import gen_integer
 from nailgun import client, config, entities
-from nailgun.entity_mixins import NoSuchPathError
+from nailgun.entity_mixins import EntityReadMixin, NoSuchPathError
 from sys import version_info
 from unittest import TestCase
 import mock
@@ -398,3 +398,36 @@ class VersionTestCase(TestCase):
                 'tftp'):
             self.assertNotIn(field_name, subnet_608.get_fields())
             self.assertIn(field_name, subnet_610.get_fields())
+
+
+class ReadTestCase(TestCase):
+    """Tests for :meth:`nailgun.entity_mixins.EntityReadMixin.read`."""
+
+    def setUp(self):
+        """Set a server configuration at ``self.cfg``."""
+        self.cfg = config.ServerConfig('http://example.com')
+
+    def test_sync_plan(self):
+        """Test :class:`nailgun.entities.SyncPlan`.
+
+        Make sure the class passes its own server configuration object ot the
+        object it creates.
+
+        """
+        for entity in (
+                entities.ContentViewFilterRule(
+                    self.cfg,
+                    content_view_filter=2,
+                ),
+                entities.ContentViewPuppetModule(self.cfg, content_view=2),
+                entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
+                entities.SyncPlan(self.cfg, organization=2),
+        ):
+            # We mock read_json() because it may be called by read().
+            with mock.patch.object(EntityReadMixin, 'read_json'):
+                with mock.patch.object(EntityReadMixin, 'read') as read:
+                    entity.read()
+            self.assertEqual(read.call_count, 1)
+            # read.call_args[0] is the tuple of arguments to read().
+            # pylint:disable=protected-access
+            self.assertEqual(read.call_args[0][0]._server_config, self.cfg)
