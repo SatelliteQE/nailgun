@@ -799,7 +799,8 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
         return _handle_response(response, self._server_config, synchronous)
 
 
-class ContentViewFilterRule(Entity):
+class ContentViewFilterRule(
+        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Content View Filter Rule entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -817,17 +818,35 @@ class ContentViewFilterRule(Entity):
             'types': entity_fields.ListField(),
             'version': entity_fields.StringField(),
         }
-        self._meta = {
-            'api_path': (
-                'katello/api/v2/content_view_filters/:content_view_filter_id/'
-                'rules'
-            ),
-            'server_modes': ('sat'),
-        }
         super(ContentViewFilterRule, self).__init__(server_config, **kwargs)
 
+        self._meta = {
+            'server_modes': ('sat'),
+            'api_path': '{0}/rules'.format(
+                # pylint:disable=no-member
+                self.content_view_filter.path('self')
+            )
+        }
 
-class ContentViewFilter(Entity):
+    def read(self, entity=None, attrs=None, ignore=('content_view_filter',)):
+        """Deal with redundant entity fields"""
+        if entity is None:
+            entity = type(self)(
+                self._server_config,
+                # pylint:disable=no-member
+                content_view_filter=self.content_view_filter,
+            )
+        if attrs is None:
+            attrs = self.read_json()
+        # Field should be present in entity only if it was passed in attributes
+        for entity_field in entity._fields.keys():
+            if entity_field not in attrs:
+                del entity._fields[entity_field]
+        return super(ContentViewFilterRule, self).read(entity, attrs, ignore)
+
+
+class ContentViewFilter(
+        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Content View Filter entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -840,13 +859,20 @@ class ContentViewFilter(Entity):
             'inclusion': entity_fields.BooleanField(),
             'name': entity_fields.StringField(required=True),
             'original_packages': entity_fields.BooleanField(),
-            'repositories': entity_fields.OneToManyField(Repository),
+            'repository': entity_fields.OneToManyField(Repository),
         }
         self._meta = {
             'api_path': 'katello/api/v2/content_view_filters',
             'server_modes': ('sat'),
         }
         super(ContentViewFilter, self).__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=()):
+        """Compensate for the pluralization of the ``repository`` field."""
+        if attrs is None:
+            attrs = self.read_json()
+        attrs['repositorys'] = attrs.pop('repositories')
+        return super(ContentViewFilter, self).read(entity, attrs, ignore)
 
 
 class ContentViewPuppetModule(
