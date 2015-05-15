@@ -1,3 +1,5 @@
+TEST_OPTIONS=-m unittest discover --start-directory tests --top-level-directory .
+
 help:
 	@echo "Please use \`make <target>' where <target> is one of:"
 	@echo "  help           to show this message"
@@ -23,7 +25,10 @@ lint:
 		docs/create_user_nailgun.py docs/create_user_plain.py
 
 test:
-	python -m unittest discover --start-directory tests --top-level-directory .
+	python $(TEST_OPTIONS)
+
+test-coverage:
+	coverage run --source nailgun $(TEST_OPTIONS)
 
 package:
 	./setup.py sdist bdist_wheel --universal

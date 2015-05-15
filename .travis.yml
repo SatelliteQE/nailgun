@@ -7,10 +7,12 @@ install:
     - pip install -r requirements.txt -r requirements-dev.txt
 script:
     - make lint
-    - make test
+    - make test-coverage
     - make docs-html
     - make docs-clean
     - make package
     - make package-clean
+after_success:
+    coveralls
 notifications:
     irc: "chat.freenode.net#robottelo"

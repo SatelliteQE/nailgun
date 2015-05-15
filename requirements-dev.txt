@@ -12,3 +12,6 @@ sphinx
 
 # For `make package`
 wheel
+
+# For code coverage
+coveralls
