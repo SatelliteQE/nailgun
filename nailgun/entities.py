@@ -719,14 +719,14 @@ class DockerHubContainer(AbstractDockerContainer):
     """A docker container that comes from Docker Hub."""
 
     def __init__(self, server_config=None, **kwargs):
-        self._fields = {
+        super(DockerHubContainer, self).__init__(server_config, **kwargs)
+        self._fields.update({
             'repository_name': entity_fields.StringField(
                 default='busybox',
                 required=True,
             ),
             'tag': entity_fields.StringField(required=True, default='latest'),
-        },
-        super(DockerHubContainer, self).__init__(server_config, **kwargs)
+        })
 
 
 class ContentUpload(Entity):
