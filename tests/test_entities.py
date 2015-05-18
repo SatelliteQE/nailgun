@@ -431,3 +431,37 @@ class ReadTestCase(TestCase):
             # read.call_args[0] is the tuple of arguments to read().
             # pylint:disable=protected-access
             self.assertEqual(read.call_args[0][0]._server_config, self.cfg)
+
+
+class AbstractDockerTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.AbstractDockerContainer`."""
+
+    def setUp(self):
+        """Set a server configuration at ``self.cfg``."""
+        self.cfg = config.ServerConfig('http://example.com')
+
+    def test_get_fields(self):
+        """Call ``nailgun.entity_mixins.Entity.get_fields``.
+
+        Assert that ``nailgun.entities.DockerHubContainer.get_fields`` returns
+        a dictionary of attributes that match what is returned by
+        ``nailgun.entities.AbstractDockerContainer.get_fields`` but also
+        returns extra attibutes unique to
+        :class:`nailgun.entities.DockerHubContainer`.
+
+        """
+        abstract_docker = entities.AbstractDockerContainer(
+            self.cfg
+        ).get_fields()
+        docker_hub = entities.DockerHubContainer(self.cfg).get_fields()
+        # Attributes should not match
+        self.assertNotEqual(abstract_docker, docker_hub)
+        # All attributes from a `entities.AbstractDockerContainer`
+        # should be found in a `entities.DockerHubContainer`.
+        for key in abstract_docker:
+            self.assertIn(key, docker_hub)
+        # These fields should be present in a `entities.DockerHubContainer`
+        # class but not in a `entities.AbstractDockerContainer` class.
+        for attr in ['repository_name', 'tag']:
+            self.assertIn(attr, docker_hub)
+            self.assertNotIn(attr, abstract_docker)
