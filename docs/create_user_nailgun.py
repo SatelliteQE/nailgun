@@ -46,9 +46,8 @@ def get_organization(server_config, label):
     """
     response = client.get(
         Organization(server_config).path(),
-        auth=server_config.auth,
         data={'search': 'label={}'.format(label)},
-        verify=server_config.verify,
+        **server_config.get_client_kwargs()
     )
     response.raise_for_status()
     decoded = response.json()

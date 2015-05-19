@@ -223,8 +223,7 @@ class ActivationKey(
         response = client.put(
             self.path('add_subscriptions'),
             params,
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
@@ -244,8 +243,7 @@ class ActivationKey(
                 'content_label': content_label,
                 'value': value,
             }},
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
@@ -714,8 +712,7 @@ class AbstractDockerContainer(
         response = client.put(
             self.path(which='power'),
             {u'power_action': power_action},
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
@@ -738,9 +735,8 @@ class AbstractDockerContainer(
             data['tail'] = tail
         response = client.get(
             self.path(which='logs'),
-            auth=self._server_config.auth,
             data=data,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
@@ -823,8 +819,7 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
         response = client.post(
             self.path('promote'),
             {u'environment_id': environment_id},
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 
@@ -1051,8 +1046,7 @@ class ContentView(
         response = client.post(
             self.path('publish'),
             {u'id': self.id},  # pylint:disable=no-member
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 
@@ -1066,8 +1060,7 @@ class ContentView(
         response = client.put(
             self.path(which='self'),
             {u'repository_ids': repo_ids},
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
@@ -1079,8 +1072,7 @@ class ContentView(
         """
         response = client.get(
             self.path('available_puppet_modules'),
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
@@ -1095,8 +1087,7 @@ class ContentView(
         response = client.post(
             self.path('content_view_puppet_modules'),
             {u'author': author, u'name': name},
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
@@ -1110,8 +1101,7 @@ class ContentView(
         response = client.post(
             self.path('copy'),
             {u'id': self.id, u'name': name},  # pylint:disable=no-member
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
@@ -1136,8 +1126,7 @@ class ContentView(
             environment_id = environment
         response = client.delete(
             '{0}/environments/{1}'.format(self.path(), environment_id),
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 
@@ -1736,13 +1725,12 @@ class LifecycleEnvironment(
                 not hasattr(self, 'prior')):
             response = client.get(
                 self.path('base'),
-                auth=self._server_config.auth,
                 data={
                     u'name': u'Library',
                     # pylint:disable=no-member
                     u'organization_id': self.organization.id,
                 },
-                verify=self._server_config.verify,
+                **self._server_config.get_client_kwargs()
             )
             response.raise_for_status()
             results = response.json()['results']
@@ -2106,8 +2094,7 @@ class Organization(
         """
         response = client.get(
             self.path('subscriptions'),
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         response.raise_for_status()
         return response.json()['results']
@@ -2138,9 +2125,8 @@ class Organization(
             response = client.post(
                 self.path('subscriptions/upload'),
                 data,
-                auth=self._server_config.auth,
                 files={'content': manifest},
-                verify=self._server_config.verify,
+                **self._server_config.get_client_kwargs()
             )
         return _handle_response(response, self._server_config, synchronous)
 
@@ -2163,8 +2149,7 @@ class Organization(
         """
         response = client.post(
             self.path('subscriptions/delete_manifest'),
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 
@@ -2187,8 +2172,7 @@ class Organization(
         """
         response = client.put(
             self.path('subscriptions/refresh_manifest'),
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 
@@ -2204,8 +2188,7 @@ class Organization(
         response = client.post(
             self.path('sync_plans'),
             {u'interval': interval, u'name': name, u'sync_date': sync_date},
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
@@ -2217,9 +2200,8 @@ class Organization(
         """
         response = client.get(
             self.path('products'),
-            auth=self._server_config.auth,
             data={u'per_page': per_page},
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         response.raise_for_status()
         return response.json()['results']
@@ -2321,9 +2303,8 @@ class Permission(Entity, EntityReadMixin):
 
         response = client.get(
             self.path('base'),
-            auth=self._server_config.auth,
             data=search_terms,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         response.raise_for_status()
         return response.json()['results']
@@ -2398,9 +2379,8 @@ class Product(
             org_label = attrs.pop('organization')['label']
             response = client.get(
                 Organization(self._server_config).path(),
-                auth=self._server_config.auth,
                 data={'search': 'label={0}'.format(org_label)},
-                verify=self._server_config.verify,
+                **self._server_config.get_client_kwargs()
             )
             response.raise_for_status()
             results = response.json()['results']
@@ -2429,9 +2409,8 @@ class Product(
         """
         response = client.get(
             self.path('repository_sets'),
-            auth=self._server_config.auth,
             data={u'per_page': per_page},
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         response.raise_for_status()
         return response.json()['results']
@@ -2450,9 +2429,8 @@ class Product(
         """
         response = client.get(
             self.path(which='base'),
-            auth=self._server_config.auth,
             data={u'organization_id': org_id, u'name': name},
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         response.raise_for_status()
         results = response.json()['results']
@@ -2476,9 +2454,8 @@ class Product(
         """
         response = client.get(
             self.path('repository_sets'),
-            auth=self._server_config.auth,
             data={u'name': name},
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         response.raise_for_status()
         results = response.json()['results']
@@ -2507,8 +2484,7 @@ class Product(
         response = client.put(
             self.path('repository_sets/{0}/enable'.format(reposet_id)),
             {u'basearch': base_arch, u'releasever': release_ver},
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 
@@ -2530,8 +2506,7 @@ class Product(
         response = client.put(
             self.path('repository_sets/{0}/disable'.format(reposet_id)),
             {u'basearch': base_arch, u'releasever': release_ver},
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 
@@ -2708,8 +2683,7 @@ class Repository(
         """
         response = client.post(
             self.path('sync'),
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 
@@ -2728,9 +2702,8 @@ class Repository(
         for _ in range(5):
             response = client.get(
                 self.path(which=None),
-                auth=self._server_config.auth,
                 data={u'organization_id': org_id, u'name': name},
-                verify=self._server_config.verify,
+                **self._server_config.get_client_kwargs()
             )
             response.raise_for_status()
             results = response.json()['results']
@@ -2757,9 +2730,8 @@ class Repository(
         """
         response = client.post(
             self.path('upload_content'),
-            auth=self._server_config.auth,
             files={'content': handle},
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         response.raise_for_status()
         response_json = response.json()
@@ -2858,8 +2830,7 @@ class SmartProxy(Entity, EntityReadMixin):
         response = client.put(
             self.path('refresh'),
             {},
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 
@@ -3088,8 +3059,7 @@ class SyncPlan(
         response = client.put(
             self.path('add_products'),
             {'product_ids': product_ids},
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 
@@ -3110,8 +3080,7 @@ class SyncPlan(
         response = client.put(
             self.path('remove_products'),
             {'product_ids': product_ids},
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 

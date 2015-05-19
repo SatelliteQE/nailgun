@@ -82,11 +82,7 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
             task_id
         )
         while True:
-            response = client.get(
-                path,
-                auth=server_config.auth,
-                verify=server_config.verify,
-            )
+            response = client.get(path, **server_config.get_client_kwargs())
             response.raise_for_status()
             task_info = response.json()
             if task_info['state'] != 'running':
@@ -390,8 +386,7 @@ class EntityDeleteMixin(object):
         """
         return client.delete(
             self.path(which='self'),
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
 
     def delete(self, synchronous=True):
@@ -443,8 +438,7 @@ class EntityReadMixin(object):
         """
         return client.get(
             self.path('self'),
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
 
     def read_json(self):
@@ -626,8 +620,7 @@ class EntityCreateMixin(object):
         return client.post(
             self.path('base'),
             self.create_payload(),
-            auth=self._server_config.auth,
-            verify=self._server_config.verify,
+            **self._server_config.get_client_kwargs()
         )
 
     def create_json(self, create_missing=None):

@@ -256,17 +256,24 @@ class ServerConfig(BaseServerConfig):
             self.verify = verify
 
     def get_client_kwargs(self):
-        """Get a dict of instance attributes, but with "url" omitted.
+        """Get kwargs for use with the methods in :mod:`nailgun.client`.
 
-        This method makes working with :mod:`nailgun.client` more pleasant.
-        Code such as the following can be written::
+        This method returns a dict of attributes that can be unpacked and used
+        as kwargs via the ``**`` operator. For example::
 
             cfg = ServerConfig.get()
             client.get(cfg.url + '/api/v2', **cfg.get_client_kwargs())
 
-        This method has been placed here to promote a better layering of
-        responsibilities: this class knows all about :mod:`nailgun.client`, and
-        :mod:`nailgun.client` knows nothing about this class.
+        This method is useful because client code may not know which attributes
+        should be passed from a ``ServerConfig`` object to one of the
+        ``nailgun.client`` functions. Consider that the example above could
+        also be written like this::
+
+            cfg = ServerConfig.get()
+            client.get(cfg.url + '/api/v2', auth=cfg.auth, verify=cfg.verify)
+
+        But this latter approach is more fragile. It will break if ``cfg`` does
+        not have an ``auth`` or ``verify`` attribute.
 
         """
         config = vars(self).copy()
