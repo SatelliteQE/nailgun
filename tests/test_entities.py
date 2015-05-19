@@ -240,19 +240,20 @@ class CreatePayloadTestCase(TestCase):
         entities_ = [
             (entity, {})
             for entity in (
+                entities.AbstractComputeResource,
+                entities.AbstractDockerContainer,
                 entities.Architecture,
                 entities.ConfigTemplate,
-                entities.AbstractDockerContainer,
                 entities.Domain,
-                entities.HostCollection,
                 entities.Host,
+                entities.HostCollection,
                 entities.LifecycleEnvironment,
                 entities.Location,
                 entities.Media,
                 entities.OperatingSystem,
                 entities.Subnet,
-                entities.UserGroup,
                 entities.User,
+                entities.UserGroup,
             )
         ]
         entities_.extend([
@@ -476,9 +477,11 @@ class ReadTestCase(TestCase):
             # pylint:disable=protected-access
             self.assertEqual(read.call_args[0][0]._server_config, self.cfg)
 
-    def test_attrs_arg(self):
+    def test_attrs_arg_v1(self):
         """Ensure ``read`` and ``read_json`` are both called once."""
         for entity in (
+                # entities.DockerComputeResource,  # see test_attrs_arg_v2
+                # entities.UserGroup,  # see test_attrs_arg_v2
                 entities.AbstractDockerContainer,
                 entities.ConfigTemplate,
                 entities.ContentView,
@@ -494,7 +497,6 @@ class ReadTestCase(TestCase):
                 entities.Repository,
                 entities.System,
                 entities.User,
-                # entities.UserGroup,  # see test_user_group
         ):
             with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
                 with mock.patch.object(EntityReadMixin, 'read') as read:
@@ -508,23 +510,30 @@ class ReadTestCase(TestCase):
                             self.assertEqual(read_json.call_count, 1)
                             self.assertEqual(read.call_count, 1)
 
-    def test_user_group(self):
+    def test_attrs_arg_v2(self):
         """Validate :meth:`nailgun.entities.UserGroup.read`.
 
         Check that the method calls ``read`` and ``read_json`` once, and that
         ``client.put`` is used to read the ``'admin'`` attribute.
 
         """
-        with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
-            read_json.return_value = {}
-            with mock.patch.object(EntityReadMixin, 'read') as read:
-                with mock.patch.object(client, 'put') as put:
-                    put.return_value.json.return_value = {'admin': 'foo'}
-                    entities.UserGroup(self.cfg, id=1).read()
-        self.assertEqual(read_json.call_count, 1)
-        self.assertEqual(read.call_count, 1)
-        self.assertEqual(put.call_count, 1)
-        self.assertEqual(read.call_args[0][1], {'admin': 'foo'})
+        # test_data is a single-use variable. We use it anyway for formatting
+        # purposes.
+        test_data = (
+            (entities.UserGroup(self.cfg, id=1), {'admin': 'foo'}),
+            (entities.DockerComputeResource(self.cfg, id=1), {'email': 'bar'}),
+        )
+        for entity, server_response in test_data:
+            with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
+                read_json.return_value = {}
+                with mock.patch.object(EntityReadMixin, 'read') as read:
+                    with mock.patch.object(client, 'put') as put:
+                        put.return_value.json.return_value = server_response
+                        entity.read()
+            self.assertEqual(read_json.call_count, 1)
+            self.assertEqual(read.call_count, 1)
+            self.assertEqual(put.call_count, 1)
+            self.assertEqual(read.call_args[0][1], server_response)
 
     def test_entity_ids(self):
         """Test cases where the server returns unusually named attributes.
@@ -643,13 +652,27 @@ class ReadTestCase(TestCase):
                 entity.read(attrs=attrs_before)
             self.assertEqual(read.call_args[0][1], attrs_after)
 
-    def test_ignore_arg(self):
-        """Call the ``read`` method on entities that ignore received values."""
-        attrs = {'account_password': None}
+    def test_ignore_arg_v1(self):
+        """Call :meth:`nailgun.entities.AuthSourceLDAP.read`.
+
+        Assert that the entity ignores the 'account_password' field.
+
+        """
         with mock.patch.object(EntityReadMixin, 'read') as read:
-            entities.AuthSourceLDAP(self.cfg).read(attrs=attrs)
+            entities.AuthSourceLDAP(self.cfg).read(attrs={})
         # read.call_args[0][2] is the `ignore` argument to read()
         self.assertIn('account_password', read.call_args[0][2])
+
+    def test_ignore_arg_v2(self):
+        """Call :meth:`nailgun.entities.DockerComputeResource.read`.
+
+        Assert that the entity ignores the 'password' field.
+
+        """
+        with mock.patch.object(EntityReadMixin, 'read') as read:
+            entities.DockerComputeResource(self.cfg).read(attrs={'email': 1})
+        # read.call_args[0][2] is the `ignore` argument to read()
+        self.assertIn('password', read.call_args[0][2])
 
 
 class AbstractDockerTestCase(TestCase):
@@ -709,6 +732,11 @@ class InitTestCase(TestCase):
         entities_ = [
             (entity, {})
             for entity in (
+                # entities.ContentViewFilterRule,  # see below
+                # entities.ContentViewPuppetModule,  # see below
+                # entities.OperatingSystemParameter,  # see below
+                # entities.SyncPlan,  # see below
+                entities.AbstractComputeResource,
                 entities.AbstractDockerContainer,
                 entities.ActivationKey,
                 entities.Architecture,
@@ -717,15 +745,13 @@ class InitTestCase(TestCase):
                 entities.CommonParameter,
                 entities.ComputeAttribute,
                 entities.ComputeProfile,
-                entities.ComputeResource,
                 entities.ConfigGroup,
                 entities.ConfigTemplate,
                 entities.ContentUpload,
                 entities.ContentView,
                 entities.ContentViewFilter,
-                # entities.ContentViewFilterRule,  # see below
-                # entities.ContentViewPuppetModule,  # see below
                 entities.ContentViewVersion,
+                entities.DockerComputeResource,
                 entities.DockerHubContainer,
                 entities.Domain,
                 entities.Environment,
@@ -742,13 +768,13 @@ class InitTestCase(TestCase):
                 entities.HostGroupClasses,
                 entities.Image,
                 entities.Interface,
+                entities.LibvirtComputeResource,
                 entities.LifecycleEnvironment,
                 entities.Location,
                 entities.Media,
                 entities.Model,
                 entities.OSDefaultTemplate,
                 entities.OperatingSystem,
-                # entities.OperatingSystemParameter,  # see below
                 entities.Organization,
                 entities.OverrideValue,
                 entities.PartitionTable,
@@ -767,7 +793,6 @@ class InitTestCase(TestCase):
                 entities.Status,
                 entities.Subnet,
                 entities.Subscription,
-                # entities.SyncPlan,  # see below
                 entities.System,
                 entities.SystemPackage,
                 entities.TemplateCombination,
