@@ -43,10 +43,16 @@ class SetContentTypeTestCase(TestCase):
         )
 
     def test_existing_value(self):
-        """Assert that an existing content-type is not overridden."""
+        """Assert that no content-type is provided if one is set."""
         kwargs = {'headers': {'content-type': ''}}
         client._set_content_type(kwargs)  # pylint:disable=protected-access
         self.assertEqual(kwargs, {'headers': {'content-type': ''}})
+
+    def test_files_in_kwargs(self):
+        """Assert that no content-type is provided if files are given."""
+        kwargs = {'files': None}
+        client._set_content_type(kwargs)  # pylint:disable=protected-access
+        self.assertEqual(kwargs, {'files': None})
 
 
 class ClientTestCase(TestCase):

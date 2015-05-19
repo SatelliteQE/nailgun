@@ -1,4 +1,5 @@
 """Tests for :mod:`nailgun.entities`."""
+from datetime import datetime
 from ddt import data, ddt, unpack
 from fauxfactory import gen_integer
 from nailgun import client, config, entities
@@ -216,7 +217,6 @@ class PathTestCase(TestCase):
             self.re_assertion(gen_path, 'systems$')
 
 
-@ddt
 class CreatePayloadTestCase(TestCase):
     """Tests for extensions of ``create_payload``.
 
@@ -232,50 +232,90 @@ class CreatePayloadTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """Set ``cls.server_config``."""
-        cls.server_config = config.ServerConfig('http://example.com')
+        """Set a server configuration at ``cls.cfg``."""
+        cls.cfg = config.ServerConfig('http://example.com')
 
-    @data(
-        entities.Architecture,
-        entities.ConfigTemplate,
-        entities.AbstractDockerContainer,
-        entities.Domain,
-        entities.HostCollection,
-        entities.Host,
-        entities.LifecycleEnvironment,
-        entities.Location,
-        entities.Media,
-        entities.OperatingSystem,
-        entities.Subnet,
-        entities.UserGroup,
-        entities.User,
-    )
-    def test_no_attributes(self, entity):
-        """Create an entity with no attributes."""
-        self.assertIsInstance(
-            entity(self.server_config).create_payload(),
-            dict
-        )
+    def test_no_attributes(self):
+        """Instantiate an entity and call ``create_payload`` on it."""
+        entities_ = [
+            (entity, {})
+            for entity in (
+                entities.Architecture,
+                entities.ConfigTemplate,
+                entities.AbstractDockerContainer,
+                entities.Domain,
+                entities.HostCollection,
+                entities.Host,
+                entities.LifecycleEnvironment,
+                entities.Location,
+                entities.Media,
+                entities.OperatingSystem,
+                entities.Subnet,
+                entities.UserGroup,
+                entities.User,
+            )
+        ]
+        entities_.extend([
+            (entities.SyncPlan, {'organization': 1}),
+            (entities.ContentViewPuppetModule, {'content_view': 1}),
+        ])
+        for entity, params in entities_:
+            if version_info < (3, 4):  # subTest() introduced in Python 3.4
+                self.assertIsInstance(
+                    entity(self.cfg, **params).create_payload(),
+                    dict
+                )
+            else:
+                with self.subTest(entity):  # pylint:disable=no-member
+                    self.assertIsInstance(
+                        entity(self.cfg, **params).create_payload(),
+                        dict
+                    )
 
     def test_sync_plan(self):
-        """Create a :class:`nailgun.entities.SyncPlan`."""
+        """Call ``create_payload`` on a :class:`nailgun.entities.SyncPlan`."""
         self.assertIsInstance(
             entities.SyncPlan(
-                self.server_config,
+                self.cfg,
                 organization=1,
-            ).create_payload(),
-            dict
+                sync_date=datetime.now(),
+            ).create_payload()['sync_date'],
+            type('')  # different for Python 2 and 3
         )
 
     def test_content_view_puppet_module(self):
         """Create a :class:`nailgun.entities.ContentViewPuppetModule`."""
-        self.assertIsInstance(
-            entities.ContentViewPuppetModule(
-                self.server_config,
-                content_view=1,
-            ).create_payload(),
-            dict
-        )
+        payload = entities.ContentViewPuppetModule(
+            self.cfg,
+            content_view=1,
+            puppet_module=2,
+        ).create_payload()
+        self.assertNotIn('puppet_module_id', payload)
+        self.assertIn('uuid', payload)
+
+    def test_host_collection(self):
+        """Create a :class:`nailgun.entities.HostCollection`."""
+        payload = entities.HostCollection(
+            self.cfg,
+            system=[1],
+        ).create_payload()
+        self.assertNotIn('system_ids', payload)
+        self.assertIn('system_uuids', payload)
+
+    def test_lifecycle_environment(self):
+        """Create a :class:`nailgun.entities.LifecycleEnvironment`."""
+        payload = entities.LifecycleEnvironment(
+            self.cfg,
+            prior=1,
+        ).create_payload()
+        self.assertNotIn('prior_id', payload)
+        self.assertIn('prior', payload)
+
+    def test_media(self):
+        """Create a :class:`nailgun.entities.Media`."""
+        payload = entities.Media(self.cfg, path_='foo').create_payload()
+        self.assertNotIn('path_', payload['medium'])
+        self.assertIn('path', payload['medium'])
 
 
 @ddt
@@ -407,11 +447,15 @@ class ReadTestCase(TestCase):
         """Set a server configuration at ``self.cfg``."""
         self.cfg = config.ServerConfig('http://example.com')
 
-    def test_sync_plan(self):
-        """Test :class:`nailgun.entities.SyncPlan`.
+    def test_entity_arg(self):
+        """Call ``read`` on entities that require parameters for instantiation.
 
-        Make sure the class passes its own server configuration object ot the
-        object it creates.
+        Some entities require extra parameters when being instantiated. As a
+        result, these entities must extend
+        :meth:`nailgun.entity_mixins.EntityReadMixin.read` by providing a value
+        for the ``entity`` argument. Assert that these entities pass their
+        server configuration objects to the child entities that they create and
+        pass in to the ``entity`` argument.
 
         """
         for entity in (
@@ -428,9 +472,184 @@ class ReadTestCase(TestCase):
                 with mock.patch.object(EntityReadMixin, 'read') as read:
                     entity.read()
             self.assertEqual(read.call_count, 1)
-            # read.call_args[0] is the tuple of arguments to read().
+            # read.call_args[0][0] is the `entity` argument to read()
             # pylint:disable=protected-access
             self.assertEqual(read.call_args[0][0]._server_config, self.cfg)
+
+    def test_attrs_arg(self):
+        """Ensure ``read`` and ``read_json`` are both called once."""
+        for entity in (
+                entities.AbstractDockerContainer,
+                entities.ConfigTemplate,
+                entities.ContentView,
+                entities.ContentViewFilter,
+                entities.Domain,
+                entities.Host,
+                entities.HostCollection,
+                entities.Location,
+                entities.Media,
+                entities.OperatingSystem,
+                entities.Product,
+                entities.PuppetModule,
+                entities.Repository,
+                entities.System,
+                entities.User,
+                # entities.UserGroup,  # see test_user_group
+        ):
+            with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
+                with mock.patch.object(EntityReadMixin, 'read') as read:
+                    if version_info < (3, 4):  # subTest() introduced in 3.4
+                        entity(self.cfg).read()
+                        self.assertEqual(read_json.call_count, 1)
+                        self.assertEqual(read.call_count, 1)
+                    else:
+                        with self.subTest(entity):  # pylint:disable=no-member
+                            entity(self.cfg).read()
+                            self.assertEqual(read_json.call_count, 1)
+                            self.assertEqual(read.call_count, 1)
+
+    def test_user_group(self):
+        """Validate :meth:`nailgun.entities.UserGroup.read`.
+
+        Check that the method calls ``read`` and ``read_json`` once, and that
+        ``client.put`` is used to read the ``'admin'`` attribute.
+
+        """
+        with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
+            read_json.return_value = {}
+            with mock.patch.object(EntityReadMixin, 'read') as read:
+                with mock.patch.object(client, 'put') as put:
+                    put.return_value.json.return_value = {'admin': 'foo'}
+                    entities.UserGroup(self.cfg, id=1).read()
+        self.assertEqual(read_json.call_count, 1)
+        self.assertEqual(read.call_count, 1)
+        self.assertEqual(put.call_count, 1)
+        self.assertEqual(read.call_args[0][1], {'admin': 'foo'})
+
+    def test_entity_ids(self):
+        """Test cases where the server returns unusually named attributes.
+
+        Assert that the returned attributes are renamed to be more regular
+        before calling ``read()``.
+
+        """
+        # test_data is a single-use variable. We use it anyway for formatting
+        # purposes.
+        test_data = (
+            (
+                entities.AbstractDockerContainer(self.cfg),
+                {'compute_resource_id': None},
+                {'compute_resource': None},
+            ),
+            (
+                entities.ConfigTemplate(self.cfg),
+                {'template_kind_id': None},
+                {'template_kind': None},
+            ),
+            (
+                entities.ContentViewPuppetModule(self.cfg, content_view=1),
+                {'uuid': None},
+                {'puppet_module': None},
+            ),
+            (
+                entities.Host(self.cfg),
+                {
+                    # These two params are renamed individually.
+                    'parameters': None,
+                    'puppetclasses': None,
+                    # The remaining params are nenamed programmatically.
+                    'architecture_id': None,
+                    'compute_profile_id': None,
+                    'compute_resource_id': None,
+                    'domain_id': None,
+                    'environment_id': None,
+                    'hostgroup_id': None,
+                    'image_id': None,
+                    'location_id': None,
+                    'medium_id': None,
+                    'model_id': None,
+                    'operatingsystem_id': None,
+                    'organization_id': None,
+                    'owner_id': None,
+                    'ptable_id': None,
+                    'puppet_proxy_id': None,
+                    'realm_id': None,
+                    'sp_subnet_id': None,
+                    'subnet_id': None,
+                },
+                {
+                    # These two params are renamed individually.
+                    'host_parameters_attributes': None,
+                    'puppet_classess': None,
+                    # The remaining params are nenamed programmatically.
+                    'architecture': None,
+                    'compute_profile': None,
+                    'compute_resource': None,
+                    'domain': None,
+                    'environment': None,
+                    'hostgroup': None,
+                    'image': None,
+                    'location': None,
+                    'medium': None,
+                    'model': None,
+                    'operatingsystem': None,
+                    'organization': None,
+                    'owner': None,
+                    'ptable': None,
+                    'puppet_proxy': None,
+                    'realm': None,
+                    'sp_subnet': None,
+                    'subnet': None,
+                }
+            ),
+            (
+                entities.HostCollection(self.cfg),
+                {'organization_id': None, 'system_ids': [1]},
+                {'organization': None, 'systems': [{'id': 1}]},
+            ),
+            (
+                entities.Product(self.cfg),
+                {'gpg_key_id': None, 'sync_plan_id': None},
+                {'gpg_key': None, 'sync_plan': None},
+            ),
+            (
+                entities.Repository(self.cfg),
+                {'gpg_key_id': None},
+                {'gpg_key': None},
+            ),
+            (
+                entities.System(self.cfg),
+                {
+                    'checkin_time': None,
+                    'hostCollections': None,
+                    'installedProducts': None,
+                    'organization_id': None,
+                },
+                {
+                    'last_checkin': None,
+                    'host_collections': None,
+                    'installed_products': None,
+                    'organization': None,
+                },
+            ),
+            (
+                entities.User(self.cfg),
+                {'auth_source_id': None},
+                {'auth_source': None},
+            ),
+        )
+        for entity, attrs_before, attrs_after in test_data:
+            with mock.patch.object(EntityReadMixin, 'read') as read:
+                entity.read(attrs=attrs_before)
+            self.assertEqual(read.call_args[0][1], attrs_after)
+
+    def test_ignore_arg(self):
+        """Call the ``read`` method on entities that ignore received values."""
+        attrs = {'account_password': None}
+        with mock.patch.object(EntityReadMixin, 'read') as read:
+            entities.AuthSourceLDAP(self.cfg).read(attrs=attrs)
+        # read.call_args[0][2] is the `ignore` argument to read()
+        self.assertIn('account_password', read.call_args[0][2])
 
 
 class AbstractDockerTestCase(TestCase):
@@ -465,3 +684,128 @@ class AbstractDockerTestCase(TestCase):
         for attr in ['repository_name', 'tag']:
             self.assertIn(attr, docker_hub)
             self.assertNotIn(attr, abstract_docker)
+
+
+class InitTestCase(TestCase):
+    """Tests for all of the ``__init__`` methods.
+
+    The tests in this class are a sanity check. They simply check to see if you
+    can instantiate each entity.
+
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Set a server configuration at ``cls.cfg``."""
+        cls.cfg = config.ServerConfig('http://example.com')
+
+    def test_init_succeeds(self):
+        """Instantiate every entity.
+
+        Assert that the returned object is an instance of the class that
+        produced it.
+
+        """
+        entities_ = [
+            (entity, {})
+            for entity in (
+                entities.AbstractDockerContainer,
+                entities.ActivationKey,
+                entities.Architecture,
+                entities.AuthSourceLDAP,
+                entities.Bookmark,
+                entities.CommonParameter,
+                entities.ComputeAttribute,
+                entities.ComputeProfile,
+                entities.ComputeResource,
+                entities.ConfigGroup,
+                entities.ConfigTemplate,
+                entities.ContentUpload,
+                entities.ContentView,
+                entities.ContentViewFilter,
+                # entities.ContentViewFilterRule,  # see below
+                # entities.ContentViewPuppetModule,  # see below
+                entities.ContentViewVersion,
+                entities.DockerHubContainer,
+                entities.Domain,
+                entities.Environment,
+                entities.Errata,
+                entities.Filter,
+                entities.ForemanTask,
+                entities.GPGKey,
+                entities.Host,
+                entities.HostClasses,
+                entities.HostCollection,
+                entities.HostCollectionErrata,
+                entities.HostCollectionPackage,
+                entities.HostGroup,
+                entities.HostGroupClasses,
+                entities.Image,
+                entities.Interface,
+                entities.LifecycleEnvironment,
+                entities.Location,
+                entities.Media,
+                entities.Model,
+                entities.OSDefaultTemplate,
+                entities.OperatingSystem,
+                # entities.OperatingSystemParameter,  # see below
+                entities.Organization,
+                entities.OverrideValue,
+                entities.PartitionTable,
+                entities.Permission,
+                entities.Ping,
+                entities.Product,
+                entities.PuppetClass,
+                entities.PuppetModule,
+                entities.Realm,
+                entities.Report,
+                entities.Repository,
+                entities.Role,
+                entities.RoleLDAPGroups,
+                entities.SmartProxy,
+                entities.SmartVariable,
+                entities.Status,
+                entities.Subnet,
+                entities.Subscription,
+                # entities.SyncPlan,  # see below
+                entities.System,
+                entities.SystemPackage,
+                entities.TemplateCombination,
+                entities.TemplateKind,
+                entities.User,
+                entities.UserGroup,
+            )
+        ]
+        entities_.extend([
+            (entities.ContentViewFilterRule, {'content_view_filter': 1}),
+            (entities.ContentViewPuppetModule, {'content_view': 1}),
+            (entities.OperatingSystemParameter, {'operatingsystem': 1}),
+            (entities.SyncPlan, {'organization': 1}),
+        ])
+        for entity, params in entities_:
+            if version_info < (3, 4):  # subTest() introduced in Python 3.4
+                self.assertIsInstance(entity(self.cfg, **params), entity)
+            else:
+                with self.subTest(entity):  # pylint:disable=no-member
+                    self.assertIsInstance(entity(self.cfg, **params), entity)
+
+    def test_required_params(self):
+        """Instantiate entities that require extra parameters.
+
+        Assert that ``TypeError`` is raised if the required extra parameters
+        are not provided.
+
+        """
+        for entity in (
+                entities.ContentViewFilterRule,
+                entities.ContentViewPuppetModule,
+                entities.OperatingSystemParameter,
+                entities.SyncPlan,
+        ):
+            if version_info < (3, 4):  # subTest() introduced in Python 3.4
+                with self.assertRaises(TypeError):
+                    entity(self.cfg)
+            else:
+                with self.subTest(entity):  # pylint:disable=no-member
+                    with self.assertRaises(TypeError):
+                        entity(self.cfg)

@@ -36,9 +36,9 @@ from time import sleep
 import random
 
 from sys import version_info
-if version_info.major == 2:
+if version_info.major == 2:  # pragma: no cover
     from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
-else:
+else:  # pragma: no cover
     from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
 
 # pylint:disable=too-many-lines
@@ -105,6 +105,36 @@ def _handle_response(response, server_config, synchronous=False):
     if response.status_code == NO_CONTENT:
         return
     return response.json()
+
+
+def _check_for_value(field_name, field_values):
+    """Check to see if ``field_name`` is present in ``field_values``.
+
+    An entity may use this function in its ``__init__`` method to ensure that a
+    parameter required for object instantiation has been passed in. For
+    example, in :class:`nailgun.entities.ContentViewPuppetModule`:
+
+    >>> def __init__(self, server_config=None, **kwargs):
+    >>>     _check_for_param('content_view', kwargs)
+    >>>     # …
+    >>>     self._meta = {
+    >>>         'api_path': '{0}/content_view_puppet_modules'.format(
+    >>>             self.content_view.path('self')
+    >>>         )
+    >>>     }
+
+    :param field_name: A string. A key with this name must be present in
+        ``field_values``.
+    :param field_values: A dict containing field-name to field-value mappings.
+    :raises: ``TypeError`` if ``field_name`` is not present in
+        ``field_values``.
+    :returns: Nothing.
+
+    """
+    if field_name not in field_values:
+        raise TypeError(
+            'A value must be provided for the "{0}" field.'.format(field_name)
+        )
 
 
 class ActivationKey(
@@ -804,6 +834,7 @@ class ContentViewFilterRule(
     """A representation of a Content View Filter Rule entity."""
 
     def __init__(self, server_config=None, **kwargs):
+        _check_for_value('content_view_filter', kwargs)
         self._fields = {
             'content_view_filter': entity_fields.OneToOneField(
                 ContentViewFilter,
@@ -886,8 +917,7 @@ class ContentViewPuppetModule(
     """
 
     def __init__(self, server_config=None, **kwargs):
-        if 'content_view' not in kwargs:
-            raise TypeError('The "content_view" parameter must be provided.')
+        _check_for_value('content_view', kwargs)
         self._fields = {
             'author': entity_fields.StringField(),
             'content_view': entity_fields.OneToOneField(
@@ -1966,10 +1996,7 @@ class OperatingSystemParameter(
     """
 
     def __init__(self, server_config=None, **kwargs):
-        if 'operatingsystem' not in kwargs:
-            raise TypeError(
-                'The "operatingsystem" parameter must be provided.'
-            )
+        _check_for_value('operatingsystem', kwargs)
         self._fields = {
             'name': entity_fields.StringField(required=True),
             'operatingsystem': entity_fields.OneToOneField(
@@ -2968,8 +2995,7 @@ class SyncPlan(
     """
 
     def __init__(self, server_config=None, **kwargs):
-        if 'organization' not in kwargs:
-            raise TypeError('The "organization" parameter must be provided.')
+        _check_for_value('organization', kwargs)
         self._fields = {
             'description': entity_fields.StringField(),
             'enabled': entity_fields.BooleanField(required=True),
@@ -3264,8 +3290,7 @@ class UserGroup(
             response = client.put(
                 self.path('self'),
                 {},
-                auth=self._server_config.auth,
-                verify=self._server_config.verify,
+                **self._server_config.get_client_kwargs()
             )
             response.raise_for_status()
             attrs['admin'] = response.json()['admin']
