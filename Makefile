@@ -5,6 +5,7 @@ help:
 	@echo "  help           to show this message"
 	@echo "  lint           to run flake8 and pylint"
 	@echo "  test           to run unit tests"
+	@echo "  test-coverage  to run unit tests and measure test coverage"
 	@echo "  docs-html      to generate HTML documentation"
 	@echo "  docs-clean     to remove documentation"
 	@echo "  package        to generate installable Python packages"

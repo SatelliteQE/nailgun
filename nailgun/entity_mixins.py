@@ -8,12 +8,12 @@ import threading
 import time
 
 from sys import version_info
-if version_info.major == 2:
+if version_info.major == 2:  # pragma: no cover
     # pylint:disable=import-error
     from urlparse import urljoin
     import httplib as http_client
     import thread
-else:
+else:  # pragma: no cover
     from urllib.parse import urljoin  # pylint:disable=F0401,E0611
     import _thread as thread  # pylint:disable=import-error
     import http.client as http_client  # pylint:disable=import-error

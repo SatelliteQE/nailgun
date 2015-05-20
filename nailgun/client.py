@@ -77,8 +77,7 @@ def _set_content_type(kwargs):
 
     """
     if 'files' in kwargs:
-        return  # requests will automatically set content-type
-
+        return  # requests will automatically set the content-type
     headers = kwargs.pop('headers', {})
     headers.setdefault('content-type', 'application/json')
     kwargs['headers'] = headers

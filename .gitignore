@@ -10,3 +10,7 @@ __pycache__/
 /build/
 /dist/
 /nailgun.egg-info/
+
+# Coverage information
+/.coverage
+/htmlcov/
