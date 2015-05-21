@@ -19,6 +19,8 @@ For example scripts that do not use NailGun, this is the set-up procedure::
     pip install requests
     ./some_script.py  # some script of your choice
 
+.. _label-simple:
+
 Simple
 ------
 
@@ -74,7 +76,7 @@ configurations, but only want to work with one at a time::
 In addition, if no server configuration object is specified when instantiating
 an :class:`nailgun.entity_mixins.Entity` object, the server configuration
 labeled "default" is used. With this in mind, here's a revised version of the
-first script in section `Simple`:
+first script in section :ref:`label-simple`:
 
 .. literalinclude:: create_organization_nailgun_v2.py
 

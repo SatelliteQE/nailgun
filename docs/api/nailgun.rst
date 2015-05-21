@@ -3,29 +3,10 @@
 
 .. automodule:: nailgun
 
-:mod:`nailgun.client`
-=====================
+.. toctree::
 
-.. automodule:: nailgun.client
-
-:mod:`nailgun.config`
-=====================
-
-.. automodule:: nailgun.config
-   :private-members:
-
-:mod:`nailgun.entities`
-=======================
-
-.. automodule:: nailgun.entities
-
-:mod:`nailgun.entity_fields`
-============================
-
-.. automodule:: nailgun.entity_fields
-
-:mod:`nailgun.entity_mixins`
-============================
-
-.. automodule:: nailgun.entity_mixins
-   :private-members:
+    nailgun.entities
+    nailgun.entity_mixins
+    nailgun.entity_fields
+    nailgun.config
+    nailgun.client
