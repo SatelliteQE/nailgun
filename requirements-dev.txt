@@ -1,6 +1,5 @@
 # For `make test`
 ddt
-fauxfactory
 mock
 
 # For `make lint`
