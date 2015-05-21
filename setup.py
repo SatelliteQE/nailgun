@@ -27,5 +27,5 @@ setup(
         'Programming Language :: Python :: 3.4',
     ],
     packages=find_packages(),
-    install_requires=['fauxfactory', 'pyxdg', 'requests', 'setuptools'],
+    install_requires=['fauxfactory', 'pyxdg', 'requests>=2.7', 'setuptools'],
 )
