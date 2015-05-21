@@ -371,7 +371,7 @@ class ComputeAttribute(Entity):
                 required=True,
             ),
             'compute_resource': entity_fields.OneToOneField(
-                ComputeResource,
+                AbstractComputeResource,
                 required=True,
             ),
         }
@@ -397,7 +397,7 @@ class ComputeProfile(
         super(ComputeProfile, self).__init__(server_config, **kwargs)
 
 
-class ComputeResource(
+class AbstractComputeResource(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Compute Resource entity."""
 
@@ -410,7 +410,6 @@ class ComputeResource(
                 str_type=('alphanumeric', 'cjk'),  # cannot contain whitespace
             ),
             'organization': entity_fields.OneToManyField(Organization),
-            'password': entity_fields.StringField(null=True),
             'provider': entity_fields.StringField(
                 choices=(
                     'Docker',
@@ -423,74 +422,96 @@ class ComputeResource(
                     'Vmware',
                 ),
                 null=True,
-                required=True,
             ),
-            'region': entity_fields.StringField(null=True),
-            'server': entity_fields.StringField(null=True),
-            'set_console_password': entity_fields.BooleanField(null=True),
-            'tenant': entity_fields.StringField(null=True),
+            'provider_friendly_name': entity_fields.StringField(),
             'url': entity_fields.URLField(required=True),
-            'user': entity_fields.StringField(null=True),
-            'uuid': entity_fields.StringField(null=True),
         }
         self._meta = {
             'api_path': 'api/v2/compute_resources',
             'server_modes': ('sat'),
         }
-        super(ComputeResource, self).__init__(server_config, **kwargs)
+        super(AbstractComputeResource, self).__init__(server_config, **kwargs)
 
-    def create_missing(self):
-        """Customize the process of auto-generating instance attributes.
+    def create_payload(self):
+        """Wrap submitted data within an extra dict.
 
-        Depending upon the value of ``self.provider``, various other fields are
-        filled in with values too.
-
-        .. WARNING: This method is fragile and needs significant work.
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        if not hasattr(self, 'provider'):
-            self.provider = self._fields['provider'].gen_value()
+        return {
+            u'compute_resource': super(
+                AbstractComputeResource,
+                self
+            ).create_payload()
+        }
 
-        # Deal with docker provider before calling super create_missing in
-        # order to check if an URL is provided by the user and, if not,
-        # generate an URL pointing to a docker server
-        if self.provider.lower() == 'docker':
-            if not hasattr(self, 'url'):
-                self.url = '{0}:2375'.format(self._server_config.url)
 
-        # Now is good to call super create_missing
-        super(ComputeResource, self).create_missing()
+class DockerComputeResource(AbstractComputeResource):
+    """A representation of a Docker Compute Resource entity."""
 
-        # Generate required fields according to the provider. First check if
-        # the field is already set by the user, if not generate a random value
-        if self.provider in ('EC2', 'Ovirt', 'Openstack'):
-            for field in ('password', 'user'):
-                if not hasattr(self, field):
-                    setattr(self, field, self._fields[field].gen_value())
-        elif self.provider == 'GCE':
-            # self.email = self._fields['email'].gen_value()
-            # self.key_path = self._fields['key_path'].gen_value()
-            # self.project = self._fields['project'].gen_value()
-            #
-            # NOTE: These three pieces of data are required. However, the API
-            # docs don't even mention their existence!
-            #
-            # 1. Figure out valid values for these three fields.
-            # 2. Uncomment the above.
-            # 3. File an issue on bugzilla asking for the docs to be expanded.
-            pass
-        elif self.provider == 'Rackspace':
-            # NOTE: Foreman always returns this error:
-            #
-            #     undefined method `upcase' for nil:NilClass
-            #
-            # 1. File a bugzilla issue asking for a fix.
-            # 2. Figure out what data is necessary and add it here.
-            pass
-        elif self.provider == 'Vmware':
-            for field in ('password', 'user', 'uuid'):
-                if not hasattr(self, field):
-                    setattr(self, field, self._fields[field].gen_value())
+    def __init__(self, server_config=None, **kwargs):
+        super(DockerComputeResource, self).__init__(server_config, **kwargs)
+        self._fields.update({
+            'email': entity_fields.EmailField(),
+            'password': entity_fields.StringField(null=True),
+            'url': entity_fields.URLField(required=True),
+            'user': entity_fields.StringField(null=True),
+        })
+        self._fields['provider'].default = 'Docker'
+        self._fields['provider'].required = True
+        self._fields['provider_friendly_name'].default = 'Docker'
+
+    def create(self, create_missing=True):
+        """Do extra work to fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1223540
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1223540>`_.
+
+        """
+        return DockerComputeResource(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
+
+    def read(self, entity=None, attrs=None, ignore=('password',)):
+        """Do extra work to fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1223540
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1223540>`_.
+
+        Also, do not try to read the "password" field. No value is returned for
+        the field, for obvious reasons.
+
+        """
+        if attrs is None:
+            attrs = self.read_json()
+        if 'email' not in attrs and 'email' not in ignore:
+            response = client.put(
+                self.path('self'),
+                {},
+                **self._server_config.get_client_kwargs()
+            )
+            response.raise_for_status()
+            attrs['email'] = response.json()['email']
+        return super(DockerComputeResource, self).read(entity, attrs, ignore)
+
+
+class LibvirtComputeResource(AbstractComputeResource):
+    """A representation of a Libvirt Compute Resource entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        super(LibvirtComputeResource, self).__init__(server_config, **kwargs)
+        self._fields.update({
+            'display_type': entity_fields.StringField(
+                choices=(u'VNC', u'SPICE'),
+                required=True,
+            ),
+            'set_console_password': entity_fields.BooleanField(null=True),
+        })
+        self._fields['provider'].default = 'Libvirt'
+        self._fields['provider'].required = True
+        self._fields['provider_friendly_name'].default = 'Libvirt'
 
 
 class ConfigGroup(Entity):
@@ -624,7 +645,9 @@ class AbstractDockerContainer(
                 required=True,
                 str_type='latin1',
             ),
-            'compute_resource': entity_fields.OneToOneField(ComputeResource),
+            'compute_resource': entity_fields.OneToOneField(
+                AbstractComputeResource
+            ),
             'cpu_set': entity_fields.StringField(null=True),
             'cpu_shares': entity_fields.StringField(null=True),
             'entrypoint': entity_fields.StringField(null=True),
@@ -1490,7 +1513,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
                 null=True,
             ),
             'compute_resource': entity_fields.OneToOneField(
-                ComputeResource,
+                AbstractComputeResource,
                 null=True,
             ),
             'domain': entity_fields.OneToOneField(Domain, null=True),
@@ -1625,7 +1648,7 @@ class Image(Entity):
                 required=True
             ),
             'compute_resource': entity_fields.OneToOneField(
-                ComputeResource,
+                AbstractComputeResource,
                 required=True
             ),
             'name': entity_fields.StringField(required=True),
@@ -1752,7 +1775,7 @@ class Location(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'compute_resource': entity_fields.OneToManyField(
-                ComputeResource,
+                AbstractComputeResource,
                 null=True,
             ),
             'config_template': entity_fields.OneToManyField(
