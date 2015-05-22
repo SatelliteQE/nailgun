@@ -374,7 +374,21 @@ class Entity(object):
 
 
 class EntityDeleteMixin(object):
-    """A mixin that adds the ability to delete an entity."""
+    """This mixin provides the ability to delete an entity.
+
+    The methods provided by this class work together. The call tree looks like
+    this::
+
+        delete → delete_raw
+
+    In short, here is what the methods do:
+
+    :meth:`delete_raw`
+        Make an HTTP DELETE request to the server.
+    :meth:`delete`
+        Check the server's response for errors and decode the response.
+
+    """
 
     def delete_raw(self):
         """Delete the current entity.
@@ -424,7 +438,27 @@ class EntityDeleteMixin(object):
 
 
 class EntityReadMixin(object):
-    """A mixin that provides the ability to read an entity."""
+    """This mixin provides the ability to read an entity.
+
+    The methods provided by this class work together. The call tree looks like
+    this::
+
+        read → read_json → read_raw
+
+    In short, here is what the methods do:
+
+    :meth:`read_raw`
+        Make an HTTP GET request to the server.
+    :meth:`read_json`
+        Check the server's response for errors and decode the response.
+    :meth:`read`
+        Create a :class:`nailgun.entity_mixins.Entity` object representing the
+        created entity and populate its fields with data returned from the
+        server.
+
+    See the individual methods for more detailed information.
+
+    """
 
     def read_raw(self):
         """Get information about the current entity.
@@ -530,18 +564,35 @@ class EntityReadMixin(object):
 
 
 class EntityCreateMixin(object):
-    """A mixin that provides the ability to create an entity.
+    """This mixin provides the ability to create an entity.
 
-    The methods provided by this mixin work together to create an entity. A
-    typical tree of method calls looks like this::
+    The methods provided by this class work together. The call tree looks like
+    this::
 
         create
         └── create_json
             └── create_raw
-                ├── create_missing
-                └── create_payload
+                ├── create_payload
+                └── create_missing
 
-    Only :meth:`create_raw` communicates with the server.
+    In short, here is what the methods do:
+
+    :meth:`create_missing`
+        Populate required fields with random values. Required fields that
+        already have a value are not populated. This method is not called
+        by default.
+    :meth:`create_payload`
+        Assemble a payload of data that can be encoded and sent to the server.
+    :meth:`create_raw`
+        Make an HTTP POST request to the server, including the payload.
+    :meth:`create_json`
+        Check the server's response for errors and decode the response.
+    :meth:`create`
+        Create a :class:`nailgun.entity_mixins.Entity` object representing the
+        created entity and populate its fields with data returned from the
+        server.
+
+    See the individual methods for more detailed information.
 
     """
 

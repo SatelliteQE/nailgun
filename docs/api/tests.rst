@@ -3,27 +3,10 @@
 
 .. automodule:: tests
 
-:mod:`tests.test_client`
-========================
+.. toctree::
 
-.. automodule:: tests.test_client
-
-:mod:`tests.test_config`
-========================
-
-.. automodule:: tests.test_config
-
-:mod:`tests.test_entities`
-==========================
-
-.. automodule:: tests.test_entities
-
-:mod:`tests.test_entity_fields`
-===============================
-
-.. automodule:: tests.test_entity_fields
-
-:mod:`tests.test_entity_mixins`
-===============================
-
-.. automodule:: tests.test_entity_mixins
+    tests.test_client
+    tests.test_config
+    tests.test_entities
+    tests.test_entity_fields
+    tests.test_entity_mixins
