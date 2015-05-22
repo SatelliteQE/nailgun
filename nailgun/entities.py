@@ -961,8 +961,8 @@ class ContentViewPuppetModule(
 
             entity = type(self)()
 
-        However, :class:`OperatingSystemParameter` requires that an
-        ``operatingsystem`` be provided, so this technique will not work. Do
+        However, :class:`ContentViewPuppetModule` requires that an
+        ``content_view`` be provided, so this technique will not work. Do
         this instead::
 
             entity = type(self)(content_view=self.content_view.id)
@@ -1226,9 +1226,14 @@ class Environment(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'location': entity_fields.OneToManyField(Location, null=True),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alphanumeric',  # cannot contain whitespace
+            ),
+            'organization': entity_fields.OneToManyField(
+                Organization,
+                null=True,
             ),
         }
         self._meta = {
@@ -1236,6 +1241,15 @@ class Environment(
             'server_modes': ('sat'),
         }
         super(Environment, self).__init__(server_config, **kwargs)
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict.
+
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
+
+        """
+        return {u'environment': super(Environment, self).create_payload()}
 
 
 class Errata(Entity):
@@ -1470,7 +1484,8 @@ class HostGroupClasses(Entity):
         super(HostGroupClasses, self).__init__(server_config, **kwargs)
 
 
-class HostGroup(Entity, EntityCreateMixin):
+class HostGroup(
+        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Host Group entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1481,10 +1496,15 @@ class HostGroup(Entity, EntityCreateMixin):
             ),
             'domain': entity_fields.OneToOneField(Domain, null=True),
             'environment': entity_fields.OneToOneField(Environment, null=True),
+            'location': entity_fields.OneToManyField(Location, null=True),
             'medium': entity_fields.OneToOneField(Media, null=True),
             'name': entity_fields.StringField(required=True),
             'operatingsystem': entity_fields.OneToOneField(
                 OperatingSystem,
+                null=True,
+            ),
+            'organization': entity_fields.OneToManyField(
+                Organization,
                 null=True,
             ),
             'parent': entity_fields.OneToOneField(HostGroup, null=True),
@@ -1494,6 +1514,68 @@ class HostGroup(Entity, EntityCreateMixin):
         }
         self._meta = {'api_path': 'api/v2/hostgroups', 'server_modes': ('sat')}
         super(HostGroup, self).__init__(server_config, **kwargs)
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict.
+
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
+
+        """
+        return {u'hostgroup': super(HostGroup, self).create_payload()}
+
+    def read(self, entity=None, attrs=None, ignore=()):
+        """Normalize the data received from the server.
+
+        The server returns data in this format::
+
+            {
+                'id': 15,
+                'name': 'name',
+                'title': 'title',
+                'subnet_id': null,
+                'subnet_name': null,
+                'operatingsystem_id': null,
+                'operatingsystem_name': null,
+                …
+            }
+
+        Normalize data to this format::
+
+            {
+                'id': 15,
+                'name': 'name',
+                'title': 'title',
+                'subnet': {'id': …},
+                'operatingsystem': {'id': …},
+                …
+            }
+
+        """
+        if attrs is None:
+            attrs = self.read_json()
+
+        field_names = [
+            field_name
+            for field_name, field
+            in self.get_fields().items()
+            if isinstance(field, entity_fields.OneToOneField)
+        ]
+        field_names.remove('parent')
+        for field_name in field_names:
+            field_value = attrs.pop(field_name + '_id')
+            if field_value is None:
+                attrs[field_name] = field_value
+            else:
+                attrs[field_name] = {'id': field_value}
+
+        parent_id = attrs.pop('ancestry')
+        if parent_id is None:
+            attrs['parent'] = None
+        else:
+            attrs['parent'] = {'id': parent_id}
+
+        return super(HostGroup, self).read(entity, attrs, ignore)
 
 
 class Host(  # pylint:disable=too-many-instance-attributes
