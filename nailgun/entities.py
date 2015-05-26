@@ -1470,7 +1470,7 @@ class HostGroupClasses(Entity):
         super(HostGroupClasses, self).__init__(server_config, **kwargs)
 
 
-class HostGroup(Entity, EntityCreateMixin):
+class HostGroup(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Host Group entity."""
 
     def __init__(self, server_config=None, **kwargs):
