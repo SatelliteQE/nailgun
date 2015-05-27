@@ -402,7 +402,20 @@ class AbstractComputeResource(
     """A representation of a Compute Resource entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        self._fields = {
+        # A user may decide to write this if trying to figure out what provider
+        # a compute resource has:
+        #
+        #     entities.AbstractComputeResource(id=…).read().provider
+        #
+        # A user may also decide to instantiate a concrete compute resource
+        # class:
+        #
+        #     entities.LibvirtComputeResource(id=…).read()
+        #
+        # In the former case, we define a set of fields — end of story. In the
+        # latter case, that set of fields is updated with values provided by
+        # the child class.
+        fields = {
             'description': entity_fields.StringField(null=True),
             'location': entity_fields.OneToManyField(Location),
             'name': entity_fields.StringField(
@@ -426,6 +439,8 @@ class AbstractComputeResource(
             'provider_friendly_name': entity_fields.StringField(),
             'url': entity_fields.URLField(required=True),
         }
+        fields.update(getattr(self, '_fields', {}))
+        self._fields = fields
         self._meta = {
             'api_path': 'api/v2/compute_resources',
             'server_modes': ('sat'),
@@ -451,13 +466,13 @@ class DockerComputeResource(AbstractComputeResource):
     """A representation of a Docker Compute Resource entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        super(DockerComputeResource, self).__init__(server_config, **kwargs)
-        self._fields.update({
+        self._fields = {
             'email': entity_fields.EmailField(),
             'password': entity_fields.StringField(null=True),
             'url': entity_fields.URLField(required=True),
             'user': entity_fields.StringField(null=True),
-        })
+        }
+        super(DockerComputeResource, self).__init__(server_config, **kwargs)
         self._fields['provider'].default = 'Docker'
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'Docker'
@@ -501,14 +516,14 @@ class LibvirtComputeResource(AbstractComputeResource):
     """A representation of a Libvirt Compute Resource entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        super(LibvirtComputeResource, self).__init__(server_config, **kwargs)
-        self._fields.update({
+        self._fields = {
             'display_type': entity_fields.StringField(
                 choices=(u'VNC', u'SPICE'),
                 required=True,
             ),
             'set_console_password': entity_fields.BooleanField(null=True),
-        })
+        }
+        super(LibvirtComputeResource, self).__init__(server_config, **kwargs)
         self._fields['provider'].default = 'Libvirt'
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'Libvirt'

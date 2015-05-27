@@ -829,6 +829,14 @@ class InitTestCase(TestCase):
             )
         ]
         entities_.extend([
+            (
+                entities.LibvirtComputeResource,
+                {'display_type': 'VNC', 'set_console_password': False},
+            ),
+            (
+                entities.DockerComputeResource,
+                {'email': 'nobody@example.com', 'url': 'http://example.com'},
+            ),
             (entities.ContentViewFilterRule, {'content_view_filter': 1}),
             (entities.ContentViewPuppetModule, {'content_view': 1}),
             (entities.OperatingSystemParameter, {'operatingsystem': 1}),
