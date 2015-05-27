@@ -1377,24 +1377,6 @@ class GPGKey(
         super(GPGKey, self).__init__(server_config, **kwargs)
 
 
-class HostClasses(Entity):
-    """A representation of a Host Class entity."""
-
-    def __init__(self, server_config=None, **kwargs):
-        self._fields = {
-            'host': entity_fields.OneToOneField(Host, required=True),
-            'puppetclass': entity_fields.OneToOneField(
-                PuppetClass,
-                required=True,
-            ),
-        }
-        self._meta = {
-            'api_path': 'api/v2/hosts/:host_id/puppetclass_ids',
-            'server_modes': ('sat'),
-        }
-        super(HostClasses, self).__init__(server_config, **kwargs)
-
-
 class HostCollectionErrata(Entity):
     """A representation of a Host Collection Errata entity."""
 
@@ -1479,24 +1461,6 @@ class HostCollection(
         if 'system_ids' in payload:
             payload['system_uuids'] = payload.pop('system_ids')
         return payload
-
-
-class HostGroupClasses(Entity):
-    """A representation of a Host Group Classes entity."""
-
-    def __init__(self, server_config=None, **kwargs):
-        self._fields = {
-            'hostgroup': entity_fields.OneToOneField(HostGroup, required=True),
-            'puppetclass': entity_fields.OneToOneField(
-                PuppetClass,
-                required=True,
-            ),
-        }
-        self._meta = {
-            'api_path': 'api/v2/hostgroups/:hostgroup_id/puppetclass_ids',
-            'server_modes': ('sat'),
-        }
-        super(HostGroupClasses, self).__init__(server_config, **kwargs)
 
 
 class HostGroup(
