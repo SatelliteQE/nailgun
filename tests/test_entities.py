@@ -247,6 +247,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.Domain,
                 entities.Host,
                 entities.HostCollection,
+                entities.HostGroup,
                 entities.LifecycleEnvironment,
                 entities.Location,
                 entities.Media,
@@ -489,6 +490,7 @@ class ReadTestCase(TestCase):
                 entities.Domain,
                 entities.Host,
                 entities.HostCollection,
+                entities.HostGroup,
                 entities.Location,
                 entities.Media,
                 entities.OperatingSystem,
@@ -615,6 +617,31 @@ class ReadTestCase(TestCase):
                 entities.HostCollection(self.cfg),
                 {'organization_id': None, 'system_ids': [1]},
                 {'organization': None, 'systems': [{'id': 1}]},
+            ),
+            (
+                entities.HostGroup(self.cfg),
+                {
+                    'ancestry': None,  # renamed to 'parent'
+                    'architecture_id': None,
+                    'domain_id': None,
+                    'environment_id': None,
+                    'medium_id': None,
+                    'operatingsystem_id': None,
+                    'ptable_id': None,
+                    'realm_id': None,
+                    'subnet_id': None,
+                },
+                {
+                    'architecture': None,
+                    'domain': None,
+                    'environment': None,
+                    'medium': None,
+                    'operatingsystem': None,
+                    'parent': None,  # renamed from 'ancestry'
+                    'ptable': None,
+                    'realm': None,
+                    'subnet': None,
+                },
             ),
             (
                 entities.Product(self.cfg),
