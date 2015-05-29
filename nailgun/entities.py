@@ -652,7 +652,7 @@ class AbstractDockerContainer(
     """
 
     def __init__(self, server_config=None, **kwargs):
-        self._fields = {
+        fields = {
             'attach_stderr': entity_fields.BooleanField(null=True),
             'attach_stdin': entity_fields.BooleanField(null=True),
             'attach_stdout': entity_fields.BooleanField(null=True),
@@ -680,6 +680,8 @@ class AbstractDockerContainer(
             ),
             'tty': entity_fields.BooleanField(null=True),
         }
+        fields.update(getattr(self, '_fields', {}))
+        self._fields = fields
         self._meta = {
             'api_path': 'docker/api/v2/containers',
             'server_modes': ('sat'),
@@ -716,6 +718,19 @@ class AbstractDockerContainer(
         return {
             u'container': super(AbstractDockerContainer, self).create_payload()
         }
+
+    def create(self, create_missing=True):
+        """Do extra work to fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1223540
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1223540>`_.
+
+        """
+        attrs = self.create_json(create_missing)
+        return AbstractDockerContainer(
+            self._server_config,
+            id=attrs['id']
+        ).read()
 
     def read(self, entity=None, attrs=None, ignore=()):
         """Compensate for the unusual format of responses from the server.
@@ -783,14 +798,14 @@ class DockerHubContainer(AbstractDockerContainer):
     """A docker container that comes from Docker Hub."""
 
     def __init__(self, server_config=None, **kwargs):
-        super(DockerHubContainer, self).__init__(server_config, **kwargs)
-        self._fields.update({
+        self._fields = {
             'repository_name': entity_fields.StringField(
                 default='busybox',
                 required=True,
             ),
             'tag': entity_fields.StringField(required=True, default='latest'),
-        })
+        }
+        super(DockerHubContainer, self).__init__(server_config, **kwargs)
 
 
 class ContentUpload(Entity):
