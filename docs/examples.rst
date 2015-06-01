@@ -19,6 +19,18 @@ For example scripts that do not use NailGun, this is the set-up procedure::
     pip install requests
     ./some_script.py  # some script of your choice
 
+Additionally, a video demonstration entitled `NailGun Hands On
+<https://www.youtube.com/watch?v=_FNjAQdNoRc>`_ is available.
+
+.. raw:: html
+
+    <iframe
+        width="560"
+        height="315"
+        src="https://www.youtube.com/embed/_FNjAQdNoRc"
+        allowfullscreen
+    ></iframe>
+
 .. _label-simple:
 
 Simple
