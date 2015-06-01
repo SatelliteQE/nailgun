@@ -1190,6 +1190,7 @@ class Domain(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'dns_id': entity_fields.IntegerField(),
             'domain_parameters_attributes': entity_fields.ListField(null=True),
             'fullname': entity_fields.StringField(null=True),
             'location': entity_fields.OneToManyField(Location, null=True),
