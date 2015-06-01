@@ -34,6 +34,7 @@ class PathTestCase(TestCase):
         (entities.Organization, '/organizations'),
         (entities.Product, '/products'),
         (entities.Repository, '/repositories'),
+        (entities.RHCIDeployment, '/deployments'),
         (entities.SmartProxy, '/smart_proxies'),
         (entities.System, '/systems'),
     )
@@ -78,6 +79,7 @@ class PathTestCase(TestCase):
         (entities.Product, '/products', 'repository_sets/2396/enable'),
         (entities.Repository, '/repositories', 'sync'),
         (entities.Repository, '/repositories', 'upload_content'),
+        (entities.RHCIDeployment, '/deployments', 'deploy'),
     )
     @unpack
     def test_self_path_with_which(self, entity, path, which):
@@ -132,6 +134,7 @@ class PathTestCase(TestCase):
         (entities.Product, 'repository_sets'),
         (entities.Repository, 'sync'),
         (entities.Repository, 'upload_content'),
+        (entities.RHCIDeployment, 'deploy'),
         (entities.SmartProxy, 'refresh'),
         (entities.System, 'self'),
     )
