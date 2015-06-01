@@ -1190,6 +1190,7 @@ class Domain(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'dns': entity_fields.OneToOneField(SmartProxy, null=True),
             'domain_parameters_attributes': entity_fields.ListField(null=True),
             'fullname': entity_fields.StringField(null=True),
             'location': entity_fields.OneToManyField(Location, null=True),
@@ -1243,10 +1244,15 @@ class Domain(
         returns a list named ``parameters``. These appear to be the same data.
         Deal with this naming weirdness.
 
+        Also, the server returns an entity ID instead of a hash of attributes
+        for the ``dns`` one to one field.
+
         """
         if attrs is None:
             attrs = self.read_json()
         attrs['domain_parameters_attributes'] = attrs.pop('parameters')
+        dns_id = attrs.pop('dns_id')
+        attrs['dns'] = None if dns_id is None else {'id': dns_id}
         return super(Domain, self).read(entity, attrs, ignore)
 
 

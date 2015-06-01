@@ -563,6 +563,11 @@ class ReadTestCase(TestCase):
                 {'puppet_module': None},
             ),
             (
+                entities.Domain(self.cfg),
+                {'dns_id': None, 'parameters': None},
+                {'dns': None, 'domain_parameters_attributes': None},
+            ),
+            (
                 entities.Host(self.cfg),
                 {
                     # These two params are renamed individually.
