@@ -37,4 +37,4 @@ package:
 package-clean:
 	rm -rf build dist nailgun.egg-info
 
-.PHONY: help lint test docs-html docs-clean package package-clean
+.PHONY: help docs-html docs-clean lint test test-coverage package package-clean
