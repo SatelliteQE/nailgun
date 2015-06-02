@@ -885,7 +885,7 @@ class ContentViewFilterRule(
         _check_for_value('content_view_filter', kwargs)
         self._fields = {
             'content_view_filter': entity_fields.OneToOneField(
-                ContentViewFilter,
+                AbstractContentViewFilter,
                 required=True
             ),
             'end_date': entity_fields.DateField(),
@@ -924,34 +924,76 @@ class ContentViewFilterRule(
         return super(ContentViewFilterRule, self).read(entity, attrs, ignore)
 
 
-class ContentViewFilter(
+class AbstractContentViewFilter(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Content View Filter entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        self._fields = {
+        # The `fields={…}; fields.update(…)` idiom lets subclasses add fields.
+        fields = {
             'content_view': entity_fields.OneToOneField(
                 ContentView,
                 required=True
             ),
-            'type': entity_fields.StringField(required=True),
+            'description': entity_fields.StringField(),
+            'type': entity_fields.StringField(
+                choices=('erratum', 'package_group', 'rpm'),
+                required=True,
+            ),
             'inclusion': entity_fields.BooleanField(),
             'name': entity_fields.StringField(required=True),
-            'original_packages': entity_fields.BooleanField(),
             'repository': entity_fields.OneToManyField(Repository),
         }
+        fields.update(getattr(self, '_fields', {}))
+        self._fields = fields
         self._meta = {
             'api_path': 'katello/api/v2/content_view_filters',
             'server_modes': ('sat'),
         }
-        super(ContentViewFilter, self).__init__(server_config, **kwargs)
+        super(AbstractContentViewFilter, self).__init__(
+            server_config,
+            **kwargs
+        )
 
     def read(self, entity=None, attrs=None, ignore=()):
         """Compensate for the pluralization of the ``repository`` field."""
         if attrs is None:
             attrs = self.read_json()
         attrs['repositorys'] = attrs.pop('repositories')
-        return super(ContentViewFilter, self).read(entity, attrs, ignore)
+        return super(AbstractContentViewFilter, self).read(
+            entity,
+            attrs,
+            ignore
+        )
+
+
+class ErratumContentViewFilter(AbstractContentViewFilter):
+    """A representation of a Content View Filter of type "erratum"."""
+
+    def __init__(self, server_config=None, **kwargs):
+        super(ErratumContentViewFilter, self).__init__(server_config, **kwargs)
+        self._fields['type'].default = 'erratum'
+
+
+class PackageGroupContentViewFilter(AbstractContentViewFilter):
+    """A representation of a Content View Filter of type "package_group"."""
+
+    def __init__(self, server_config=None, **kwargs):
+        super(PackageGroupContentViewFilter, self).__init__(
+            server_config,
+            **kwargs
+        )
+        self._fields['type'].default = 'package_group'
+
+
+class RPMContentViewFilter(AbstractContentViewFilter):
+    """A representation of a Content View Filter of type "rpm"."""
+
+    def __init__(self, server_config=None, **kwargs):
+        # Add the `original_packages` field to what's provided by parent class.
+        self._fields = {'original_packages': entity_fields.BooleanField()}
+        super(RPMContentViewFilter, self).__init__(server_config, **kwargs)
+        self._fields['type'].default = 'rpm'
 
 
 class ContentViewPuppetModule(
