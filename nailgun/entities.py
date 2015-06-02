@@ -477,7 +477,7 @@ class DockerComputeResource(AbstractComputeResource):
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'Docker'
 
-    def create(self, create_missing=True):
+    def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
 
         For more information, see `Bugzilla #1223540
@@ -719,7 +719,7 @@ class AbstractDockerContainer(
             u'container': super(AbstractDockerContainer, self).create_payload()
         }
 
-    def create(self, create_missing=True):
+    def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
 
         For more information, see `Bugzilla #1223540
@@ -1224,7 +1224,7 @@ class Domain(
         """
         return {u'domain': super(Domain, self).create_payload()}
 
-    def create(self, create_missing=True):
+    def create(self, create_missing=None):
         """Manually fetch a complete set of attributes for this entity.
 
         For more information, see `Bugzilla #1219654
@@ -1896,7 +1896,7 @@ class Location(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
             u'location': super(Location, self).create_payload()
         }
 
-    def create(self, create_missing=True):
+    def create(self, create_missing=None):
         """Manually fetch a complete set of attributes for this entity.
 
         For more information, see `Bugzilla #1216236
@@ -1979,7 +1979,7 @@ class Media(
             payload['path'] = payload.pop('path_')
         return {u'medium': payload}
 
-    def create(self, create_missing=True):
+    def create(self, create_missing=None):
         """Manually fetch a complete set of attributes for this entity.
 
         For more information, see `Bugzilla #1219653
