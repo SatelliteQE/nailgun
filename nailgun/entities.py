@@ -1670,12 +1670,24 @@ class Host(  # pylint:disable=too-many-instance-attributes
                 'Found instance attributes: {0}'.format(self.get_values())
             )
         super(Host, self).create_missing()
+        # See: https://bugzilla.redhat.com/show_bug.cgi?id=1227854
+        self.name = self.name.lower()
         self.mac = self._fields['mac'].gen_value()
         self.root_pass = self._fields['root_pass'].gen_value()
 
         # Flesh out the dependency graph shown in the docstring.
-        self.domain = Domain(self._server_config).create(True)
-        self.environment = Environment(self._server_config).create(True)
+        self.domain = Domain(
+            self._server_config,
+            # pylint:disable=no-member
+            location=[self.location],
+            organization=[self.organization],
+        ).create(True)
+        self.environment = Environment(
+            self._server_config,
+            # pylint:disable=no-member
+            location=[self.location],
+            organization=[self.organization],
+        ).create(True)
         self.architecture = Architecture(self._server_config).create(True)
         self.ptable = PartitionTable(self._server_config).create(True)
         self.operatingsystem = OperatingSystem(
@@ -1685,7 +1697,10 @@ class Host(  # pylint:disable=too-many-instance-attributes
         ).create(True)
         self.medium = Media(
             self._server_config,
-            operatingsystem=[self.operatingsystem]
+            operatingsystem=[self.operatingsystem],
+            # pylint:disable=no-member
+            location=[self.location],
+            organization=[self.organization],
         ).create(True)
 
     def create_payload(self):
@@ -1936,6 +1951,7 @@ class Media(
                 Organization,
                 null=True,
             ),
+            'location': entity_fields.OneToManyField(Location, null=True),
             'os_family': entity_fields.StringField(
                 choices=(
                     'AIX',
