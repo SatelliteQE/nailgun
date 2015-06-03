@@ -2918,6 +2918,99 @@ class Repository(
         return super(Repository, self).read(entity, attrs, ignore)
 
 
+class RHCIDeployment(
+        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+    """A representation of a RHCI deployment entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+            'organization_id': entity_fields.IntegerField(required=True),
+            'lifecycle_environment_id': entity_fields.IntegerField(
+                required=True),
+            'deploy_rhev': entity_fields.BooleanField(required=True),
+            'rhev_engine_host_id': entity_fields.IntegerField(required=True),
+            'rhev_storage_type': entity_fields.StringField(required=True),
+            'rhev_engine_admin_password': entity_fields.StringField(),
+        }
+        self._meta = {
+            'api_path': 'fusor/api/v21/deployments',
+            'server_modes': ('sat'),
+        }
+        super(RHCIDeployment, self).__init__(server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        deploy
+            /deployments/<id>/deploy
+
+        ``super`` is called otherwise.
+
+        """
+        if which == 'deploy':
+            return '{0}/{1}'.format(
+                super(RHCIDeployment, self).path(which='self'),
+                which
+            )
+        return super(RHCIDeployment, self).path(which)
+
+    def add_hypervisors(self, hypervisor_ids):
+        """Helper for creating an RHCI deployment.
+
+        :param hypervisor_ids: A list of RHEV hypervisor ids to be added to the
+            deployment.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        response = client.put(
+            self.path(),
+            {'discovered_host_ids': hypervisor_ids},
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config)
+
+    def deploy(self, params):
+        """Kickoff the RHCI deployment.
+
+        :param params: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        response = client.put(
+            self.path('deploy'),
+            params,
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config)
+
+    def update(self, params):
+        """Update the parameters of an existing deployments.
+
+        :param params: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        response = client.put(
+            self.path(),
+            params,
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config)
+
+
 class RoleLDAPGroups(Entity):
     """A representation of a Role LDAP Groups entity."""
 
