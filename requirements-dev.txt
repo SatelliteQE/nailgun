@@ -1,6 +1,6 @@
 # For `make test`
-ddt
 mock
+unittest2
 
 # For `make lint`
 flake8

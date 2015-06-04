@@ -3,7 +3,7 @@
 from fauxfactory.constants import VALID_NETMASKS
 from nailgun import entity_fields
 from random import randint
-from unittest import TestCase
+from unittest2 import TestCase
 import datetime
 import socket
 
@@ -99,11 +99,7 @@ class GenValueTestCase(TestCase):
         http://stackoverflow.com/questions/7629643/how-do-i-validate-the-format-of-a-mac-address
 
         """
-        if version_info.major == 2:
-            validator = self.assertRegexpMatches
-        else:
-            validator = self.assertRegex  # pylint:disable=no-member
-        validator(
+        self.assertRegex(
             entity_fields.MACAddressField().gen_value().upper(),
             '^([0-9A-F]{2}[:]){5}[0-9A-F]{2}$'
         )
@@ -150,7 +146,7 @@ class StringFieldTestCase(TestCase):
     def test_str_is_returned(self):
         """Ensure a unicode string at least 1 char long is returned."""
         string = entity_fields.StringField().gen_value()
-        if version_info[0] == 2:
+        if version_info.major == 2:
             self.assertIsInstance(string, unicode)  # flake8:noqa pylint:disable=undefined-variable
         else:
             self.assertIsInstance(string, str)
