@@ -29,6 +29,7 @@ from nailgun.entity_mixins import (
     EntityCreateMixin,
     EntityDeleteMixin,
     EntityReadMixin,
+    EntityUpdateMixin,
     _poll_task,
 )
 from pkg_resources import parse_version
@@ -2195,7 +2196,11 @@ class OperatingSystemParameter(
 
 
 class Organization(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of an Organization entity."""
 
     def __init__(self, server_config=None, **kwargs):
