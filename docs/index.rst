@@ -48,8 +48,8 @@ currently a consideration. Although NailGun is developed with a broad audience
 in mind, it targets `Robottelo`_ first and foremost.
 
 NailGun was originally conceived as a set of helper routines internal to
-`Robottelo`_. It is in the process of being extracted out from that code base
-and turned in to an independently useful library.
+`Robottelo`_. It has since been extracted from that code base and turned in to
+an independently useful library.
 
 .. WARNING:: Until version 1.0 is released, functionality will be incomplete,
     and breaking changes may be introduced. Users are advised to read the
@@ -61,8 +61,8 @@ Resources
 If you'd like to chat with a human, please join the #robottelo channel on the
 `freenode`_ IRC network.
 
-For in-depth examples of how to use NailGun, see the `Robottelo source code`_,
-especially the `tests/foreman/api/
+For examples of how to use NailGun, see :doc:`examples`. For even more examples,
+see the `Robottelo source code`_, especially the `tests/foreman/api/
 <https://github.com/SatelliteQE/robottelo/tree/master/tests/foreman/api>`_
 directory. For a glimpse into the design of NailGun, see `this blog post`_.
 
