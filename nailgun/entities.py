@@ -2259,8 +2259,7 @@ class Organization(
             self.path('subscriptions'),
             **self._server_config.get_client_kwargs()
         )
-        response.raise_for_status()
-        return response.json()['results']
+        return _handle_response(response, self._server_config)['results']
 
     def upload_manifest(self, path, repository_url=None, synchronous=True):
         """Helper method that uploads a subscription manifest file
@@ -2347,10 +2346,13 @@ class Organization(
             an HTTP 4XX or 5XX message.
 
         """
-        sync_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         response = client.post(
             self.path('sync_plans'),
-            {u'interval': interval, u'name': name, u'sync_date': sync_date},
+            {
+                u'interval': interval,
+                u'name': name,
+                u'sync_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            },
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
@@ -2366,8 +2368,7 @@ class Organization(
             data={u'per_page': per_page},
             **self._server_config.get_client_kwargs()
         )
-        response.raise_for_status()
-        return response.json()['results']
+        return _handle_response(response, self._server_config)['results']
 
 
 class OSDefaultTemplate(Entity):

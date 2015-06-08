@@ -6,7 +6,7 @@ from unittest import TestCase
 import json
 
 from sys import version_info
-if version_info[0] == 2:
+if version_info.major == 2:
     # The `__builtins__` module (note the "s") also provides the `open`
     # function. However, that module is an implementation detail for CPython 2,
     # so it should not be relied on.
