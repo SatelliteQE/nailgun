@@ -144,6 +144,50 @@ def _make_entities_from_ids(entity_cls, entity_objs_and_ids, server_config):
     ]
 
 
+def _payload(fields, values):
+    """Implement the ``*_payload`` methods.
+
+    It's frequently useful to create a dict of values that can be encoded to
+    JSON and sent to the server. Unfortunately, there are mismatches between
+    the field names used by NailGun and the field names the server expects.
+    This method provides a default translation that works in many cases. For
+    example:
+
+    >>> from nailgun.entities import Product
+    >>> product = Product(name='foo', organization=1)
+    >>> set(product.get_fields())
+    {
+        'description',
+        'gpg_key',
+        'id',
+        'label',
+        'name',
+        'organization',
+        'sync_plan',
+    }
+    >>> set(product.get_values())
+    {'name', 'organization'}
+    >>> product.create_payload()
+    {'organization_id': 1, 'name': 'foo'}
+
+    :param fields: A value like what is returned by
+        :meth:`nailgun.entity_mixins.Entity.get_fields`.
+    :param values: A value like what is returned by
+        :meth:`nailgun.entity_mixins.Entity.get_values`.
+    :returns: A dict mapping field names to field values.
+
+    """
+    for field_name, field in fields.items():
+        if field_name in values:
+            if isinstance(field, OneToOneField):
+                values[field_name + '_id'] = values.pop(field_name).id
+            elif isinstance(field, OneToManyField):
+                values[field_name + '_ids'] = [
+                    entity.id for entity in values.pop(field_name)
+                ]
+    return values
+
+
 # -----------------------------------------------------------------------------
 # Definition of parent Entity class and its dependencies.
 # -----------------------------------------------------------------------------
@@ -393,9 +437,9 @@ class EntityDeleteMixin(object):
     def delete_raw(self):
         """Delete the current entity.
 
-        Send an HTTP DELETE request to :meth:`Entity.path`. Return the
-        response. Do not check the response for any errors, such as an HTTP 4XX
-        or 5XX status code.
+        Make an HTTP DELETE call to ``self.path('base')``. Return the response.
+
+        :return: A ``requests.response`` object.
 
         """
         return client.delete(
@@ -463,9 +507,7 @@ class EntityReadMixin(object):
     def read_raw(self):
         """Get information about the current entity.
 
-        Send an HTTP GET request to :meth:`Entity.path`. Return the response.
-        Do not check the response for any errors, such as an HTTP 4XX or 5XX
-        status code.
+        Make an HTTP PUT call to ``self.path('self')``. Return the response.
 
         :return: A ``requests.response`` object.
 
@@ -494,8 +536,14 @@ class EntityReadMixin(object):
     def read(self, entity=None, attrs=None, ignore=()):
         """Get information about the current entity.
 
-        Call :meth:`read_json`. Use this information to populate an object of
-        type ``type(self)`` and return that object.
+        1. Create a new entity of type ``type(self)``.
+        2. Call :meth:`read_json` and capture the response.
+        3. Populate the entity with the response.
+        4. Return the entity.
+
+        Step one is skipped if the ``entity`` argument is specified. Step two
+        is skipped if the ``attrs`` argument is specified. Step three is
+        modified by the ``ignore`` argument.
 
         All of an entity's one-to-one and one-to-many relationships are
         populated with objects of the correct type. For example, if
@@ -628,35 +676,19 @@ class EntityCreateMixin(object):
                 setattr(self, field_name, value)
 
     def create_payload(self):
-        """Create a payload that can be POSTed to the server.
+        """Create a payload of values that can be sent to the server.
 
-        Create a payload of values by copying the instance attributes on
-        ``self`` and appending "_id" and "_ids" on to key names for each
-        ``OneToOneField`` and ``OneToManyField``. Then POST this payload to the
-        server.
-
-        :return: A dict. A copy of the instance attributes on ``self``, with
-            key names adjusted as appropriate.
+        See :func:`_payload`.
 
         """
-        data = self.get_values().copy()
-        for field_name, field in self.get_fields().items():
-            if field_name in data:
-                if isinstance(field, OneToOneField):
-                    data[field_name + '_id'] = data.pop(field_name).id
-                elif isinstance(field, OneToManyField):
-                    data[field_name + '_ids'] = [
-                        entity.id for entity in data.pop(field_name)
-                    ]
-        return data
+        return _payload(self.get_fields(), self.get_values())
 
     def create_raw(self, create_missing=None):
         """Create an entity.
 
-        Generate values for required, unset fields by calling
-        :meth:`create_missing`. Only do this if ``create_missing`` is true.
-        Then make an HTTP POST call to ``self.path('base')``. Return the
-        response received from the server.
+        Possibly call :meth:`create_missing`. Then make an HTTP POST call to
+        ``self.path('base')``. The request payload consists of whatever is
+        returned by :meth:`create_payload`. Return the response.
 
         :param create_missing: Should :meth:`create_missing` be called? In
             other words, should values be generated for required, empty fields?
@@ -693,8 +725,8 @@ class EntityCreateMixin(object):
     def create(self, create_missing=None):
         """Create an entity.
 
-        Call :meth:`create_json`. Use this information to populate an object of
-        type ``type(self)`` and return that object.
+        Call :meth:`create_json`, use the response to populate a new object
+        of type ``type(self)`` and return that object.
 
         This method requires that a method named "read" be available on the
         current object. A method named "read" will be available if
@@ -717,3 +749,99 @@ class EntityCreateMixin(object):
 
         """
         return self.read(attrs=self.create_json(create_missing))
+
+
+class EntityUpdateMixin(object):
+    """This mixin provides the ability to update an entity.
+
+    The methods provided by this class work together. The call tree looks
+    like this::
+
+        update → update_json → update_raw → update_payload
+
+    In short, here is what the methods do:
+
+    :meth:`update_payload`
+        Assemble a payload of data that can be encoded and sent to the
+        server.
+    :meth:`update_raw`
+        Make an HTTP PUT request to the server, including the payload.
+    :meth:`update_json`
+        Check the server's response for errors and decode the response.
+    :meth:`update`
+        Create a :class:`nailgun.entity_mixins.Entity` object representing
+        the created entity and populate its fields.
+
+    See the individual methods for more detailed information.
+
+    """
+
+    def update_payload(self, fields=None):
+        """Create a payload of values that can be sent to the server.
+
+        By default, this method behaves just like :func:`_payload`. However,
+        one can also specify a certain set of fields that should be returned.
+        For more information, see :meth:`update`.
+
+        """
+        values = self.get_values()
+        if fields is not None:
+            values = {field: values[field] for field in fields}
+        return _payload(self.get_fields(), values)
+
+    def update_raw(self, fields=None):
+        """Update the current entity.
+
+        Make an HTTP PUT call to ``self.path('base')``. The request payload
+        consists of whatever is returned by :meth:`update_payload`. Return the
+        response.
+
+        :param fields: See :meth:`update`.
+        :return: A ``requests.response`` object.
+
+        """
+        return client.put(
+            self.path('self'),
+            self.update_payload(fields),
+            **self._server_config.get_client_kwargs()
+        )
+
+    def update_json(self, fields=None):
+        """Update the current entity.
+
+        Call :meth:`update_raw`. Check the response status code, decode JSON
+        and return the decoded JSON as a dict.
+
+        :param fields: See :meth:`update`.
+        :return: A dict consisting of the decoded JSON in the server's
+            response.
+        :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP
+            4XX or 5XX status code.
+        :raises: ``ValueError`` If the response JSON can not be decoded.
+
+        """
+        response = self.update_raw(fields)
+        response.raise_for_status()
+        return response.json()
+
+    def update(self, fields=None):
+        """Update the current entity.
+
+        Call :meth:`update_json`, use the response to populate a new object
+        of type ``type(self)`` and return that object.
+
+        This method requires that
+        :meth:`nailgun.entity_mixins.EntityReadMixin.read` or some other
+        identical method be available on the current object. A more thorough
+        explanation is available at
+        :meth:`nailgun.entity_mixins.EntityCreateMixin.create`.
+
+        :param fields: An iterable of field names. Only the fields named in
+            this iterable will be updated. No fields are updated if an empty
+            iterable is passed in. All fields are updated if ``None`` is passed
+            in.
+        :raises: ``KeyError`` if asked to update a field but no value is
+            available for that field on the current entity.
+
+        """
+        return self.read(attrs=self.update_json(fields))

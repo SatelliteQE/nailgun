@@ -33,8 +33,8 @@ Additionally, a video demonstration entitled `NailGun Hands On
 
 .. _label-simple:
 
-Simple
-------
+Getting Started
+---------------
 
 This script demonstrates how to create an organization, print out its
 attributes and delete it using NailGun:
@@ -103,8 +103,154 @@ specification is obeyed, meaning that you can do things like provide a
 system-wide configuration file or place user configuration data in an alternate
 location. Read :mod:`nailgun.config` for full details.
 
-Advanced
---------
+Using More Methods
+------------------
+
+The examples so far have only made use of a small set of classes and methods:
+
+* The ``ServerConfig`` class and several of its methods.
+* The ``Organization`` class and its ``create``, ``get_values`` and ``delete``
+  methods.
+
+However, there are several more very useful high-level methods that you should
+be aware of:
+
+* ``get_fields``
+* ``read``
+* ``update``
+
+
+``get_fields``
+~~~~~~~~~~~~~~
+
+The ``get_fields`` method is closely related to the ``get_values`` method. The
+former tells you which values *may* be assigned to an entity, and the latter
+tells you what values *are* assigned to an entity. For example:
+
+    >>> from nailgun.entities import Product
+    >>> product = Product(name='junk product')
+    >>> product.get_values()
+    {'name': 'junk product'}
+    >>> product.get_fields()
+    {
+        'description': <nailgun.entity_fields.StringField object at 0x7fb5bf25ee10>,
+        'gpg_key': <nailgun.entity_fields.OneToOneField object at 0x7fb5bf1f1128>,
+        'id': <nailgun.entity_fields.IntegerField object at 0x7fb5bd4bd748>,
+        'label': <nailgun.entity_fields.StringField object at 0x7fb5bd48b7f0>,
+        'name': <nailgun.entity_fields.StringField object at 0x7fb5bd48b828>,
+        'organization': <nailgun.entity_fields.OneToOneField object at 0x7fb5bd498f60>,
+        'sync_plan': <nailgun.entity_fields.OneToOneField object at 0x7fb5bd49eac8>,
+    }
+
+Fields serve two purposes. First, they provide typing information mixins. For
+example, a server expects this JSON payload when creating a product::
+
+    {
+        "name": "junk product",
+        "organization_id": 5,
+        …
+    }
+
+And a server will return this JSON payload when reading a product::
+
+
+    {
+        "name": "junk product",
+        "organization": {
+            'id': 3,
+            'label': 'c5f2646f-5975-48c4-b2a3-bf8398b44510',
+            'name': 'junk org',
+        },
+        …
+    }
+
+Notice how the "organization" field is named and structured differently in the
+above two cases. NailGun can deal with this irregularity due to the presence of
+the ``StringField`` and ``OneToOneField``. If you are ever fiddling with an
+entity's definition, be careful to use the right field types. Otherwise, you may
+get some strange and hard-to-troubleshoot bugs.
+
+Secondly, fields can generate random values for unit testing purposes. (This
+does *not* normally happen!) See the ``create_missing`` method for more
+information.
+
+``read``
+~~~~~~~~
+
+Rather unsurprisingly, the ``read`` method fetches information about an entity.
+Importantly, the ``read`` method does not have side-effects:
+
+    >>> from nailgun import entities
+    >>> org = entities.Organization(id=418)
+    >>> response = org.read()
+    >>> for obj in (org, response):
+    ...     type(obj)
+    ...
+    <class 'nailgun.entities.Organization'>
+    <class 'nailgun.entities.Organization'>
+    >>> for obj in (org, response):
+    ...     obj.get_values()
+    ...
+    {'id': 418}
+    {
+        'description': None,
+        'id': 418,
+        'label': 'junk_org',
+        'name': 'junk org',
+        'title': 'junk org',
+    }
+
+As demonstrated above, the ``read`` method does not alter the object it is
+called on. Instead, it creates a new object, populates that object with
+attributes, and returns that new object. As a result, idioms like ``org =
+org.read()`` are advisable.
+
+``update``
+~~~~~~~~~~
+
+The ``update`` method updates an entity's values. For example:
+
+    >>> from nailgun.entities import Organization
+    >>> org = Organization(id=418).read()
+    >>> org.get_values()
+    {
+        'description': None,
+        'id': 418,
+        'label': 'junk_org',
+        'name': 'junk org',
+        'title': 'junk org',
+    }
+    >>> org.name = 'junkier org'
+    >>> org.description = 'supercalifragilisticexpialidocious'
+    >>> org = org.update()  # update all fields by default
+    >>> org.get_values()
+    {
+        'description': 'supercalifragilisticexpialidocious',
+        'id': 418,
+        'label': 'junk_org',
+        'name': 'junkier org',
+        'title': 'junkier org',
+    }
+    >>> org.description = None
+    >>> org = org.update(['description'])  # update only named fields
+    >>> org.get_values()
+    {
+        'description': None,
+        'id': 418,
+        'label': 'junk_org',
+        'name': 'junkier org',
+        'title': 'junkier org',
+    }
+
+Some notes on the above:
+
+* By default, the ``update`` method updates all fields. However, it is also
+  possible to update a subset of fields.
+* The ``update`` method is side-effect free. As a result, idioms like ``org =
+  org.update()`` are advisable.
+
+Using Lower Layers
+------------------
 
 This section demonstrates how to create a user account. To make things
 interesting, there are some extra considerations:
