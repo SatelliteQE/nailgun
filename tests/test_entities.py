@@ -1,14 +1,40 @@
 # -*- encoding: utf-8 -*-
 """Tests for :mod:`nailgun.entities`."""
 from datetime import datetime
-from fauxfactory import gen_integer
+from fauxfactory import gen_integer, gen_string
 from nailgun import client, config, entities
-from nailgun.entity_mixins import EntityReadMixin, NoSuchPathError
+from nailgun.entity_mixins import (
+    EntityCreateMixin,
+    EntityReadMixin,
+    NoSuchPathError,
+)
 from unittest2 import TestCase
 import mock
+
+from sys import version_info
+if version_info.major == 2:
+    from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
+else:
+    from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
+
 # pylint:disable=too-many-lines
 # The size of this file is a direct reflection of the size of module
 # `nailgun.entities` and the Satellite API.
+
+
+def _get_required_field_names(entity):
+    """Get the names of all required fields from an entity.
+
+    :param nailgun.entity_mixins.Entity entity: This entity is inspected.
+    :returns: A set in the form ``{'field_name_1', 'field_name_2', …}``.
+
+    """
+    return set((
+        field_name
+        for field_name, field
+        in entity.get_fields().items()
+        if field.required is True
+    ))
 
 
 # This file is divided in to three sets of test cases (`TestCase` subclasses):
@@ -18,104 +44,6 @@ import mock
 # 3. Other tests.
 #
 # 1. Tests for inherited methods. ---------------------------------------- {{{1
-
-
-class CreatePayloadTestCase(TestCase):
-    """Tests for extensions of ``create_payload``.
-
-    Several classes extend the ``create_payload`` method and make it do things
-    like rename attributes or wrap the submitted dict of data in a second hash.
-    It is possible to mess this up in a variety of ways. For example, an
-    extended method could could try to rename an attribute that does not exist.
-    This class attempts to find such issues by creating an entity, calling
-    :meth:`nailgun.entity_mixins.EntityCreateMixin.create_payload` and
-    asserting that a ``dict`` is returned.
-
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        """Set a server configuration at ``cls.cfg``."""
-        cls.cfg = config.ServerConfig('http://example.com')
-
-    def test_no_attributes(self):
-        """Instantiate an entity and call ``create_payload`` on it."""
-        entities_ = [
-            (entity, {})
-            for entity in (
-                entities.AbstractComputeResource,
-                entities.AbstractDockerContainer,
-                entities.Architecture,
-                entities.ConfigTemplate,
-                entities.Domain,
-                entities.Environment,
-                entities.Host,
-                entities.HostCollection,
-                entities.HostGroup,
-                entities.LifecycleEnvironment,
-                entities.Location,
-                entities.Media,
-                entities.OperatingSystem,
-                entities.Subnet,
-                entities.User,
-                entities.UserGroup,
-            )
-        ]
-        entities_.extend([
-            (entities.SyncPlan, {'organization': 1}),
-            (entities.ContentViewPuppetModule, {'content_view': 1}),
-        ])
-        for entity, params in entities_:
-            with self.subTest():
-                self.assertIsInstance(
-                    entity(self.cfg, **params).create_payload(),
-                    dict
-                )
-
-    def test_sync_plan(self):
-        """Call ``create_payload`` on a :class:`nailgun.entities.SyncPlan`."""
-        self.assertIsInstance(
-            entities.SyncPlan(
-                self.cfg,
-                organization=1,
-                sync_date=datetime.now(),
-            ).create_payload()['sync_date'],
-            type('')  # different for Python 2 and 3
-        )
-
-    def test_content_view_puppet_module(self):
-        """Create a :class:`nailgun.entities.ContentViewPuppetModule`."""
-        payload = entities.ContentViewPuppetModule(
-            self.cfg,
-            content_view=1,
-            puppet_module=2,
-        ).create_payload()
-        self.assertNotIn('puppet_module_id', payload)
-        self.assertIn('uuid', payload)
-
-    def test_host_collection(self):
-        """Create a :class:`nailgun.entities.HostCollection`."""
-        payload = entities.HostCollection(
-            self.cfg,
-            system=[1],
-        ).create_payload()
-        self.assertNotIn('system_ids', payload)
-        self.assertIn('system_uuids', payload)
-
-    def test_lifecycle_environment(self):
-        """Create a :class:`nailgun.entities.LifecycleEnvironment`."""
-        payload = entities.LifecycleEnvironment(
-            self.cfg,
-            prior=1,
-        ).create_payload()
-        self.assertNotIn('prior_id', payload)
-        self.assertIn('prior', payload)
-
-    def test_media(self):
-        """Create a :class:`nailgun.entities.Media`."""
-        payload = entities.Media(self.cfg, path_='foo').create_payload()
-        self.assertNotIn('path_', payload['medium'])
-        self.assertIn('path', payload['medium'])
 
 
 class InitTestCase(TestCase):
@@ -416,6 +344,327 @@ class PathTestCase(TestCase):
             self.assertRegex(path, '{}$'.format(self.id_))
 
 
+class CreateTestCase(TestCase):
+    """Tests for :meth:`nailgun.entity_mixins.EntityCreateMixin.create`."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set a server configuration at ``cls.cfg``."""
+        cls.cfg = config.ServerConfig('http://example.com')
+
+    def test_generic(self):
+        """Call ``create`` on a variety of entities."""
+        entities_ = (
+            entities.DockerComputeResource(self.cfg),
+            entities.AbstractDockerContainer(self.cfg),
+            entities.Domain(self.cfg),
+            entities.Location(self.cfg),
+            entities.Media(self.cfg),
+            entities.Organization(self.cfg),
+        )
+        for entity in entities_:
+            with self.subTest(entity):
+
+                # Call create()
+                with mock.patch.object(entity, 'create_json') as create_json:
+                    create_json.return_value = {'id': gen_integer()}
+                    with mock.patch.object(type(entity), 'read') as read:
+                        read.return_value = gen_integer()
+                        entity.create()
+                self.assertEqual(create_json.call_count, 1)
+                self.assertEqual(create_json.call_args[0], (None,))
+                self.assertEqual(read.call_count, 1)
+                self.assertEqual(read.call_args[0], ())
+
+
+class CreatePayloadTestCase(TestCase):
+    """Tests for extensions of ``create_payload``.
+
+    Several classes extend the ``create_payload`` method and make it do things
+    like rename attributes or wrap the submitted dict of data in a second hash.
+    It is possible to mess this up in a variety of ways. For example, an
+    extended method could could try to rename an attribute that does not exist.
+    This class attempts to find such issues by creating an entity, calling
+    :meth:`nailgun.entity_mixins.EntityCreateMixin.create_payload` and
+    asserting that a ``dict`` is returned.
+
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Set a server configuration at ``cls.cfg``."""
+        cls.cfg = config.ServerConfig('http://example.com')
+
+    def test_no_attributes(self):
+        """Instantiate an entity and call ``create_payload`` on it."""
+        entities_ = [
+            (entity, {})
+            for entity in (
+                entities.AbstractComputeResource,
+                entities.AbstractDockerContainer,
+                entities.Architecture,
+                entities.ConfigTemplate,
+                entities.Domain,
+                entities.Environment,
+                entities.Host,
+                entities.HostCollection,
+                entities.HostGroup,
+                entities.LifecycleEnvironment,
+                entities.Location,
+                entities.Media,
+                entities.OperatingSystem,
+                entities.Subnet,
+                entities.User,
+                entities.UserGroup,
+            )
+        ]
+        entities_.extend([
+            (entities.SyncPlan, {'organization': 1}),
+            (entities.ContentViewPuppetModule, {'content_view': 1}),
+        ])
+        for entity, params in entities_:
+            with self.subTest():
+                self.assertIsInstance(
+                    entity(self.cfg, **params).create_payload(),
+                    dict
+                )
+
+    def test_sync_plan(self):
+        """Call ``create_payload`` on a :class:`nailgun.entities.SyncPlan`."""
+        self.assertIsInstance(
+            entities.SyncPlan(
+                self.cfg,
+                organization=1,
+                sync_date=datetime.now(),
+            ).create_payload()['sync_date'],
+            type('')  # different for Python 2 and 3
+        )
+
+    def test_content_view_puppet_module(self):
+        """Create a :class:`nailgun.entities.ContentViewPuppetModule`."""
+        payload = entities.ContentViewPuppetModule(
+            self.cfg,
+            content_view=1,
+            puppet_module=2,
+        ).create_payload()
+        self.assertNotIn('puppet_module_id', payload)
+        self.assertIn('uuid', payload)
+
+    def test_host_collection(self):
+        """Create a :class:`nailgun.entities.HostCollection`."""
+        payload = entities.HostCollection(
+            self.cfg,
+            system=[1],
+        ).create_payload()
+        self.assertNotIn('system_ids', payload)
+        self.assertIn('system_uuids', payload)
+
+    def test_lifecycle_environment(self):
+        """Create a :class:`nailgun.entities.LifecycleEnvironment`."""
+        payload = entities.LifecycleEnvironment(
+            self.cfg,
+            prior=1,
+        ).create_payload()
+        self.assertNotIn('prior_id', payload)
+        self.assertIn('prior', payload)
+
+    def test_media(self):
+        """Create a :class:`nailgun.entities.Media`."""
+        payload = entities.Media(self.cfg, path_='foo').create_payload()
+        self.assertNotIn('path_', payload['medium'])
+        self.assertIn('path', payload['medium'])
+
+
+class CreateMissingTestCase(TestCase):
+    """Tests for extensions of ``create_missing``."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set a server configuration at ``cls.cfg``."""
+        cls.cfg = config.ServerConfig('http://example.com')
+
+    def test_auth_source_ldap_v1(self):
+        """Test ``AuthSourceLDAP(onthefly_register=False)``."""
+        entity = entities.AuthSourceLDAP(self.cfg, onthefly_register=False)
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(
+            _get_required_field_names(entity).union(('onthefly_register',)),
+            set(entity.get_values().keys()),
+        )
+
+    def test_auth_source_ldap_v2(self):
+        """Test ``AuthSourceLDAP(onthefly_register=True)``."""
+        entity = entities.AuthSourceLDAP(self.cfg, onthefly_register=True)
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(
+            _get_required_field_names(entity).union((
+                'account_password',
+                'attr_firstname',
+                'attr_lastname',
+                'attr_login',
+                'attr_mail',
+                'onthefly_register',
+            )),
+            set(entity.get_values().keys()),
+        )
+
+    def test_config_template_v1(self):
+        """Test ``ConfigTemplate(snippet=True)``."""
+        entity = entities.ConfigTemplate(self.cfg, snippet=True)
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(
+            _get_required_field_names(entity),
+            set(entity.get_values().keys()),
+        )
+
+    def test_config_template_v2(self):
+        """Test ``ConfigTemplate(snippet=False)``."""
+        entity = entities.ConfigTemplate(self.cfg, snippet=False)
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(
+            _get_required_field_names(entity).union(['template_kind']),
+            set(entity.get_values().keys()),
+        )
+
+    def test_config_template_v3(self):
+        """Test ``ConfigTemplate(snippet=False, template_kind=…)``."""
+        tk_id = gen_integer()
+        entity = entities.ConfigTemplate(
+            self.cfg,
+            snippet=False,
+            template_kind=tk_id,
+        )
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(
+            _get_required_field_names(entity).union(['template_kind']),
+            set(entity.get_values().keys()),
+        )
+        # pylint:disable=no-member
+        self.assertEqual(entity.template_kind.id, tk_id)
+
+    def test_domain_v1(self):
+        """Test ``Domain(name='UPPER')``."""
+        entity = entities.Domain(self.cfg, name='UPPER')
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(entity.name, 'UPPER')
+
+    def test_domain_v2(self):
+        """Test ``Domain()``."""
+        entity = entities.Domain(self.cfg)
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertTrue(entity.name.islower())
+
+    def test_host_v1(self):
+        """Test ``Host(any_attribute=…)``."""
+        with self.assertRaises(entities.HostCreateMissingError):
+            entities.Host(self.cfg, name='foo').create_missing()
+
+    def test_host_v2(self):
+        """Test ``Host()``."""
+        entity = entities.Host(self.cfg)
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(
+            set(entity.get_values().keys()),
+            _get_required_field_names(entity).union((
+                'architecture',
+                'domain',
+                'environment',
+                'mac',
+                'medium',
+                'operatingsystem',
+                'ptable',
+                'root_pass',
+            )),
+        )
+
+    def test_lifecycle_environment_v1(self):
+        """Test ``LifecycleEnvironment(name='Library')``."""
+        entity = entities.LifecycleEnvironment(self.cfg, name='Library')
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(
+            _get_required_field_names(entity),
+            set(entity.get_values().keys()),
+        )
+
+    def test_lifecycle_environment_v2(self):
+        """Test ``LifecycleEnvironment(name='not Library')``."""
+        entity = entities.LifecycleEnvironment(self.cfg, name='not Library')
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                with mock.patch.object(client, 'get') as get:
+                    get.return_value.json.return_value = {
+                        'results': [{'id': gen_integer()}]
+                    }
+                    entity.create_missing()
+        self.assertEqual(
+            _get_required_field_names(entity).union(('prior',)),
+            set(entity.get_values().keys()),
+        )
+        self.assertEqual(
+            entity.prior.id,  # pylint:disable=no-member
+            get.return_value.json.return_value['results'][0]['id'],
+        )
+
+    def test_lifecycle_environment_v3(self):
+        """What happens when the "Library" lifecycle env cannot be found?"""
+        entity = entities.LifecycleEnvironment(self.cfg, name='not Library')
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                with mock.patch.object(client, 'get') as get:
+                    get.return_value.json.return_value = {'results': []}
+                    with self.assertRaises(entities.APIResponseError):
+                        entity.create_missing()
+
+    def test_media_v1(self):
+        """Test ``Media()``."""
+        entity = entities.Media(self.cfg)
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertTrue('path_' in entity.get_values())
+
+    def test_media_v2(self):
+        """Test ``Media(path_=…)``."""
+        path = gen_string('alphanumeric')
+        entity = entities.Media(self.cfg, path_=path)
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(entity.path_, path)
+
+    def test_repository_v1(self):
+        """Test ``Repository(content_type='docker')``."""
+        entity = entities.Repository(self.cfg, content_type='docker')
+        with mock.patch.object(EntityCreateMixin, 'create_missing'):
+            entity.create_missing()
+        self.assertTrue(entity.get_fields()['docker_upstream_name'].required)
+
+    def test_repository_v2(self):
+        """Test ``Repository(content_type='not docker')``."""
+        entity = entities.Repository(self.cfg, content_type='not docker')
+        with mock.patch.object(EntityCreateMixin, 'create_missing'):
+            entity.create_missing()
+        self.assertFalse(entity.get_fields()['docker_upstream_name'].required)
+
+
 class ReadTestCase(TestCase):
     """Tests for :meth:`nailgun.entity_mixins.EntityReadMixin.read`."""
 
@@ -620,8 +869,12 @@ class ReadTestCase(TestCase):
             ),
             (
                 entities.Product(self.cfg),
-                {'gpg_key_id': None, 'sync_plan_id': None},
-                {'gpg_key': None, 'sync_plan': None},
+                {
+                    'gpg_key_id': None,
+                    'repositories': None,
+                    'sync_plan_id': None,
+                },
+                {'gpg_key': None, 'repositorys': None, 'sync_plan': None},
             ),
             (
                 entities.Repository(self.cfg),
@@ -634,13 +887,11 @@ class ReadTestCase(TestCase):
                     'checkin_time': None,
                     'hostCollections': None,
                     'installedProducts': None,
-                    'organization_id': None,
                 },
                 {
                     'last_checkin': None,
                     'host_collections': None,
                     'installed_products': None,
-                    'organization': None,
                 },
             ),
             (
@@ -650,9 +901,10 @@ class ReadTestCase(TestCase):
             ),
         )
         for entity, attrs_before, attrs_after in test_data:
-            with mock.patch.object(EntityReadMixin, 'read') as read:
-                entity.read(attrs=attrs_before)
-            self.assertEqual(read.call_args[0][1], attrs_after)
+            with self.subTest(entity):
+                with mock.patch.object(EntityReadMixin, 'read') as read:
+                    entity.read(attrs=attrs_before)
+                self.assertEqual(read.call_args[0][1], attrs_after)
 
     def test_ignore_arg_v1(self):
         """Call :meth:`nailgun.entities.AuthSourceLDAP.read`.
@@ -675,6 +927,74 @@ class ReadTestCase(TestCase):
             entities.DockerComputeResource(self.cfg).read(attrs={'email': 1})
         # `call_args` is a two-tupe of (positional, keyword) args.
         self.assertIn('password', read.call_args[0][2])
+
+
+class UpdateTestCase(TestCase):
+    """Tests for :meth:`nailgun.entity_mixins.EntityUpdateMixin.update`."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set a server configuration at ``cls.cfg``."""
+        cls.cfg = config.ServerConfig('http://example.com')
+
+    def test_generic(self):
+        """Call ``update`` on a variety of entities."""
+        entities_ = (
+            entities.Architecture(self.cfg),
+            entities.ConfigTemplate(self.cfg),
+            entities.Domain(self.cfg),
+            entities.Host(self.cfg),
+            entities.Organization(self.cfg),
+            entities.User(self.cfg),
+        )
+        for entity in entities_:
+            with self.subTest(entity):
+
+                # Call update()
+                with mock.patch.object(entity, 'update_json') as update_json:
+                    with mock.patch.object(entity, 'read') as read:
+                        read.return_value = gen_integer()
+                        self.assertEqual(entity.update(), read.return_value)
+                self.assertEqual(update_json.call_count, 1)
+                self.assertEqual(update_json.call_args[0], (None,))
+                self.assertEqual(read.call_count, 1)
+                self.assertEqual(read.call_args[0], ())
+
+                # Call update(fields)
+                fields = gen_integer()
+                with mock.patch.object(entity, 'update_json') as update_json:
+                    with mock.patch.object(entity, 'read') as read:
+                        read.return_value = gen_integer()
+                        self.assertEqual(
+                            entity.update(fields),
+                            read.return_value,
+                        )
+                self.assertEqual(update_json.call_count, 1)
+                self.assertEqual(update_json.call_args[0], (fields,))
+                self.assertEqual(read.call_count, 1)
+                self.assertEqual(read.call_args[0], ())
+
+
+class UpdatePayloadTestCase(TestCase):
+    """Tests for extensions of ``update_payload``."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set a server configuration at ``cls.cfg``."""
+        cls.cfg = config.ServerConfig('http://example.com')
+
+    def test_generic(self):
+        """Instantiate a variety of entities and call ``create_payload``."""
+        class_response = [
+            (entities.Organization, {'organization': {}}),
+            (entities.User, {'user': {}}),
+        ]
+        for klass, response in class_response:
+            with self.subTest():
+                self.assertEqual(
+                    klass(self.cfg).update_payload(),
+                    response
+                )
 
 
 # 2. Tests for entity-specific methods. ---------------------------------- {{{1
@@ -964,25 +1284,75 @@ class RHCIDeploymentTestCase(TestCase):
         # `call_args` is a two-tupe of (positional, keyword) args.
         self.assertEqual(client_put.call_args[0][1], params)
 
-    def test_update(self):
-        """Call :meth:`nailgun.entities.RHCIDeployment.update`."""
-        with mock.patch.object(client, 'put') as client_put:
-            with mock.patch.object(
-                entities,
-                '_handle_response',
-                return_value={'results': gen_integer()},  # not realistic
-            ) as handler:
-                params = {'foo': gen_integer()}
-                response = self.rhci_deployment.update(params)
-        self.assertEqual(client_put.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
-
-        # `call_args` is a two-tupe of (positional, keyword) args.
-        self.assertEqual(client_put.call_args[0][1], params)
-
 
 # 3. Other tests. -------------------------------------------------------- {{{1
+
+
+class HandleResponseTestCase(TestCase):
+    """Test ``nailgun.entities._handle_response``."""
+
+    def test_default(self):
+        """Don't give the response any special status code."""
+        response = mock.Mock()
+        response.json.return_value = gen_integer()  # not realistic
+        self.assertEqual(
+            entities._handle_response(response, 'foo'),  # pylint:disable=W0212
+            response.json.return_value,
+        )
+        self.assertEqual(
+            response.mock_calls,
+            [mock.call.raise_for_status(), mock.call.json()],
+        )
+
+    def test_no_content(self):
+        """Give the response an HTTP "NO CONTENT" status code."""
+        response = mock.Mock()
+        response.status_code = NO_CONTENT
+        self.assertEqual(
+            entities._handle_response(response, 'foo'),  # pylint:disable=W0212
+            None,
+        )
+        self.assertEqual(response.mock_calls, [mock.call.raise_for_status()])
+
+    def test_accepted_v1(self):
+        """Give the response an HTTP "ACCEPTED" status code.
+
+        Call ``_handle_response`` twice:
+
+        * Do not pass the ``synchronous`` argument.
+        * Pass ``synchronous=False``.
+
+        """
+        response = mock.Mock()
+        response.status_code = ACCEPTED
+        response.json.return_value = gen_integer()  # not realistic
+        for args in [response, 'foo'], [response, 'foo', False]:
+            self.assertEqual(
+                entities._handle_response(*args),  # pylint:disable=W0212
+                response.json.return_value,
+            )
+            self.assertEqual(
+                response.mock_calls,
+                [mock.call.raise_for_status(), mock.call.json()],
+            )
+            response.reset_mock()
+
+    def test_accepted_v2(self):
+        """Give the response an HTTP "ACCEPTED" status code.
+
+        Pass ``synchronous=True`` as an argument.
+
+        """
+        response = mock.Mock()
+        response.status_code = ACCEPTED
+        response.json.return_value = {'id': gen_integer()}
+        with mock.patch.object(entities, 'ForemanTask') as foreman_task:
+            foreman_task.return_value.poll.return_value = gen_integer()
+            self.assertEqual(
+                foreman_task.return_value.poll.return_value,
+                # pylint:disable=protected-access
+                entities._handle_response(response, 'foo', True),
+            )
 
 
 class VersionTestCase(TestCase):

@@ -139,7 +139,11 @@ def _check_for_value(field_name, field_values):
 
 
 class ActivationKey(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Activtion Key entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -250,7 +254,11 @@ class ActivationKey(
 
 
 class Architecture(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Architecture entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -275,6 +283,15 @@ class Architecture(
 
         """
         return {u'architecture': super(Architecture, self).create_payload()}
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+
+        """
+        self.update_json(fields)
+        return self.read()
 
 
 class AuthSourceLDAP(
@@ -545,7 +562,11 @@ class ConfigGroup(Entity):
 
 
 class ConfigTemplate(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Config Template entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -587,14 +608,12 @@ class ConfigTemplate(
         super(ConfigTemplate, self).create_missing()
         if (getattr(self, 'snippet', None) is False and
                 not hasattr(self, 'template_kind')):
-            # A server is pre-populated with exactly eight template kinds. We
-            # use one of those instead of creating a new one on the fly.
-            self.template_kind = TemplateKind(
-                self._server_config,
-                id=random.randint(
-                    # pylint:disable=protected-access
-                    1, TemplateKind()._meta['num_created_by_default']
-                )
+            # A server is pre-populated with "num_created_by_default" template
+            # kinds. We use one of those instead of creating a new one.
+            self.template_kind = TemplateKind(self._server_config)
+            self.template_kind.id = random.randint(  # pylint:disable=C0103
+                # pylint:disable=protected-access
+                1, self.template_kind._meta['num_created_by_default']
             )
 
     def create_payload(self):
@@ -618,6 +637,15 @@ class ConfigTemplate(
         else:
             attrs['template_kind'] = {'id': template_kind_id}
         return super(ConfigTemplate, self).read(entity, attrs, ignore)
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+
+        """
+        self.update_json(fields)
+        return self.read()
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -727,10 +755,9 @@ class AbstractDockerContainer(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1223540>`_.
 
         """
-        attrs = self.create_json(create_missing)
         return AbstractDockerContainer(
             self._server_config,
-            id=attrs['id']
+            id=self.create_json(create_missing)['id'],
         ).read()
 
     def read(self, entity=None, attrs=None, ignore=()):
@@ -832,6 +859,10 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
     """A representation of a Content View Version non-entity."""
 
     def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'environment': entity_fields.OneToManyField(Environment),
+            'puppet_module': entity_fields.OneToManyField(PuppetModule),
+        }
         self._meta = {
             'api_path': 'katello/api/v2/content_view_versions',
             'server_modes': ('sat'),
@@ -1069,7 +1100,11 @@ class ContentViewPuppetModule(
 
 
 class ContentView(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Content View entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1083,7 +1118,9 @@ class ContentView(
                 Organization,
                 required=True,
             ),
+            'puppet_module': entity_fields.OneToManyField(PuppetModule),
             'repository': entity_fields.OneToManyField(Repository),
+            'version': entity_fields.OneToManyField(ContentViewVersion),
         }
         self._meta = {
             'api_path': 'katello/api/v2/content_views',
@@ -1228,7 +1265,11 @@ class ContentView(
 
 
 class Domain(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Domain entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1297,6 +1338,15 @@ class Domain(
         dns_id = attrs.pop('dns_id')
         attrs['dns'] = None if dns_id is None else {'id': dns_id}
         return super(Domain, self).read(entity, attrs, ignore)
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+
+        """
+        self.update_json(fields)
+        return self.read()
 
 
 class Environment(
@@ -1410,7 +1460,6 @@ class ForemanTask(Entity, EntityReadMixin):
             with an HTTP 4XX or 5XX status code.
 
         """
-        # pylint:disable=protected-access
         # See nailgun.entity_mixins._poll_task for an explanation of why a
         # private method is called.
         return _poll_task(
@@ -1622,7 +1671,11 @@ class HostGroup(
 
 
 class Host(  # pylint:disable=too-many-instance-attributes
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Host entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1777,6 +1830,15 @@ class Host(  # pylint:disable=too-many-instance-attributes
 
         return super(Host, self).read(entity, attrs, ignore)
 
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+
+        """
+        self.update_json(fields)
+        return self.read()
+
 
 class Image(Entity):
     """A representation of a Image entity."""
@@ -1882,8 +1944,9 @@ class LifecycleEnvironment(
         not done if the current lifecycle environment has a name of 'Library'.
 
         """
+        # We call `super` first b/c it populates `self.organization`, and we
+        # need that field to perform a search a little later.
         super(LifecycleEnvironment, self).create_missing()
-        # `super` creates all missing required fields, such as `name`.
         if (self.name != 'Library' and  # pylint:disable=no-member
                 not hasattr(self, 'prior')):
             response = client.get(
@@ -1935,7 +1998,7 @@ class Location(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
                 Organization,
                 null=True,
             ),
-            # 'realm': entity_fields.OneToManyField(Realm, null=True,),
+            'realm': entity_fields.OneToManyField(Realm, null=True,),
             'smart_proxy': entity_fields.OneToManyField(SmartProxy, null=True),
             'subnet': entity_fields.OneToManyField(Subnet, null=True),
             'user': entity_fields.OneToManyField(User, null=True),
@@ -1964,8 +2027,16 @@ class Location(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
         attrs = self.create_json(create_missing)
         return Location(self._server_config, id=attrs['id']).read()
 
-    def read(self, entity=None, attrs=None, ignore=()):
-        """Compensate for the pluralization of several fields."""
+    def read(self, entity=None, attrs=None, ignore=('realm',)):
+        """Work around several bugs in the server's response.
+
+        * Compensate for the pluralization of the "smart_proxy" and "media"
+          fields.
+        * Do not try to read any of the attributes listed in the ``ignore``
+          argument. See `Bugzilla #1216234
+          <https://bugzilla.redhat.com/show_bug.cgi?id=1216234>`_.
+
+        """
         if attrs is None:
             attrs = self.read_json()
         attrs['smart_proxys'] = attrs.pop('smart_proxies')
@@ -2205,10 +2276,22 @@ class Organization(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'compute_resource': entity_fields.OneToManyField(
+                AbstractComputeResource
+            ),
+            'config_template': entity_fields.OneToManyField(ConfigTemplate),
             'description': entity_fields.StringField(),
+            'domain': entity_fields.OneToManyField(Domain),
+            'environment': entity_fields.OneToManyField(Environment),
+            'hostgroup': entity_fields.OneToManyField(HostGroup),
             'label': entity_fields.StringField(str_type='alpha'),
+            'media': entity_fields.OneToManyField(Media),
             'name': entity_fields.StringField(required=True),
+            'realm': entity_fields.OneToManyField(Realm),
+            'smart_proxy': entity_fields.OneToManyField(SmartProxy),
+            'subnet': entity_fields.OneToManyField(Subnet),
             'title': entity_fields.StringField(),
+            'user': entity_fields.OneToManyField(User),
         }
         self._meta = {
             'api_path': 'katello/api/v2/organizations',
@@ -2375,6 +2458,50 @@ class Organization(
         )
         return _handle_response(response, self._server_config)['results']
 
+    def create(self, create_missing=None):
+        """Do extra work to fetch a complete set of attributes for this entity.
+
+        No value is returned for at least the "smart proxy" field, and possibly
+        other fields too.
+
+        """
+        return Organization(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
+
+    def read(self, entity=None, attrs=None, ignore=('realm',)):
+        """Fetch as many attributes as possible for this entity.
+
+        The server does not return any of the attributes listed in the
+        ``ignore`` argument. See `BZ #1230873
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1230873>`_.
+
+        Also, compensate for the pluralization of the "media" and "smart_proxy"
+        fields.
+
+        """
+        if attrs is None:
+            attrs = self.read_json()
+        attrs['smart_proxys'] = attrs.pop('smart_proxies')
+        attrs['medias'] = attrs.pop('media')
+        return super(Organization, self).read(entity, attrs, ignore)
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+
+        """
+        self.update_json(fields)
+        return self.read()
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {
+            u'organization': super(Organization, self).update_payload(fields)
+        }
+
 
 class OSDefaultTemplate(Entity):
     """A representation of a OS Default Template entity."""
@@ -2491,7 +2618,11 @@ class Ping(Entity):
 
 
 class Product(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Product entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2504,10 +2635,8 @@ class Product(
                 Organization,
                 required=True
             ),
-            'sync_plan': entity_fields.OneToOneField(
-                SyncPlan,
-                null=True
-            ),
+            'repository': entity_fields.OneToManyField(Repository),
+            'sync_plan': entity_fields.OneToOneField(SyncPlan, null=True),
         }
         self._meta = {
             'api_path': 'katello/api/v2/products',
@@ -2541,6 +2670,7 @@ class Product(
         """Compensate for the weird structure of returned data."""
         if attrs is None:
             attrs = self.read_json()
+        attrs['repositorys'] = attrs.pop('repositories')
 
         # Satellite 6.0 does not include an ID in the `organization` hash.
         if (getattr(self._server_config, 'version', parse_version('6.1')) <
@@ -2740,16 +2870,43 @@ class PuppetModule(Entity, EntityReadMixin):
         return super(PuppetModule, self).read(entity, attrs, ignore)
 
 
-class Realm(Entity):
+class Realm(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Realm entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'location': entity_fields.OneToManyField(Location),
             'name': entity_fields.StringField(required=True),
-            'realm_type': entity_fields.StringField(required=True),
+            'organization': entity_fields.OneToManyField(Organization),
+            'realm_proxy': entity_fields.OneToOneField(
+                SmartProxy,
+                required=True,
+            ),
+            'realm_type': entity_fields.StringField(
+                choices=('Red Hat Identity Management', 'Active Directory'),
+                required=True,
+            ),
         }
         self._meta = {'api_path': 'api/v2/realms', 'server_modes': ('sat')}
         super(Realm, self).__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=()):
+        """Compensate for the naming of the "realm_proxy" field.
+
+        The server returns an integer attribute named ``realm_proxy_id``
+        instead of a hash named ``realm_proxy``.
+
+        """
+        if attrs is None:
+            attrs = self.read_json()
+        rp_id = attrs.pop('realm_proxy_id')
+        attrs['realm_proxy'] = None if rp_id is None else {'id': rp_id}
+        return super(Realm, self).read(entity, attrs, ignore)
 
 
 class Report(Entity):
@@ -2766,7 +2923,11 @@ class Report(Entity):
 
 
 class Repository(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Repository entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2925,7 +3086,11 @@ class Repository(
 
 
 class RHCIDeployment(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a RHCI deployment entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2998,24 +3163,6 @@ class RHCIDeployment(
         )
         return _handle_response(response, self._server_config)
 
-    def update(self, params):
-        """Update the parameters of an existing deployments.
-
-        :param params: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        response = client.put(
-            self.path(),
-            params,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
-
 
 class RoleLDAPGroups(Entity):
     """A representation of a Role LDAP Groups entity."""
@@ -3032,7 +3179,11 @@ class RoleLDAPGroups(Entity):
 
 
 class Role(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Role entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -3148,42 +3299,32 @@ class Subnet(
         }
         if (getattr(server_config, 'version', parse_version('6.1')) >=
                 parse_version('6.1')):
-            self._fields['boot_mode'] = entity_fields.StringField(
-                choices=('Static', 'DHCP',),
-                default=u'DHCP',
-                null=True,
-            )
-            self._fields['dhcp'] = entity_fields.OneToOneField(
-                SmartProxy,
-                null=True,
-            )
-            # When reading a subnet, no discovery information is
-            # returned by the server. See Bugzilla #1217146.
-            # self._fields['discovery'] = entity_fields.OneToOneField(
-            #     SmartProxy,
-            #     null=True,
-            # )
-            self._fields['dns'] = entity_fields.OneToOneField(
-                SmartProxy,
-                null=True,
-            )
-            self._fields['ipam'] = entity_fields.StringField(
-                choices=('DHCP', 'Internal DB',),
-                default=u'DHCP',
-                null=True,
-            )
-            self._fields['location'] = entity_fields.OneToManyField(
-                Location,
-                null=True,
-            )
-            self._fields['organization'] = entity_fields.OneToManyField(
-                Organization,
-                null=True,
-            )
-            self._fields['tftp'] = entity_fields.OneToOneField(
-                SmartProxy,
-                null=True,
-            )
+            self._fields.update({
+                'boot_mode': entity_fields.StringField(
+                    choices=('Static', 'DHCP',),
+                    default=u'DHCP',
+                    null=True,
+                ),
+                'dhcp': entity_fields.OneToOneField(SmartProxy, null=True),
+                # When reading a subnet, no discovery information is
+                # returned by the server. See Bugzilla #1217146.
+                'discovery': entity_fields.OneToOneField(
+                    SmartProxy,
+                    null=True,
+                ),
+                'dns': entity_fields.OneToOneField(SmartProxy, null=True),
+                'ipam': entity_fields.StringField(
+                    choices=(u'DHCP', u'Internal DB'),
+                    default=u'DHCP',
+                    null=True,
+                ),
+                'location': entity_fields.OneToManyField(Location, null=True),
+                'organization': entity_fields.OneToManyField(
+                    Organization,
+                    null=True,
+                ),
+                'tftp': entity_fields.OneToOneField(SmartProxy, null=True),
+            })
         self._meta = {'api_path': 'api/v2/subnets', 'server_modes': ('sat')}
         super(Subnet, self).__init__(server_config, **kwargs)
 
@@ -3195,6 +3336,16 @@ class Subnet(
 
         """
         return {u'subnet': super(Subnet, self).create_payload()}
+
+    def read(self, entity=None, attrs=None, ignore=('discovery',)):
+        """Fetch as many attributes as possible for this entity.
+
+        The server does not return any of the attributes listed in the
+        ``ignore`` argument. For more information, see `Bugzilla #1217146
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1217146>`_.
+
+        """
+        return super(Subnet, self).read(entity, attrs, ignore)
 
 
 class Subscription(Entity):
@@ -3241,6 +3392,7 @@ class SyncPlan(
                 Organization,
                 required=True,
             ),
+            'product': entity_fields.OneToManyField(Product),
             'sync_date': entity_fields.DateTimeField(required=True),
         }
         super(SyncPlan, self).__init__(server_config, **kwargs)
@@ -3428,18 +3580,23 @@ class System(
             )
         return super(System, self).path(which)
 
-    def read(self, entity=None, attrs=None, ignore=()):
+    def read(
+            self,
+            entity=None,
+            attrs=None,
+            ignore=('facts', 'organization', 'type')):
+        """Fetch as many attributes as possible for this entity.
+
+        The server does not return any of the attributes listed in the
+        ``ignore`` argument. For more information, see `Bugzilla #1202917
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1202917>`_.
+
+        """
         if attrs is None:
             attrs = self.read_json()
-        ignore = tuple(set(ignore).union(('facts', 'type')))  # BZ 1202917
         attrs['last_checkin'] = attrs.pop('checkin_time')
         attrs['host_collections'] = attrs.pop('hostCollections')
         attrs['installed_products'] = attrs.pop('installedProducts')
-        organization_id = attrs.pop('organization_id')
-        if organization_id is None:
-            attrs['organization'] = None
-        else:
-            attrs['organization'] = {'id': organization_id}
         return super(System, self).read(entity, attrs, ignore)
 
 
@@ -3529,7 +3686,11 @@ class UserGroup(
 
 
 class User(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a User entity.
 
     The LDAP authentication source with an ID of 1 is internal. It is nearly
@@ -3542,7 +3703,6 @@ class User(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'admin': entity_fields.BooleanField(null=True),
-            # NOTE: `auth_source` is modified in __init__.
             'auth_source': entity_fields.OneToOneField(
                 AuthSourceLDAP,
                 default=AuthSourceLDAP(server_config, id=1),
@@ -3590,9 +3750,19 @@ class User(
     def read(self, entity=None, attrs=None, ignore=('password',)):
         if attrs is None:
             attrs = self.read_json()
-        auth_source_id = attrs.pop('auth_source_id')
-        if auth_source_id is None:
-            attrs['auth_source'] = None
-        else:
-            attrs['auth_source'] = {'id': auth_source_id}
+        as_id = attrs.pop('auth_source_id')
+        attrs['auth_source'] = None if as_id is None else {'id': as_id}
         return super(User, self).read(entity, attrs, ignore)
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {u'user': super(User, self).update_payload(fields)}
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+
+        """
+        self.update_json(fields)
+        return self.read()

@@ -12,8 +12,8 @@ from nailgun.entity_fields import (
     StringField,
 )
 from requests.exceptions import HTTPError
+from unittest2 import TestCase
 import mock
-import unittest
 
 from sys import version_info
 if version_info.major == 2:
@@ -87,7 +87,7 @@ class EntityWithDelete(entity_mixins.Entity, entity_mixins.EntityDeleteMixin):
 # 2. Tests for private methods. ------------------------------------------ {{{1
 
 
-class MakeEntityFromIdTestCase(unittest.TestCase):
+class MakeEntityFromIdTestCase(TestCase):
     """Tests for :func:`nailgun.entity_mixins._make_entity_from_id`."""
     # pylint:disable=protected-access
 
@@ -118,7 +118,7 @@ class MakeEntityFromIdTestCase(unittest.TestCase):
         self.assertEqual(entity_obj.id, entity_id)  # pylint:disable=no-member
 
 
-class MakeEntitiesFromIdsTestCase(unittest.TestCase):
+class MakeEntitiesFromIdsTestCase(TestCase):
     """Tests for :func:`nailgun.entity_mixins._make_entities_from_ids`."""
     # pylint:disable=protected-access
 
@@ -181,7 +181,7 @@ class MakeEntitiesFromIdsTestCase(unittest.TestCase):
             self.assertIsInstance(entity, SampleEntity)
 
 
-class PollTaskTestCase(unittest.TestCase):
+class PollTaskTestCase(TestCase):
     """Tests for :func:`nailgun.entity_mixins._poll_task`."""
 
     def test__poll_task_failed_task(self):
@@ -210,7 +210,7 @@ class PollTaskTestCase(unittest.TestCase):
 # 3. Tests for public methods. ------------------------------------------- {{{1
 
 
-class EntityTestCase(unittest.TestCase):
+class EntityTestCase(TestCase):
     """Tests for :class:`nailgun.entity_mixins.Entity`."""
 
     def setUp(self):
@@ -358,7 +358,7 @@ class EntityTestCase(unittest.TestCase):
         self.assertEqual(repr(eval(repr(entity))), target)
 
 
-class EntityCreateMixinTestCase(unittest.TestCase):
+class EntityCreateMixinTestCase(TestCase):
     """Tests for :class:`nailgun.entity_mixins.EntityCreateMixin`."""
 
     def setUp(self):
@@ -489,7 +489,7 @@ class EntityCreateMixinTestCase(unittest.TestCase):
             )
 
 
-class EntityReadMixinTestCase(unittest.TestCase):
+class EntityReadMixinTestCase(TestCase):
     """Tests for :class:`nailgun.entity_mixins.EntityReadMixin`."""
 
     def setUp(self):
@@ -571,7 +571,7 @@ class EntityReadMixinTestCase(unittest.TestCase):
         self.assertEqual(new_entity.one.id, attrs['one']['id'])
 
 
-class EntityUpdateMixinTestCase(unittest.TestCase):
+class EntityUpdateMixinTestCase(TestCase):
     """Tests for :class:`nailgun.entity_mixins.EntityUpdateMixin`."""
 
     def setUp(self):
@@ -581,7 +581,7 @@ class EntityUpdateMixinTestCase(unittest.TestCase):
             id=gen_integer(min_value=1),
         )
 
-    def test_update_payload(self):
+    def test_update_payload_v1(self):
         """Call :meth:`nailgun.entity_mixins.EntityUpdateMixin.update_payload`.
 
         Assert that the method behaves correctly given various values for the
@@ -627,6 +627,27 @@ class EntityUpdateMixinTestCase(unittest.TestCase):
         for field_names in (['one'], ['two'], ['one', 'two']):
             with self.assertRaises(KeyError):
                 entity.update_payload(field_names)
+
+    def test_update_payload_v2(self):
+        """Call :meth:`nailgun.entity_mixins.EntityUpdateMixin.update_payload`.
+
+        Assign ``None`` to a ``OneToOneField`` and call ``update_payload``.
+
+        """
+
+        class TestEntity(EntityWithUpdate):
+            """Just like its parent class, but with fields."""
+
+            def __init__(self, server_config=None, **kwargs):
+                self._fields = {'other': OneToOneField(SampleEntity)}
+                super(TestEntity, self).__init__(server_config, **kwargs)
+
+        cfg = config.ServerConfig('url')
+        entities = [TestEntity(cfg, other=None), TestEntity(cfg)]
+        entities[1].other = None  # pylint:disable=W0201
+        for entity in entities:
+            with self.subTest(entity):
+                self.assertEqual(entity.update_payload(), {'other_id': None})
 
     def test_update_raw(self):
         """Call :meth:`nailgun.entity_mixins.EntityUpdateMixin.update_raw`."""
@@ -678,7 +699,7 @@ class EntityUpdateMixinTestCase(unittest.TestCase):
         )
 
 
-class EntityDeleteMixinTestCase(unittest.TestCase):
+class EntityDeleteMixinTestCase(TestCase):
     """Tests for :class:`nailgun.entity_mixins.EntityDeleteMixin`."""
 
     def setUp(self):
