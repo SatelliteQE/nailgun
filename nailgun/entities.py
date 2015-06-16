@@ -2920,20 +2920,50 @@ class RHCIDeployment(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'name': entity_fields.StringField(required=True),
-            'organization_id': entity_fields.IntegerField(required=True),
-            'lifecycle_environment_id': entity_fields.IntegerField(
-                required=True),
             'deploy_rhev': entity_fields.BooleanField(required=True),
-            'rhev_engine_host_id': entity_fields.IntegerField(required=True),
-            'rhev_storage_type': entity_fields.StringField(required=True),
+            'lifecycle_environment': entity_fields.OneToOneField(
+                LifecycleEnvironment,
+                required=True
+            ),
+            'name': entity_fields.StringField(required=True),
+            'organization': entity_fields.OneToOneField(
+                Organization,
+                required=True,
+            ),
             'rhev_engine_admin_password': entity_fields.StringField(),
+            'rhev_engine_host': entity_fields.OneToOneField(
+                Host,
+                required=True,
+            ),
+            'rhev_storage_type': entity_fields.StringField(required=True),
         }
         self._meta = {
             'api_path': 'fusor/api/v21/deployments',
             'server_modes': ('sat'),
         }
         super(RHCIDeployment, self).__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=('rhev_engine_host',)):
+        """Normalize the data returned by the server.
+
+        The server's JSON response is in this form::
+
+            {
+                "organizations": […],
+                "lifecycle_environments": […],
+                "discovered_hosts": […],
+                "deployment": {…},
+            }
+
+        The inner "deployment" dict contains information about this entity. The
+        response does not contain any of the attributes listed in the
+        ``ignore`` argument.
+
+        """
+        if attrs is None:
+            attrs = self.read_json()
+        attrs = attrs['deployment']
+        return super(RHCIDeployment, self).read(entity, attrs, ignore)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
