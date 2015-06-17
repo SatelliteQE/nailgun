@@ -2745,6 +2745,18 @@ class Realm(
         self._meta = {'api_path': 'api/v2/realms', 'server_modes': ('sat')}
         super(Realm, self).__init__(server_config, **kwargs)
 
+    def create(self, create_missing=None):
+        """Do extra work to fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1232855
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1232855>`_.
+
+        """
+        return Realm(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
+
 
 class Report(Entity):
     """A representation of a Report entity."""

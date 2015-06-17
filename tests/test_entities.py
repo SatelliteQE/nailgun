@@ -355,12 +355,13 @@ class CreateTestCase(TestCase):
     def test_generic(self):
         """Call ``create`` on a variety of entities."""
         entities_ = (
-            entities.DockerComputeResource(self.cfg),
             entities.AbstractDockerContainer(self.cfg),
+            entities.DockerComputeResource(self.cfg),
             entities.Domain(self.cfg),
             entities.Location(self.cfg),
             entities.Media(self.cfg),
             entities.Organization(self.cfg),
+            entities.Realm(self.cfg),
         )
         for entity in entities_:
             with self.subTest(entity):
