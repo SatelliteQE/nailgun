@@ -180,12 +180,28 @@ def _payload(fields, values):
     for field_name, field in fields.items():
         if field_name in values:
             if isinstance(field, OneToOneField):
-                values[field_name + '_id'] = values.pop(field_name).id
+                values[field_name + '_id'] = (
+                    getattr(values.pop(field_name), 'id', None)
+                )
             elif isinstance(field, OneToManyField):
                 values[field_name + '_ids'] = [
                     entity.id for entity in values.pop(field_name)
                 ]
     return values
+
+
+def _get_server_config():
+    """Search for a :class:`nailgun.config.ServerConfig`.
+
+    :returns: :data:`nailgun.entity_mixins.DEFAULT_SERVER_CONFIG` if it is not
+        ``None``, or whatever is returned by
+        :meth:`nailgun.config.ServerConfig.get` otherwise.
+    :rtype: nailgun.config.ServerConfig
+
+    """
+    if DEFAULT_SERVER_CONFIG is not None:
+        return DEFAULT_SERVER_CONFIG
+    return config.ServerConfig.get()
 
 
 # -----------------------------------------------------------------------------
@@ -270,13 +286,9 @@ class Entity(object):
     """
 
     def __init__(self, server_config=None, **kwargs):
-        # server_config > DEFAULT_SERVER_CONFIG > ServerConfig.get()
-        if server_config is not None:
-            self._server_config = server_config
-        elif DEFAULT_SERVER_CONFIG is not None:
-            self._server_config = DEFAULT_SERVER_CONFIG
-        else:
-            self._server_config = config.ServerConfig.get()
+        if server_config is None:
+            server_config = _get_server_config()
+        self._server_config = server_config
 
         # Subclasses usually define a set of fields and metadata before calling
         # `super`, but that's not always the case.
@@ -299,11 +311,14 @@ class Entity(object):
         for field_name, field_value in kwargs.items():  # e.g. ('admin', True)
             field = self._fields[field_name]  # e.g. A BooleanField object
             if isinstance(field, OneToOneField):
-                setattr(self, field_name, _make_entity_from_id(
-                    field.gen_value(),
-                    field_value,
-                    self._server_config
-                ))
+                if field_value is None:
+                    setattr(self, field_name, field_value)
+                else:
+                    setattr(self, field_name, _make_entity_from_id(
+                        field.gen_value(),
+                        field_value,
+                        self._server_config
+                    ))
             elif isinstance(field, OneToManyField):
                 # `try:; …; except TypeError:; raise BadValueError(…)` better
                 # follows the "ask forgiveness" principle. However, a TypeError
