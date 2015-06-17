@@ -2334,8 +2334,8 @@ class Organization(
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
 
-        No value is returned for at least the "smart proxy" field, and possibly
-        other fields too.
+        For more information, see `Bugzilla #1230873
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1230873>`_.
 
         """
         return Organization(
