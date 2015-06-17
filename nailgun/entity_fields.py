@@ -237,15 +237,13 @@ class OneToOneField(Field):
 
     All parameters not documented here are passed to :class:`Field`.
 
-    :param entity: Either a class or the name of a class.
-    :param module: A string. A dotted module name. Used by
-        :meth:`OneToOneField.gen_value`. See that method for more details.
+    :param nailgun.entity_mixins.Entity entity: The entity to which this field
+        points.
 
     """
 
-    def __init__(self, entity, module=None, *args, **kwargs):
+    def __init__(self, entity, *args, **kwargs):
         self.entity = entity
-        self.module = module
         super(OneToOneField, self).__init__(*args, **kwargs)
 
     def gen_value(self):
@@ -256,14 +254,13 @@ class OneToOneField(Field):
 class OneToManyField(Field):
     """Field that represents a reference to zero or more other entities.
 
-    The parameters for this class are exactly the same as for
-    :class:`OneToOneField`.
+    :param nailgun.entity_mixins.Entity entity: The entities to which this
+        field points.
 
     """
 
-    def __init__(self, entity, module=None, *args, **kwargs):
+    def __init__(self, entity, *args, **kwargs):
         self.entity = entity
-        self.module = module
         super(OneToManyField, self).__init__(*args, **kwargs)
 
     def gen_value(self):
