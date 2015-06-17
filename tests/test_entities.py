@@ -576,9 +576,10 @@ class CreateMissingTestCase(TestCase):
     def test_host_v2(self):
         """Test ``Host()``."""
         entity = entities.Host(self.cfg)
-        with mock.patch.object(EntityCreateMixin, 'create_raw'):
-            with mock.patch.object(EntityReadMixin, 'read_raw'):
-                entity.create_missing()
+        with mock.patch.object(EntityCreateMixin, 'create_json'):
+            with mock.patch.object(EntityReadMixin, 'read_json'):
+                with mock.patch.object(EntityReadMixin, 'read'):
+                    entity.create_missing()
         self.assertEqual(
             set(entity.get_values().keys()),
             _get_required_field_names(entity).union((
@@ -596,28 +597,24 @@ class CreateMissingTestCase(TestCase):
     def test_lifecycle_environment_v1(self):
         """Test ``LifecycleEnvironment(name='Library')``."""
         entity = entities.LifecycleEnvironment(self.cfg, name='Library')
-        with mock.patch.object(EntityCreateMixin, 'create_raw'):
-            with mock.patch.object(EntityReadMixin, 'read_raw'):
+        with mock.patch.object(EntityCreateMixin, 'create_missing'):
+            with mock.patch.object(client, 'get') as get:
                 entity.create_missing()
-        self.assertEqual(
-            _get_required_field_names(entity),
-            set(entity.get_values().keys()),
-        )
+        self.assertEqual(get.call_count, 0)
 
     def test_lifecycle_environment_v2(self):
         """Test ``LifecycleEnvironment(name='not Library')``."""
-        entity = entities.LifecycleEnvironment(self.cfg, name='not Library')
-        with mock.patch.object(EntityCreateMixin, 'create_raw'):
-            with mock.patch.object(EntityReadMixin, 'read_raw'):
-                with mock.patch.object(client, 'get') as get:
-                    get.return_value.json.return_value = {
-                        'results': [{'id': gen_integer()}]
-                    }
-                    entity.create_missing()
-        self.assertEqual(
-            _get_required_field_names(entity).union(('prior',)),
-            set(entity.get_values().keys()),
+        entity = entities.LifecycleEnvironment(
+            self.cfg,
+            name='not Library',
+            organization=1,
         )
+        with mock.patch.object(EntityCreateMixin, 'create_missing'):
+            with mock.patch.object(client, 'get') as get:
+                get.return_value.json.return_value = {
+                    'results': [{'id': gen_integer()}]
+                }
+                entity.create_missing()
         self.assertEqual(
             entity.prior.id,  # pylint:disable=no-member
             get.return_value.json.return_value['results'][0]['id'],
@@ -625,13 +622,16 @@ class CreateMissingTestCase(TestCase):
 
     def test_lifecycle_environment_v3(self):
         """What happens when the "Library" lifecycle env cannot be found?"""
-        entity = entities.LifecycleEnvironment(self.cfg, name='not Library')
-        with mock.patch.object(EntityCreateMixin, 'create_raw'):
-            with mock.patch.object(EntityReadMixin, 'read_raw'):
-                with mock.patch.object(client, 'get') as get:
-                    get.return_value.json.return_value = {'results': []}
-                    with self.assertRaises(entities.APIResponseError):
-                        entity.create_missing()
+        entity = entities.LifecycleEnvironment(
+            self.cfg,
+            name='not Library',
+            organization=1,
+        )
+        with mock.patch.object(EntityCreateMixin, 'create_missing'):
+            with mock.patch.object(client, 'get') as get:
+                get.return_value.json.return_value = {'results': []}
+                with self.assertRaises(entities.APIResponseError):
+                    entity.create_missing()
 
     def test_media_v1(self):
         """Test ``Media()``."""
@@ -702,27 +702,21 @@ class ReadTestCase(TestCase):
             self.assertEqual(read.call_args[0][0]._server_config, self.cfg)
 
     def test_attrs_arg_v1(self):
-        """Ensure ``read`` and ``read_json`` are both called once."""
+        """Ensure ``read`` and ``read_json`` are both called once.
+
+        This test is only appropriate for entities that override the ``read``
+        method in order to fiddle with the ``attrs`` argument.
+
+        """
         for entity in (
                 # entities.DockerComputeResource,  # see test_attrs_arg_v2
                 # entities.UserGroup,  # see test_attrs_arg_v2
-                entities.AbstractContentViewFilter,
-                entities.AbstractDockerContainer,
-                entities.ConfigTemplate,
-                entities.ContentView,
                 entities.Domain,
                 entities.Host,
-                entities.HostCollection,
                 entities.HostGroup,
-                entities.Location,
                 entities.Media,
-                entities.OperatingSystem,
                 entities.Product,
-                entities.PuppetModule,
-                entities.RPMContentViewFilter,
-                entities.Repository,
                 entities.System,
-                entities.User,
         ):
             with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
                 with mock.patch.object(EntityReadMixin, 'read') as read:
@@ -767,119 +761,24 @@ class ReadTestCase(TestCase):
         # purposes.
         test_data = (
             (
-                entities.AbstractDockerContainer(self.cfg),
-                {'compute_resource_id': None},
-                {'compute_resource': None},
-            ),
-            (
-                entities.ConfigTemplate(self.cfg),
-                {'template_kind_id': None},
-                {'template_kind': None},
-            ),
-            (
                 entities.ContentViewPuppetModule(self.cfg, content_view=1),
                 {'uuid': None},
                 {'puppet_module': None},
             ),
             (
                 entities.Domain(self.cfg),
-                {'dns_id': None, 'parameters': None},
-                {'dns': None, 'domain_parameters_attributes': None},
+                {'parameters': None},
+                {'domain_parameters_attributes': None},
             ),
             (
                 entities.Host(self.cfg),
-                {
-                    # These two params are renamed individually.
-                    'parameters': None,
-                    'puppetclasses': None,
-                    # The remaining params are nenamed programmatically.
-                    'architecture_id': None,
-                    'compute_profile_id': None,
-                    'compute_resource_id': None,
-                    'domain_id': None,
-                    'environment_id': None,
-                    'hostgroup_id': None,
-                    'image_id': None,
-                    'location_id': None,
-                    'medium_id': None,
-                    'model_id': None,
-                    'operatingsystem_id': None,
-                    'organization_id': None,
-                    'owner_id': None,
-                    'ptable_id': None,
-                    'puppet_proxy_id': None,
-                    'realm_id': None,
-                    'sp_subnet_id': None,
-                    'subnet_id': None,
-                },
-                {
-                    # These two params are renamed individually.
-                    'host_parameters_attributes': None,
-                    'puppet_classess': None,
-                    # The remaining params are nenamed programmatically.
-                    'architecture': None,
-                    'compute_profile': None,
-                    'compute_resource': None,
-                    'domain': None,
-                    'environment': None,
-                    'hostgroup': None,
-                    'image': None,
-                    'location': None,
-                    'medium': None,
-                    'model': None,
-                    'operatingsystem': None,
-                    'organization': None,
-                    'owner': None,
-                    'ptable': None,
-                    'puppet_proxy': None,
-                    'realm': None,
-                    'sp_subnet': None,
-                    'subnet': None,
-                }
-            ),
-            (
-                entities.HostCollection(self.cfg),
-                {'organization_id': None, 'system_ids': [1]},
-                {'organization': None, 'systems': [{'id': 1}]},
+                {'parameters': None, 'puppetclasses': None},
+                {'host_parameters_attributes': None, 'puppet_classes': None},
             ),
             (
                 entities.HostGroup(self.cfg),
-                {
-                    'ancestry': None,  # renamed to 'parent'
-                    'architecture_id': None,
-                    'domain_id': None,
-                    'environment_id': None,
-                    'medium_id': None,
-                    'operatingsystem_id': None,
-                    'ptable_id': None,
-                    'realm_id': None,
-                    'subnet_id': None,
-                },
-                {
-                    'architecture': None,
-                    'domain': None,
-                    'environment': None,
-                    'medium': None,
-                    'operatingsystem': None,
-                    'parent': None,  # renamed from 'ancestry'
-                    'ptable': None,
-                    'realm': None,
-                    'subnet': None,
-                },
-            ),
-            (
-                entities.Product(self.cfg),
-                {
-                    'gpg_key_id': None,
-                    'repositories': None,
-                    'sync_plan_id': None,
-                },
-                {'gpg_key': None, 'repositorys': None, 'sync_plan': None},
-            ),
-            (
-                entities.Repository(self.cfg),
-                {'gpg_key_id': None},
-                {'gpg_key': None},
+                {'ancestry': None},
+                {'parent': None},
             ),
             (
                 entities.System(self.cfg),
@@ -893,11 +792,6 @@ class ReadTestCase(TestCase):
                     'host_collections': None,
                     'installed_products': None,
                 },
-            ),
-            (
-                entities.User(self.cfg),
-                {'auth_source_id': None},
-                {'auth_source': None},
             ),
         )
         for entity, attrs_before, attrs_after in test_data:

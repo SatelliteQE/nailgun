@@ -627,17 +627,6 @@ class ConfigTemplate(
             u'config_template': super(ConfigTemplate, self).create_payload()
         }
 
-    def read(self, entity=None, attrs=None, ignore=()):
-        """Deal with unusually structured data returned by the server."""
-        if attrs is None:
-            attrs = self.read_json()
-        template_kind_id = attrs.pop('template_kind_id')
-        if template_kind_id is None:
-            attrs['template_kind'] = None
-        else:
-            attrs['template_kind'] = {'id': template_kind_id}
-        return super(ConfigTemplate, self).read(entity, attrs, ignore)
-
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
@@ -759,24 +748,6 @@ class AbstractDockerContainer(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
-
-    def read(self, entity=None, attrs=None, ignore=()):
-        """Compensate for the unusual format of responses from the server.
-
-        The server returns an ID and a list of IDs for the ``compute_resource``
-        field. Compensate for this unusual design trait. Typically, the server
-        returns a hash or a list of hashes for ``OneToOneField`` and
-        ``OneToManyField`` fields.
-
-        """
-        if attrs is None:
-            attrs = self.read_json()
-        compute_resource_id = attrs.pop('compute_resource_id')
-        if compute_resource_id is None:
-            attrs['compute_resource'] = None
-        else:
-            attrs['compute_resource'] = {'id': compute_resource_id}
-        return super(AbstractDockerContainer, self).read(entity, attrs, ignore)
 
     def power(self, power_action):
         """Run a power operation on a container.
@@ -940,7 +911,7 @@ class ContentViewFilterRule(
         }
 
     def read(self, entity=None, attrs=None, ignore=('content_view_filter',)):
-        """Deal with redundant entity fields"""
+        """Deal with redundant entity fields."""
         if entity is None:
             entity = type(self)(
                 self._server_config,
@@ -985,17 +956,6 @@ class AbstractContentViewFilter(
         super(AbstractContentViewFilter, self).__init__(
             server_config,
             **kwargs
-        )
-
-    def read(self, entity=None, attrs=None, ignore=()):
-        """Compensate for the pluralization of the ``repository`` field."""
-        if attrs is None:
-            attrs = self.read_json()
-        attrs['repositorys'] = attrs.pop('repositories')
-        return super(AbstractContentViewFilter, self).read(
-            entity,
-            attrs,
-            ignore
         )
 
 
@@ -1157,13 +1117,6 @@ class ContentView(
                 which
             )
         return super(ContentView, self).path(which)
-
-    def read(self, entity=None, attrs=None, ignore=()):
-        """Compensate for the pluralization of the ``repository`` field."""
-        if attrs is None:
-            attrs = self.read_json()
-        attrs['repositorys'] = attrs.pop('repositories')
-        return super(ContentView, self).read(entity, attrs, ignore)
 
     def publish(self, synchronous=True):
         """Helper for publishing an existing content view.
@@ -1335,8 +1288,6 @@ class Domain(
         if attrs is None:
             attrs = self.read_json()
         attrs['domain_parameters_attributes'] = attrs.pop('parameters')
-        dns_id = attrs.pop('dns_id')
-        attrs['dns'] = None if dns_id is None else {'id': dns_id}
         return super(Domain, self).read(entity, attrs, ignore)
 
     def update(self, fields=None):
@@ -1547,27 +1498,6 @@ class HostCollection(
         }
         super(HostCollection, self).__init__(server_config, **kwargs)
 
-    def read(self, entity=None, attrs=None, ignore=()):
-        """Compensate for the unusual format of responses from the server.
-
-        The server returns an ID and a list of IDs for the ``organization`` and
-        ``system`` fields, respectively. Compensate for this unusual design
-        trait. Typically, the server returns a hash or a list of hashes for
-        ``OneToOneField`` and ``OneToManyField`` fields.
-
-        """
-        if attrs is None:
-            attrs = self.read_json()
-        org_id = attrs.pop('organization_id')
-        if org_id is None:
-            attrs['organization'] = None
-        else:
-            attrs['organization'] = {'id': org_id}
-        attrs['systems'] = [
-            {'id': system_id} for system_id in attrs.pop('system_ids')
-        ]
-        return super(HostCollection, self).read(entity, attrs, ignore)
-
     def create_payload(self):
         """Rename ``system_ids`` to ``system_uuids``."""
         payload = super(HostCollection, self).create_payload()
@@ -1617,50 +1547,15 @@ class HostGroup(
         return {u'hostgroup': super(HostGroup, self).create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=()):
-        """Normalize the data received from the server.
+        """Deal with weirdly named data returned from the server.
 
-        The server returns data in this format::
-
-            {
-                'id': 15,
-                'name': 'name',
-                'title': 'title',
-                'subnet_id': null,
-                'subnet_name': null,
-                'operatingsystem_id': null,
-                'operatingsystem_name': null,
-                …
-            }
-
-        Normalize data to this format::
-
-            {
-                'id': 15,
-                'name': 'name',
-                'title': 'title',
-                'subnet': {'id': …},
-                'operatingsystem': {'id': …},
-                …
-            }
+        When creating a HostGroup, the server accepts a field named 'parent'.
+        When reading a HostGroup, the server returns a semantically identical
+        field named 'ancestry'.
 
         """
         if attrs is None:
             attrs = self.read_json()
-
-        field_names = [
-            field_name
-            for field_name, field
-            in self.get_fields().items()
-            if isinstance(field, entity_fields.OneToOneField)
-        ]
-        field_names.remove('parent')
-        for field_name in field_names:
-            field_value = attrs.pop(field_name + '_id')
-            if field_value is None:
-                attrs[field_name] = field_value
-            else:
-                attrs[field_name] = {'id': field_value}
-
         parent_id = attrs.pop('ancestry')
         if parent_id is None:
             attrs['parent'] = None
@@ -1817,16 +1712,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
         attrs['host_parameters_attributes'] = attrs.pop('parameters')
         # The server returns a list of IDs for all OneToOneFields except
         # `puppet_classes`.
-        attrs['puppet_classess'] = attrs.pop('puppetclasses')
-        for field_name, field in self.get_fields().items():
-            if field_name == 'puppet_classes':
-                continue
-            if isinstance(field, entity_fields.OneToOneField):
-                field_id = attrs.pop(field_name + '_id')
-                if field_id is None:
-                    attrs[field_name] = None
-                else:
-                    attrs[field_name] = {'id': field_id}
+        attrs['puppet_classes'] = attrs.pop('puppetclasses')
 
         return super(Host, self).read(entity, attrs, ignore)
 
@@ -2028,19 +1914,13 @@ class Location(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
         return Location(self._server_config, id=attrs['id']).read()
 
     def read(self, entity=None, attrs=None, ignore=('realm',)):
-        """Work around several bugs in the server's response.
+        """Work around a bug in the server's response.
 
-        * Compensate for the pluralization of the "smart_proxy" and "media"
-          fields.
-        * Do not try to read any of the attributes listed in the ``ignore``
-          argument. See `Bugzilla #1216234
-          <https://bugzilla.redhat.com/show_bug.cgi?id=1216234>`_.
+        Do not try to read oany of the attributes listed in the ``ignore``
+        argument. See `Bugzilla #1216234
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1216234>`_.
 
         """
-        if attrs is None:
-            attrs = self.read_json()
-        attrs['smart_proxys'] = attrs.pop('smart_proxies')
-        attrs['medias'] = attrs.pop('media')
         return super(Location, self).read(entity, attrs, ignore)
 
 
@@ -2199,13 +2079,6 @@ class OperatingSystem(
         return {
             u'operatingsystem': super(OperatingSystem, self).create_payload()
         }
-
-    def read(self, entity=None, attrs=None, ignore=()):
-        """Compensate for the pluralization of the ``media`` field."""
-        if attrs is None:
-            attrs = self.read_json()
-        attrs['medias'] = attrs.pop('media')
-        return super(OperatingSystem, self).read(entity, attrs, ignore)
 
 
 class OperatingSystemParameter(
@@ -2474,17 +2347,10 @@ class Organization(
         """Fetch as many attributes as possible for this entity.
 
         The server does not return any of the attributes listed in the
-        ``ignore`` argument. See `BZ #1230873
+        ``ignore`` argument. For more information, see `Bugzilla #1230873
         <https://bugzilla.redhat.com/show_bug.cgi?id=1230873>`_.
 
-        Also, compensate for the pluralization of the "media" and "smart_proxy"
-        fields.
-
         """
-        if attrs is None:
-            attrs = self.read_json()
-        attrs['smart_proxys'] = attrs.pop('smart_proxies')
-        attrs['medias'] = attrs.pop('media')
         return super(Organization, self).read(entity, attrs, ignore)
 
     def update(self, fields=None):
@@ -2670,7 +2536,6 @@ class Product(
         """Compensate for the weird structure of returned data."""
         if attrs is None:
             attrs = self.read_json()
-        attrs['repositorys'] = attrs.pop('repositories')
 
         # Satellite 6.0 does not include an ID in the `organization` hash.
         if (getattr(self._server_config, 'version', parse_version('6.1')) <
@@ -2689,14 +2554,6 @@ class Product(
                     ' Actual search results: {1}'.format(org_label, results)
                 )
             attrs['organization'] = {'id': response.json()['results'][0]['id']}
-
-        # The server returns IDs for these attrs instead of dicts of data.
-        for attr in ('gpg_key', 'sync_plan'):
-            attr_id = attrs.pop(attr + '_id')
-            if attr_id is None:
-                attrs[attr] = None
-            else:
-                attrs[attr] = {'id': attr_id}
 
         return super(Product, self).read(entity, attrs, ignore)
 
@@ -2862,13 +2719,6 @@ class PuppetModule(Entity, EntityReadMixin):
         self._meta = {'api_path': 'katello/api/v2/puppet_modules'}
         super(PuppetModule, self).__init__(server_config, **kwargs)
 
-    def read(self, entity=None, attrs=None, ignore=()):
-        """Compensate for the pluralization of the ``repository`` field."""
-        if attrs is None:
-            attrs = self.read_json()
-        attrs['repositorys'] = attrs.pop('repositories')
-        return super(PuppetModule, self).read(entity, attrs, ignore)
-
 
 class Realm(
         Entity,
@@ -2894,19 +2744,6 @@ class Realm(
         }
         self._meta = {'api_path': 'api/v2/realms', 'server_modes': ('sat')}
         super(Realm, self).__init__(server_config, **kwargs)
-
-    def read(self, entity=None, attrs=None, ignore=()):
-        """Compensate for the naming of the "realm_proxy" field.
-
-        The server returns an integer attribute named ``realm_proxy_id``
-        instead of a hash named ``realm_proxy``.
-
-        """
-        if attrs is None:
-            attrs = self.read_json()
-        rp_id = attrs.pop('realm_proxy_id')
-        attrs['realm_proxy'] = None if rp_id is None else {'id': rp_id}
-        return super(Realm, self).read(entity, attrs, ignore)
 
 
 class Report(Entity):
@@ -3071,18 +2908,6 @@ class Repository(
                 .format(handle, self.id, response_json)  # pylint:disable=E1101
             )
         return response_json
-
-    def read(self, entity=None, attrs=None, ignore=()):
-        """Compensate for the weird structure of returned data."""
-        if attrs is None:
-            attrs = self.read_json()
-        # The server returns an ID for this attr instead of a dict of data.
-        gpg_key_id = attrs.pop('gpg_key_id')
-        if gpg_key_id is None:
-            attrs['gpg_key'] = None
-        else:
-            attrs['gpg_key'] = {'id': gpg_key_id}
-        return super(Repository, self).read(entity, attrs, ignore)
 
 
 class RHCIDeployment(
@@ -3748,10 +3573,7 @@ class User(
         return {u'user': super(User, self).create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=('password',)):
-        if attrs is None:
-            attrs = self.read_json()
-        as_id = attrs.pop('auth_source_id')
-        attrs['auth_source'] = None if as_id is None else {'id': as_id}
+        """Do not read any attributes listed in the ``ignore`` argument."""
         return super(User, self).read(entity, attrs, ignore)
 
     def update_payload(self, fields=None):

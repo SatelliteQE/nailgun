@@ -2,6 +2,7 @@
 """Defines a set of mixins that provide tools for interacting with entities."""
 from collections import Iterable
 from fauxfactory import gen_choice
+from inflector import Inflector
 from nailgun import client, config
 from nailgun.entity_fields import IntegerField, OneToManyField, OneToOneField
 import threading
@@ -204,6 +205,77 @@ def _get_server_config():
     return config.ServerConfig.get()
 
 
+def _get_entity_id(field_name, attrs):
+    """Find the ID for a one to one relationship.
+
+    The server may return JSON data in the following forms for a
+    :class:`nailgun.entity_fields.OneToOneField`::
+
+        'user': None
+        'user': {'name': 'Alice Hayes', 'login': 'ahayes', 'id': 1}
+        'user_id': 1
+        'user_id': None
+
+    Search ``attrs`` for a one to one ``field_name`` and return its ID.
+
+    :param field_name: A string. The name of a field.
+    :param attrs: A dict. A JSON payload as returned from a server.
+    :returns: Either an entity ID or None.
+
+    """
+    field_name_id = field_name + '_id'
+    if field_name in attrs:
+        if attrs[field_name] is None:
+            return None
+        else:
+            return attrs[field_name]['id']
+    elif field_name_id in attrs:
+        return attrs[field_name_id]
+    else:
+        raise MissingValueError(
+            'Cannot find a value for the "{}" field. Searched for keys named '
+            '{}, but available keys are {}.'
+            .format(field_name, (field_name, field_name_id), attrs.keys())
+        )
+
+
+def _get_entity_ids(field_name, attrs):
+    """Find the IDs for a one to many relationship.
+
+    The server may return JSON data in the following forms for a
+    :class:`nailgun.entity_fields.OneToManyField`::
+
+        'user': [{'id': 1, …}, {'id': 42, …}]
+        'users': [{'id': 1, …}, {'id': 42, …}]
+        'user_ids': [1, 42]
+
+    Search ``attrs`` for a one to many ``field_name`` and return its ID.
+
+    :param field_name: A string. The name of a field.
+    :param attrs: A dict. A JSON payload as returned from a server.
+    :returns: An iterable of entity IDs.
+
+    """
+    field_name_ids = field_name + '_ids'
+    plural_field_name = Inflector().pluralize(field_name)
+    if field_name_ids in attrs:
+        return attrs[field_name_ids]
+    elif field_name in attrs:
+        return [entity['id'] for entity in attrs[field_name]]
+    elif plural_field_name in attrs:
+        return [entity['id'] for entity in attrs[plural_field_name]]
+    else:
+        raise MissingValueError(
+            'Cannot find a value for the "{}" field. Searched for keys named '
+            '{}, but available keys are {}.'
+            .format(
+                field_name,
+                (field_name_ids, field_name, plural_field_name),
+                attrs.keys()
+            )
+        )
+
+
 # -----------------------------------------------------------------------------
 # Definition of parent Entity class and its dependencies.
 # -----------------------------------------------------------------------------
@@ -219,6 +291,10 @@ class NoSuchFieldError(Exception):
 
 class BadValueError(Exception):
     """Indicates that an inappropriate value was assigned to an entity."""
+
+
+class MissingValueError(Exception):
+    """Indicates that no value can be found for a field."""
 
 
 class Entity(object):
@@ -596,29 +672,24 @@ class EntityReadMixin(object):
         if attrs is None:
             attrs = self.read_json()
 
-        # The server returns OneToOneFields as a hash of attributes, like so:
-        #
-        #     {'name': 'Alice Hayworth', 'login': 'ahayworth', 'id': 1}
-        #
-        # OneToManyFields are a list of hashes.
-        for field_name, field_type in entity.get_fields().items():
+        for field_name, field in entity.get_fields().items():
             if field_name in ignore:
                 continue
-            if isinstance(field_type, OneToOneField):
-                if attrs[field_name] is None:
+            if isinstance(field, OneToOneField):
+                entity_id = _get_entity_id(field_name, attrs)
+                if entity_id is None:
                     referenced_entity = None
                 else:
-                    referenced_entity = field_type.gen_value()(
+                    referenced_entity = field.entity(
                         self._server_config,
-                        id=attrs[field_name]['id']
+                        id=entity_id,
                     )
                 setattr(entity, field_name, referenced_entity)
-            elif isinstance(field_type, OneToManyField):
-                other_cls = field_type.gen_value()
+            elif isinstance(field, OneToManyField):
                 referenced_entities = [
-                    other_cls(self._server_config, id=referenced_entity['id'])
-                    for referenced_entity
-                    in attrs[field_name + 's']  # e.g. "users"
+                    field.entity(self._server_config, id=entity_id)
+                    for entity_id
+                    in _get_entity_ids(field_name, attrs)
                 ]
                 setattr(entity, field_name, referenced_entities)
             else:

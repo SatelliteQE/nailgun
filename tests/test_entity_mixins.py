@@ -492,6 +492,28 @@ class EntityCreateMixinTestCase(TestCase):
 class EntityReadMixinTestCase(TestCase):
     """Tests for :class:`nailgun.entity_mixins.EntityReadMixin`."""
 
+    @classmethod
+    def setUpClass(cls):
+        """Set ``cls.test_entity``.
+
+        ``test_entity`` is a class having one to one and one to many fields.
+
+        """
+        class TestEntity(entity_mixins.Entity, entity_mixins.EntityReadMixin):
+            """An entity with several different types of fields."""
+
+            def __init__(self, server_config=None, **kwargs):
+                self._fields = {
+                    'ignore_me': IntegerField(),
+                    'many': OneToManyField(SampleEntity),
+                    'none': OneToOneField(SampleEntity),
+                    'one': OneToOneField(SampleEntity),
+                }
+                self._meta = {'api_path': ''}
+                super(TestEntity, self).__init__(server_config, **kwargs)
+
+        cls.test_entity = TestEntity
+
     def setUp(self):
         """Set ``self.entity = EntityWithRead(…)``."""
         self.entity = EntityWithRead(
@@ -523,52 +545,97 @@ class EntityReadMixinTestCase(TestCase):
         self.assertEqual(response.raise_for_status.call_count, 1)
         self.assertEqual(response.json.call_count, 1)
 
-    def test_read(self):
-        """Test :meth:`nailgun.entity_mixins.EntityReadMixin.read`."""
-
-        class TestEntity(entity_mixins.Entity, entity_mixins.EntityReadMixin):
-            """An entity with several different types of fields."""
-
-            def __init__(self, server_config=None, **kwargs):
-                self._fields = {
-                    'ignore_me': IntegerField(),
-                    'int': IntegerField(),
-                    'many': OneToManyField(SampleEntity),
-                    'none': OneToOneField(SampleEntity),
-                    'one': OneToOneField(SampleEntity),
-                }
-                self._meta = {'api_path': ''}
-                super(TestEntity, self).__init__(server_config, **kwargs)
-
+    def test_read_v1(self):
+        """Make ``read_json`` return hashes."""
         # Generate some bogus values and call `read`.
         cfg = config.ServerConfig('example.com')
-        entity = TestEntity(cfg)
+        entity_1 = self.test_entity(cfg)
         attrs = {
             'id': gen_integer(min_value=1),
-            'int': gen_integer(),
-            'manys': [{'id': gen_integer(min_value=1)}],
+            'manies': [{'id': gen_integer(min_value=1)}],
             'none': None,
             'one': {'id': gen_integer(min_value=1)},
         }
-        with mock.patch.object(entity, 'read_json') as read_json:
+        with mock.patch.object(entity_1, 'read_json') as read_json:
             read_json.return_value = attrs
-            new_entity = entity.read(ignore='ignore_me')
+            entity_2 = entity_1.read(ignore='ignore_me')
 
-        # Make assertions about the call.
-        self.assertEqual(
-            cfg,
-            new_entity._server_config,  # pylint:disable=protected-access
-        )
+        # Make assertions about the call and the returned entity.
+        self.assertEqual(cfg, entity_2._server_config)  # pylint:disable=W0212
         self.assertEqual(read_json.call_count, 1)
         self.assertEqual(
-            set(entity.get_fields().keys()),
-            set(new_entity.get_fields().keys()),
+            set(entity_1.get_fields().keys()),
+            set(entity_2.get_fields().keys()),
         )
-        self.assertEqual(new_entity.id, attrs['id'])
-        self.assertEqual(new_entity.int, attrs['int'])
-        self.assertEqual(new_entity.many[0].id, attrs['manys'][0]['id'])
-        self.assertEqual(new_entity.none, attrs['none'])
-        self.assertEqual(new_entity.one.id, attrs['one']['id'])
+        self.assertEqual(entity_2.id, attrs['id'])
+        self.assertEqual(entity_2.many[0].id, attrs['manies'][0]['id'])
+        self.assertEqual(entity_2.one.id, attrs['one']['id'])
+
+    def test_read_v2(self):
+        """Make ``read_json`` return hashes, but with different field names."""
+        # Generate some bogus values and call `read`.
+        cfg = config.ServerConfig('example.com')
+        entity_1 = self.test_entity(cfg)
+        attrs = {'many': [{'id': gen_integer(min_value=1)}]}
+        with mock.patch.object(entity_1, 'read_json') as read_json:
+            read_json.return_value = attrs
+            entity_2 = entity_1.read(ignore=('id', 'none', 'one', 'ignore_me'))
+
+        # Make assertions about the call and the returned entity.
+        self.assertEqual(cfg, entity_2._server_config)  # pylint:disable=W0212
+        self.assertEqual(read_json.call_count, 1)
+        self.assertEqual(
+            set(entity_1.get_fields().keys()),
+            set(entity_2.get_fields().keys()),
+        )
+        self.assertEqual(entity_2.many[0].id, attrs['many'][0]['id'])
+
+    def test_read_v3(self):
+        """Make ``read_json`` return IDs."""
+        # Generate some bogus values and call `read`.
+        cfg = config.ServerConfig('example.com')
+        entity_1 = self.test_entity(cfg)
+        attrs = {
+            'id': gen_integer(min_value=1),
+            'many_ids': [gen_integer(min_value=1)],
+            'none': None,
+            'one_id': gen_integer(min_value=1),
+        }
+        with mock.patch.object(entity_1, 'read_json') as read_json:
+            read_json.return_value = attrs
+            entity_2 = entity_1.read(ignore='ignore_me')
+
+        # Make assertions about the call and the returned entity.
+        self.assertEqual(cfg, entity_2._server_config)  # pylint:disable=W0212
+        self.assertEqual(read_json.call_count, 1)
+        self.assertEqual(
+            set(entity_1.get_fields().keys()),
+            set(entity_2.get_fields().keys()),
+        )
+        self.assertEqual(entity_2.id, attrs['id'])
+        self.assertEqual(entity_2.many[0].id, attrs['many_ids'][0])
+        self.assertEqual(entity_2.one.id, attrs['one_id'])
+
+    def test_missing_value_error(self):
+        """Raise a :class:`nailgun.entity_mixins.MissingValueError`."""
+        entity = self.test_entity(config.ServerConfig('example.com'))
+        for attrs in (
+                {
+                    'id': gen_integer(min_value=1),
+                    'none': None,
+                    'one_id': gen_integer(min_value=1),
+                },
+                {
+                    'id': gen_integer(min_value=1),
+                    'many_ids': [gen_integer(min_value=1)],
+                    'none': None,
+                },
+        ):
+            with self.subTest(attrs):
+                with mock.patch.object(entity, 'read_json') as read_json:
+                    read_json.return_value = attrs
+                    with self.assertRaises(entity_mixins.MissingValueError):
+                        entity.read(ignore='ignore_me')
 
 
 class EntityUpdateMixinTestCase(TestCase):
