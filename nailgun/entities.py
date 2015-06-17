@@ -2356,7 +2356,12 @@ class Organization(
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
-        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+        For more information, see `Bugzilla #1232871
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1232871>`_.
+
+        Also, beware of `Bugzilla #1230865
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1230865>`_:
+        "Cannot use HTTP PUT to associate organization with media"
 
         """
         self.update_json(fields)
