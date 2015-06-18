@@ -716,6 +716,7 @@ class ReadTestCase(TestCase):
                 entities.HostGroup,
                 entities.Media,
                 entities.Product,
+                entities.RHCIDeployment,
                 entities.System,
         ):
             with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
