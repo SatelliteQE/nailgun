@@ -1276,13 +1276,8 @@ class Domain(
     def read(self, entity=None, attrs=None, ignore=()):
         """Deal with weirdly named data returned from the server.
 
-        When creating a domain, the server accepts a list named
-        ``domain_parameters_attributes``. When reading a domain, the server
-        returns a list named ``parameters``. These appear to be the same data.
-        Deal with this naming weirdness.
-
-        Also, the server returns an entity ID instead of a hash of attributes
-        for the ``dns`` one to one field.
+        For more information, see `Bugzilla #1233245
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1233245>`_.
 
         """
         if attrs is None:
@@ -2334,8 +2329,8 @@ class Organization(
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
 
-        No value is returned for at least the "smart proxy" field, and possibly
-        other fields too.
+        For more information, see `Bugzilla #1230873
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1230873>`_.
 
         """
         return Organization(
@@ -2356,7 +2351,12 @@ class Organization(
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
-        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+        For more information, see `Bugzilla #1232871
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1232871>`_.
+
+        Also, beware of `Bugzilla #1230865
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1230865>`_:
+        "Cannot use HTTP PUT to associate organization with media"
 
         """
         self.update_json(fields)
@@ -2744,6 +2744,18 @@ class Realm(
         }
         self._meta = {'api_path': 'api/v2/realms', 'server_modes': ('sat')}
         super(Realm, self).__init__(server_config, **kwargs)
+
+    def create(self, create_missing=None):
+        """Do extra work to fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1232855
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1232855>`_.
+
+        """
+        return Realm(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
 
 
 class Report(Entity):
