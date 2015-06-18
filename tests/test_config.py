@@ -38,10 +38,10 @@ def _compare_configs(self, dict_config, server_config):
         subclass thereof.
 
     """
-    cfg = vars(server_config).copy()
-    if 'version' in cfg:
-        cfg['version'] = str(cfg['version'])
-    self.assertEqual(dict_config, cfg)
+    if 'version' in dict_config:
+        dict_config = dict_config.copy()  # shadow the passed in dict
+        dict_config['version'] = parse_version(dict_config.pop('version'))
+    self.assertEqual(dict_config, vars(server_config))
 
 
 class BaseServerConfigTestCase(TestCase):
