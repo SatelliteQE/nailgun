@@ -1276,13 +1276,8 @@ class Domain(
     def read(self, entity=None, attrs=None, ignore=()):
         """Deal with weirdly named data returned from the server.
 
-        When creating a domain, the server accepts a list named
-        ``domain_parameters_attributes``. When reading a domain, the server
-        returns a list named ``parameters``. These appear to be the same data.
-        Deal with this naming weirdness.
-
-        Also, the server returns an entity ID instead of a hash of attributes
-        for the ``dns`` one to one field.
+        For more information, see `Bugzilla #1233245
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1233245>`_.
 
         """
         if attrs is None:
