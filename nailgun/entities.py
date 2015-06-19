@@ -831,6 +831,7 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'content_view': entity_fields.OneToOneField(ContentView),
             'environment': entity_fields.OneToManyField(Environment),
             'puppet_module': entity_fields.OneToManyField(PuppetModule),
         }
@@ -1069,7 +1070,7 @@ class ContentView(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'component': entity_fields.OneToManyField(ContentView),
+            'component': entity_fields.OneToManyField(ContentViewVersion),
             'composite': entity_fields.BooleanField(),
             'description': entity_fields.StringField(),
             'label': entity_fields.StringField(),
