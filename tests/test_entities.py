@@ -230,6 +230,8 @@ class PathTestCase(TestCase):
                 (entities.Product, 'repository_sets'),
                 (entities.Product, 'repository_sets/2396/disable'),
                 (entities.Product, 'repository_sets/2396/enable'),
+                (entities.Product,
+                 'repository_sets/2396/available_repositories'),
                 (entities.Repository, 'sync'),
                 (entities.Repository, 'upload_content'),
                 (entities.RHCIDeployment, 'deploy'),
@@ -1128,6 +1130,37 @@ class OrganizationTestCase(TestCase):
                 return_value={'results': gen_integer()},  # not realistic
             ) as handler:
                 response = self.org.list_rhproducts()
+        self.assertEqual(client_get.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value['results'], response)
+
+
+class ProductTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.Product`."""
+
+    def setUp(self):
+        """Set ``self.product``."""
+        self.product = entities.Product(
+            config.ServerConfig('http://example.com'),
+            id=gen_integer(min_value=1),
+        )
+
+    # pylint:disable=C0103
+    def test_repository_sets_available_repositories(self):
+        """Call
+        :meth:`nailgun.entities.Product.repository_sets_available_repositories`
+
+        """
+        with mock.patch.object(client, 'get') as client_get:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'results': gen_integer()},  # not realistic
+            ) as handler:
+                reposet_id = gen_integer(min_value=1)
+                response = self.product.repository_sets_available_repositories(
+                    reposet_id=reposet_id,
+                )
         self.assertEqual(client_get.call_count, 1)
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value['results'], response)

@@ -2667,6 +2667,23 @@ class Product(
         )
         return _handle_response(response, self._server_config, synchronous)
 
+    # pylint:disable=C0103
+    def repository_sets_available_repositories(self, reposet_id):
+        """Lists available repositories for the repository set
+
+        :param reposet_id: The RepositorySet Id.
+        :returns: Returns list of available repositories for the repository set
+
+        """
+        response = client.get(
+            self.path(
+                'repository_sets/{0}/available_repositories'
+                .format(reposet_id)
+            ),
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config)['results']
+
 
 class PartitionTable(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
