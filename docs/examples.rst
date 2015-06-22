@@ -4,15 +4,15 @@ Examples
 This page contains several examples of how to use NailGun. The examples progress
 from simple to more advanced.
 
-You can run any of the scripts presented in this document. For example scripts
-that use NailGun, this is the set-up procedure::
+You can run any of the scripts presented in this document. This is the set-up
+procedure for scripts that use NailGun::
 
     virtualenv env
     source env/bin/activate
     pip install nailgun
     ./some_script.py  # some script of your choice
 
-For example scripts that do not use NailGun, this is the set-up procedure::
+This is the set-up procedure for scripts that do not use NailGun::
 
     virtualenv env
     source env/bin/activate
@@ -21,6 +21,14 @@ For example scripts that do not use NailGun, this is the set-up procedure::
 
 Additionally, a video demonstration entitled `NailGun Hands On
 <https://www.youtube.com/watch?v=_FNjAQdNoRc>`_ is available.
+
+.. contents::
+
+Video Demonstration
+-------------------
+
+Note that this video does not touch on features that were added after it was
+recorded on May 26 2015, such as the :ref:`label-update` method.
 
 .. raw:: html
 
@@ -31,7 +39,7 @@ Additionally, a video demonstration entitled `NailGun Hands On
         allowfullscreen
     ></iframe>
 
-.. _label-simple:
+.. _label-getting-started:
 
 Getting Started
 ---------------
@@ -88,7 +96,7 @@ configurations, but only want to work with one at a time::
 In addition, if no server configuration object is specified when instantiating
 an :class:`nailgun.entity_mixins.Entity` object, the server configuration
 labeled "default" is used. With this in mind, here's a revised version of the
-first script in section :ref:`label-simple`:
+first script in section :ref:`label-getting-started`:
 
 .. literalinclude:: create_organization_nailgun_v2.py
 
@@ -113,19 +121,18 @@ The examples so far have only made use of a small set of classes and methods:
   methods.
 
 However, there are several more very useful high-level methods that you should
-be aware of:
+be aware of. In addition, there are aspects to the ``create`` method that have
+not been touched on.
 
-* ``get_fields``
-* ``read``
-* ``update``
-
+.. contents::
+    :local:
 
 ``get_fields``
 ~~~~~~~~~~~~~~
 
 The ``get_fields`` method is closely related to the ``get_values`` method. The
 former tells you which values *may* be assigned to an entity, and the latter
-tells you what values *are* assigned to an entity. For example:
+tells you what values *are* assigned to an entity. For example::
 
     >>> from nailgun.entities import Product
     >>> product = Product(name='junk product')
@@ -174,14 +181,32 @@ Secondly, fields can generate random values for unit testing purposes. (This
 does *not* normally happen!) See the ``create_missing`` method for more
 information.
 
+``create``
+~~~~~~~~~~
+
+So far, we have only used brand new objects::
+
+    >>> from nailgun.entities import Organization
+    >>> org = entities.Organization(name='junk org').create()
+
+However, we can also use existing objects::
+
+    >>> from nailgun.entities import Organization
+    >>> org = entities.Organization()
+    >>> org.name = 'junk org'
+    >>> org = org.create()
+
+Note that the ``create`` method is side-effect free. As a result, the ``org =
+org.create()`` idiom is advisable. (The next section discusses this more.)
+
 ``read``
 ~~~~~~~~
 
-Rather unsurprisingly, the ``read`` method fetches information about an entity.
-Importantly, the ``read`` method does not have side-effects:
+The ``read`` method fetches information about an entity. Typical usages of this
+method have already been shown, so this example goes in to more detail::
 
-    >>> from nailgun import entities
-    >>> org = entities.Organization(id=418)
+    >>> from nailgun.entities import Organization
+    >>> org = Organization(id=418)
     >>> response = org.read()
     >>> for obj in (org, response):
     ...     type(obj)
@@ -200,15 +225,33 @@ Importantly, the ``read`` method does not have side-effects:
         'title': 'junk org',
     }
 
-As demonstrated above, the ``read`` method does not alter the object it is
-called on. Instead, it creates a new object, populates that object with
-attributes, and returns that new object. As a result, idioms like ``org =
-org.read()`` are advisable.
+Some notes on the above:
+
+* The ``read`` method requires that an ``id`` attribute be present. Running
+  ``Organization().read()`` will throw an exception.
+* The ``read`` method is side-effect free. Rather than altering the object it is
+  called on, it creates a new object, populates that object with attributes and
+  returns the object. As a result, idioms like ``org = org.read()`` are
+  advisable.
+
+So far, we have only used brand new objects::
+
+    >>> from nailgun.entities import Organization
+    >>> org = Organization(id=418).read()
+
+However, we can also use existing objects::
+
+    >>> from nailgun.entities import Organization
+    >>> org = Organziation()
+    >>> org.id = 418
+    >>> org = org.read()
+
+.. _label-update:
 
 ``update``
 ~~~~~~~~~~
 
-The ``update`` method updates an entity's values. For example:
+The ``update`` method updates an entity's values. For example::
 
     >>> from nailgun.entities import Organization
     >>> org = Organization(id=418).read()
@@ -248,6 +291,16 @@ Some notes on the above:
   possible to update a subset of fields.
 * The ``update`` method is side-effect free. As a result, idioms like ``org =
   org.update()`` are advisable.
+
+So far, we have only called ``update`` on existing objects. However, we can also
+call ``update`` on brand new objects::
+
+    >>> from nailgun.entities import Organization
+    >>> Organization(
+    ...     id=418,
+    ...     name='junkier org',
+    ...     description='supercalifragilisticexpialidocious',
+    ... ).update(['name', 'description'])
 
 Using Lower Layers
 ------------------
