@@ -777,7 +777,7 @@ class ReadTestCase(TestCase):
             (
                 entities.Host(self.cfg),
                 {'parameters': None, 'puppetclasses': None},
-                {'host_parameters_attributes': None, 'puppet_classes': None},
+                {'host_parameters_attributes': None, 'puppet_class': None},
             ),
             (
                 entities.HostGroup(self.cfg),
@@ -810,10 +810,15 @@ class ReadTestCase(TestCase):
         Assert that the entity ignores the 'account_password' field.
 
         """
-        with mock.patch.object(EntityReadMixin, 'read') as read:
-            entities.AuthSourceLDAP(self.cfg).read(attrs={})
-        # `call_args` is a two-tupe of (positional, keyword) args.
-        self.assertIn('account_password', read.call_args[0][2])
+        for entity, ignored_attrs in (
+                (entities.AuthSourceLDAP, ('account_password',)),
+                (entities.Subnet, ('discovery',))
+        ):
+            with self.subTest(entity):
+                with mock.patch.object(EntityReadMixin, 'read') as read:
+                    entity(self.cfg).read()
+                # `call_args` is a two-tupe of (positional, keyword) args.
+                self.assertEqual(set(ignored_attrs), set(read.call_args[0][2]))
 
     def test_ignore_arg_v2(self):
         """Call :meth:`nailgun.entities.DockerComputeResource.read`.
@@ -886,6 +891,7 @@ class UpdatePayloadTestCase(TestCase):
         class_response = [
             (entities.ConfigTemplate, {'config_template': {}}),
             (entities.Domain, {'domain': {}}),
+            (entities.Host, {'host': {}}),
             (entities.Organization, {'organization': {}}),
             (entities.User, {'user': {}}),
         ]

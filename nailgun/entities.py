@@ -1629,14 +1629,13 @@ class Host(  # pylint:disable=too-many-instance-attributes
             ),
             'provision_method': entity_fields.StringField(null=True),
             'ptable': entity_fields.OneToOneField(PartitionTable, null=True),
-            'puppet_classes': entity_fields.OneToManyField(
+            'puppet_class': entity_fields.OneToManyField(
                 PuppetClass,
                 null=True,
             ),
             'puppet_proxy': entity_fields.OneToOneField(SmartProxy, null=True),
             'realm': entity_fields.OneToOneField(Realm, null=True),
             'root_pass': entity_fields.StringField(length=(8, 30)),
-            'sp_subnet': entity_fields.OneToOneField(Subnet, null=True),
             'subnet': entity_fields.OneToOneField(Subnet, null=True),
         }
         self._meta = {'api_path': 'api/v2/hosts', 'server_modes': ('sat')}
@@ -1716,26 +1715,34 @@ class Host(  # pylint:disable=too-many-instance-attributes
         return {u'host': super(Host, self).create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=('root_pass',)):
-        """Deal with oddly named and structured data returned by the server."""
+        """Deal with oddly named and structured data returned by the server.
+
+        For more information, see `Bugzilla #1235019
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1235019>`_.
+
+        """
         if attrs is None:
             attrs = self.read_json()
-
-        # POST accepts `host_parameters_attributes`, GET returns `parameters`
         attrs['host_parameters_attributes'] = attrs.pop('parameters')
-        # The server returns a list of IDs for all OneToOneFields except
-        # `puppet_classes`.
-        attrs['puppet_classes'] = attrs.pop('puppetclasses')
-
+        attrs['puppet_class'] = attrs.pop('puppetclasses')
         return super(Host, self).read(entity, attrs, ignore)
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
-        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+        For more information, see `Bugzilla #1235049
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1235049>`_.
+
+        .. WARNING:: Several attributes cannot be updated. See `Bugzilla
+            #1235041 <https://bugzilla.redhat.com/show_bug.cgi?id=1235041>`_.
 
         """
         self.update_json(fields)
         return self.read()
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {u'host': super(Host, self).update_payload(fields)}
 
 
 class Image(Entity):
@@ -2371,9 +2378,8 @@ class Organization(
         For more information, see `Bugzilla #1232871
         <https://bugzilla.redhat.com/show_bug.cgi?id=1232871>`_.
 
-        Also, beware of `Bugzilla #1230865
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1230865>`_:
-        "Cannot use HTTP PUT to associate organization with media"
+        .. WARNING:: Several attributes cannot be updated. See `Bugzilla
+            #1230865 <https://bugzilla.redhat.com/show_bug.cgi?id=1230865>`_.
 
         """
         self.update_json(fields)
