@@ -885,6 +885,7 @@ class UpdatePayloadTestCase(TestCase):
         """Instantiate a variety of entities and call ``update_payload``."""
         class_response = [
             (entities.ConfigTemplate, {'config_template': {}}),
+            (entities.Domain, {'domain': {}}),
             (entities.Organization, {'organization': {}}),
             (entities.User, {'user': {}}),
         ]

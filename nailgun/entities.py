@@ -1300,11 +1300,16 @@ class Domain(
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
-        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+        For more information, see `Bugzilla #1234999
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1234999>`_.
 
         """
         self.update_json(fields)
         return self.read()
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {u'domain': super(Domain, self).update_payload(fields)}
 
 
 class Environment(
