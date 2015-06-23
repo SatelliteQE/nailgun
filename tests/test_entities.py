@@ -882,8 +882,9 @@ class UpdatePayloadTestCase(TestCase):
         cls.cfg = config.ServerConfig('http://example.com')
 
     def test_generic(self):
-        """Instantiate a variety of entities and call ``create_payload``."""
+        """Instantiate a variety of entities and call ``update_payload``."""
         class_response = [
+            (entities.ConfigTemplate, {'config_template': {}}),
             (entities.Organization, {'organization': {}}),
             (entities.User, {'user': {}}),
         ]
