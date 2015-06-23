@@ -287,7 +287,8 @@ class Architecture(
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
-        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+        For more information, see `Bugzilla #1234964
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1234964>`_.
 
         """
         self.update_json(fields)
