@@ -807,7 +807,8 @@ class ReadTestCase(TestCase):
         """
         for entity, ignored_attrs in (
                 (entities.AuthSourceLDAP, ('account_password',)),
-                (entities.Subnet, ('discovery',))
+                (entities.Subnet, ('discovery',)),
+                (entities.User, ('password',)),
         ):
             with self.subTest(entity):
                 with mock.patch.object(EntityReadMixin, 'read') as read:
