@@ -1519,7 +1519,11 @@ class HostCollection(
 
 
 class HostGroup(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Host Group entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1528,8 +1532,16 @@ class HostGroup(
                 Architecture,
                 null=True,
             ),
+            'content_view': entity_fields.OneToOneField(
+                ContentView,
+                null=True,
+            ),
             'domain': entity_fields.OneToOneField(Domain, null=True),
             'environment': entity_fields.OneToOneField(Environment, null=True),
+            'lifecycle_environment': entity_fields.OneToOneField(
+                LifecycleEnvironment,
+                null=True,
+            ),
             'location': entity_fields.OneToManyField(Location, null=True),
             'medium': entity_fields.OneToOneField(Media, null=True),
             'name': entity_fields.StringField(required=True),
@@ -1559,11 +1571,14 @@ class HostGroup(
         return {u'hostgroup': super(HostGroup, self).create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=()):
-        """Deal with weirdly named data returned from the server.
+        """Deal with several bugs.
 
-        When creating a HostGroup, the server accepts a field named 'parent'.
-        When reading a HostGroup, the server returns a semantically identical
-        field named 'ancestry'.
+        For more information, see:
+
+        * `Bugzilla #1235377
+          <https://bugzilla.redhat.com/show_bug.cgi?id=1235377>`_
+        * `Bugzilla #1235379
+          <https://bugzilla.redhat.com/show_bug.cgi?id=1235379>`_
 
         """
         if attrs is None:
@@ -1573,8 +1588,28 @@ class HostGroup(
             attrs['parent'] = None
         else:
             attrs['parent'] = {'id': parent_id}
-
+        update_attrs = self.update_json([])
+        for attr in ('content_view_id', 'lifecycle_environment_id'):
+            attrs[attr] = update_attrs[attr]
         return super(HostGroup, self).read(entity, attrs, ignore)
+
+    def update(self, fields=None):
+        """Deal with several bugs.
+
+        For more information, see:
+
+        * `Bugzilla #1235378
+          <https://bugzilla.redhat.com/show_bug.cgi?id=1235378>`_
+        * `Bugzilla #1235380
+          <https://bugzilla.redhat.com/show_bug.cgi?id=1235380>`_
+
+        """
+        self.update_json(fields)
+        return self.read()
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {u'hostgroup': super(HostGroup, self).update_payload(fields)}
 
 
 class Host(  # pylint:disable=too-many-instance-attributes
