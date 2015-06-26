@@ -1912,7 +1912,12 @@ class LifecycleEnvironment(
             )
 
 
-class Location(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+class Location(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Location entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1976,6 +1981,23 @@ class Location(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
 
         """
         return super(Location, self).read(entity, attrs, ignore)
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        Beware of `Bugzilla #1236008
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1236008>`_:
+        "Cannot use HTTP PUT to associate location with media"
+
+        """
+        self.update_json(fields)
+        return self.read()
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {
+            u'location': super(Location, self).update_payload(fields)
+        }
 
 
 class Media(
