@@ -15,6 +15,7 @@ def main():
     auth = ('admin', 'changeme')
     base_url = 'https://sat1.example.com'
     organization_name = 'junk org'
+    args = {'auth': auth, 'headers': {'content-type': 'application/json'}}
 
     response = requests.post(
         base_url + '/katello/api/v2/organizations',
@@ -22,8 +23,7 @@ def main():
             'name': organization_name,
             'organization': {'name': organization_name},
         }),
-        auth=auth,
-        headers={'content-type': 'application/json'},
+        **args
     )
     response.raise_for_status()
     PrettyPrinter().pprint(response.json())
@@ -32,8 +32,7 @@ def main():
             base_url,
             response.json()['id'],
         ),
-        auth=auth,
-        headers={'content-type': 'application/json'},
+        **args
     )
     response.raise_for_status()
 
