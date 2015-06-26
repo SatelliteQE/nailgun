@@ -1056,11 +1056,7 @@ class ContentViewPuppetModule(
             )
         if attrs is None:
             attrs = self.read_json()
-        uuid = attrs.pop('uuid')
-        if uuid is None:
-            attrs['puppet_module'] = None
-        else:
-            attrs['puppet_module'] = {'id': uuid}
+        attrs['puppet_module_id'] = attrs.pop('uuid')  # either an ID or None
         return super(ContentViewPuppetModule, self).read(entity, attrs, ignore)
 
     def create_payload(self):
@@ -1583,11 +1579,7 @@ class HostGroup(
         """
         if attrs is None:
             attrs = self.read_json()
-        parent_id = attrs.pop('ancestry')
-        if parent_id is None:
-            attrs['parent'] = None
-        else:
-            attrs['parent'] = {'id': parent_id}
+        attrs['parent_id'] = attrs.pop('ancestry')  # either an ID or None
         # We cannot call `self.update_json([])`, as an ID might not be present
         # on self. However, `attrs` is guaranteed to have an ID.
         attrs2 = HostGroup(self._server_config, id=attrs['id']).update_json([])

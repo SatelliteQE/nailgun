@@ -767,7 +767,7 @@ class ReadTestCase(TestCase):
             (
                 entities.ContentViewPuppetModule(self.cfg, content_view=1),
                 {'uuid': None},
-                {'puppet_module': None},
+                {'puppet_module_id': None},
             ),
             (
                 entities.Domain(self.cfg),
@@ -1084,7 +1084,7 @@ class HostGroupTestCase(TestCase):
                 'content_view_id': None,
                 'id': 641212,
                 'lifecycle_environment_id': None,
-                'parent': None,
+                'parent_id': None,
             },
         )
 
