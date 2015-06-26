@@ -1065,12 +1065,15 @@ class HostGroupTestCase(TestCase):
         """
         entity = entities.HostGroup(config.ServerConfig('some url'))
         with mock.patch.object(entity, 'read_json') as read_json:
-            read_json.return_value = {'ancestry': None}
-            with mock.patch.object(entity, 'update_json') as update_json:
-                update_json.return_value = {
+            read_json.return_value = {'ancestry': None, 'id': 641212}  # random
+            with mock.patch.object(
+                entities.HostGroup,
+                'update_json',
+                return_value={
                     'content_view_id': None,
                     'lifecycle_environment_id': None,
-                }
+                },
+            ) as update_json:
                 with mock.patch.object(EntityReadMixin, 'read') as read:
                     entity.read()
         for meth in (read_json, update_json, read):
@@ -1079,6 +1082,7 @@ class HostGroupTestCase(TestCase):
             read.call_args[0][1],
             {
                 'content_view_id': None,
+                'id': 641212,
                 'lifecycle_environment_id': None,
                 'parent': None,
             },

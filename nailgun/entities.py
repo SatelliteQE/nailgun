@@ -1588,9 +1588,11 @@ class HostGroup(
             attrs['parent'] = None
         else:
             attrs['parent'] = {'id': parent_id}
-        update_attrs = self.update_json([])
+        # We cannot call `self.update_json([])`, as an ID might not be present
+        # on self. However, `attrs` is guaranteed to have an ID.
+        attrs2 = HostGroup(self._server_config, id=attrs['id']).update_json([])
         for attr in ('content_view_id', 'lifecycle_environment_id'):
-            attrs[attr] = update_attrs[attr]
+            attrs[attr] = attrs2[attr]
         return super(HostGroup, self).read(entity, attrs, ignore)
 
     def update(self, fields=None):
