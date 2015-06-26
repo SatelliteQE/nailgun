@@ -844,6 +844,7 @@ class UpdateTestCase(TestCase):
             entities.Domain(self.cfg),
             entities.Host(self.cfg),
             entities.HostGroup(self.cfg),
+            entities.Location(self.cfg),
             entities.Organization(self.cfg),
             entities.User(self.cfg),
         )
@@ -890,6 +891,7 @@ class UpdatePayloadTestCase(TestCase):
             (entities.Domain, {'domain': {}}),
             (entities.Host, {'host': {}}),
             (entities.HostGroup, {'hostgroup': {}}),
+            (entities.Location, {'location': {}}),
             (entities.Organization, {'organization': {}}),
             (entities.User, {'user': {}}),
         ]
