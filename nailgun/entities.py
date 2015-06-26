@@ -1043,8 +1043,6 @@ class ContentViewPuppetModule(
 
             entity = type(self)(content_view=self.content_view.id)
 
-        Also, deal with the weirdly named "uuid" parameter.
-
         """
         # read() should not change the state of the object it's called on, but
         # super() alters the attributes of any entity passed in. Creating a new
@@ -1054,9 +1052,6 @@ class ContentViewPuppetModule(
                 self._server_config,
                 content_view=self.content_view,  # pylint:disable=no-member
             )
-        if attrs is None:
-            attrs = self.read_json()
-        attrs['puppet_module_id'] = attrs.pop('uuid')  # either an ID or None
         return super(ContentViewPuppetModule, self).read(entity, attrs, ignore)
 
     def create_payload(self):

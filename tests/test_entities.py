@@ -765,11 +765,6 @@ class ReadTestCase(TestCase):
         # purposes.
         test_data = (
             (
-                entities.ContentViewPuppetModule(self.cfg, content_view=1),
-                {'uuid': None},
-                {'puppet_module_id': None},
-            ),
-            (
                 entities.Domain(self.cfg),
                 {'parameters': None},
                 {'domain_parameters_attributes': None},
