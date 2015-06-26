@@ -287,7 +287,8 @@ class Architecture(
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
-        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+        For more information, see `Bugzilla #1234964
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1234964>`_.
 
         """
         self.update_json(fields)
@@ -630,11 +631,21 @@ class ConfigTemplate(
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
-        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+        For more information, see `Bugzilla #1234973
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1234973>`_.
 
         """
         self.update_json(fields)
         return self.read()
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {
+            u'config_template': super(
+                ConfigTemplate,
+                self
+            ).update_payload(fields)
+        }
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -1289,11 +1300,16 @@ class Domain(
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
-        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+        For more information, see `Bugzilla #1234999
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1234999>`_.
 
         """
         self.update_json(fields)
         return self.read()
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {u'domain': super(Domain, self).update_payload(fields)}
 
 
 class Environment(
@@ -1503,7 +1519,11 @@ class HostCollection(
 
 
 class HostGroup(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Host Group entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1512,8 +1532,16 @@ class HostGroup(
                 Architecture,
                 null=True,
             ),
+            'content_view': entity_fields.OneToOneField(
+                ContentView,
+                null=True,
+            ),
             'domain': entity_fields.OneToOneField(Domain, null=True),
             'environment': entity_fields.OneToOneField(Environment, null=True),
+            'lifecycle_environment': entity_fields.OneToOneField(
+                LifecycleEnvironment,
+                null=True,
+            ),
             'location': entity_fields.OneToManyField(Location, null=True),
             'medium': entity_fields.OneToOneField(Media, null=True),
             'name': entity_fields.StringField(required=True),
@@ -1543,11 +1571,14 @@ class HostGroup(
         return {u'hostgroup': super(HostGroup, self).create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=()):
-        """Deal with weirdly named data returned from the server.
+        """Deal with several bugs.
 
-        When creating a HostGroup, the server accepts a field named 'parent'.
-        When reading a HostGroup, the server returns a semantically identical
-        field named 'ancestry'.
+        For more information, see:
+
+        * `Bugzilla #1235377
+          <https://bugzilla.redhat.com/show_bug.cgi?id=1235377>`_
+        * `Bugzilla #1235379
+          <https://bugzilla.redhat.com/show_bug.cgi?id=1235379>`_
 
         """
         if attrs is None:
@@ -1557,8 +1588,28 @@ class HostGroup(
             attrs['parent'] = None
         else:
             attrs['parent'] = {'id': parent_id}
-
+        update_attrs = self.update_json([])
+        for attr in ('content_view_id', 'lifecycle_environment_id'):
+            attrs[attr] = update_attrs[attr]
         return super(HostGroup, self).read(entity, attrs, ignore)
+
+    def update(self, fields=None):
+        """Deal with several bugs.
+
+        For more information, see:
+
+        * `Bugzilla #1235378
+          <https://bugzilla.redhat.com/show_bug.cgi?id=1235378>`_
+        * `Bugzilla #1235380
+          <https://bugzilla.redhat.com/show_bug.cgi?id=1235380>`_
+
+        """
+        self.update_json(fields)
+        return self.read()
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {u'hostgroup': super(HostGroup, self).update_payload(fields)}
 
 
 class Host(  # pylint:disable=too-many-instance-attributes
@@ -1613,14 +1664,13 @@ class Host(  # pylint:disable=too-many-instance-attributes
             ),
             'provision_method': entity_fields.StringField(null=True),
             'ptable': entity_fields.OneToOneField(PartitionTable, null=True),
-            'puppet_classes': entity_fields.OneToManyField(
+            'puppet_class': entity_fields.OneToManyField(
                 PuppetClass,
                 null=True,
             ),
             'puppet_proxy': entity_fields.OneToOneField(SmartProxy, null=True),
             'realm': entity_fields.OneToOneField(Realm, null=True),
             'root_pass': entity_fields.StringField(length=(8, 30)),
-            'sp_subnet': entity_fields.OneToOneField(Subnet, null=True),
             'subnet': entity_fields.OneToOneField(Subnet, null=True),
         }
         self._meta = {'api_path': 'api/v2/hosts', 'server_modes': ('sat')}
@@ -1700,26 +1750,34 @@ class Host(  # pylint:disable=too-many-instance-attributes
         return {u'host': super(Host, self).create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=('root_pass',)):
-        """Deal with oddly named and structured data returned by the server."""
+        """Deal with oddly named and structured data returned by the server.
+
+        For more information, see `Bugzilla #1235019
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1235019>`_.
+
+        """
         if attrs is None:
             attrs = self.read_json()
-
-        # POST accepts `host_parameters_attributes`, GET returns `parameters`
         attrs['host_parameters_attributes'] = attrs.pop('parameters')
-        # The server returns a list of IDs for all OneToOneFields except
-        # `puppet_classes`.
-        attrs['puppet_classes'] = attrs.pop('puppetclasses')
-
+        attrs['puppet_class'] = attrs.pop('puppetclasses')
         return super(Host, self).read(entity, attrs, ignore)
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
-        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+        For more information, see `Bugzilla #1235049
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1235049>`_.
+
+        .. WARNING:: Several attributes cannot be updated. See `Bugzilla
+            #1235041 <https://bugzilla.redhat.com/show_bug.cgi?id=1235041>`_.
 
         """
         self.update_json(fields)
         return self.read()
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {u'host': super(Host, self).update_payload(fields)}
 
 
 class Image(Entity):
@@ -2355,9 +2413,8 @@ class Organization(
         For more information, see `Bugzilla #1232871
         <https://bugzilla.redhat.com/show_bug.cgi?id=1232871>`_.
 
-        Also, beware of `Bugzilla #1230865
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1230865>`_:
-        "Cannot use HTTP PUT to associate organization with media"
+        .. WARNING:: Several attributes cannot be updated. See `Bugzilla
+            #1230865 <https://bugzilla.redhat.com/show_bug.cgi?id=1230865>`_.
 
         """
         self.update_json(fields)
@@ -3643,7 +3700,8 @@ class User(
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
-        FIXME: File a bug at https://bugzilla.redhat.com/ and link to it.
+        For more information, see `Bugzilla #1235012
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1235012>`_.
 
         """
         self.update_json(fields)

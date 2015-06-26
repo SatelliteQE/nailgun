@@ -713,10 +713,10 @@ class ReadTestCase(TestCase):
         """
         for entity in (
                 # entities.DockerComputeResource,  # see test_attrs_arg_v2
+                # entities.HostGroup,  # see HostGroupTestCase.test_read
                 # entities.UserGroup,  # see test_attrs_arg_v2
                 entities.Domain,
                 entities.Host,
-                entities.HostGroup,
                 entities.Media,
                 entities.Product,
                 entities.RHCIDeployment,
@@ -730,10 +730,10 @@ class ReadTestCase(TestCase):
                         self.assertEqual(read.call_count, 1)
 
     def test_attrs_arg_v2(self):
-        """Validate :meth:`nailgun.entities.UserGroup.read`.
+        """Ensure ``read``, ``read_json`` and ``client.put`` are called once.
 
-        Check that the method calls ``read`` and ``read_json`` once, and that
-        ``client.put`` is used to read the ``'admin'`` attribute.
+        This test is only appropriate for entities that override the ``read``
+        method in order to fiddle with the ``attrs`` argument.
 
         """
         # test_data is a single-use variable. We use it anyway for formatting
@@ -777,12 +777,7 @@ class ReadTestCase(TestCase):
             (
                 entities.Host(self.cfg),
                 {'parameters': None, 'puppetclasses': None},
-                {'host_parameters_attributes': None, 'puppet_classes': None},
-            ),
-            (
-                entities.HostGroup(self.cfg),
-                {'ancestry': None},
-                {'parent': None},
+                {'host_parameters_attributes': None, 'puppet_class': None},
             ),
             (
                 entities.System(self.cfg),
@@ -810,10 +805,16 @@ class ReadTestCase(TestCase):
         Assert that the entity ignores the 'account_password' field.
 
         """
-        with mock.patch.object(EntityReadMixin, 'read') as read:
-            entities.AuthSourceLDAP(self.cfg).read(attrs={})
-        # `call_args` is a two-tupe of (positional, keyword) args.
-        self.assertIn('account_password', read.call_args[0][2])
+        for entity, ignored_attrs in (
+                (entities.AuthSourceLDAP, ('account_password',)),
+                (entities.Subnet, ('discovery',)),
+                (entities.User, ('password',)),
+        ):
+            with self.subTest(entity):
+                with mock.patch.object(EntityReadMixin, 'read') as read:
+                    entity(self.cfg).read()
+                # `call_args` is a two-tupe of (positional, keyword) args.
+                self.assertEqual(set(ignored_attrs), set(read.call_args[0][2]))
 
     def test_ignore_arg_v2(self):
         """Call :meth:`nailgun.entities.DockerComputeResource.read`.
@@ -842,6 +843,7 @@ class UpdateTestCase(TestCase):
             entities.ConfigTemplate(self.cfg),
             entities.Domain(self.cfg),
             entities.Host(self.cfg),
+            entities.HostGroup(self.cfg),
             entities.Organization(self.cfg),
             entities.User(self.cfg),
         )
@@ -882,8 +884,12 @@ class UpdatePayloadTestCase(TestCase):
         cls.cfg = config.ServerConfig('http://example.com')
 
     def test_generic(self):
-        """Instantiate a variety of entities and call ``create_payload``."""
+        """Instantiate a variety of entities and call ``update_payload``."""
         class_response = [
+            (entities.ConfigTemplate, {'config_template': {}}),
+            (entities.Domain, {'domain': {}}),
+            (entities.Host, {'host': {}}),
+            (entities.HostGroup, {'hostgroup': {}}),
             (entities.Organization, {'organization': {}}),
             (entities.User, {'user': {}}),
         ]
@@ -1042,6 +1048,38 @@ class ActivationKeyTestCase(TestCase):
         self.assertEqual(
             client_put.call_args[0][1]['content_override'],
             {'content_label': content_label, 'value': value},
+        )
+
+
+class HostGroupTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.HostGroup`."""
+
+    def test_read(self):
+        """Ensure ``read``, ``read_json`` and ``update_json`` are called once.
+
+        This test is only appropriate for entities that override the ``read``
+        method in order to fiddle with the ``attrs`` argument.
+
+        """
+        entity = entities.HostGroup(config.ServerConfig('some url'))
+        with mock.patch.object(entity, 'read_json') as read_json:
+            read_json.return_value = {'ancestry': None}
+            with mock.patch.object(entity, 'update_json') as update_json:
+                update_json.return_value = {
+                    'content_view_id': None,
+                    'lifecycle_environment_id': None,
+                }
+                with mock.patch.object(EntityReadMixin, 'read') as read:
+                    entity.read()
+        for meth in (read_json, update_json, read):
+            self.assertEqual(meth.call_count, 1)
+        self.assertEqual(
+            read.call_args[0][1],
+            {
+                'content_view_id': None,
+                'lifecycle_environment_id': None,
+                'parent': None,
+            },
         )
 
 
