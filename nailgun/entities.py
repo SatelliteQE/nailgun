@@ -138,6 +138,31 @@ def _check_for_value(field_name, field_values):
         )
 
 
+def _get_org_attrs(server_config, organization_label):
+    """Find an :class:`nailgun.entities.Organization` object.
+
+    :param nailgun.config.ServerConfig server_config: The server that should be
+        searched.
+    :param organization_label: A string. The label of the organization to find.
+    :raises APIResponseError: If exactly one organization is not found.
+    :returns: A dict of attributes about an organization.
+
+    """
+    response = client.get(
+        Organization(server_config).path(),
+        data={u'search': u'label={0}'.format(organization_label)},
+        **server_config.get_client_kwargs()
+    )
+    response.raise_for_status()
+    results = response.json()['results']
+    if len(results) != 1:
+        raise APIResponseError(
+            u'Could not find exactly one organization with label "{0}". '
+            u'Actual search results: {1}'.format(organization_label, results)
+        )
+    return results[0]
+
+
 class ActivationKey(
         Entity,
         EntityCreateMixin,
@@ -1090,6 +1115,23 @@ class ContentView(
             'server_modes': ('sat'),
         }
         super(ContentView, self).__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=()):
+        """Fetch an attribute missing from the server's response.
+
+        For more information, see `Bugzilla #1237257
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1237257>`_.
+
+        """
+        if (getattr(self._server_config, 'version', parse_version('6.1')) <
+                parse_version('6.1')):
+            if attrs is None:
+                attrs = self.read_json()
+            attrs['organization'] = _get_org_attrs(
+                self._server_config,
+                attrs['organization']['label'],
+            )
+        return super(ContentView, self).read(entity, attrs, ignore)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -2602,28 +2644,20 @@ class Product(
         return super(Product, self).path(which)
 
     def read(self, entity=None, attrs=None, ignore=()):
-        """Compensate for the weird structure of returned data."""
-        if attrs is None:
-            attrs = self.read_json()
+        """Fetch an attribute missing from the server's response.
 
-        # Satellite 6.0 does not include an ID in the `organization` hash.
+        For more information, see `Bugzilla #1237283
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1237283>`_.
+
+        """
         if (getattr(self._server_config, 'version', parse_version('6.1')) <
                 parse_version('6.1')):
-            org_label = attrs.pop('organization')['label']
-            response = client.get(
-                Organization(self._server_config).path(),
-                data={'search': 'label={0}'.format(org_label)},
-                **self._server_config.get_client_kwargs()
+            if attrs is None:
+                attrs = self.read_json()
+            attrs['organization'] = _get_org_attrs(
+                self._server_config,
+                attrs['organization']['label'],
             )
-            response.raise_for_status()
-            results = response.json()['results']
-            if len(results) != 1:
-                raise APIResponseError(
-                    'Could not find exactly one organization with label "{0}".'
-                    ' Actual search results: {1}'.format(org_label, results)
-                )
-            attrs['organization'] = {'id': response.json()['results'][0]['id']}
-
         return super(Product, self).read(entity, attrs, ignore)
 
     def list_repositorysets(self, per_page=None):

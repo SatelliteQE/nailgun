@@ -714,11 +714,11 @@ class ReadTestCase(TestCase):
         for entity in (
                 # entities.DockerComputeResource,  # see test_attrs_arg_v2
                 # entities.HostGroup,  # see HostGroupTestCase.test_read
+                # entities.Product,  # See Product.test_read
                 # entities.UserGroup,  # see test_attrs_arg_v2
                 entities.Domain,
                 entities.Host,
                 entities.Media,
-                entities.Product,
                 entities.RHCIDeployment,
                 entities.System,
         ):
@@ -890,10 +890,10 @@ class UpdatePayloadTestCase(TestCase):
             (entities.Organization, {'organization': {}}),
             (entities.User, {'user': {}}),
         ]
-        for klass, response in class_response:
+        for entity, response in class_response:
             with self.subTest():
                 self.assertEqual(
-                    klass(self.cfg).update_payload(),
+                    entity(self.cfg).update_payload(),
                     response
                 )
 
@@ -1256,6 +1256,33 @@ class RHCIDeploymentTestCase(TestCase):
 # 3. Other tests. -------------------------------------------------------- {{{1
 
 
+class GetOrgAttrsTestCase(TestCase):
+    """Test ``nailgun.entities._get_org_attrs``."""
+
+    def setUp(self):
+        """Set ``self.args``, which can be passed to ``_get_org_attrs``."""
+        self.args = [config.ServerConfig('some url'), gen_string('utf8')]
+
+    def test_default(self):
+        """Run the method with a sane and normal set of arguments."""
+        result = gen_integer()  # unrealistic, but fine for test purposes
+        with mock.patch.object(client, 'get') as get:
+            get.return_value.json.return_value = {'results': [result]}
+            # pylint:disable=protected-access
+            self.assertEqual(entities._get_org_attrs(*self.args), result)
+        self.assertEqual(get.call_count, 1)
+
+    def test_api_response_error(self):
+        """Trigger an :class:`nailgun.entities.APIResponseError`."""
+        for results in ([], [1, 2]):
+            with mock.patch.object(client, 'get') as get:
+                get.return_value.json.return_value = {'results': results}
+                with self.assertRaises(entities.APIResponseError):
+                    # pylint:disable=protected-access
+                    entities._get_org_attrs(*self.args)
+            self.assertEqual(get.call_count, 1)
+
+
 class HandleResponseTestCase(TestCase):
     """Test ``nailgun.entities._handle_response``."""
 
@@ -1332,6 +1359,36 @@ class VersionTestCase(TestCase):
         super(VersionTestCase, cls).setUpClass()
         cls.cfg_608 = config.ServerConfig('bogus url', version='6.0.8')
         cls.cfg_610 = config.ServerConfig('bogus url', version='6.1.0')
+
+    def test_missing_org_id(self):
+        """Test methods for which no organization ID is returned.
+
+        Affected methods:
+
+        * :meth:`nailgun.entities.ContentView.read`
+        * :meth:`nailgun.entities.Product.read`
+
+        Assert that ``read_json``, ``_get_org_attrs`` and ``read`` are all
+        called once, and that the second is called with the correct arguments.
+
+        """
+        for entity in (entities.ContentView, entities.Product):
+            # Version 6.0.8
+            label = gen_integer()  # unrealistic value
+            with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
+                read_json.return_value = {'organization': {'label': label}}
+                with mock.patch.object(entities, '_get_org_attrs') as helper:
+                    with mock.patch.object(EntityReadMixin, 'read') as read:
+                        entity(self.cfg_608).read()
+            self.assertEqual(read_json.call_count, 1)
+            self.assertEqual(helper.call_count, 1)
+            self.assertEqual(read.call_count, 1)
+            self.assertEqual(helper.call_args[0], (self.cfg_608, label))
+
+            # Version 6.1.0
+            with mock.patch.object(EntityReadMixin, 'read') as read:
+                entity(self.cfg_610).read()
+            self.assertEqual(read.call_args[0][2], ())
 
     def test_repository_fields(self):
         """Check :class:`nailgun.entities.Repository`'s fields.
