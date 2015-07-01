@@ -2759,7 +2759,11 @@ class Product(
 
 
 class PartitionTable(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Partition Table entity."""
 
     def __init__(self, server_config=None, **kwargs):
