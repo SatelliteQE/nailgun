@@ -938,7 +938,6 @@ class ContentViewFilterRule(
             'version': entity_fields.StringField(),
         }
         super(ContentViewFilterRule, self).__init__(server_config, **kwargs)
-
         self._meta = {
             'server_modes': ('sat'),
             'api_path': '{0}/rules'.format(
@@ -948,7 +947,18 @@ class ContentViewFilterRule(
         }
 
     def read(self, entity=None, attrs=None, ignore=('content_view_filter',)):
-        """Deal with redundant entity fields."""
+        """Do not read certain fields.
+
+        Do not expect the server to return the ``content_view_filter``
+        attribute. This has no practical impact, as the attribute must be
+        provided when a :class:`nailgun.entities.ContentViewFilterRule` is
+        instantiated.
+
+        Also, ignore any field that is not returned by the server. For more
+        information, see `Bugzilla #1238408
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1238408>`_.
+
+        """
         if entity is None:
             entity = type(self)(
                 self._server_config,
@@ -957,10 +967,14 @@ class ContentViewFilterRule(
             )
         if attrs is None:
             attrs = self.read_json()
-        # Field should be present in entity only if it was passed in attributes
-        for entity_field in entity.get_fields().keys():
-            if entity_field not in attrs:
-                del entity._fields[entity_field]
+        ignore = set(ignore).union([
+            field_name
+            for field_name in entity.get_fields().keys()
+            if field_name not in attrs
+        ])
+        if 'errata_id' in attrs:
+            ignore.discard('errata')  # pylint:disable=no-member
+        ignore = tuple(ignore)
         return super(ContentViewFilterRule, self).read(entity, attrs, ignore)
 
 
