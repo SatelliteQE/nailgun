@@ -1094,7 +1094,12 @@ class ContentViewPuppetModule(
         return super(ContentViewPuppetModule, self).read(entity, attrs, ignore)
 
     def create_payload(self):
-        """Rename the ``puppet_module_id`` field to ``uuid``."""
+        """Rename the ``puppet_module_id`` field to ``uuid``.
+
+        For more information, see `Bugzilla #1238731
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1238731>`_.
+
+        """
         payload = super(ContentViewPuppetModule, self).create_payload()
         if 'puppet_module_id' in payload:
             payload['uuid'] = payload.pop('puppet_module_id')
