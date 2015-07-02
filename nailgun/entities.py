@@ -1905,13 +1905,14 @@ class LifecycleEnvironment(
     def create_payload(self):
         """Rename the payload key "prior_id" to "prior".
 
-        A ``LifecycleEnvironment`` can be associated to another instance of a
-        ``LifecycleEnvironment``. Unusually, this relationship is represented
-        via the ``prior`` field, not ``prior_id``.
+        For more information, see `Bugzilla #1238757
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1238757>`_.
 
         """
         data = super(LifecycleEnvironment, self).create_payload()
-        if 'prior_id' in data:
+        # `version` is a single-use var, but it is used anyway for readability.
+        version = getattr(self._server_config, 'version', parse_version('6.1'))
+        if version < parse_version('6.1') and 'prior_id' in data:
             data['prior'] = data.pop('prior_id')
         return data
 

@@ -462,15 +462,6 @@ class CreatePayloadTestCase(TestCase):
         self.assertNotIn('system_ids', payload)
         self.assertIn('system_uuids', payload)
 
-    def test_lifecycle_environment(self):
-        """Create a :class:`nailgun.entities.LifecycleEnvironment`."""
-        payload = entities.LifecycleEnvironment(
-            self.cfg,
-            prior=1,
-        ).create_payload()
-        self.assertNotIn('prior_id', payload)
-        self.assertIn('prior', payload)
-
     def test_media(self):
         """Create a :class:`nailgun.entities.Media`."""
         payload = entities.Media(self.cfg, path_='foo').create_payload()
@@ -1389,6 +1380,29 @@ class VersionTestCase(TestCase):
             with mock.patch.object(EntityReadMixin, 'read') as read:
                 entity(self.cfg_610).read()
             self.assertEqual(read.call_args[0][2], ())
+
+    def test_lifecycle_environment(self):
+        """Create a :class:`nailgun.entities.LifecycleEnvironment`.
+
+        Assert that
+        :meth:`nailgun.entities.LifecycleEnvironment.create_payload` returns a
+        dict having a ``prior`` key in Satellite 6.0.8 and ``prior_id`` in
+        Satellite 6.1.0.
+
+        """
+        payload = entities.LifecycleEnvironment(
+            self.cfg_608,
+            prior=1,
+        ).create_payload()
+        self.assertNotIn('prior_id', payload)
+        self.assertIn('prior', payload)
+
+        payload = entities.LifecycleEnvironment(
+            self.cfg_610,
+            prior=1,
+        ).create_payload()
+        self.assertNotIn('prior', payload)
+        self.assertIn('prior_id', payload)
 
     def test_repository_fields(self):
         """Check :class:`nailgun.entities.Repository`'s fields.
