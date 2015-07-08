@@ -138,6 +138,31 @@ def _check_for_value(field_name, field_values):
         )
 
 
+def _get_org_attrs(server_config, organization_label):
+    """Find an :class:`nailgun.entities.Organization` object.
+
+    :param nailgun.config.ServerConfig server_config: The server that should be
+        searched.
+    :param organization_label: A string. The label of the organization to find.
+    :raises APIResponseError: If exactly one organization is not found.
+    :returns: A dict of attributes about an organization.
+
+    """
+    response = client.get(
+        Organization(server_config).path(),
+        data={u'search': u'label={0}'.format(organization_label)},
+        **server_config.get_client_kwargs()
+    )
+    response.raise_for_status()
+    results = response.json()['results']
+    if len(results) != 1:
+        raise APIResponseError(
+            u'Could not find exactly one organization with label "{0}". '
+            u'Actual search results: {1}'.format(organization_label, results)
+        )
+    return results[0]
+
+
 class ActivationKey(
         Entity,
         EntityCreateMixin,
@@ -913,7 +938,6 @@ class ContentViewFilterRule(
             'version': entity_fields.StringField(),
         }
         super(ContentViewFilterRule, self).__init__(server_config, **kwargs)
-
         self._meta = {
             'server_modes': ('sat'),
             'api_path': '{0}/rules'.format(
@@ -923,7 +947,18 @@ class ContentViewFilterRule(
         }
 
     def read(self, entity=None, attrs=None, ignore=('content_view_filter',)):
-        """Deal with redundant entity fields."""
+        """Do not read certain fields.
+
+        Do not expect the server to return the ``content_view_filter``
+        attribute. This has no practical impact, as the attribute must be
+        provided when a :class:`nailgun.entities.ContentViewFilterRule` is
+        instantiated.
+
+        Also, ignore any field that is not returned by the server. For more
+        information, see `Bugzilla #1238408
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1238408>`_.
+
+        """
         if entity is None:
             entity = type(self)(
                 self._server_config,
@@ -932,10 +967,14 @@ class ContentViewFilterRule(
             )
         if attrs is None:
             attrs = self.read_json()
-        # Field should be present in entity only if it was passed in attributes
-        for entity_field in entity.get_fields().keys():
-            if entity_field not in attrs:
-                del entity._fields[entity_field]
+        ignore = set(ignore).union([
+            field_name
+            for field_name in entity.get_fields().keys()
+            if field_name not in attrs
+        ])
+        if 'errata_id' in attrs:
+            ignore.discard('errata')  # pylint:disable=no-member
+        ignore = tuple(ignore)
         return super(ContentViewFilterRule, self).read(entity, attrs, ignore)
 
 
@@ -1043,8 +1082,6 @@ class ContentViewPuppetModule(
 
             entity = type(self)(content_view=self.content_view.id)
 
-        Also, deal with the weirdly named "uuid" parameter.
-
         """
         # read() should not change the state of the object it's called on, but
         # super() alters the attributes of any entity passed in. Creating a new
@@ -1054,13 +1091,15 @@ class ContentViewPuppetModule(
                 self._server_config,
                 content_view=self.content_view,  # pylint:disable=no-member
             )
-        if attrs is None:
-            attrs = self.read_json()
-        attrs['puppet_module_id'] = attrs.pop('uuid')  # either an ID or None
         return super(ContentViewPuppetModule, self).read(entity, attrs, ignore)
 
     def create_payload(self):
-        """Rename the ``puppet_module_id`` field to ``uuid``."""
+        """Rename the ``puppet_module_id`` field to ``uuid``.
+
+        For more information, see `Bugzilla #1238731
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1238731>`_.
+
+        """
         payload = super(ContentViewPuppetModule, self).create_payload()
         if 'puppet_module_id' in payload:
             payload['uuid'] = payload.pop('puppet_module_id')
@@ -1095,6 +1134,23 @@ class ContentView(
             'server_modes': ('sat'),
         }
         super(ContentView, self).__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=()):
+        """Fetch an attribute missing from the server's response.
+
+        For more information, see `Bugzilla #1237257
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1237257>`_.
+
+        """
+        if (getattr(self._server_config, 'version', parse_version('6.1')) <
+                parse_version('6.1')):
+            if attrs is None:
+                attrs = self.read_json()
+            attrs['organization'] = _get_org_attrs(
+                self._server_config,
+                attrs['organization']['label'],
+            )
+        return super(ContentView, self).read(entity, attrs, ignore)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -1849,13 +1905,14 @@ class LifecycleEnvironment(
     def create_payload(self):
         """Rename the payload key "prior_id" to "prior".
 
-        A ``LifecycleEnvironment`` can be associated to another instance of a
-        ``LifecycleEnvironment``. Unusually, this relationship is represented
-        via the ``prior`` field, not ``prior_id``.
+        For more information, see `Bugzilla #1238757
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1238757>`_.
 
         """
         data = super(LifecycleEnvironment, self).create_payload()
-        if 'prior_id' in data:
+        # `version` is a single-use var, but it is used anyway for readability.
+        version = getattr(self._server_config, 'version', parse_version('6.1'))
+        if version < parse_version('6.1') and 'prior_id' in data:
             data['prior'] = data.pop('prior_id')
         return data
 
@@ -2607,28 +2664,20 @@ class Product(
         return super(Product, self).path(which)
 
     def read(self, entity=None, attrs=None, ignore=()):
-        """Compensate for the weird structure of returned data."""
-        if attrs is None:
-            attrs = self.read_json()
+        """Fetch an attribute missing from the server's response.
 
-        # Satellite 6.0 does not include an ID in the `organization` hash.
+        For more information, see `Bugzilla #1237283
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1237283>`_.
+
+        """
         if (getattr(self._server_config, 'version', parse_version('6.1')) <
                 parse_version('6.1')):
-            org_label = attrs.pop('organization')['label']
-            response = client.get(
-                Organization(self._server_config).path(),
-                data={'search': 'label={0}'.format(org_label)},
-                **self._server_config.get_client_kwargs()
+            if attrs is None:
+                attrs = self.read_json()
+            attrs['organization'] = _get_org_attrs(
+                self._server_config,
+                attrs['organization']['label'],
             )
-            response.raise_for_status()
-            results = response.json()['results']
-            if len(results) != 1:
-                raise APIResponseError(
-                    'Could not find exactly one organization with label "{0}".'
-                    ' Actual search results: {1}'.format(org_label, results)
-                )
-            attrs['organization'] = {'id': response.json()['results'][0]['id']}
-
         return super(Product, self).read(entity, attrs, ignore)
 
     def list_repositorysets(self, per_page=None):
