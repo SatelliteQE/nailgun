@@ -979,7 +979,11 @@ class ContentViewFilterRule(
 
 
 class AbstractContentViewFilter(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Content View Filter entity."""
 
     def __init__(self, server_config=None, **kwargs):
