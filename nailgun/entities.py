@@ -1584,16 +1584,8 @@ class HostGroup(
                 Architecture,
                 null=True,
             ),
-            'content_view': entity_fields.OneToOneField(
-                ContentView,
-                null=True,
-            ),
             'domain': entity_fields.OneToOneField(Domain, null=True),
             'environment': entity_fields.OneToOneField(Environment, null=True),
-            'lifecycle_environment': entity_fields.OneToOneField(
-                LifecycleEnvironment,
-                null=True,
-            ),
             'location': entity_fields.OneToManyField(Location, null=True),
             'medium': entity_fields.OneToOneField(Media, null=True),
             'name': entity_fields.StringField(required=True),
@@ -1610,6 +1602,18 @@ class HostGroup(
             'realm': entity_fields.OneToOneField(Realm, null=True),
             'subnet': entity_fields.OneToOneField(Subnet, null=True),
         }
+        if (getattr(server_config, 'version', parse_version('6.1')) >=
+                parse_version('6.1')):
+            self._fields.update({
+                'content_view': entity_fields.OneToOneField(
+                    ContentView,
+                    null=True,
+                ),
+                'lifecycle_environment': entity_fields.OneToOneField(
+                    LifecycleEnvironment,
+                    null=True,
+                ),
+            })
         self._meta = {'api_path': 'api/v2/hostgroups', 'server_modes': ('sat')}
         super(HostGroup, self).__init__(server_config, **kwargs)
 
@@ -1636,11 +1640,17 @@ class HostGroup(
         if attrs is None:
             attrs = self.read_json()
         attrs['parent_id'] = attrs.pop('ancestry')  # either an ID or None
-        # We cannot call `self.update_json([])`, as an ID might not be present
-        # on self. However, `attrs` is guaranteed to have an ID.
-        attrs2 = HostGroup(self._server_config, id=attrs['id']).update_json([])
-        for attr in ('content_view_id', 'lifecycle_environment_id'):
-            attrs[attr] = attrs2[attr]
+        # `version` is a single-use var, but it is used anyway for readability.
+        version = getattr(self._server_config, 'version', parse_version('6.1'))
+        if version >= parse_version('6.1'):
+            # We cannot call `self.update_json([])`, as an ID might not be
+            # present on self. However, `attrs` is guaranteed to have an ID.
+            attrs2 = HostGroup(
+                self._server_config,
+                id=attrs['id']
+            ).update_json([])
+            for attr in ('content_view_id', 'lifecycle_environment_id'):
+                attrs[attr] = attrs2[attr]
         return super(HostGroup, self).read(entity, attrs, ignore)
 
     def update(self, fields=None):

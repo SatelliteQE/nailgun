@@ -1404,6 +1404,19 @@ class VersionTestCase(TestCase):
         self.assertNotIn('prior', payload)
         self.assertIn('prior_id', payload)
 
+    def test_hostgroup_fields(self):
+        """Check :class:`nailgun.entities.HostGroup`'s fields.
+
+        Assert that version 6.1.0 adds the ``content_view`` and
+        ``lifecycle_environment`` fields.
+
+        """
+        entity_608 = entities.HostGroup(self.cfg_608)
+        entity_610 = entities.HostGroup(self.cfg_610)
+        for field_name in ('content_view', 'lifecycle_environment'):
+            self.assertNotIn(field_name, entity_608.get_fields())
+            self.assertIn(field_name, entity_610.get_fields())
+
     def test_repository_fields(self):
         """Check :class:`nailgun.entities.Repository`'s fields.
 
