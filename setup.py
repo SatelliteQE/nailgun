@@ -1,5 +1,12 @@
 #!/usr/bin/env python
-"""A setuptools-based script for installing NailGun."""
+"""A setuptools-based script for installing NailGun.
+
+For more information, see:
+
+* https://packaging.python.org/en/latest/index.html
+* https://docs.python.org/distutils/sourcedist.html
+
+"""
 from setuptools import find_packages, setup  # prefer setuptools over distutils
 
 
@@ -7,9 +14,13 @@ with open('README.rst') as handle:
     LONG_DESCRIPTION = handle.read()
 
 
+with open('VERSION') as handle:
+    VERSION = handle.read().strip()
+
+
 setup(
     name='nailgun',
-    version='0.18.0',  # Should be identical to the version in docs/conf.py!
+    version=VERSION,
     description='A library that facilitates easy usage of the Satellite 6 API',
     long_description=LONG_DESCRIPTION,
     url='https://github.com/SatelliteQE/nailgun',
