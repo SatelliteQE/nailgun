@@ -2803,8 +2803,7 @@ class Product(
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    # pylint:disable=C0103
-    def repository_sets_available_repositories(self, reposet_id):
+    def repository_sets_available_repositories(self, reposet_id):  # noqa pylint:disable=C0103
         """Lists available repositories for the repository set
 
         :param reposet_id: The RepositorySet Id.
