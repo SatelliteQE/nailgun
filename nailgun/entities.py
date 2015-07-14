@@ -321,7 +321,11 @@ class Architecture(
 
 
 class AuthSourceLDAP(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a AuthSourceLDAP entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -330,18 +334,14 @@ class AuthSourceLDAP(
             'attr_photo': entity_fields.StringField(null=True),
             'base_dn': entity_fields.StringField(null=True),
             'groups_base': entity_fields.StringField(null=True),
-            'server_type': entity_fields.StringField(
-                choices=(
-                    'posix',
-                    'free_ipa',
-                    'active_directory',
-                ),
-                null=True,
-            ),
             'host': entity_fields.StringField(required=True, length=(1, 60)),
             'name': entity_fields.StringField(required=True, length=(1, 60)),
             'onthefly_register': entity_fields.BooleanField(null=True),
             'port': entity_fields.IntegerField(null=True),
+            'server_type': entity_fields.StringField(
+                choices=('active_directory', 'free_ipa', 'posix'),
+                null=True,
+            ),
             'tls': entity_fields.BooleanField(null=True),
 
             # required if onthefly_register is true,
@@ -381,7 +381,14 @@ class AuthSourceLDAP(
             self.attr_mail = self._fields['attr_mail'].gen_value()
 
     def read(self, entity=None, attrs=None, ignore=('account_password',)):
-        """Do not read the ``account_password`` attribute from the server."""
+        """Do not read the ``account_password`` attribute. Work around a bug.
+
+        For more information, see `Bugzilla #1243036
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1243036>`_.
+
+        """
+        if attrs is None:
+            attrs = self.update_json([])
         return super(AuthSourceLDAP, self).read(entity, attrs, ignore)
 
 
@@ -2049,7 +2056,7 @@ class Location(
     def read(self, entity=None, attrs=None, ignore=('realm',)):
         """Work around a bug in the server's response.
 
-        Do not try to read oany of the attributes listed in the ``ignore``
+        Do not try to read any of the attributes listed in the ``ignore``
         argument. See `Bugzilla #1216234
         <https://bugzilla.redhat.com/show_bug.cgi?id=1216234>`_.
 
