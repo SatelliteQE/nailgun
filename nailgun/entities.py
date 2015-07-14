@@ -329,6 +329,15 @@ class AuthSourceLDAP(
             'account': entity_fields.StringField(null=True),
             'attr_photo': entity_fields.StringField(null=True),
             'base_dn': entity_fields.StringField(null=True),
+            'groups_base': entity_fields.StringField(null=True),
+            'server_type': entity_fields.StringField(
+                choices=(
+                    'posix',
+                    'free_ipa',
+                    'active_directory',
+                ),
+                null=True,
+            ),
             'host': entity_fields.StringField(required=True, length=(1, 60)),
             'name': entity_fields.StringField(required=True, length=(1, 60)),
             'onthefly_register': entity_fields.BooleanField(null=True),
