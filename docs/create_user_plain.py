@@ -12,7 +12,7 @@ like so::
 
 """
 from __future__ import print_function
-from pprint import PrettyPrinter
+from pprint import pprint
 import requests
 import json
 
@@ -44,7 +44,7 @@ def main():
             verify=server_config['verify'],
         )
         response.raise_for_status()
-        PrettyPrinter().pprint(response.json())
+        pprint(response.json())
 
 
 def get_organization_id(server_config, label):

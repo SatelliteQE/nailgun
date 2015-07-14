@@ -7,7 +7,7 @@ Use NailGun to accomplish this task.
 """
 from nailgun.config import ServerConfig
 from nailgun.entities import Organization
-from pprint import PrettyPrinter
+from pprint import pprint
 
 
 def main():
@@ -17,7 +17,7 @@ def main():
         url='https://sat1.example.com',  # …to talk to this server.
     )
     org = Organization(server_config, name='junk org').create()
-    PrettyPrinter().pprint(org.get_values())
+    pprint(org.get_values())  # e.g. {'name': 'junk org', …}
     org.delete()
 
 

@@ -2,16 +2,42 @@ NailGun
 =======
 
 NailGun is a GPL-licensed Python library that facilitates easy usage of the
-Satellite 6 API.
+Satellite 6 API. It lets you write code like this::
 
-This page provides a summary of information about NailGun. You can find more
-in-depth information by visiting one of the other sections:
+    >>> org = Organization(id=1).read()
+
+This page provides a summary of information about NailGun.
+
+.. contents::
+
+More in-depth coverage is provided in other sections.
 
 .. toctree::
     :maxdepth: 1
 
     examples
     api/index
+
+Quick Start
+-----------
+
+This script demonstrates how to create and delete an organization, and how to
+save some of our work for later re-use::
+
+    >>> from nailgun.config import ServerConfig
+    >>> from nailgun.entities import Organization
+    >>> server_config = ServerConfig(
+    ...     auth=('admin', 'changeme'),      # Use these credentials…
+    ...     url='https://sat1.example.com',  # …to talk to this server.
+    ... )  # More options are available, e.g. disabling SSL verification.
+    >>> org = Organization(server_config, name='junk org').create()
+    >>> org.name == 'junk org'  # Access all attrs likewise, e.g. `org.label`
+    True
+    >>> org.delete()
+    >>> server_config.save()  # Save to disk w/label 'default'. Read with get()
+
+This example glosses over *many* features. The :doc:`examples` and :doc:`API
+documentation </api/index>` sections provide more in-depth documentation.
 
 Why NailGun?
 ------------
@@ -58,16 +84,15 @@ an independently useful library.
 Resources
 ---------
 
-If you'd like to chat with a human, please join the #robottelo channel on the
-`freenode`_ IRC network.
+The :doc:`examples` and :doc:`API documentation </api/index>` sections provide
+more in-depth documentation.
 
-For examples of how to use NailGun, see :doc:`examples`. For even more examples,
-see the `Robottelo source code`_, especially the `tests/foreman/api/
+Join the #robottelo channel on the `freenode`_ IRC network to chat with a
+human. The `Robottelo source code`_ contains many real-world examples how
+NailGun is used, especially the `tests/foreman/api/
 <https://github.com/SatelliteQE/robottelo/tree/master/tests/foreman/api>`_
-directory. For a glimpse into the design of NailGun, see `this blog post`_.
-
-For information on the internals of NailGun itself, see the :doc:`API
-documentation </api/index>`.
+directory. `This blog post`_ provides a glimpse in to the challenges that
+NailGun is designed to overcome.
 
 Contributing
 ------------

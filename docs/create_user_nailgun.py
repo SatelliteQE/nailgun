@@ -5,7 +5,7 @@ from __future__ import print_function
 from nailgun import client
 from nailgun.config import ServerConfig
 from nailgun.entities import Organization, User
-from pprint import PrettyPrinter
+from pprint import pprint
 
 
 def main():
@@ -18,7 +18,7 @@ def main():
     for server_config in server_configs:
         # The LDAP authentication source with an ID of 1 is internal. It is
         # nearly guaranteed to exist and be functioning.
-        PrettyPrinter().pprint(User(
+        user = User(
             server_config,
             auth_source=1,  # or: AuthSourceLDAP(server_config, id=1),
             login='Alice',
@@ -27,7 +27,8 @@ def main():
                 get_organization(server_config, 'Default_Organization')
             ],
             password='hackme',
-        ).create_json())  # create_json returns a dict of attributes
+        )
+        pprint(user.get_values())  # e.g. {'login': 'Alice', …}
 
 
 def get_organization(server_config, label):

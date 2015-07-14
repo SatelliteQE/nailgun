@@ -5,7 +5,7 @@
 Use Requests and standard library modules to accomplish this task.
 
 """
-from pprint import PrettyPrinter
+from pprint import pprint
 import json
 import requests
 
@@ -26,7 +26,7 @@ def main():
         **args
     )
     response.raise_for_status()
-    PrettyPrinter().pprint(response.json())
+    pprint(response.json())
     response = requests.delete(
         '{0}/katello/api/v2/organizations/{1}'.format(
             base_url,
