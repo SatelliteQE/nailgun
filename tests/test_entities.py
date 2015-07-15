@@ -6,6 +6,7 @@ from nailgun import client, config, entities
 from nailgun.entity_mixins import (
     EntityCreateMixin,
     EntityReadMixin,
+    EntityUpdateMixin,
     NoSuchPathError,
 )
 from unittest2 import TestCase
@@ -786,13 +787,12 @@ class ReadTestCase(TestCase):
                 self.assertEqual(read.call_args[0][1], attrs_after)
 
     def test_ignore_arg_v1(self):
-        """Call :meth:`nailgun.entities.AuthSourceLDAP.read`.
+        """Call ``read`` on a variety of entities.``.
 
-        Assert that the entity ignores the 'account_password' field.
+        Assert that the ``ignore`` argument is correctly passed on.
 
         """
         for entity, ignored_attrs in (
-                (entities.AuthSourceLDAP, ('account_password',)),
                 (entities.Subnet, ('discovery',)),
                 (entities.User, ('password',)),
         ):
@@ -812,6 +812,19 @@ class ReadTestCase(TestCase):
             entities.DockerComputeResource(self.cfg).read(attrs={'email': 1})
         # `call_args` is a two-tupe of (positional, keyword) args.
         self.assertIn('password', read.call_args[0][2])
+
+    def test_ignore_arg_v3(self):
+        """Call :meth:`nailgun.entities.AuthSourceLDAP.read`.
+
+        Assert that the entity ignores the 'account_password' field.
+
+        """
+        with mock.patch.object(EntityUpdateMixin, 'update_json') as u_json:
+            with mock.patch.object(EntityReadMixin, 'read') as read:
+                entities.AuthSourceLDAP(self.cfg).read()
+        self.assertEqual(u_json.call_count, 1)
+        self.assertEqual(read.call_count, 1)
+        self.assertEqual(set(['account_password']), set(read.call_args[0][2]))
 
 
 class UpdateTestCase(TestCase):
