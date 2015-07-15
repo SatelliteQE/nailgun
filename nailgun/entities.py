@@ -32,7 +32,7 @@ from nailgun.entity_mixins import (
     EntityUpdateMixin,
     _poll_task,
 )
-from pkg_resources import parse_version
+from packaging.version import parse
 from time import sleep
 import random
 
@@ -1162,8 +1162,8 @@ class ContentView(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1237257>`_.
 
         """
-        if (getattr(self._server_config, 'version', parse_version('6.1')) <
-                parse_version('6.1')):
+        if (getattr(self._server_config, 'version', parse('6.1')) <
+                parse('6.1')):
             if attrs is None:
                 attrs = self.read_json()
             attrs['organization'] = _get_org_attrs(
@@ -1622,8 +1622,7 @@ class HostGroup(
             'realm': entity_fields.OneToOneField(Realm, null=True),
             'subnet': entity_fields.OneToOneField(Subnet, null=True),
         }
-        if (getattr(server_config, 'version', parse_version('6.1')) >=
-                parse_version('6.1')):
+        if getattr(server_config, 'version', parse('6.1')) >= parse('6.1'):
             self._fields.update({
                 'content_view': entity_fields.OneToOneField(
                     ContentView,
@@ -1661,8 +1660,8 @@ class HostGroup(
             attrs = self.read_json()
         attrs['parent_id'] = attrs.pop('ancestry')  # either an ID or None
         # `version` is a single-use var, but it is used anyway for readability.
-        version = getattr(self._server_config, 'version', parse_version('6.1'))
-        if version >= parse_version('6.1'):
+        version = getattr(self._server_config, 'version', parse('6.1'))
+        if version >= parse('6.1'):
             # We cannot call `self.update_json([])`, as an ID might not be
             # present on self. However, `attrs` is guaranteed to have an ID.
             attrs2 = HostGroup(
@@ -1941,8 +1940,8 @@ class LifecycleEnvironment(
         """
         data = super(LifecycleEnvironment, self).create_payload()
         # `version` is a single-use var, but it is used anyway for readability.
-        version = getattr(self._server_config, 'version', parse_version('6.1'))
-        if version < parse_version('6.1') and 'prior_id' in data:
+        version = getattr(self._server_config, 'version', parse('6.1'))
+        if version < parse('6.1') and 'prior_id' in data:
             data['prior'] = data.pop('prior_id')
         return data
 
@@ -2700,8 +2699,8 @@ class Product(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1237283>`_.
 
         """
-        if (getattr(self._server_config, 'version', parse_version('6.1')) <
-                parse_version('6.1')):
+        if (getattr(self._server_config, 'version', parse('6.1')) <
+                parse('6.1')):
             if attrs is None:
                 attrs = self.read_json()
             attrs['organization'] = _get_org_attrs(
@@ -2977,8 +2976,7 @@ class Repository(
                 required=True,
             ),
         }
-        if (getattr(server_config, 'version', parse_version('6.1')) <
-                parse_version('6.1')):
+        if getattr(server_config, 'version', parse('6.1')) < parse('6.1'):
             # Adjust for Satellite 6.0
             del self._fields['docker_upstream_name']
             self._fields['content_type'].choices = (tuple(
@@ -3337,8 +3335,7 @@ class Subnet(
             'to': entity_fields.IPAddressField(null=True),
             'vlanid': entity_fields.StringField(null=True),
         }
-        if (getattr(server_config, 'version', parse_version('6.1')) >=
-                parse_version('6.1')):
+        if getattr(server_config, 'version', parse('6.1')) >= parse('6.1'):
             self._fields.update({
                 'boot_mode': entity_fields.StringField(
                     choices=('Static', 'DHCP',),

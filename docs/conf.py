@@ -7,7 +7,7 @@ http://sphinx-doc.org/config.html
 import sys
 import os
 
-from pkg_resources import SetuptoolsVersion
+from packaging.version import Version
 
 
 # Add the NailGun root directory to the system path. This allows references
@@ -22,7 +22,7 @@ sys.path.insert(0, ROOT_DIR)
 # and an InvalidVersion is raised if the version is non-conformant, so this
 # serves as a unit test for the contents of the `VERSION` file.
 with open(os.path.join(ROOT_DIR, 'VERSION')) as handle:
-    VERSION = SetuptoolsVersion(handle.read().strip())
+    VERSION = Version(handle.read().strip())
 
 
 # pylint:disable=invalid-name

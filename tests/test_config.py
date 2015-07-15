@@ -1,7 +1,7 @@
 """Unit tests for :mod:`nailgun.config`."""
 from mock import call, mock_open, patch
 from nailgun.config import BaseServerConfig, ServerConfig
-from pkg_resources import parse_version
+from packaging.version import parse
 from unittest import TestCase
 import json
 
@@ -40,7 +40,7 @@ def _compare_configs(self, dict_config, server_config):
     """
     if 'version' in dict_config:
         dict_config = dict_config.copy()  # shadow the passed in dict
-        dict_config['version'] = parse_version(dict_config.pop('version'))
+        dict_config['version'] = parse(dict_config.pop('version'))
     self.assertEqual(dict_config, vars(server_config))
 
 
@@ -225,7 +225,7 @@ class ReprTestCase(TestCase):
         are specified.
 
         """
-        ver = repr(parse_version('1'))
+        ver = repr(parse('1'))
         targets = (
             "nailgun.config.BaseServerConfig(url='flim', version={0})".format(
                 ver
@@ -274,7 +274,7 @@ class ReprTestCase(TestCase):
         are specified.
 
         """
-        ver = repr(parse_version('1'))
+        ver = repr(parse('1'))
         targets = (
             "nailgun.config.ServerConfig(url='flim', version={0})".format(ver),
             "nailgun.config.ServerConfig(version={0}, url='flim')".format(ver),
