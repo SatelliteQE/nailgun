@@ -41,8 +41,8 @@ setup(
     install_requires=[
         'fauxfactory',
         'inflector',
+        'packaging',
         'pyxdg',
         'requests>=2.7',
-        'setuptools',
     ],
 )

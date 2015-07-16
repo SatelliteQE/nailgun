@@ -8,7 +8,7 @@ presenting that information.
 
 """
 from os.path import isfile, join
-from pkg_resources import parse_version
+from packaging.version import parse
 from threading import Lock
 from xdg import BaseDirectory
 import json
@@ -68,17 +68,17 @@ class BaseServerConfig(object):
         if no value is provided.
     :param version: A string, such as ``'6.0'`` or ``'6.1'``, indicating the
         Satellite version the server is running. This version number is parsed
-        by ``pkg_resources.parse_version`` before being stored locally. This
-        allows for version comparisons:
+        by ``packaging.version.parse`` before being stored locally. This allows
+        for version comparisons:
 
         >>> from nailgun.config import ServerConfig
-        >>> from pkg_resources import parse_version
+        >>> from packaging.version import parse
         >>> cfg = ServerConfig('http://sat.example.com', version='6.0')
-        >>> cfg.version == parse_version('6.0')
+        >>> cfg.version == parse('6.0')
         True
-        >>> cfg.version == parse_version('6.0.0')
+        >>> cfg.version == parse('6.0.0')
         True
-        >>> cfg.version < parse_version('10.0')
+        >>> cfg.version < parse('10.0')
         True
         >>> '6.0' < '10.0'
         False
@@ -105,7 +105,7 @@ class BaseServerConfig(object):
         if auth is not None:
             self.auth = auth
         if version is not None:
-            self.version = parse_version(version)
+            self.version = parse(version)
 
     def __repr__(self):
         return '{0}.{1}({2})'.format(
