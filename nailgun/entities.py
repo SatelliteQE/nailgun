@@ -3560,7 +3560,7 @@ class System(
         self._fields = {
             'content_view': entity_fields.OneToOneField(ContentView),
             'description': entity_fields.StringField(),
-            'environment': entity_fields.OneToOneField(Environment),
+            'environment': entity_fields.OneToOneField(LifecycleEnvironment),
             'facts': entity_fields.DictField(
                 default={u'uname.machine': u'unknown'},
                 null=True,
