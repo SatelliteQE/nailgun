@@ -176,7 +176,7 @@ class ActivationKey(
             'auto_attach': entity_fields.BooleanField(),
             'content_view': entity_fields.OneToOneField(ContentView),
             'description': entity_fields.StringField(),
-            'environment': entity_fields.OneToOneField(Environment),
+            'environment': entity_fields.OneToOneField(LifecycleEnvironment),
             'host_collection': entity_fields.OneToManyField(HostCollection),
             'max_content_hosts': entity_fields.IntegerField(),
             'name': entity_fields.StringField(required=True),
