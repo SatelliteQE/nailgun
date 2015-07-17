@@ -19,6 +19,12 @@ else:  # pragma: no cover
     import _thread as thread  # pylint:disable=import-error
     import http.client as http_client  # pylint:disable=import-error
 
+# pylint:disable=too-many-lines
+# This module contains very extensive docstrings, so this module is easier to
+# understand than its size suggests. That said, it could be useful to split
+# each mixin in to a separate module. That would help to ensure that each
+# mixin stays independent.
+
 
 #: Default for ``poll_rate`` argument to
 #: :func:`nailgun.entity_mixins._poll_task`.
@@ -233,8 +239,8 @@ def _get_entity_id(field_name, attrs):
         return attrs[field_name_id]
     else:
         raise MissingValueError(
-            'Cannot find a value for the "{}" field. Searched for keys named '
-            '{}, but available keys are {}.'
+            'Cannot find a value for the "{0}" field. Searched for keys named '
+            '{1}, but available keys are {2}.'
             .format(field_name, (field_name, field_name_id), attrs.keys())
         )
 
@@ -266,8 +272,8 @@ def _get_entity_ids(field_name, attrs):
         return [entity['id'] for entity in attrs[plural_field_name]]
     else:
         raise MissingValueError(
-            'Cannot find a value for the "{}" field. Searched for keys named '
-            '{}, but available keys are {}.'
+            'Cannot find a value for the "{0}" field. Searched for keys named '
+            '{1}, but available keys are {2}.'
             .format(
                 field_name,
                 (field_name_ids, field_name, plural_field_name),
@@ -286,7 +292,7 @@ class NoSuchPathError(Exception):
 
 
 class NoSuchFieldError(Exception):
-    """Indicates that the assigned-to :class:`Entity` field does not exist."""
+    """Indicates that the referenced field does not exist."""
 
 
 class BadValueError(Exception):
@@ -708,8 +714,8 @@ class EntityCreateMixin(object):
         create
         └── create_json
             └── create_raw
-                ├── create_payload
-                └── create_missing
+                ├── create_missing
+                └── create_payload
 
     In short, here is what the methods do:
 
@@ -933,3 +939,346 @@ class EntityUpdateMixin(object):
 
         """
         return self.read(attrs=self.update_json(fields))
+
+
+class EntitySearchMixin(object):
+    """This mixin provides the ability to search for entities.
+
+    The methods provided by this class work together. The call tree looks like
+    this::
+
+        search
+        ├── search_json
+        │   └── search_raw
+        │       └── search_payload
+        ├── search_normalize
+        └── search_filter
+
+    In short, here is what the methods do:
+
+    :meth:`search_payload`
+        Assemble a search query that can be encoded and sent to the server.
+    :meth:`search_raw`
+        Make an HTTP GET request to the server, including the payload.
+    :meth:`search_json`
+        Check the server's response for errors and decode the response.
+    :meth:`search_normalize`
+        Normalize search results so they can be used to create new entities.
+    :meth:`search`
+        Create one or more :class:`nailgun.entity_mixins.Entity` objects
+        representing the found entities and populate their fields.
+    :meth:`search_filter`
+        Read all ``entities`` and locally filter them.
+
+    See the individual methods for more detailed information.
+
+    """
+
+    def search_payload(self, fields=None, query=None):
+        """Create a search query.
+
+        Do the following:
+
+        1. Generate a search query. By default, all values returned by
+           :meth:`nailgun.entity_mixins.Entity.get_values` are used. If
+           ``fields`` is specified, only the named values are used.
+        2. Merge ``query`` in to the generated search query.
+        3. Return the result.
+
+        The rules for generating a search query can be illustrated by example::
+
+            >>> some_entity = SomeEntity(id=1, one=2, many=[3, 4])
+            >>> fields = some_entity.get_fields()
+            >>> isinstance(fields['id'], IntegerField)
+            True
+            >>> isinstance(fields['one'], OneToOneField)
+            True
+            >>> isinstance(fields['many'], OneToManyField)
+            True
+            >>> some_entity.search_payload()  # Field types determine names.
+            {'id': 1, 'one_id': 2, 'many_ids': [3, 4]}
+            >>> some_entity.search_payload({'id'})  # i.e. fields=set(['id'])
+            {'id': 1}
+            >>> some_entity.search_payload(query={'id': 5})  # gen, then merge
+            {'id': 5, 'one_id': 2, 'many_ids': [3, 4]}
+            >>> some_entity.search_payload(query={'per_page': 1000})  # same
+            {'id': 1, 'one_id': 2, 'many_ids': [3, 4], 'per_page': 1000}
+
+        .. WARNING:: This method currently generates an extremely naive search
+            query that will be wrong in many cases. In addition, Satellite
+            currently accepts invalid search queries without complaint. Make
+            sure to check the API documentation for your version of Satellite
+            against what this method produces.
+
+        :param fields: See :meth:`search`.
+        :param query: See :meth:`search`.
+        :returns: A dict that can be encoded as JSON and used in a search.
+
+        """
+        if fields is None:
+            fields = set(self.get_values().keys())
+        if query is None:
+            query = {}
+
+        payload = {}
+        fields_dict = self.get_fields()
+        for field in fields:
+            value = getattr(self, field)
+            if isinstance(fields_dict[field], OneToOneField):
+                payload[field + '_id'] = value.id
+            elif isinstance(fields_dict[field], OneToManyField):
+                payload[field + '_ids'] = [entity.id for entity in value]
+            else:
+                payload[field] = value
+        payload.update(query)
+        return payload
+
+    def search_raw(self, fields=None, query=None):
+        """Search for entities.
+
+        Make an HTTP GET call to ``self.path('base')``. Return the response.
+
+        .. WARNING:: Subclasses that override this method should not alter the
+            ``fields`` or ``query`` arguments. (However, subclasses that
+            override this method may still alter the server's response.) See
+            :meth:`search_normalize` for details.
+
+        :param fields: See :meth:`search`.
+        :param query: See :meth:`search`.
+        :return: A ``requests.response`` object.
+
+        """
+        return client.get(
+            self.path('base'),
+            data=self.search_payload(fields, query),
+            **self._server_config.get_client_kwargs()
+        )
+
+    def search_json(self, fields=None, query=None):
+        """Search for entities.
+
+        Call :meth:`search_raw`. Check the response status code, decode JSON
+        and return the decoded JSON as a dict.
+
+        .. WARNING:: Subclasses that override this method should not alter the
+            ``fields`` or ``query`` arguments. (However, subclasses that
+            override this method may still alter the server's response.) See
+            :meth:`search_normalize` for details.
+
+        :param fields: See :meth:`search`.
+        :param query: See :meth:`search`.
+        :return: A dict. The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP
+            4XX or 5XX status code.
+        :raises: ``ValueError`` If the response JSON can not be decoded.
+
+        """
+        response = self.search_raw(fields, query)
+        response.raise_for_status()
+        return response.json()
+
+    def search_normalize(self, results):
+        """Normalize search results so they can be used to create new entities.
+
+        See :meth:`search` for an example of how to use this method. Here's a
+        simplified example::
+
+            results = self.search_json()
+            results = self.search_normalize(results)
+            entity = SomeEntity(some_cfg, **results[0])
+
+        At this time, it is possible to parse all search results without
+        knowing what search query was sent to the server. However, it is
+        possible that certain responses can only be parsed if the search query
+        is known. If that is the case, this method will be given a new
+        ``payload`` argument, where ``payload`` is the query sent to the
+        server.
+
+        As a precaution, the following is higly recommended:
+
+        * :meth:`search` may alter ``fields`` and ``query`` at will.
+        * :meth:`search_payload` may alter ``fields`` and ``query`` in an
+          idempotent manner.
+        * No other method should alter ``fields`` or ``query``.
+
+        :param results: A list of dicts, where each dict is a set of attributes
+            for one entity. The contents of these dicts are as is returned from
+            the server.
+        :returns: A list of dicts, where each dict is a set of attributes for
+            one entity. The contents of these dicts have been normalized and
+            can be used to instantiate entities.
+
+        """
+        fields = self.get_fields()
+        normalized = []
+        for result in results:
+            # For each field that we know about, copy the corresponding field
+            # from the server's search result. If any extra attributes are
+            # copied over, Entity.__init__ will raise a NoSuchFieldError.
+            # Examples of problematic results from server:
+            #
+            # * organization_id (denormalized OneToOne. see above)
+            # * organizations, organization_ids (denormalized OneToMany. above)
+            # * updated_at, created_at (these may be handled in the future)
+            # * sp_subnet (Host.sp_subnet is an undocumented field)
+            #
+            attrs = {}
+            for field_name, field in fields.items():
+                if isinstance(field, OneToOneField):
+                    try:
+                        attrs[field_name] = _get_entity_id(field_name, result)
+                    except MissingValueError:
+                        pass
+                elif isinstance(field, OneToManyField):
+                    try:
+                        attrs[field_name] = _get_entity_ids(field_name, result)
+                    except MissingValueError:
+                        pass
+                else:
+                    try:
+                        attrs[field_name] = result[field_name]
+                    except KeyError:
+                        pass
+            normalized.append(attrs)
+        return normalized
+
+    def search(self, fields=None, query=None, filters=None):
+        """Search for entities.
+
+        At its simplest, this method searches for all entities of a given kind.
+        For example, to ask for all
+        :class:`nailgun.entities.LifecycleEnvironment` entities::
+
+            LifecycleEnvironment().search()
+
+        Values on an entity are used to generate a search query, and the
+        ``fields`` argument can be used to specify which fields should be used
+        when generating a search query::
+
+            lc_env = LifecycleEnvironment(name='foo', organization=1)
+            results = lc_env.search()  # Search by name and organization.
+            results = lc_env.search({'name', 'organization'})  # Same.
+            results = lc_env.search({'name'})  # Search by name.
+            results = lc_env.search({'organization'})  # Search by organization
+            results = lc_env.search(set())  # Search for all lifecycle envs.
+            results = lc_env.search({'library'})  # Error!
+
+        In some cases, the simple search queries that can be generated by
+        NailGun are not sufficient. In this case, you can pass in a raw search
+        query instead. For example, to search for all lifecycle environments
+        with a name of 'foo'::
+
+            LifecycleEnvironment().search(query={'search': 'name="foo"'})
+
+        The example above is rather pointless: it is easier and more concise to
+        use a generated query. But — and this is a **very** important "but" —
+        the manual search query is melded in to the generated query. This can
+        be used to great effect::
+
+            LifecycleEnvironment(name='foo').search(query={'per_page': 50})
+
+        For examples of what the final search queries look like, see
+        :meth:`search_payload`. (That method also accepts the ``fields`` and
+        ``query`` arguments.)
+
+        In some cases, the server's search facilities may be insufficient, or
+        it may be inordinately difficult to craft a search query. In this case,
+        you can filter search results locally. For example, to ask the server
+        for a list of all lifecycle environments and then locally search
+        through the results for the lifecycle environment named "foo"::
+
+            LifecycleEnvironment().search(filters={'name': 'foo'})
+
+        Be warned that filtering locally can be **very** slow. NailGun must
+        ``read()`` every single entity returned by the server before filtering
+        results. This is because the values used in the filtering process may
+        not have been returned by the server in the initial response to the
+        search.
+
+        The fact that all entities are read when ``filters`` is specified can
+        be used to great effect. For example, this search returns a fully
+        populated list of every single lifecycle environment::
+
+            LifecycleEnvironment().search(filters={})
+
+        :param fields: A set naming which fields should be used when generating
+            a search query. If ``None``, all values on the entity are used. If
+            an empty set, no values are used.
+        :param query: A dict containing a raw search query. This is melded in
+            to the generated search query like so:  ``{generated:
+            query}.update({manual: query})``.
+        :param filters: A dict. Used to filter search results locally.
+        :return: A list of entities, all of type ``type(self)``.
+
+        """
+        # Goals:
+        #
+        # * Be tolerant of missing values. It's reasonable for the server to
+        #   return an incomplete set of attributes for each search result.
+        # * Use as many returned values as possible. There's no point in
+        #   letting returned data go to waste. This implies that we must…
+        # * …parse irregular server responses. This includes pluralized field
+        #   names, misnamed attributes (e.g. BZ 1233245) and weirdly named
+        #   fields (e.g. Media.path_).
+        #
+        results = self.search_json(fields, query)['results']
+        results = self.search_normalize(results)
+        entities = [
+            type(self)(self._server_config, **result)
+            for result in results
+        ]
+        if filters is not None:
+            entities = self.search_filter(entities, filters)
+        return entities
+
+    @staticmethod
+    def search_filter(entities, filters):
+        """Read all ``entities`` and locally filter them.
+
+        This method can be used like so::
+
+            entities = EntitySearchMixin(entities, {'name': 'foo'})
+
+        In this example, only entities where ``entity.name == 'foo'`` holds
+        true are returned. An arbitrary number of field names and values may be
+        provided as filters.
+
+        .. NOTE:: This method calls :meth:`EntityReadMixin.read`. As a result,
+            this method only works when called on a class that also inherits
+            from :class:`EntityReadMixin`.
+
+        :param entities: A list of :class:`Entity` objects. All list items
+            should be of the same type.
+        :param filters: A dict in the form ``{field_name: field_value, …}``.
+        :raises nailgun.entity_mixins.NoSuchFieldError: If any of the fields
+            named in ``filters`` do not exist on the entities being filtered.
+        :raises: ``NotImplementedError`` If any of the fields named in
+            ``filters`` are a :class:`nailgun.entity_fields.OneToOneField` or
+            :class:`nailgun.entity_fields.OneToManyField`.
+
+        """
+        # Check to make sure all arguments are sane.
+        if len(entities) == 0:
+            return entities
+        fields = entities[0].get_fields()  # assume all entities are identical
+        if not set(filters).issubset(fields):
+            raise NoSuchFieldError(
+                'Valid filters are {0}, but received {1} instead.'
+                .format(fields.keys(), filters.keys())
+            )
+        for field_name in filters:
+            if isinstance(fields[field_name], (OneToOneField, OneToManyField)):
+                raise NotImplementedError(
+                    'Search results cannot (yet?) be locally filtered by '
+                    '`OneToOneField`s and `OneToManyField`s. {0} is a {1}.'
+                    .format(field_name, type(fields[field_name]).__name__)
+                )
+
+        # The arguments are sane. Filter away!
+        filtered = [entity.read() for entity in entities]  # don't alter inputs
+        for field_name, field_value in filters.items():
+            filtered = [
+                entity for entity in filtered
+                if getattr(entity, field_name) == field_value
+            ]
+        return filtered

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """Create an identical user account on a pair of satellites."""
 from __future__ import print_function
-from nailgun import client
 from nailgun.config import ServerConfig
 from nailgun.entities import Organization, User
 from pprint import pprint
@@ -10,12 +9,11 @@ from pprint import pprint
 
 def main():
     """Create an identical user account on a pair of satellites."""
-    server_configs = (
-        ServerConfig(url=url, auth=('admin', 'changeme'), verify=False)
-        for url
-        in ('https://sat1.example.com', 'https://sat2.example.com')
-    )
+    server_configs = ServerConfig.get('sat1'), ServerConfig.get('sat2')
     for server_config in server_configs:
+        org = Organization(server_config).search(
+            query={'search': 'name="Default_Organization"'}
+        )[0]
         # The LDAP authentication source with an ID of 1 is internal. It is
         # nearly guaranteed to exist and be functioning.
         user = User(
@@ -23,45 +21,10 @@ def main():
             auth_source=1,  # or: AuthSourceLDAP(server_config, id=1),
             login='Alice',
             mail='alice@example.com',
-            organization=[
-                get_organization(server_config, 'Default_Organization')
-            ],
+            organization=[org],
             password='hackme',
         )
         pprint(user.get_values())  # e.g. {'login': 'Alice', …}
-
-
-def get_organization(server_config, label):
-    """Return the organization object with label ``label``.
-
-    This function is necessary because NailGun does not yet have a mixin
-    facilitating entity searches.
-
-    :param nailgun.config.ServerConfig server_config: This object defines which
-        server will be searched, what credentials will be used when searching
-        and so on.
-    :param label: A string label that will be used when searching. Every
-        organization should have a unique label.
-    :returns: An ``Organization`` object.
-
-    """
-    response = client.get(
-        Organization(server_config).path(),
-        data={'search': 'label={}'.format(label)},
-        **server_config.get_client_kwargs()
-    )
-    response.raise_for_status()
-    decoded = response.json()
-    if decoded['subtotal'] != 1:
-        print(
-            'Expected to find one organization, but instead found {0}. Search '
-            'results: {1}'.format(decoded['subtotal'], decoded['results'])
-        )
-        exit(1)
-    return Organization(
-        server_config,
-        id=decoded['results'][0]['id']
-    ).read()
 
 
 if __name__ == '__main__':
