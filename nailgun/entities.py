@@ -2841,12 +2841,18 @@ class PartitionTable(
         EntityDeleteMixin,
         EntityReadMixin,
         EntityUpdateMixin):
-    """A representation of a Partition Table entity."""
+    """A representation of a Partition Table entity.
+
+    Currently a Partition Table with one character in name cannot be created.
+    For more information, see `Bugzilla #1229384
+    <https://bugzilla.redhat.com/show_bug.cgi?id=1229384>`_.
+
+    """
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'layout': entity_fields.StringField(required=True),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(required=True, length=(2, 30)),
             'os_family': entity_fields.StringField(
                 choices=_OPERATING_SYSTEMS,
                 null=True,
