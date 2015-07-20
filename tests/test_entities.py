@@ -233,6 +233,7 @@ class PathTestCase(TestCase):
                 (entities.Product, 'repository_sets/2396/enable'),
                 (entities.Product,
                  'repository_sets/2396/available_repositories'),
+                (entities.Product, 'sync'),
                 (entities.Repository, 'sync'),
                 (entities.Repository, 'upload_content'),
                 (entities.RHCIDeployment, 'deploy'),
@@ -885,7 +886,7 @@ class UpdatePayloadTestCase(TestCase):
 
     def test_generic(self):
         """Instantiate a variety of entities and call ``update_payload``."""
-        class_response = [
+        entities_payloads = [
             (entities.ConfigTemplate, {'config_template': {}}),
             (entities.Domain, {'domain': {}}),
             (entities.Host, {'host': {}}),
@@ -894,11 +895,33 @@ class UpdatePayloadTestCase(TestCase):
             (entities.Organization, {'organization': {}}),
             (entities.User, {'user': {}}),
         ]
-        for entity, response in class_response:
-            with self.subTest():
+        for entity, payload in entities_payloads:
+            with self.subTest((entity, payload)):
+                self.assertEqual(entity(self.cfg).update_payload(), payload)
+
+    def test_syncplan_sync_date(self):
+        """Test ``update_payload`` for different syncplan sync_date formats."""
+        date_string = '2015-07-20 20:54:38'
+        date_datetime = datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S')
+        kwargs_responses = [
+            (
+                {'organization': 1},
+                {'organization_id': 1},
+            ),
+            (
+                {'organization': 1, 'sync_date': date_string},
+                {'organization_id': 1, 'sync_date': date_string},
+            ),
+            (
+                {'organization': 1, 'sync_date': date_datetime},
+                {'organization_id': 1, 'sync_date': date_string},
+            ),
+        ]
+        for kwargs, payload in kwargs_responses:
+            with self.subTest((kwargs, payload)):
                 self.assertEqual(
-                    entity(self.cfg).update_payload(),
-                    response
+                    entities.SyncPlan(self.cfg, **kwargs).update_payload(),
+                    payload,
                 )
 
 
@@ -1207,6 +1230,18 @@ class ProductTestCase(TestCase):
         self.assertEqual(client_get.call_count, 1)
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value['results'], response)
+
+    def test_sync(self):
+        """Call :meth:`nailgun.entities.Product.sync`."""
+        with mock.patch.object(client, 'post') as client_post:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'results': gen_integer()},  # not realistic
+            ) as handler:
+                self.product.sync()
+        self.assertEqual(client_post.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
 
 
 class RHCIDeploymentTestCase(TestCase):
