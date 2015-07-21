@@ -2681,11 +2681,14 @@ class Product(
             /products/<product_id>/repository_sets/<id>/enable
         repository_sets/<id>/disable
             /products/<product_id>/repository_sets/<id>/disable
+        sync
+            /products/<product_id>/sync
 
         ``super`` is called otherwise.
 
         """
-        if which is not None and which.startswith("repository_sets"):
+        if which is not None and (
+                which.startswith('repository_sets') or which == 'sync'):
             return '{0}/{1}'.format(
                 super(Product, self).path(which='self'),
                 which,
@@ -2833,6 +2836,15 @@ class Product(
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)['results']
+
+    def sync(self):
+        """Synchronize :class:`repositories <Repository>` in this product."""
+        response = client.post(
+            self.path('sync'),
+            {},
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config)
 
 
 class PartitionTable(
@@ -3412,7 +3424,11 @@ class Subscription(Entity):
 
 
 class SyncPlan(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Sync Plan entity.
 
     ``organization`` must be passed in when this entity is instantiated.
@@ -3540,6 +3556,13 @@ class SyncPlan(
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
+
+    def update_payload(self, fields=None):
+        """Convert ``sync_date`` to a string if datetime object provided."""
+        data = super(SyncPlan, self).update_payload()
+        if isinstance(data.get('sync_date'), datetime):
+            data['sync_date'] = data['sync_date'].strftime('%Y-%m-%d %H:%M:%S')
+        return data
 
 
 class SystemPackage(Entity):
