@@ -32,7 +32,7 @@ from nailgun.entity_mixins import (
     EntityUpdateMixin,
     _poll_task,
 )
-from packaging.version import parse
+from packaging.version import parse, Version
 from time import sleep
 import random
 
@@ -3441,10 +3441,11 @@ class SyncPlan(
     """
 
     def __init__(self, server_config=None, **kwargs):
-        _check_for_value('organization', kwargs)
+        version = getattr(server_config, 'version', Version('1!0'))
+        if version < Version('6.1.1'):  # default: False
+            _check_for_value('organization', kwargs)
         self._fields = {
             'description': entity_fields.StringField(),
-            'enabled': entity_fields.BooleanField(required=True),
             'interval': entity_fields.StringField(
                 choices=('hourly', 'daily', 'weekly'),
                 required=True,
@@ -3458,10 +3459,16 @@ class SyncPlan(
             'sync_date': entity_fields.DateTimeField(required=True),
         }
         super(SyncPlan, self).__init__(server_config, **kwargs)
-        self._meta = {
-            # pylint:disable=no-member
-            'api_path': '{0}/sync_plans'.format(self.organization.path()),
-        }
+        if version < Version('6.1.1'):  # default: False
+            self._meta = {
+                # pylint:disable=no-member
+                'api_path': '{0}/sync_plans'.format(self.organization.path()),
+            }
+        else:
+            self._meta = {'api_path': 'katello/api/v2/sync_plans'}
+            self._fields.update({
+                'enabled': entity_fields.BooleanField(required=True),
+            })
 
     def read(self, entity=None, attrs=None, ignore=('organization',)):
         """Provide a default value for ``entity``.
@@ -3477,14 +3484,17 @@ class SyncPlan(
             entity = type(self)(organization=self.organization.id)
 
         """
-        # read() should not change the state of the object it's called on, but
-        # super() alters the attributes of any entity passed in. Creating a new
-        # object and passing it to super() lets this one avoid changing state.
-        if entity is None:
-            entity = type(self)(
-                self._server_config,
-                organization=self.organization,  # pylint:disable=no-member
-            )
+        version = getattr(self._server_config, 'version', Version('1!0'))
+        if version < Version('6.1.1'):  # default: False
+            # read() should not change the state of the object it's called on,
+            # but super() alters the attributes of any entity passed in.
+            # Creating a new object and passing it to super() lets this one
+            # avoid changing state.
+            if entity is None:
+                entity = type(self)(
+                    self._server_config,
+                    organization=self.organization,  # pylint:disable=no-member
+                )
         return super(SyncPlan, self).read(entity, attrs, ignore)
 
     def create_payload(self):
