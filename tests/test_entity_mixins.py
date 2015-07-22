@@ -516,10 +516,8 @@ class EntityReadMixinTestCase(TestCase):
 
     def setUp(self):
         """Set ``self.entity = EntityWithRead(…)``."""
-        self.entity = EntityWithRead(
-            config.ServerConfig('example.com'),
-            id=gen_integer(min_value=1),
-        )
+        self.cfg = config.ServerConfig('example.com')
+        self.entity = EntityWithRead(self.cfg, id=gen_integer(min_value=1))
 
     def test_read_raw(self):
         """Call :meth:`nailgun.entity_mixins.EntityReadMixin.read_raw`."""
@@ -548,8 +546,7 @@ class EntityReadMixinTestCase(TestCase):
     def test_read_v1(self):
         """Make ``read_json`` return hashes."""
         # Generate some bogus values and call `read`.
-        cfg = config.ServerConfig('example.com')
-        entity_1 = self.test_entity(cfg)
+        entity_1 = self.test_entity(self.cfg)
         attrs = {
             'id': gen_integer(min_value=1),
             'manies': [{'id': gen_integer(min_value=1)}],
@@ -558,10 +555,13 @@ class EntityReadMixinTestCase(TestCase):
         }
         with mock.patch.object(entity_1, 'read_json') as read_json:
             read_json.return_value = attrs
-            entity_2 = entity_1.read(ignore='ignore_me')
+            entity_2 = entity_1.read(ignore={'ignore_me'})
 
         # Make assertions about the call and the returned entity.
-        self.assertEqual(cfg, entity_2._server_config)  # pylint:disable=W0212
+        self.assertEqual(
+            entity_2._server_config,  # pylint:disable=protected-access
+            self.cfg,
+        )
         self.assertEqual(read_json.call_count, 1)
         self.assertEqual(
             set(entity_1.get_fields().keys()),
@@ -574,15 +574,17 @@ class EntityReadMixinTestCase(TestCase):
     def test_read_v2(self):
         """Make ``read_json`` return hashes, but with different field names."""
         # Generate some bogus values and call `read`.
-        cfg = config.ServerConfig('example.com')
-        entity_1 = self.test_entity(cfg)
+        entity_1 = self.test_entity(self.cfg)
         attrs = {'many': [{'id': gen_integer(min_value=1)}]}
         with mock.patch.object(entity_1, 'read_json') as read_json:
             read_json.return_value = attrs
-            entity_2 = entity_1.read(ignore=('id', 'none', 'one', 'ignore_me'))
+            entity_2 = entity_1.read(ignore={'id', 'none', 'one', 'ignore_me'})
 
         # Make assertions about the call and the returned entity.
-        self.assertEqual(cfg, entity_2._server_config)  # pylint:disable=W0212
+        self.assertEqual(
+            entity_2._server_config,  # pylint:disable=protected-access
+            self.cfg,
+        )
         self.assertEqual(read_json.call_count, 1)
         self.assertEqual(
             set(entity_1.get_fields().keys()),
@@ -593,8 +595,7 @@ class EntityReadMixinTestCase(TestCase):
     def test_read_v3(self):
         """Make ``read_json`` return IDs."""
         # Generate some bogus values and call `read`.
-        cfg = config.ServerConfig('example.com')
-        entity_1 = self.test_entity(cfg)
+        entity_1 = self.test_entity(self.cfg)
         attrs = {
             'id': gen_integer(min_value=1),
             'many_ids': [gen_integer(min_value=1)],
@@ -603,10 +604,13 @@ class EntityReadMixinTestCase(TestCase):
         }
         with mock.patch.object(entity_1, 'read_json') as read_json:
             read_json.return_value = attrs
-            entity_2 = entity_1.read(ignore='ignore_me')
+            entity_2 = entity_1.read(ignore={'ignore_me'})
 
         # Make assertions about the call and the returned entity.
-        self.assertEqual(cfg, entity_2._server_config)  # pylint:disable=W0212
+        self.assertEqual(
+            entity_2._server_config,  # pylint:disable=protected-access
+            self.cfg,
+        )
         self.assertEqual(read_json.call_count, 1)
         self.assertEqual(
             set(entity_1.get_fields().keys()),
@@ -615,6 +619,16 @@ class EntityReadMixinTestCase(TestCase):
         self.assertEqual(entity_2.id, attrs['id'])
         self.assertEqual(entity_2.many[0].id, attrs['many_ids'][0])
         self.assertEqual(entity_2.one.id, attrs['one_id'])
+
+    def test_read_v4(self):
+        """Do not ignore any fields."""
+        with mock.patch.object(
+            entity_mixins.EntityReadMixin,
+            'read_json',
+            return_value={'id': gen_integer()},
+        ) as read_json:
+            entity = EntityWithRead(self.cfg).read()
+        self.assertEqual(entity.get_values(), read_json.return_value)
 
     def test_missing_value_error(self):
         """Raise a :class:`nailgun.entity_mixins.MissingValueError`."""
@@ -635,7 +649,7 @@ class EntityReadMixinTestCase(TestCase):
                 with mock.patch.object(entity, 'read_json') as read_json:
                     read_json.return_value = attrs
                     with self.assertRaises(entity_mixins.MissingValueError):
-                        entity.read(ignore='ignore_me')
+                        entity.read(ignore={'ignore_me'})
 
 
 class EntityUpdateMixinTestCase(TestCase):

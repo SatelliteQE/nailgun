@@ -624,7 +624,7 @@ class EntityReadMixin(object):
         response.raise_for_status()
         return response.json()
 
-    def read(self, entity=None, attrs=None, ignore=()):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Get information about the current entity.
 
         1. Create a new entity of type ``type(self)``.
@@ -660,7 +660,7 @@ class EntityReadMixin(object):
         :param attrs: A dict. Data used to populate the object's attributes.
             The response from
             :meth:`nailgun.entity_mixins.EntityReadMixin.read_json` by default.
-        :param ignore: A tuple of attributes which should not be read from the
+        :param ignore: A set of attributes which should not be read from the
             server. This is mainly useful for attributes like a password which
             are not returned.
         :return: An instance of type ``type(self)``.
@@ -671,6 +671,8 @@ class EntityReadMixin(object):
             entity = type(self)(self._server_config)
         if attrs is None:
             attrs = self.read_json()
+        if ignore is None:
+            ignore = set()
 
         for field_name, field in entity.get_fields().items():
             if field_name in ignore:

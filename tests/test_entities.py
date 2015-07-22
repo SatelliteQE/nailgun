@@ -805,14 +805,14 @@ class ReadTestCase(TestCase):
 
         """
         for entity, ignored_attrs in (
-                (entities.Subnet, ('discovery',)),
-                (entities.User, ('password',)),
+                (entities.Subnet, {'discovery'}),
+                (entities.User, {'password'}),
         ):
             with self.subTest(entity):
                 with mock.patch.object(EntityReadMixin, 'read') as read:
                     entity(self.cfg).read()
-                # `call_args` is a two-tupe of (positional, keyword) args.
-                self.assertEqual(set(ignored_attrs), set(read.call_args[0][2]))
+                # `call_args` is a two-tuple of (positional, keyword) args.
+                self.assertEqual(ignored_attrs, read.call_args[0][2])
 
     def test_ignore_arg_v2(self):
         """Call :meth:`nailgun.entities.DockerComputeResource.read`.
@@ -822,7 +822,7 @@ class ReadTestCase(TestCase):
         """
         with mock.patch.object(EntityReadMixin, 'read') as read:
             entities.DockerComputeResource(self.cfg).read(attrs={'email': 1})
-        # `call_args` is a two-tupe of (positional, keyword) args.
+        # `call_args` is a two-tuple of (positional, keyword) args.
         self.assertIn('password', read.call_args[0][2])
 
     def test_ignore_arg_v3(self):
@@ -836,7 +836,26 @@ class ReadTestCase(TestCase):
                 entities.AuthSourceLDAP(self.cfg).read()
         self.assertEqual(u_json.call_count, 1)
         self.assertEqual(read.call_count, 1)
-        self.assertEqual(set(['account_password']), set(read.call_args[0][2]))
+        self.assertEqual({'account_password'}, read.call_args[0][2])
+
+    def test_ignore_arg_v4(self):
+        """Call :meth:`nailgun.entities.User.read`.
+
+        Assert that entity`s predefined values of ``ignore`` are always
+        correctly passed on.
+
+        """
+        for input_ignore, actual_ignore in (
+                (None, {'password'}),
+                ({'password'}, {'password'}),
+                ({'email'}, {'email', 'password'}),
+                ({'email', 'password'}, {'email', 'password'}),
+        ):
+            with self.subTest(input_ignore):
+                with mock.patch.object(EntityReadMixin, 'read') as read:
+                    entities.User(self.cfg).read(ignore=input_ignore)
+                # `call_args` is a two-tuple of (positional, keyword) args.
+                self.assertEqual(actual_ignore, read.call_args[0][2])
 
 
 class UpdateTestCase(TestCase):
@@ -990,7 +1009,7 @@ class AbstractDockerContainerTestCase(TestCase):
             self.assertEqual(handler.call_count, 1)
             self.assertEqual(handler.return_value, response)
 
-            # `call_args` is a two-tupe of (positional, keyword) args.
+            # `call_args` is a two-tuple of (positional, keyword) args.
             self.assertEqual(
                 client_put.call_args[0][1],
                 {'power_action': power_action},
@@ -1029,7 +1048,7 @@ class AbstractDockerContainerTestCase(TestCase):
             self.assertEqual(handler.call_count, 1)
             self.assertEqual(handler.return_value, response)
 
-            # `call_args` is a two-tupe of (positional, keyword) args.
+            # `call_args` is a two-tuple of (positional, keyword) args.
             self.assertEqual(client_get.call_args[1]['data'], kwargs)
 
 
@@ -1057,7 +1076,7 @@ class ActivationKeyTestCase(TestCase):
         self.assertEqual(handler.return_value, response)
 
         # This was just executed: client_put(path='…', data={…}, …)
-        # `call_args` is a two-tupe of (positional, keyword) args.
+        # `call_args` is a two-tuple of (positional, keyword) args.
         self.assertEqual(client_put.call_args[0][1], {1: 2})
 
     def test_content_override(self):
@@ -1079,7 +1098,7 @@ class ActivationKeyTestCase(TestCase):
         self.assertEqual(handler.return_value, response)
 
         # This was just executed: client_put(path='…', data={…}, …)
-        # `call_args` is a two-tupe of (positional, keyword) args.
+        # `call_args` is a two-tuple of (positional, keyword) args.
         self.assertEqual(
             client_put.call_args[0][1]['content_override'],
             {'content_label': content_label, 'value': value},
@@ -1188,7 +1207,7 @@ class OrganizationTestCase(TestCase):
         self.assertEqual(handler.return_value, response)
 
         # This was just executed: client_post(path='…', data={…}, …)
-        # `call_args` is a two-tupe of (positional, keyword) args.
+        # `call_args` is a two-tuple of (positional, keyword) args.
         data = client_post.call_args[0][1]
         self.assertEqual(
             set(('interval', 'name', 'sync_date')),
@@ -1279,7 +1298,7 @@ class RHCIDeploymentTestCase(TestCase):
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value, response)
 
-        # `call_args` is a two-tupe of (positional, keyword) args.
+        # `call_args` is a two-tuple of (positional, keyword) args.
         self.assertEqual(
             client_put.call_args[0][1],
             {'discovered_host_ids': hypervisor_ids},
@@ -1299,7 +1318,7 @@ class RHCIDeploymentTestCase(TestCase):
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value, response)
 
-        # `call_args` is a two-tupe of (positional, keyword) args.
+        # `call_args` is a two-tuple of (positional, keyword) args.
         self.assertEqual(client_put.call_args[0][1], params)
 
 
@@ -1438,7 +1457,7 @@ class VersionTestCase(TestCase):
             # Version 6.1.0
             with mock.patch.object(EntityReadMixin, 'read') as read:
                 entity(self.cfg_610).read()
-            self.assertEqual(read.call_args[0][2], ())
+            self.assertEqual(read.call_args[0][2], None)
 
     def test_lifecycle_environment(self):
         """Create a :class:`nailgun.entities.LifecycleEnvironment`.
