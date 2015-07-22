@@ -132,6 +132,7 @@ class InitTestCase(TestCase):
                 entities.Status,
                 entities.Subnet,
                 entities.Subscription,
+                entities.SyncPlan,
                 entities.System,
                 entities.SystemPackage,
                 entities.TemplateCombination,
@@ -152,7 +153,6 @@ class InitTestCase(TestCase):
             (entities.ContentViewFilterRule, {'content_view_filter': 1}),
             (entities.ContentViewPuppetModule, {'content_view': 1}),
             (entities.OperatingSystemParameter, {'operatingsystem': 1}),
-            (entities.SyncPlan, {'organization': 1}),
         ])
         for entity, params in entities_:
             with self.subTest():
@@ -169,9 +169,8 @@ class InitTestCase(TestCase):
                 entities.ContentViewFilterRule,
                 entities.ContentViewPuppetModule,
                 entities.OperatingSystemParameter,
-                entities.SyncPlan,
         ):
-            with self.subTest():
+            with self.subTest(entity):
                 with self.assertRaises(TypeError):
                     entity(self.cfg)
 
@@ -198,6 +197,7 @@ class PathTestCase(TestCase):
                 (entities.RHCIDeployment, '/deployments'),
                 (entities.Repository, '/repositories'),
                 (entities.SmartProxy, '/smart_proxies'),
+                (entities.SyncPlan, '/sync_plans'),
                 (entities.System, '/systems'),
         ):
             with self.subTest():
@@ -229,14 +229,16 @@ class PathTestCase(TestCase):
                 (entities.Organization, 'subscriptions/upload'),
                 (entities.Organization, 'sync_plans'),
                 (entities.Product, 'repository_sets'),
-                (entities.Product, 'repository_sets/2396/disable'),
-                (entities.Product, 'repository_sets/2396/enable'),
                 (entities.Product,
                  'repository_sets/2396/available_repositories'),
+                (entities.Product, 'repository_sets/2396/disable'),
+                (entities.Product, 'repository_sets/2396/enable'),
                 (entities.Product, 'sync'),
+                (entities.RHCIDeployment, 'deploy'),
                 (entities.Repository, 'sync'),
                 (entities.Repository, 'upload_content'),
-                (entities.RHCIDeployment, 'deploy'),
+                (entities.SyncPlan, 'add_products'),
+                (entities.SyncPlan, 'remove_products'),
         ):
             with self.subTest():
                 path = entity(self.cfg, id=self.id_).path(which=which)
@@ -304,24 +306,6 @@ class PathTestCase(TestCase):
                 entities.ForemanTask(self.cfg, id=self.id_).path('bulk_search')
         ):
             self.assertIn('/foreman_tasks/api/tasks/bulk_search', path)
-
-    def test_sync_plan(self):
-        """Test :meth:`nailgun.entities.SyncPlan.path`.
-
-        Assert that the following return appropriate paths:
-
-        * ``SyncPlan(id=…).path('add_products')``
-        * ``SyncPlan(id=…).path('remove_products')``
-
-        """
-        for which in ('add_products', 'remove_products'):
-            path = entities.SyncPlan(
-                self.cfg,
-                id=2,
-                organization=1,
-            ).path(which)
-            self.assertIn('organizations/1/sync_plans/2/' + which, path)
-            self.assertRegex(path, '{}$'.format(which))
 
     def test_system(self):
         """Test :meth:`nailgun.entities.System.path`.
@@ -419,12 +403,12 @@ class CreatePayloadTestCase(TestCase):
                 entities.Media,
                 entities.OperatingSystem,
                 entities.Subnet,
+                entities.SyncPlan,
                 entities.User,
                 entities.UserGroup,
             )
         ]
         entities_.extend([
-            (entities.SyncPlan, {'organization': 1}),
             (entities.ContentViewPuppetModule, {'content_view': 1}),
         ])
         for entity, params in entities_:
@@ -686,16 +670,23 @@ class ReadTestCase(TestCase):
                 ),
                 entities.ContentViewPuppetModule(self.cfg, content_view=2),
                 entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
-                entities.SyncPlan(self.cfg, organization=2),
+                entities.SyncPlan(
+                    config.ServerConfig('url', version='6.1.0'),
+                    organization=2,
+                ),
         ):
-            # We mock read_json() because it may be called by read().
-            with mock.patch.object(EntityReadMixin, 'read_json'):
-                with mock.patch.object(EntityReadMixin, 'read') as read:
-                    entity.read()
-            self.assertEqual(read.call_count, 1)
-            # read.call_args[0][0] is the `entity` argument to read()
-            # pylint:disable=protected-access
-            self.assertEqual(read.call_args[0][0]._server_config, self.cfg)
+            with self.subTest(type(entity)):
+                # We mock read_json() because it may be called by read().
+                with mock.patch.object(EntityReadMixin, 'read_json'):
+                    with mock.patch.object(EntityReadMixin, 'read') as read:
+                        entity.read()
+                self.assertEqual(read.call_count, 1)
+                # read.call_args[0][0] is the `entity` argument to read()
+                # pylint:disable=protected-access
+                self.assertEqual(
+                    entity._server_config,
+                    read.call_args[0][0]._server_config,
+                )
 
     def test_attrs_arg_v1(self):
         """Ensure ``read`` and ``read_json`` are both called once.
@@ -904,18 +895,9 @@ class UpdatePayloadTestCase(TestCase):
         date_string = '2015-07-20 20:54:38'
         date_datetime = datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S')
         kwargs_responses = [
-            (
-                {'organization': 1},
-                {'organization_id': 1},
-            ),
-            (
-                {'organization': 1, 'sync_date': date_string},
-                {'organization_id': 1, 'sync_date': date_string},
-            ),
-            (
-                {'organization': 1, 'sync_date': date_datetime},
-                {'organization_id': 1, 'sync_date': date_string},
-            ),
+            ({}, {}),
+            ({'sync_date': date_string}, {'sync_date': date_string}),
+            ({'sync_date': date_datetime}, {'sync_date': date_string}),
         ]
         for kwargs, payload in kwargs_responses:
             with self.subTest((kwargs, payload)):
@@ -1509,3 +1491,18 @@ class VersionTestCase(TestCase):
                 'tftp'):
             self.assertNotIn(field_name, subnet_608.get_fields())
             self.assertIn(field_name, subnet_610.get_fields())
+
+    def test_sync_plan(self):
+        """Check :class:`nailgun.entities.SyncPlan`'s path.
+
+        Assert that ``SyncPlan._meta['path']`` contains ``/organizations/<id>``
+        on Satellite 6.1.0 and older.
+
+        """
+        sp_610 = entities.SyncPlan(self.cfg_610, organization=gen_integer())
+        self.assertIn(
+            '/organizations/{}/sync_plans'.format(
+                sp_610.organization.id  # pylint:disable=no-member
+            ),
+            sp_610.path()
+        )
