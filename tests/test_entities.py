@@ -478,35 +478,46 @@ class CreateMissingTestCase(TestCase):
     def setUpClass(cls):
         """Set a server configuration at ``cls.cfg``."""
         cls.cfg = config.ServerConfig('http://example.com')
+        # Fields optionally populated by AuthSourceLDAP.create_missing()
+        cls.AS_LDAP_FIELDS = (
+            'account_password',
+            'attr_firstname',
+            'attr_lastname',
+            'attr_login',
+            'attr_mail',
+        )
 
     def test_auth_source_ldap_v1(self):
-        """Test ``AuthSourceLDAP(onthefly_register=False)``."""
+        """Test ``AuthSourceLDAP(onthefly_register=False).create_missing()``"""
         entity = entities.AuthSourceLDAP(self.cfg, onthefly_register=False)
-        with mock.patch.object(EntityCreateMixin, 'create_raw'):
-            with mock.patch.object(EntityReadMixin, 'read_raw'):
-                entity.create_missing()
-        self.assertEqual(
-            _get_required_field_names(entity).union(('onthefly_register',)),
-            set(entity.get_values().keys()),
+        with mock.patch.object(EntityCreateMixin, 'create_missing'):
+            entity.create_missing()
+        self.assertTrue(
+            set((self.AS_LDAP_FIELDS)).isdisjoint(entity.get_values())
         )
 
     def test_auth_source_ldap_v2(self):
-        """Test ``AuthSourceLDAP(onthefly_register=True)``."""
+        """Test ``AuthSourceLDAP(onthefly_register=True).create_missing()``."""
         entity = entities.AuthSourceLDAP(self.cfg, onthefly_register=True)
-        with mock.patch.object(EntityCreateMixin, 'create_raw'):
-            with mock.patch.object(EntityReadMixin, 'read_raw'):
-                entity.create_missing()
-        self.assertEqual(
-            _get_required_field_names(entity).union((
-                'account_password',
-                'attr_firstname',
-                'attr_lastname',
-                'attr_login',
-                'attr_mail',
-                'onthefly_register',
-            )),
-            set(entity.get_values().keys()),
+        with mock.patch.object(EntityCreateMixin, 'create_missing'):
+            entity.create_missing()
+        self.assertTrue(
+            set((self.AS_LDAP_FIELDS)).issubset(entity.get_values())
         )
+
+    def test_auth_source_ldap_v3(self):
+        """Does ``AuthSourceLDAP.create_missing`` overwrite fields?"""
+        attrs = {
+            field: i
+            for i, field in enumerate(self.AS_LDAP_FIELDS)
+        }
+        attrs.update({'onthefly_register': True})
+        entity = entities.AuthSourceLDAP(self.cfg, **attrs)
+        with mock.patch.object(EntityCreateMixin, 'create_missing'):
+            entity.create_missing()
+        for key, value in attrs.items():
+            with self.subTest((key, value)):
+                self.assertEqual(getattr(entity, key), value)
 
     def test_config_template_v1(self):
         """Test ``ConfigTemplate(snippet=True)``."""

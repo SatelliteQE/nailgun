@@ -372,13 +372,14 @@ class AuthSourceLDAP(
         """
         super(AuthSourceLDAP, self).create_missing()
         if getattr(self, 'onthefly_register', False) is True:
-            self.account_password = (
-                self._fields['account_password'].gen_value()
-            )
-            self.attr_firstname = self._fields['attr_firstname'].gen_value()
-            self.attr_lastname = self._fields['attr_lastname'].gen_value()
-            self.attr_login = self._fields['attr_login'].gen_value()
-            self.attr_mail = self._fields['attr_mail'].gen_value()
+            for field in (
+                    'account_password',
+                    'attr_firstname',
+                    'attr_lastname',
+                    'attr_login',
+                    'attr_mail'):
+                if not hasattr(self, field):
+                    setattr(self, field, self._fields[field].gen_value())
 
     def read(self, entity=None, attrs=None, ignore=('account_password',)):
         """Do not read the ``account_password`` attribute. Work around a bug.
