@@ -381,7 +381,7 @@ class AuthSourceLDAP(
                 if not hasattr(self, field):
                     setattr(self, field, self._fields[field].gen_value())
 
-    def read(self, entity=None, attrs=None, ignore=('account_password',)):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Do not read the ``account_password`` attribute. Work around a bug.
 
         For more information, see `Bugzilla #1243036
@@ -390,6 +390,9 @@ class AuthSourceLDAP(
         """
         if attrs is None:
             attrs = self.update_json([])
+        if ignore is None:
+            ignore = set()
+        ignore.add('account_password')
         return super(AuthSourceLDAP, self).read(entity, attrs, ignore)
 
 
@@ -550,7 +553,7 @@ class DockerComputeResource(AbstractComputeResource):
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def read(self, entity=None, attrs=None, ignore=('password',)):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Do extra work to fetch a complete set of attributes for this entity.
 
         For more information, see `Bugzilla #1223540
@@ -562,6 +565,9 @@ class DockerComputeResource(AbstractComputeResource):
         """
         if attrs is None:
             attrs = self.read_json()
+        if ignore is None:
+            ignore = set()
+        ignore.add('password')
         if 'email' not in attrs and 'email' not in ignore:
             response = client.put(
                 self.path('self'),
@@ -963,7 +969,7 @@ class ContentViewFilterRule(
             )
         }
 
-    def read(self, entity=None, attrs=None, ignore=('content_view_filter',)):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Do not read certain fields.
 
         Do not expect the server to return the ``content_view_filter``
@@ -984,14 +990,16 @@ class ContentViewFilterRule(
             )
         if attrs is None:
             attrs = self.read_json()
-        ignore = set(ignore).union([
+        if ignore is None:
+            ignore = set()
+        ignore.add('content_view_filter')
+        ignore.update([
             field_name
             for field_name in entity.get_fields().keys()
             if field_name not in attrs
         ])
         if 'errata_id' in attrs:
             ignore.discard('errata')  # pylint:disable=no-member
-        ignore = tuple(ignore)
         return super(ContentViewFilterRule, self).read(entity, attrs, ignore)
 
 
@@ -1089,7 +1097,7 @@ class ContentViewPuppetModule(
             )
         }
 
-    def read(self, entity=None, attrs=None, ignore=('content_view',)):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Provide a default value for ``entity``.
 
         By default, ``nailgun.entity_mixins.EntityReadMixin.read provides a
@@ -1112,6 +1120,10 @@ class ContentViewPuppetModule(
                 self._server_config,
                 content_view=self.content_view,  # pylint:disable=no-member
             )
+
+        if ignore is None:
+            ignore = set()
+        ignore.add('content_view')
         return super(ContentViewPuppetModule, self).read(entity, attrs, ignore)
 
     def create_payload(self):
@@ -1156,7 +1168,7 @@ class ContentView(
         }
         super(ContentView, self).__init__(server_config, **kwargs)
 
-    def read(self, entity=None, attrs=None, ignore=()):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Fetch an attribute missing from the server's response.
 
         For more information, see `Bugzilla #1237257
@@ -1358,7 +1370,7 @@ class Domain(
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def read(self, entity=None, attrs=None, ignore=()):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Deal with weirdly named data returned from the server.
 
         For more information, see `Bugzilla #1233245
@@ -1646,7 +1658,7 @@ class HostGroup(
         """
         return {u'hostgroup': super(HostGroup, self).create_payload()}
 
-    def read(self, entity=None, attrs=None, ignore=()):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Deal with several bugs.
 
         For more information, see:
@@ -1829,7 +1841,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
         """
         return {u'host': super(Host, self).create_payload()}
 
-    def read(self, entity=None, attrs=None, ignore=('root_pass',)):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Deal with oddly named and structured data returned by the server.
 
         For more information, see `Bugzilla #1235019
@@ -1838,6 +1850,9 @@ class Host(  # pylint:disable=too-many-instance-attributes
         """
         if attrs is None:
             attrs = self.read_json()
+        if ignore is None:
+            ignore = set()
+        ignore.add('root_pass')
         attrs['host_parameters_attributes'] = attrs.pop('parameters')
         attrs['puppet_class'] = attrs.pop('puppetclasses')
         return super(Host, self).read(entity, attrs, ignore)
@@ -2053,14 +2068,16 @@ class Location(
         attrs = self.create_json(create_missing)
         return Location(self._server_config, id=attrs['id']).read()
 
-    def read(self, entity=None, attrs=None, ignore=('realm',)):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Work around a bug in the server's response.
 
-        Do not try to read any of the attributes listed in the ``ignore``
-        argument. See `Bugzilla #1216234
+        Do not read the ``realm`` attribute. See `Bugzilla #1216234
         <https://bugzilla.redhat.com/show_bug.cgi?id=1216234>`_.
 
         """
+        if ignore is None:
+            ignore = set()
+        ignore.add('realm')
         return super(Location, self).read(entity, attrs, ignore)
 
     def update(self, fields=None):
@@ -2158,7 +2175,7 @@ class Media(
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def read(self, entity=None, attrs=None, ignore=()):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Rename ``path`` to ``path_``."""
         if attrs is None:
             attrs = self.read_json()
@@ -2266,7 +2283,7 @@ class OperatingSystemParameter(
             'server_modes': ('sat'),
         }
 
-    def read(self, entity=None, attrs=None, ignore=('operatingsystem',)):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Provide a default value for ``entity``.
 
         By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
@@ -2289,6 +2306,9 @@ class OperatingSystemParameter(
                 self._server_config,
                 operatingsystem=self.operatingsystem,  # pylint:disable=E1101
             )
+        if ignore is None:
+            ignore = set()
+        ignore.add('operatingsystem')
         return super(OperatingSystemParameter, self).read(
             entity,
             attrs,
@@ -2500,14 +2520,17 @@ class Organization(
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def read(self, entity=None, attrs=None, ignore=('realm',)):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Fetch as many attributes as possible for this entity.
 
-        The server does not return any of the attributes listed in the
-        ``ignore`` argument. For more information, see `Bugzilla #1230873
+        Do not read the ``realm`` attribute. For more information, see
+        `Bugzilla #1230873
         <https://bugzilla.redhat.com/show_bug.cgi?id=1230873>`_.
 
         """
+        if ignore is None:
+            ignore = set()
+        ignore.add('realm')
         return super(Organization, self).read(entity, attrs, ignore)
 
     def update(self, fields=None):
@@ -2696,7 +2719,7 @@ class Product(
             )
         return super(Product, self).path(which)
 
-    def read(self, entity=None, attrs=None, ignore=()):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Fetch an attribute missing from the server's response.
 
         For more information, see `Bugzilla #1237283
@@ -3148,7 +3171,7 @@ class RHCIDeployment(
         }
         super(RHCIDeployment, self).__init__(server_config, **kwargs)
 
-    def read(self, entity=None, attrs=None, ignore=('rhev_engine_host',)):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Normalize the data returned by the server.
 
         The server's JSON response is in this form::
@@ -3161,13 +3184,16 @@ class RHCIDeployment(
             }
 
         The inner "deployment" dict contains information about this entity. The
-        response does not contain any of the attributes listed in the
-        ``ignore`` argument.
+        response does not contain a value for the ``rhev_engine_host``
+        argument.
 
         """
         if attrs is None:
             attrs = self.read_json()
         attrs = attrs['deployment']
+        if ignore is None:
+            ignore = set()
+        ignore.add('rhev_engine_host')
         return super(RHCIDeployment, self).read(entity, attrs, ignore)
 
     def path(self, which=None):
@@ -3396,14 +3422,18 @@ class Subnet(
         """
         return {u'subnet': super(Subnet, self).create_payload()}
 
-    def read(self, entity=None, attrs=None, ignore=('discovery',)):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Fetch as many attributes as possible for this entity.
 
-        The server does not return any of the attributes listed in the
-        ``ignore`` argument. For more information, see `Bugzilla #1217146
+        Do not read the ``discovery`` attribute. For more information, see
+        `Bugzilla #1217146
         <https://bugzilla.redhat.com/show_bug.cgi?id=1217146>`_.
 
         """
+
+        if ignore is None:
+            ignore = set()
+        ignore.add('discovery')
         return super(Subnet, self).read(entity, attrs, ignore)
 
 
@@ -3464,7 +3494,7 @@ class SyncPlan(
             'api_path': '{0}/sync_plans'.format(self.organization.path()),
         }
 
-    def read(self, entity=None, attrs=None, ignore=('organization',)):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Provide a default value for ``entity``.
 
         By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
@@ -3486,6 +3516,9 @@ class SyncPlan(
                 self._server_config,
                 organization=self.organization,  # pylint:disable=no-member
             )
+        if ignore is None:
+            ignore = set()
+        ignore.add('organization')
         return super(SyncPlan, self).read(entity, attrs, ignore)
 
     def create_payload(self):
@@ -3650,15 +3683,11 @@ class System(
             )
         return super(System, self).path(which)
 
-    def read(
-            self,
-            entity=None,
-            attrs=None,
-            ignore=('facts', 'organization', 'type')):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Fetch as many attributes as possible for this entity.
 
-        The server does not return any of the attributes listed in the
-        ``ignore`` argument. For more information, see `Bugzilla #1202917
+        Do not read the ``facts``, ``organization`` or ``type`` attributes.
+        For more information, see `Bugzilla #1202917
         <https://bugzilla.redhat.com/show_bug.cgi?id=1202917>`_.
 
         """
@@ -3667,6 +3696,9 @@ class System(
         attrs['last_checkin'] = attrs.pop('checkin_time')
         attrs['host_collections'] = attrs.pop('hostCollections')
         attrs['installed_products'] = attrs.pop('installedProducts')
+        if ignore is None:
+            ignore = set()
+        ignore.update(['facts', 'organization', 'type'])
         return super(System, self).read(entity, attrs, ignore)
 
 
@@ -3731,7 +3763,7 @@ class UserGroup(
         """
         return {u'usergroup': super(UserGroup, self).create_payload()}
 
-    def read(self, entity=None, attrs=None, ignore=()):
+    def read(self, entity=None, attrs=None, ignore=None):
         """Work around `Redmine #9594`_.
 
         An HTTP GET request to ``path('self')`` does not return the ``admin``
@@ -3744,6 +3776,8 @@ class UserGroup(
         """
         if attrs is None:
             attrs = self.read_json()
+        if ignore is None:
+            ignore = set()
         if 'admin' not in attrs and 'admin' not in ignore:
             response = client.put(
                 self.path('self'),
@@ -3817,8 +3851,11 @@ class User(
         """
         return {u'user': super(User, self).create_payload()}
 
-    def read(self, entity=None, attrs=None, ignore=('password',)):
-        """Do not read any attributes listed in the ``ignore`` argument."""
+    def read(self, entity=None, attrs=None, ignore=None):
+        """Do not read the ``password`` argument."""
+        if ignore is None:
+            ignore = set()
+        ignore.add('password')
         return super(User, self).read(entity, attrs, ignore)
 
     def update_payload(self, fields=None):
