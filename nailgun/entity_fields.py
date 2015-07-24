@@ -58,23 +58,15 @@ class Field(object):
     :param choices: A tuple of values that this field may be populated with.
     :param default: Entity classes that inherit from
         :class:`nailgun.entity_mixins.EntityCreateMixin` use this field.
-    :param null: A boolean. Determines whether a null value can be submitted to
-        the server when creating or updating an entity.
 
     """
 
-    def __init__(
-            self,
-            required=False,
-            choices=None,
-            default=_SENTINEL,
-            null=False):
+    def __init__(self, required=False, choices=None, default=_SENTINEL):
         self.required = required
         if choices is not None:
             self.choices = choices
         if default is not _SENTINEL:
             self.default = default
-        self.null = null
 
 
 class BooleanField(Field):

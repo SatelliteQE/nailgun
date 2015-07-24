@@ -289,10 +289,7 @@ class Architecture(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(required=True),
-            'operatingsystem': entity_fields.OneToManyField(
-                OperatingSystem,
-                null=True,
-            ),
+            'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
         }
         self._meta = {
             'api_path': 'api/v2/architectures',
@@ -330,26 +327,24 @@ class AuthSourceLDAP(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'account': entity_fields.StringField(null=True),
-            'attr_photo': entity_fields.StringField(null=True),
-            'base_dn': entity_fields.StringField(null=True),
-            'groups_base': entity_fields.StringField(null=True),
+            'account': entity_fields.StringField(),
+            'attr_photo': entity_fields.StringField(),
+            'base_dn': entity_fields.StringField(),
+            'groups_base': entity_fields.StringField(),
             'host': entity_fields.StringField(required=True, length=(1, 60)),
             'name': entity_fields.StringField(required=True, length=(1, 60)),
-            'onthefly_register': entity_fields.BooleanField(null=True),
-            'port': entity_fields.IntegerField(null=True),
+            'onthefly_register': entity_fields.BooleanField(),
+            'port': entity_fields.IntegerField(),
             'server_type': entity_fields.StringField(
-                choices=('active_directory', 'free_ipa', 'posix'),
-                null=True,
-            ),
-            'tls': entity_fields.BooleanField(null=True),
+                choices=('active_directory', 'free_ipa', 'posix')),
+            'tls': entity_fields.BooleanField(),
 
             # required if onthefly_register is true,
-            'account_password': entity_fields.StringField(null=True),
-            'attr_firstname': entity_fields.StringField(null=True),
-            'attr_lastname': entity_fields.StringField(null=True),
-            'attr_login': entity_fields.StringField(null=True),
-            'attr_mail': entity_fields.EmailField(null=True),
+            'account_password': entity_fields.StringField(),
+            'attr_firstname': entity_fields.StringField(),
+            'attr_lastname': entity_fields.StringField(),
+            'attr_login': entity_fields.StringField(),
+            'attr_mail': entity_fields.EmailField(),
         }
         self._meta = {
             'api_path': 'api/v2/auth_source_ldaps',
@@ -403,7 +398,7 @@ class Bookmark(Entity):
         self._fields = {
             'controller': entity_fields.StringField(required=True),
             'name': entity_fields.StringField(required=True),
-            'public': entity_fields.BooleanField(null=True),
+            'public': entity_fields.BooleanField(),
             'query': entity_fields.StringField(required=True),
         }
         self._meta = {'api_path': 'api/v2/bookmarks', 'server_modes': ('sat')}
@@ -480,7 +475,7 @@ class AbstractComputeResource(
         # latter case, that set of fields is updated with values provided by
         # the child class.
         fields = {
-            'description': entity_fields.StringField(null=True),
+            'description': entity_fields.StringField(),
             'location': entity_fields.OneToManyField(Location),
             'name': entity_fields.StringField(
                 required=True,
@@ -498,7 +493,6 @@ class AbstractComputeResource(
                     'Rackspace',
                     'Vmware',
                 ),
-                null=True,
             ),
             'provider_friendly_name': entity_fields.StringField(),
             'url': entity_fields.URLField(required=True),
@@ -532,9 +526,9 @@ class DockerComputeResource(AbstractComputeResource):
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'email': entity_fields.EmailField(),
-            'password': entity_fields.StringField(null=True),
+            'password': entity_fields.StringField(),
             'url': entity_fields.URLField(required=True),
-            'user': entity_fields.StringField(null=True),
+            'user': entity_fields.StringField(),
         }
         super(DockerComputeResource, self).__init__(server_config, **kwargs)
         self._fields['provider'].default = 'Docker'
@@ -588,7 +582,7 @@ class LibvirtComputeResource(AbstractComputeResource):
                 choices=(u'VNC', u'SPICE'),
                 required=True,
             ),
-            'set_console_password': entity_fields.BooleanField(null=True),
+            'set_console_password': entity_fields.BooleanField(),
         }
         super(LibvirtComputeResource, self).__init__(server_config, **kwargs)
         self._fields['provider'].default = 'Libvirt'
@@ -620,24 +614,15 @@ class ConfigTemplate(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'audit_comment': entity_fields.StringField(null=True),
-            'locked': entity_fields.BooleanField(null=True),
+            'audit_comment': entity_fields.StringField(),
+            'locked': entity_fields.BooleanField(),
             'name': entity_fields.StringField(required=True),
-            'operatingsystem': entity_fields.OneToManyField(
-                OperatingSystem,
-                null=True,
-            ),
-            'organization': entity_fields.OneToManyField(
-                Organization,
-                null=True,
-            ),
-            'snippet': entity_fields.BooleanField(null=True, required=True),
+            'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
+            'organization': entity_fields.OneToManyField(Organization),
+            'snippet': entity_fields.BooleanField(required=True),
             'template': entity_fields.StringField(required=True),
-            'template_combinations': entity_fields.ListField(null=True),
-            'template_kind': entity_fields.OneToOneField(
-                TemplateKind,
-                null=True,
-            ),
+            'template_combinations': entity_fields.ListField(),
+            'template_kind': entity_fields.OneToOneField(TemplateKind),
         }
         self._meta = {
             'api_path': 'api/v2/config_templates',
@@ -730,9 +715,9 @@ class AbstractDockerContainer(
 
     def __init__(self, server_config=None, **kwargs):
         fields = {
-            'attach_stderr': entity_fields.BooleanField(null=True),
-            'attach_stdin': entity_fields.BooleanField(null=True),
-            'attach_stdout': entity_fields.BooleanField(null=True),
+            'attach_stderr': entity_fields.BooleanField(),
+            'attach_stdin': entity_fields.BooleanField(),
+            'attach_stdout': entity_fields.BooleanField(),
             'command': entity_fields.StringField(
                 required=True,
                 str_type='latin1',
@@ -740,22 +725,19 @@ class AbstractDockerContainer(
             'compute_resource': entity_fields.OneToOneField(
                 AbstractComputeResource
             ),
-            'cpu_set': entity_fields.StringField(null=True),
-            'cpu_shares': entity_fields.StringField(null=True),
-            'entrypoint': entity_fields.StringField(null=True),
-            'location': entity_fields.OneToManyField(Location, null=True),
-            'memory': entity_fields.StringField(null=True),
+            'cpu_set': entity_fields.StringField(),
+            'cpu_shares': entity_fields.StringField(),
+            'entrypoint': entity_fields.StringField(),
+            'location': entity_fields.OneToManyField(Location),
+            'memory': entity_fields.StringField(),
             # The "name" field may be any of a-zA-Z0-9_.-,
             # "alphanumeric" is a subset of those legal characters.
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alphanumeric',
             ),
-            'organization': entity_fields.OneToManyField(
-                Organization,
-                null=True,
-            ),
-            'tty': entity_fields.BooleanField(null=True),
+            'organization': entity_fields.OneToManyField(Organization),
+            'tty': entity_fields.BooleanField(),
         }
         fields.update(getattr(self, '_fields', {}))
         self._fields = fields
@@ -1324,15 +1306,12 @@ class Domain(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'dns': entity_fields.OneToOneField(SmartProxy, null=True),
-            'domain_parameters_attributes': entity_fields.ListField(null=True),
-            'fullname': entity_fields.StringField(null=True),
-            'location': entity_fields.OneToManyField(Location, null=True),
+            'dns': entity_fields.OneToOneField(SmartProxy),
+            'domain_parameters_attributes': entity_fields.ListField(),
+            'fullname': entity_fields.StringField(),
+            'location': entity_fields.OneToManyField(Location),
             'name': entity_fields.StringField(required=True),
-            'organization': entity_fields.OneToManyField(
-                Organization,
-                null=True,
-            ),
+            'organization': entity_fields.OneToManyField(Organization),
         }
         self._meta = {'api_path': 'api/v2/domains', 'server_modes': ('sat')}
         super(Domain, self).__init__(server_config, **kwargs)
@@ -1403,15 +1382,12 @@ class Environment(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'location': entity_fields.OneToManyField(Location, null=True),
+            'location': entity_fields.OneToManyField(Location),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alphanumeric',  # cannot contain whitespace
             ),
-            'organization': entity_fields.OneToManyField(
-                Organization,
-                null=True,
-            ),
+            'organization': entity_fields.OneToManyField(Organization),
         }
         self._meta = {
             'api_path': 'api/v2/environments',
@@ -1444,14 +1420,11 @@ class Filter(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'location': entity_fields.OneToManyField(Location, null=True),
-            'organization': entity_fields.OneToManyField(
-                Organization,
-                null=True,
-            ),
-            'permission': entity_fields.OneToManyField(Permission, null=True),
+            'location': entity_fields.OneToManyField(Location),
+            'organization': entity_fields.OneToManyField(Organization),
+            'permission': entity_fields.OneToManyField(Permission),
             'role': entity_fields.OneToOneField(Role, required=True),
-            'search': entity_fields.StringField(null=True),
+            'search': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'api/v2/filters', 'server_modes': ('sat')}
         super(Filter, self).__init__(server_config, **kwargs)
@@ -1613,38 +1586,24 @@ class HostGroup(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'architecture': entity_fields.OneToOneField(
-                Architecture,
-                null=True,
-            ),
-            'domain': entity_fields.OneToOneField(Domain, null=True),
-            'environment': entity_fields.OneToOneField(Environment, null=True),
-            'location': entity_fields.OneToManyField(Location, null=True),
-            'medium': entity_fields.OneToOneField(Media, null=True),
+            'architecture': entity_fields.OneToOneField(Architecture),
+            'domain': entity_fields.OneToOneField(Domain),
+            'environment': entity_fields.OneToOneField(Environment),
+            'location': entity_fields.OneToManyField(Location),
+            'medium': entity_fields.OneToOneField(Media),
             'name': entity_fields.StringField(required=True),
-            'operatingsystem': entity_fields.OneToOneField(
-                OperatingSystem,
-                null=True,
-            ),
-            'organization': entity_fields.OneToManyField(
-                Organization,
-                null=True,
-            ),
-            'parent': entity_fields.OneToOneField(HostGroup, null=True),
-            'ptable': entity_fields.OneToOneField(PartitionTable, null=True),
-            'realm': entity_fields.OneToOneField(Realm, null=True),
-            'subnet': entity_fields.OneToOneField(Subnet, null=True),
+            'operatingsystem': entity_fields.OneToOneField(OperatingSystem),
+            'organization': entity_fields.OneToManyField(Organization),
+            'parent': entity_fields.OneToOneField(HostGroup),
+            'ptable': entity_fields.OneToOneField(PartitionTable),
+            'realm': entity_fields.OneToOneField(Realm),
+            'subnet': entity_fields.OneToOneField(Subnet),
         }
         if getattr(server_config, 'version', parse('6.1')) >= parse('6.1'):
             self._fields.update({
-                'content_view': entity_fields.OneToOneField(
-                    ContentView,
-                    null=True,
-                ),
+                'content_view': entity_fields.OneToOneField(ContentView),
                 'lifecycle_environment': entity_fields.OneToOneField(
-                    LifecycleEnvironment,
-                    null=True,
-                ),
+                    LifecycleEnvironment),
             })
         self._meta = {'api_path': 'api/v2/hostgroups', 'server_modes': ('sat')}
         super(HostGroup, self).__init__(server_config, **kwargs)
@@ -1714,56 +1673,41 @@ class Host(  # pylint:disable=too-many-instance-attributes
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'architecture': entity_fields.OneToOneField(
-                Architecture,
-                null=True,
-            ),
-            'build': entity_fields.BooleanField(null=True),
-            'capabilities': entity_fields.StringField(null=True),
-            'compute_profile': entity_fields.OneToOneField(
-                ComputeProfile,
-                null=True,
-            ),
+            'architecture': entity_fields.OneToOneField(Architecture),
+            'build': entity_fields.BooleanField(),
+            'capabilities': entity_fields.StringField(),
+            'compute_profile': entity_fields.OneToOneField(ComputeProfile),
             'compute_resource': entity_fields.OneToOneField(
-                AbstractComputeResource,
-                null=True,
-            ),
-            'domain': entity_fields.OneToOneField(Domain, null=True),
-            'enabled': entity_fields.BooleanField(null=True),
-            'environment': entity_fields.OneToOneField(Environment, null=True),
-            'hostgroup': entity_fields.OneToOneField(HostGroup, null=True),
-            'host_parameters_attributes': entity_fields.ListField(null=True),
-            'image': entity_fields.OneToOneField(Image, null=True),
-            'ip': entity_fields.StringField(null=True),
+                AbstractComputeResource),
+            'domain': entity_fields.OneToOneField(Domain),
+            'enabled': entity_fields.BooleanField(),
+            'environment': entity_fields.OneToOneField(Environment),
+            'hostgroup': entity_fields.OneToOneField(HostGroup),
+            'host_parameters_attributes': entity_fields.ListField(),
+            'image': entity_fields.OneToOneField(Image),
+            'ip': entity_fields.StringField(),
             'location': entity_fields.OneToOneField(Location, required=True),
-            'mac': entity_fields.MACAddressField(null=True),
-            'managed': entity_fields.BooleanField(null=True),
-            'medium': entity_fields.OneToOneField(Media, null=True),
-            'model': entity_fields.OneToOneField(Model, null=True),
+            'mac': entity_fields.MACAddressField(),
+            'managed': entity_fields.BooleanField(),
+            'medium': entity_fields.OneToOneField(Media),
+            'model': entity_fields.OneToOneField(Model),
             'name': entity_fields.StringField(required=True, str_type='alpha'),
-            'operatingsystem': entity_fields.OneToOneField(
-                OperatingSystem,
-                null=True,
-            ),
+            'operatingsystem': entity_fields.OneToOneField(OperatingSystem),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
             ),
-            'owner': entity_fields.OneToOneField(User, null=True),
+            'owner': entity_fields.OneToOneField(User),
             'owner_type': entity_fields.StringField(
                 choices=('User', 'Usergroup'),
-                null=True,
             ),
-            'provision_method': entity_fields.StringField(null=True),
-            'ptable': entity_fields.OneToOneField(PartitionTable, null=True),
-            'puppet_class': entity_fields.OneToManyField(
-                PuppetClass,
-                null=True,
-            ),
-            'puppet_proxy': entity_fields.OneToOneField(SmartProxy, null=True),
-            'realm': entity_fields.OneToOneField(Realm, null=True),
+            'provision_method': entity_fields.StringField(),
+            'ptable': entity_fields.OneToOneField(PartitionTable),
+            'puppet_class': entity_fields.OneToManyField(PuppetClass),
+            'puppet_proxy': entity_fields.OneToOneField(SmartProxy),
+            'realm': entity_fields.OneToOneField(Realm),
             'root_pass': entity_fields.StringField(length=(8, 30)),
-            'subnet': entity_fields.OneToOneField(Subnet, null=True),
+            'subnet': entity_fields.OneToOneField(Subnet),
         }
         self._meta = {'api_path': 'api/v2/hosts', 'server_modes': ('sat')}
         super(Host, self).__init__(server_config, **kwargs)
@@ -1908,16 +1852,16 @@ class Interface(Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'domain': entity_fields.OneToOneField(Domain, null=True),
+            'domain': entity_fields.OneToOneField(Domain),
             'host': entity_fields.OneToOneField(Host, required=True),
             'type': entity_fields.StringField(required=True),
             'ip': entity_fields.IPAddressField(required=True),
             'mac': entity_fields.MACAddressField(required=True),
             'name': entity_fields.StringField(required=True),
-            'password': entity_fields.StringField(null=True),
-            'provider': entity_fields.StringField(null=True),
-            'subnet': entity_fields.OneToOneField(Subnet, null=True),
-            'username': entity_fields.StringField(null=True),
+            'password': entity_fields.StringField(),
+            'provider': entity_fields.StringField(),
+            'subnet': entity_fields.OneToOneField(Subnet),
+            'username': entity_fields.StringField(),
         }
         self._meta = {
             'api_path': 'api/v2/hosts/:host_id/interfaces',
@@ -2019,30 +1963,19 @@ class Location(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'compute_resource': entity_fields.OneToManyField(
-                AbstractComputeResource,
-                null=True,
-            ),
-            'config_template': entity_fields.OneToManyField(
-                ConfigTemplate,
-                null=True,
-            ),
+                AbstractComputeResource),
+            'config_template': entity_fields.OneToManyField(ConfigTemplate),
             'description': entity_fields.StringField(),
-            'domain': entity_fields.OneToManyField(Domain, null=True),
-            'environment': entity_fields.OneToManyField(
-                Environment,
-                null=True,
-            ),
-            'hostgroup': entity_fields.OneToManyField(HostGroup, null=True),
-            'media': entity_fields.OneToManyField(Media, null=True),
+            'domain': entity_fields.OneToManyField(Domain),
+            'environment': entity_fields.OneToManyField(Environment),
+            'hostgroup': entity_fields.OneToManyField(HostGroup),
+            'media': entity_fields.OneToManyField(Media),
             'name': entity_fields.StringField(required=True),
-            'organization': entity_fields.OneToManyField(
-                Organization,
-                null=True,
-            ),
-            'realm': entity_fields.OneToManyField(Realm, null=True,),
-            'smart_proxy': entity_fields.OneToManyField(SmartProxy, null=True),
-            'subnet': entity_fields.OneToManyField(Subnet, null=True),
-            'user': entity_fields.OneToManyField(User, null=True),
+            'organization': entity_fields.OneToManyField(Organization),
+            'realm': entity_fields.OneToManyField(Realm),
+            'smart_proxy': entity_fields.OneToManyField(SmartProxy),
+            'subnet': entity_fields.OneToManyField(Subnet),
+            'user': entity_fields.OneToManyField(User),
         }
         self._meta = {'api_path': 'api/v2/locations', 'server_modes': ('sat')}
         super(Location, self).__init__(server_config, **kwargs)
@@ -2111,15 +2044,9 @@ class Media(
         self._fields = {
             'path_': entity_fields.URLField(required=True),
             'name': entity_fields.StringField(required=True),
-            'operatingsystem': entity_fields.OneToManyField(
-                OperatingSystem,
-                null=True,
-            ),
-            'organization': entity_fields.OneToManyField(
-                Organization,
-                null=True,
-            ),
-            'location': entity_fields.OneToManyField(Location, null=True),
+            'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
+            'organization': entity_fields.OneToManyField(Organization),
+            'location': entity_fields.OneToManyField(Location),
             'os_family': entity_fields.StringField(
                 choices=(
                     'AIX',
@@ -2133,7 +2060,6 @@ class Media(
                     'Suse',
                     'Windows',
                 ),
-                null=True,
             ),
         }
         self._meta = {'api_path': 'api/v2/media', 'server_modes': ('sat')}
@@ -2189,10 +2115,10 @@ class Model(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'hardware_model': entity_fields.StringField(null=True),
-            'info': entity_fields.StringField(null=True),
+            'hardware_model': entity_fields.StringField(),
+            'info': entity_fields.StringField(),
             'name': entity_fields.StringField(required=True),
-            'vendor_class': entity_fields.StringField(null=True),
+            'vendor_class': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'api/v2/models', 'server_modes': ('sat')}
         super(Model, self).__init__(server_config, **kwargs)
@@ -2217,11 +2143,8 @@ class OperatingSystem(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'architecture': entity_fields.OneToManyField(Architecture),
-            'description': entity_fields.StringField(null=True),
-            'family': entity_fields.StringField(
-                choices=_OPERATING_SYSTEMS,
-                null=True,
-            ),
+            'description': entity_fields.StringField(),
+            'family': entity_fields.StringField(choices=_OPERATING_SYSTEMS),
             'major': entity_fields.StringField(
                 length=(1, 5),
                 required=True,
@@ -2230,12 +2153,11 @@ class OperatingSystem(
             'media': entity_fields.OneToManyField(Media),
             'minor': entity_fields.StringField(
                 length=(1, 16),
-                null=True,
                 str_type='numeric',
             ),
             'name': entity_fields.StringField(required=True),
             'ptable': entity_fields.OneToManyField(PartitionTable),
-            'release_name': entity_fields.StringField(null=True),
+            'release_name': entity_fields.StringField(),
         }
         self._meta = {
             'api_path': 'api/v2/operatingsystems',
@@ -2558,17 +2480,11 @@ class OSDefaultTemplate(Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'config_template': entity_fields.OneToOneField(
-                ConfigTemplate,
-                null=True,
-            ),
+            'config_template': entity_fields.OneToOneField(ConfigTemplate),
             'operatingsystem': entity_fields.OneToOneField(
                 OperatingSystem
             ),
-            'template_kind': entity_fields.OneToOneField(
-                TemplateKind,
-                null=True
-            ),
+            'template_kind': entity_fields.OneToOneField(TemplateKind),
         }
         self._meta = {
             'api_path': (
@@ -2585,9 +2501,9 @@ class OverrideValue(Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'match': entity_fields.StringField(null=True),
+            'match': entity_fields.StringField(),
             'smart_variable': entity_fields.OneToOneField(SmartVariable),
-            'value': entity_fields.StringField(null=True),
+            'value': entity_fields.StringField(),
         }
         self._meta = {
             'api_path': (
@@ -2686,7 +2602,7 @@ class Product(
                 required=True
             ),
             'repository': entity_fields.OneToManyField(Repository),
-            'sync_plan': entity_fields.OneToOneField(SyncPlan, null=True),
+            'sync_plan': entity_fields.OneToOneField(SyncPlan),
         }
         self._meta = {
             'api_path': 'katello/api/v2/products',
@@ -2892,10 +2808,7 @@ class PartitionTable(
         self._fields = {
             'layout': entity_fields.StringField(required=True),
             'name': entity_fields.StringField(required=True, length=(4, 30)),
-            'os_family': entity_fields.StringField(
-                choices=_OPERATING_SYSTEMS,
-                null=True,
-            ),
+            'os_family': entity_fields.StringField(choices=_OPERATING_SYSTEMS),
         }
         self._meta = {'api_path': 'api/v2/ptables', 'server_modes': ('sat')}
         super(PartitionTable, self).__init__(server_config, **kwargs)
@@ -2981,7 +2894,7 @@ class Report(Entity):
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'host': entity_fields.StringField(required=True),
-            'logs': entity_fields.ListField(null=True),
+            'logs': entity_fields.ListField(),
             'reported_at': entity_fields.DateTimeField(required=True),
         }
         self._meta = {'api_path': 'api/v2/reports', 'server_modes': ('sat')}
@@ -3339,14 +3252,14 @@ class SmartVariable(Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'default_value': entity_fields.StringField(null=True),
-            'description': entity_fields.StringField(null=True),
-            'override_value_order': entity_fields.StringField(null=True),
-            'puppetclass': entity_fields.OneToOneField(PuppetClass, null=True),
-            'validator_rule': entity_fields.StringField(null=True),
-            'validator_type': entity_fields.StringField(null=True),
+            'default_value': entity_fields.StringField(),
+            'description': entity_fields.StringField(),
+            'override_value_order': entity_fields.StringField(),
+            'puppetclass': entity_fields.OneToOneField(PuppetClass),
+            'validator_rule': entity_fields.StringField(),
+            'validator_type': entity_fields.StringField(),
             'variable': entity_fields.StringField(required=True),
-            'variable_type': entity_fields.StringField(null=True),
+            'variable_type': entity_fields.StringField(),
         }
         self._meta = {
             'api_path': 'api/v2/smart_variables',
@@ -3372,43 +3285,35 @@ class Subnet(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'dns_primary': entity_fields.IPAddressField(null=True),
-            'dns_secondary': entity_fields.IPAddressField(null=True),
-            'domain': entity_fields.OneToManyField(Domain, null=True),
-            'from': entity_fields.IPAddressField(null=True),
-            'gateway': entity_fields.StringField(null=True),
+            'dns_primary': entity_fields.IPAddressField(),
+            'dns_secondary': entity_fields.IPAddressField(),
+            'domain': entity_fields.OneToManyField(Domain),
+            'from': entity_fields.IPAddressField(),
+            'gateway': entity_fields.StringField(),
             'mask': entity_fields.NetmaskField(required=True),
             'name': entity_fields.StringField(required=True),
             'network': entity_fields.IPAddressField(required=True),
-            'to': entity_fields.IPAddressField(null=True),
-            'vlanid': entity_fields.StringField(null=True),
+            'to': entity_fields.IPAddressField(),
+            'vlanid': entity_fields.StringField(),
         }
         if getattr(server_config, 'version', parse('6.1')) >= parse('6.1'):
             self._fields.update({
                 'boot_mode': entity_fields.StringField(
                     choices=('Static', 'DHCP',),
                     default=u'DHCP',
-                    null=True,
                 ),
-                'dhcp': entity_fields.OneToOneField(SmartProxy, null=True),
+                'dhcp': entity_fields.OneToOneField(SmartProxy),
                 # When reading a subnet, no discovery information is
                 # returned by the server. See Bugzilla #1217146.
-                'discovery': entity_fields.OneToOneField(
-                    SmartProxy,
-                    null=True,
-                ),
-                'dns': entity_fields.OneToOneField(SmartProxy, null=True),
+                'discovery': entity_fields.OneToOneField(SmartProxy),
+                'dns': entity_fields.OneToOneField(SmartProxy),
                 'ipam': entity_fields.StringField(
                     choices=(u'DHCP', u'Internal DB'),
                     default=u'DHCP',
-                    null=True,
                 ),
-                'location': entity_fields.OneToManyField(Location, null=True),
-                'organization': entity_fields.OneToManyField(
-                    Organization,
-                    null=True,
-                ),
-                'tftp': entity_fields.OneToOneField(SmartProxy, null=True),
+                'location': entity_fields.OneToManyField(Location),
+                'organization': entity_fields.OneToManyField(Organization),
+                'tftp': entity_fields.OneToOneField(SmartProxy),
             })
         self._meta = {'api_path': 'api/v2/subnets', 'server_modes': ('sat')}
         super(Subnet, self).__init__(server_config, **kwargs)
@@ -3629,11 +3534,10 @@ class System(
             'environment': entity_fields.OneToOneField(LifecycleEnvironment),
             'facts': entity_fields.DictField(
                 default={u'uname.machine': u'unknown'},
-                null=True,
                 required=True,
             ),
             'host_collection': entity_fields.OneToManyField(HostCollection),
-            'installed_products': entity_fields.ListField(null=True),
+            'installed_products': entity_fields.ListField(),
             'last_checkin': entity_fields.DateTimeField(),
             'location': entity_fields.StringField(),
             'name': entity_fields.StringField(required=True),
@@ -3642,7 +3546,7 @@ class System(
                 required=True,
             ),
             'release_ver': entity_fields.StringField(),
-            'service_level': entity_fields.StringField(null=True),
+            'service_level': entity_fields.StringField(),
             'uuid': entity_fields.StringField(),
 
             # The type() builtin is still available within instance methods,
@@ -3711,8 +3615,8 @@ class TemplateCombination(Entity):
                 ConfigTemplate,
                 required=True,
             ),
-            'environment': entity_fields.OneToOneField(Environment, null=True),
-            'hostgroup': entity_fields.OneToOneField(HostGroup, null=True),
+            'environment': entity_fields.OneToOneField(Environment),
+            'hostgroup': entity_fields.OneToOneField(HostGroup),
         }
         self._meta = {
             'api_path': (
@@ -3806,35 +3710,26 @@ class User(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'admin': entity_fields.BooleanField(null=True),
+            'admin': entity_fields.BooleanField(),
             'auth_source': entity_fields.OneToOneField(
                 AuthSourceLDAP,
                 default=AuthSourceLDAP(server_config, id=1),
                 required=True,
             ),
-            'default_location': entity_fields.OneToOneField(
-                Location,
-                null=True,
-            ),
-            'default_organization': entity_fields.OneToOneField(
-                Organization,
-                null=True,
-            ),
-            'firstname': entity_fields.StringField(null=True, length=(1, 50)),
-            'lastname': entity_fields.StringField(null=True, length=(1, 50)),
-            'location': entity_fields.OneToManyField(Location, null=True),
+            'default_location': entity_fields.OneToOneField(Location),
+            'default_organization': entity_fields.OneToOneField(Organization),
+            'firstname': entity_fields.StringField(length=(1, 50)),
+            'lastname': entity_fields.StringField(length=(1, 50)),
+            'location': entity_fields.OneToManyField(Location),
             'login': entity_fields.StringField(
                 length=(1, 100),
                 required=True,
                 str_type=('alpha', 'alphanumeric', 'cjk', 'latin1', 'utf8'),
             ),
             'mail': entity_fields.EmailField(required=True),
-            'organization': entity_fields.OneToManyField(
-                Organization,
-                null=True,
-            ),
+            'organization': entity_fields.OneToManyField(Organization),
             'password': entity_fields.StringField(required=True),
-            'role': entity_fields.OneToManyField(Role, null=True),
+            'role': entity_fields.OneToManyField(Role),
         }
         self._meta = {
             'api_path': 'api/v2/users',
