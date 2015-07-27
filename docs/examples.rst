@@ -302,6 +302,31 @@ call ``update`` on brand new objects::
     ...     description='supercalifragilisticexpialidocious',
     ... ).update(['name', 'description'])
 
+``search``
+~~~~~~~~~~
+
+The ``search`` method searches for entities. By default, it searches for all
+entities of a given kind::
+
+    lc_envs = LifecycleEnvironment().search()
+
+If any attributes have been set, they are used. This finds all lifecycle
+environments that have a name of "foo" and that belong to organization 1::
+
+    lc_envs = LifecycleEnvironment(name='foo', organization=1).search()
+
+You can choose to use only some fields in a search. This finds all lifecycle
+environments that have a name of "foo"::
+
+    lc_envs = LifecycleEnvironment(name='foo', organization=1).search({'name'})
+
+Other options are available, too. You can hard-code query parameters
+(especially useful for pagination), filter results locally and more. For
+examples of how to search, see
+:meth:`nailgun.entity_mixins.EntitySearchMixin.search`. For examples of how
+search queries are generated, see
+:meth:`nailgun.entity_mixins.EntitySearchMixin.search_payload`.
+
 Using Lower Layers
 ------------------
 
@@ -325,15 +350,14 @@ standard library modules.
 
 .. literalinclude:: create_user_plain.py
 
-It is easy to miss the differences between the two scripts, as they are
-similarly structured. However, a closer look shows that the two scripts have
-significant differences in robustness. Here's some highlights.
+What's different between the two scripts?
 
-First, both scripts pass around ``server_config`` objects, and the values that
-go in to those objects are hard-coded in to the scripts. However, NailGun's
-:class:`nailgun.config.ServerConfig` objects provide a ``get`` method that allow
-you to read a saved configuration from disk. The sans-NailGun script has no such
-facility. Thus, NailGun allows for easy information re-use.
+First, both scripts pass around ``server_config`` objects (see
+:class:`nailgun.config.ServerConfig`). However, the NailGun script does not
+include any hard-coded parameters. Instead, configurations are read from disk.
+This makes the script more secure (it can be published publicly without any
+information leakage) and maintainable (server details can change independent of
+programming logic).
 
 Second, the sans-NailGun script relies entirely on convention when placing
 values in to and retrieving values from the ``server_config`` objects. This is
@@ -347,26 +371,25 @@ and ``User`` have an explicit set of possible instance attributes.) Thus,
 NailGun allows for more effective static analysis.
 
 Third, NailGun automatically checks HTTP status codes for you when you call
-methods such as ``create_json``. In contrast, the sans-NailGun script requires
-that the user call ``raise_for_status`` or some equivalent every time a response
-is received. Thus, NailGun makes it harder for undetected errors to creep in to
+methods such as ``create``. In contrast, the sans-NailGun script requires that
+the user call ``raise_for_status`` or some equivalent every time a response is
+received. Thus, NailGun makes it harder for undetected errors to creep in to
 code and cause trouble.
 
 Fourth, there are several hard-coded paths present in the sans-NailGun script:
 ``'/katello/api/v2/organizations'`` and ``'/api/v2/users'``. This is a hassle.
 Developers need to look up a path every time they write an API call, and it's
 easy to make a mistake and waste time troubleshooting the resultant error.
-NailGun shields the developer from this issue by providing a ``path`` method.
+NailGun shields the developer from this issue — not a single path is present!
 
 Fifth, the NailGun script shields developers from idiosyncrasies in JSON request
-formats. Notice how no nested has is necessary when issuing a GET request for
+formats. Notice how no nested hass is necessary when issuing a GET request for
 organizations, but a nested hash is necessary when issuing a POST request for
-users. Differences like this abound.
+users. Differences like this abound. NailGun packages data for you.
 
-Sixth, the NailGun script will get better in the future. For example, the
-``get_organization`` method will be minified or obsoleted when an
-``EntitySearchMixin`` class is written and made a parent of class
-``Organization``.
+Sixth, and perhaps most obviously, the NailGun script is *significantly*
+shorter! This makes it easier to focus on high-level business logic instead of
+worrying about implementation details.
 
 .. _Requests: http://docs.python-requests.org/en/latest/
 .. _Robottelo: http://robottelo.readthedocs.org/en/latest/

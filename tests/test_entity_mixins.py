@@ -21,6 +21,11 @@ if version_info.major == 2:
 else:
     import http.client as http_client  # pylint:disable=import-error
 
+# pylint:disable=too-many-lines
+# The size of this module is a direct reflection of the size of module
+# `nailgun.entity_mixins`. It would be good to split that module up, then split
+# this module up similarly.
+
 # This module is divided in to the following sections:
 #
 # 1. Entity defintions.
@@ -82,6 +87,25 @@ class EntityWithDelete(entity_mixins.Entity, entity_mixins.EntityDeleteMixin):
     def __init__(self, server_config=None, **kwargs):
         self._meta = {'api_path': ''}
         super(EntityWithDelete, self).__init__(server_config, **kwargs)
+
+
+class EntityWithSearch(entity_mixins.Entity, entity_mixins.EntitySearchMixin):
+    """Inherits from :class:`nailgun.entity_mixins.EntitySearchMixin`."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._meta = {'api_path': ''}
+        super(EntityWithSearch, self).__init__(server_config, **kwargs)
+
+
+class EntityWithSearch2(EntityWithSearch):
+    """An entity with integer, one to one and one to many fields."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'one': OneToOneField(SampleEntity),
+            'many': OneToManyField(SampleEntity),
+        }
+        super(EntityWithSearch2, self).__init__(server_config, **kwargs)
 
 
 # 2. Tests for private methods. ------------------------------------------ {{{1
@@ -242,7 +266,7 @@ class EntityTestCase(TestCase):
         """Test :meth:`nailgun.entity_mixins.Entity.get_fields`."""
         fields = SampleEntity(self.cfg).get_fields()
         self.assertEqual(len(fields), 3)
-        self.assertEqual(set(fields.keys()), set(('id', 'name', 'number')))
+        self.assertEqual(set(fields.keys()), {'id', 'name', 'number'})
         self.assertIsInstance(fields['name'], StringField)
         self.assertIsInstance(fields['number'], IntegerField)
 
@@ -404,7 +428,7 @@ class EntityCreateMixinTestCase(TestCase):
                 ]
             )
         self.assertEqual(
-            set(entity.get_fields().keys()) - set(['id']),
+            set(entity.get_fields().keys()) - {'id'},
             set(entity.get_values().keys()),
         )
         self.assertIn(entity.int_choices, (1, 2))  # pylint:disable=no-member
@@ -858,3 +882,227 @@ class EntityDeleteMixinTestCase(TestCase):
             return_value=response,
         ):
             self.assertEqual(self.entity.delete(), response.json.return_value)
+
+
+class EntitySearchMixinTestCase(TestCase):
+    """Tests for :class:`nailgun.entity_mixins.EntitySearchMixin`."""
+
+    def setUp(self):
+        """Set ``self.cfg`` and ``self.entity``."""
+        self.cfg = config.ServerConfig('example.com')
+        self.entity = EntityWithSearch(self.cfg)
+
+    def test_search_payload_v1(self):
+        """Call ``search_payload``. Generate an empty query."""
+        for kwargs in (
+                {'fields': set()},
+                {'query': {}, 'fields': set()},
+                {'query': {}},
+                {},
+        ):
+            with self.subTest(kwargs):
+                self.assertEqual(self.entity.search_payload(**kwargs), {})
+
+    def test_search_payload_v2(self):
+        """Call ``search_payload``. Pass in a query."""
+        query = {'foo': 'bar'}
+        self.assertEqual(self.entity.search_payload([], query), query)
+
+    def test_search_payload_v3(self):
+        """Call ``search_payload``. Include a variety of fields in a search."""
+        inputs_outputs = (
+            ({'id': 1}, {'id': 1}),
+            ({'one': 2}, {'one_id': 2}),
+            ({'many': [3, 4]}, {'many_ids': [3, 4]}),
+        )
+        entity = EntityWithSearch2(self.cfg, id=1, one=2, many=[3, 4])
+
+        # Implicitly and explicitly select one field for the payload.
+        for input_, output in inputs_outputs:
+            self.assertEqual(
+                EntityWithSearch2(self.cfg, **input_).search_payload(),
+                output,
+            )
+        for input_, output in inputs_outputs:
+            self.assertEqual(
+                entity.search_payload(set(input_.keys())),
+                output,
+            )
+
+        # Implicitly and explicitly include all fields in the payload.
+        self.assertEqual(
+            entity.search_payload(),
+            {'id': 1, 'one_id': 2, 'many_ids': [3, 4]},
+        )
+        self.assertEqual(
+            entity.search_payload({'id', 'one', 'many'}),
+            {'id': 1, 'one_id': 2, 'many_ids': [3, 4]},
+        )
+
+    def test_search_raw(self):
+        """Call :meth:`nailgun.entity_mixins.EntitySearchMixin.search_raw`."""
+        with mock.patch.object(self.entity, 'search_payload') as s_payload:
+            with mock.patch.object(client, 'get') as get:
+                self.entity.search_raw()
+        self.assertEqual(s_payload.call_count, 1)
+        self.assertEqual(get.call_count, 1)
+        self.assertEqual(len(get.call_args[0]), 1)  # path='…'
+        self.assertEqual(get.call_args[0][0], self.entity.path())
+        self.assertEqual(get.call_args[1]['data'], s_payload.return_value)
+
+    def test_search_json(self):
+        """Call :meth:`nailgun.entity_mixins.EntitySearchMixin.search_json`."""
+        response = mock.Mock()
+        response.json.return_value = gen_integer()
+        with mock.patch.object(self.entity, 'search_raw') as search_raw:
+            search_raw.return_value = response
+            self.entity.search_json()
+        self.assertEqual(search_raw.call_count, 1)
+        self.assertEqual(response.raise_for_status.call_count, 1)
+        self.assertEqual(response.json.call_count, 1)
+
+    def test_search_normalize_v1(self):
+        """Call ``search_normalize``.
+
+        Pretend the server returns values for all fields, and an extra value.
+
+        """
+        with mock.patch.object(entity_mixins, '_get_entity_ids') as get_ids:
+            with mock.patch.object(entity_mixins, '_get_entity_id') as get_id:
+                attrs_list = EntityWithSearch2(self.cfg).search_normalize([{
+                    'extra': 'foo',  # simulate extra value returned by server
+                    'id': 'bar',
+                    'many_ids': [gen_integer()],
+                    'one_id': gen_integer(),
+                }])
+        self.assertEqual(get_ids.call_count, 1)
+        self.assertEqual(get_id.call_count, 1)
+        self.assertEqual(len(attrs_list), 1)
+        self.assertEqual(
+            attrs_list[0],
+            {
+                'id': 'bar',
+                'many': get_ids.return_value,
+                'one': get_id.return_value,
+            }
+        )
+
+    def test_search_normalize_v2(self):
+        """Call ``search_normalize``.
+
+        Pretend the server returns no values for any fields.
+
+        """
+        attrs_list = EntityWithSearch2(self.cfg).search_normalize([{}])
+        self.assertEqual(len(attrs_list), 1)
+        self.assertEqual(attrs_list[0], {})
+
+    def test_search_v1(self):
+        """Test :meth:`nailgun.entity_mixins.EntitySearchMixin.search`.
+
+        Pass no arguments.
+
+        """
+        with mock.patch.object(self.entity, 'search_normalize') as s_normalize:
+            with mock.patch.object(self.entity, 'search_filter') as s_filter:
+                with mock.patch.object(self.entity, 'search_json') as s_json:
+                    results = self.entity.search()
+        self.assertEqual(s_json.call_count, 1)
+        self.assertEqual(s_normalize.call_count, 1)
+        self.assertEqual(s_filter.call_count, 0)
+        self.assertEqual(results, [])
+
+    def test_search_v2(self):
+        """Test :meth:`nailgun.entity_mixins.EntitySearchMixin.search`.
+
+        Provide each possible argument.
+
+        """
+        with mock.patch.object(self.entity, 'search_normalize') as s_normalize:
+            with mock.patch.object(self.entity, 'search_filter') as s_filter:
+                with mock.patch.object(self.entity, 'search_json') as s_json:
+                    s_normalize.return_value = [{'id': 'foo'}]
+                    s_filter.return_value = [gen_integer()]  # not realistic
+                    results = self.entity.search('fields', 'query', 'filters')
+        self.assertEqual(s_json.call_count, 1)
+        self.assertEqual(s_normalize.call_count, 1)
+        self.assertEqual(s_filter.call_count, 1)
+        self.assertEqual(results, s_filter.return_value)
+
+        # Check search_json
+        self.assertEqual(len(s_json.call_args[0]), 2)  # fields, query
+        self.assertEqual(len(s_json.call_args[1]), 0)
+        self.assertEqual(s_json.call_args[0][0], 'fields')
+        self.assertEqual(s_json.call_args[0][1], 'query')
+
+        # Check search_normalize
+        self.assertEqual(len(s_normalize.call_args[0]), 1)  # results
+        self.assertEqual(len(s_normalize.call_args[1]), 0)
+        self.assertEqual(
+            s_normalize.call_args[0][0],
+            s_json.return_value['results'],
+        )
+
+        # Check search_filter
+        self.assertEqual(len(s_filter.call_args[0]), 2)  # entities, filters
+        self.assertEqual(len(s_filter.call_args[1]), 0)
+        self.assertEqual(len(s_filter.call_args[0][0]), 1)
+        self.assertEqual(s_filter.call_args[0][0][0].id, 'foo')  # from mock ↑
+        self.assertEqual(s_filter.call_args[0][1], 'filters')
+
+    def test_search_filter_v1(self):
+        """Test :meth:`nailgun.entity_mixins.EntitySearchMixin.search_filter`.
+
+        Pass a zero-length list of entities.
+
+        """
+        self.assertEqual(
+            [],
+            entity_mixins.EntitySearchMixin.search_filter([], {}),
+        )
+
+    def test_search_filter_v2(self):
+        """Test :meth:`nailgun.entity_mixins.EntitySearchMixin.search_filter`.
+
+        Try to filter on a foreign key field.
+
+        """
+        for filter_ in ({'one': 'foo'}, {'many': 'bar'}):
+            with self.subTest(filter_):
+                with self.assertRaises(NotImplementedError):
+                    entity_mixins.EntitySearchMixin.search_filter(
+                        [EntityWithSearch2(self.cfg)],
+                        filter_,
+                    )
+
+    def test_search_filter_v3(self):
+        """Test :meth:`nailgun.entity_mixins.EntitySearchMixin.search_filter`.
+
+        Pass an invalid filter.
+
+        """
+        with self.assertRaises(entity_mixins.NoSuchFieldError):
+            entity_mixins.EntitySearchMixin.search_filter(
+                [EntityWithSearch2(self.cfg)],
+                {'field name': 'field value'},
+            )
+
+    def test_search_filter_v4(self):
+        """Test :meth:`nailgun.entity_mixins.EntitySearchMixin.search_filter`.
+
+        Pass in valid entities and filters.
+
+        """
+
+        class EntityWithSearch3(
+                EntityWithSearch, entity_mixins.EntityReadMixin):
+            """An entity inheriting from the search and read mixins."""
+
+        with mock.patch.object(EntityWithSearch3, 'read') as read:
+            read.return_value = EntityWithSearch3(self.cfg, id=15)
+            results = entity_mixins.EntitySearchMixin.search_filter(
+                [EntityWithSearch3(self.cfg)],
+                {'id': 15},
+            )
+        self.assertEqual(read.call_count, 1)
+        self.assertEqual(results, [read.return_value])

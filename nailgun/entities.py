@@ -29,6 +29,7 @@ from nailgun.entity_mixins import (
     EntityCreateMixin,
     EntityDeleteMixin,
     EntityReadMixin,
+    EntitySearchMixin,
     EntityUpdateMixin,
     _poll_task,
 )
@@ -46,7 +47,8 @@ else:  # pragma: no cover
 # The size of this file is a direct reflection of the size of Satellite's API.
 # This file's size has already been significantly cut down through the use of
 # mixins and fields, and cutting the file down in size further would simply
-# obfuscate the design of the entities.
+# obfuscate the design of the entities. It might be possible to place entity
+# definitions in separate modules, though.
 
 # pylint:disable=attribute-defined-outside-init
 # NailGun aims to be like a traditional database ORM and allow uses of the dot
@@ -56,9 +58,14 @@ else:  # pragma: no cover
 #     product.name
 #     product.organization.id
 #
-# Unfortunately, these fields cannot simply be initialized with `None`, as the
-# server considers "nil" to be different from the absence of a value. This
-# inevitably means that instance attributes will be defined outside __init__.
+# Unfortunately, these fields cannot simply be initialized with `None`. These
+# have different effects:
+#
+#     product.description = None; product.update()
+#     del product.description; product.update()
+#
+# The first will delete the product's description, and the second will not
+# touch the product's description.
 
 
 _FAKE_YUM_REPO = 'http://inecas.fedorapeople.org/fakerepos/zoo3/'
@@ -116,7 +123,7 @@ def _check_for_value(field_name, field_values):
     example, in :class:`nailgun.entities.ContentViewPuppetModule`:
 
     >>> def __init__(self, server_config=None, **kwargs):
-    >>>     _check_for_param('content_view', kwargs)
+    >>>     _check_for_value('content_view', kwargs)
     >>>     # …
     >>>     self._meta = {
     >>>         'api_path': '{0}/content_view_puppet_modules'.format(
@@ -138,29 +145,25 @@ def _check_for_value(field_name, field_values):
         )
 
 
-def _get_org_attrs(server_config, organization_label):
+def _get_org(server_config, label):
     """Find an :class:`nailgun.entities.Organization` object.
 
     :param nailgun.config.ServerConfig server_config: The server that should be
         searched.
-    :param organization_label: A string. The label of the organization to find.
+    :param label: A string. The label of the organization to find.
     :raises APIResponseError: If exactly one organization is not found.
-    :returns: A dict of attributes about an organization.
+    :returns: An :class:`nailgun.entities.Organization` object.
 
     """
-    response = client.get(
-        Organization(server_config).path(),
-        data={u'search': u'label={0}'.format(organization_label)},
-        **server_config.get_client_kwargs()
+    organizations = Organization(server_config).search(
+        query={u'search': u'label={0}'.format(label)}
     )
-    response.raise_for_status()
-    results = response.json()['results']
-    if len(results) != 1:
+    if len(organizations) != 1:
         raise APIResponseError(
             u'Could not find exactly one organization with label "{0}". '
-            u'Actual search results: {1}'.format(organization_label, results)
+            u'Actual search results: {1}'.format(label, organizations)
         )
-    return results[0]
+    return organizations[0].read()
 
 
 class ActivationKey(
@@ -1161,10 +1164,8 @@ class ContentView(
                 parse('6.1')):
             if attrs is None:
                 attrs = self.read_json()
-            attrs['organization'] = _get_org_attrs(
-                self._server_config,
-                attrs['organization']['label'],
-            )
+            org = _get_org(self._server_config, attrs['organization']['label'])
+            attrs['organization'] = org.get_values()
         return super(ContentView, self).read(entity, attrs, ignore)
 
     def path(self, which=None):
@@ -1377,7 +1378,11 @@ class Domain(
 
 
 class Environment(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
     """A representation of a Environment entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1492,7 +1497,11 @@ class ForemanTask(Entity, EntityReadMixin):
 
 
 class GPGKey(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
     """A representation of a GPG Key entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1871,7 +1880,11 @@ class Interface(Entity):
 
 
 class LifecycleEnvironment(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
     """A representation of a Lifecycle Environment entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1929,27 +1942,14 @@ class LifecycleEnvironment(
         super(LifecycleEnvironment, self).create_missing()
         if (self.name != 'Library' and  # pylint:disable=no-member
                 not hasattr(self, 'prior')):
-            response = client.get(
-                self.path('base'),
-                data={
-                    u'name': u'Library',
-                    # pylint:disable=no-member
-                    u'organization_id': self.organization.id,
-                },
-                **self._server_config.get_client_kwargs()
-            )
-            response.raise_for_status()
-            results = response.json()['results']
+            results = self.search({'organization'}, {u'name': u'Library'})
             if len(results) != 1:
                 raise APIResponseError(
-                    'Could not find the "Library" lifecycle environment for '
-                    'organization {0}. Search results: {1}'
+                    u'Could not find the "Library" lifecycle environment for '
+                    u'organization {0}. Search results: {1}'
                     .format(self.organization, results)  # pylint:disable=E1101
                 )
-            self.prior = LifecycleEnvironment(
-                self._server_config,
-                id=results[0]['id'],
-            )
+            self.prior = results[0]
 
 
 class Location(
@@ -1957,6 +1957,7 @@ class Location(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Location entity."""
 
@@ -2243,6 +2244,7 @@ class Organization(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of an Organization entity."""
 
@@ -2518,7 +2520,7 @@ class OverrideValue(Entity):
         super(OverrideValue, self).__init__(server_config, **kwargs)
 
 
-class Permission(Entity, EntityReadMixin):
+class Permission(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of a Permission entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2532,47 +2534,8 @@ class Permission(Entity, EntityReadMixin):
         }
         super(Permission, self).__init__(server_config, **kwargs)
 
-    def search(self, per_page=10000):
-        """Searches for permissions using the values for instance name and
-        resource_type
 
-        Example usage::
-
-            >>> from nailgun import entities
-            >>> entities.Permission(resource_type='User').search()
-            [
-                {'name': 'view_users', 'resource_type': 'User', 'id': 158},
-                {'name': 'create_users', 'resource_type': 'User', 'id': 159},
-                {'name': 'edit_users', 'resource_type': 'User', 'id': 160},
-                {'name': 'destroy_users', 'resource_type': 'User', 'id': 161},
-            ]
-            >>> entities.Permission(name='create_users').search()
-            [{'name': 'create_users', 'resource_type': 'User', 'id': 159}]
-
-        If both ``name`` and ``resource_type`` are provided, ``name`` is
-        ignored.
-
-        :param per_page: number of results per page to return
-        :returns: A list of matching permissions.
-
-        """
-        search_terms = {u'per_page': per_page}
-        if hasattr(self, 'name'):
-            search_terms[u'name'] = self.name  # pylint:disable=no-member
-        if hasattr(self, 'resource_type'):
-            # pylint:disable=no-member
-            search_terms[u'resource_type'] = self.resource_type
-
-        response = client.get(
-            self.path('base'),
-            data=search_terms,
-            **self._server_config.get_client_kwargs()
-        )
-        response.raise_for_status()
-        return response.json()['results']
-
-
-class Ping(Entity):
+class Ping(Entity, EntitySearchMixin):
     """A representation of a Ping entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2588,6 +2551,7 @@ class Product(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Product entity."""
 
@@ -2646,10 +2610,8 @@ class Product(
                 parse('6.1')):
             if attrs is None:
                 attrs = self.read_json()
-            attrs['organization'] = _get_org_attrs(
-                self._server_config,
-                attrs['organization']['label'],
-            )
+            org = _get_org(self._server_config, attrs['organization']['label'])
+            attrs['organization'] = org.get_values()
         return super(Product, self).read(entity, attrs, ignore)
 
     def list_repositorysets(self, per_page=None):
@@ -3182,6 +3144,7 @@ class Role(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Role entity."""
 
@@ -3698,6 +3661,7 @@ class User(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a User entity.
 

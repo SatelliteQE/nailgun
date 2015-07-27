@@ -6,6 +6,7 @@ from nailgun import client, config, entities
 from nailgun.entity_mixins import (
     EntityCreateMixin,
     EntityReadMixin,
+    EntitySearchMixin,
     EntityUpdateMixin,
     NoSuchPathError,
 )
@@ -605,9 +606,9 @@ class CreateMissingTestCase(TestCase):
         """Test ``LifecycleEnvironment(name='Library')``."""
         entity = entities.LifecycleEnvironment(self.cfg, name='Library')
         with mock.patch.object(EntityCreateMixin, 'create_missing'):
-            with mock.patch.object(client, 'get') as get:
+            with mock.patch.object(EntitySearchMixin, 'search') as search:
                 entity.create_missing()
-        self.assertEqual(get.call_count, 0)
+        self.assertEqual(search.call_count, 0)
 
     def test_lifecycle_environment_v2(self):
         """Test ``LifecycleEnvironment(name='not Library')``."""
@@ -617,15 +618,11 @@ class CreateMissingTestCase(TestCase):
             organization=1,
         )
         with mock.patch.object(EntityCreateMixin, 'create_missing'):
-            with mock.patch.object(client, 'get') as get:
-                get.return_value.json.return_value = {
-                    'results': [{'id': gen_integer()}]
-                }
+            with mock.patch.object(EntitySearchMixin, 'search') as search:
+                search.return_value = [gen_integer()]
                 entity.create_missing()
-        self.assertEqual(
-            entity.prior.id,  # pylint:disable=no-member
-            get.return_value.json.return_value['results'][0]['id'],
-        )
+        self.assertEqual(search.call_count, 1)
+        self.assertEqual(entity.prior, search.return_value[0])
 
     def test_lifecycle_environment_v3(self):
         """What happens when the "Library" lifecycle env cannot be found?"""
@@ -635,8 +632,8 @@ class CreateMissingTestCase(TestCase):
             organization=1,
         )
         with mock.patch.object(EntityCreateMixin, 'create_missing'):
-            with mock.patch.object(client, 'get') as get:
-                get.return_value.json.return_value = {'results': []}
+            with mock.patch.object(EntitySearchMixin, 'search') as search:
+                search.return_value = []
                 with self.assertRaises(entities.APIResponseError):
                     entity.create_missing()
 
@@ -1325,31 +1322,32 @@ class RHCIDeploymentTestCase(TestCase):
 # 3. Other tests. -------------------------------------------------------- {{{1
 
 
-class GetOrgAttrsTestCase(TestCase):
-    """Test ``nailgun.entities._get_org_attrs``."""
+class GetOrgTestCase(TestCase):
+    """Test ``nailgun.entities._get_org``."""
 
     def setUp(self):
-        """Set ``self.args``, which can be passed to ``_get_org_attrs``."""
+        """Set ``self.args``, which can be passed to ``_get_org``."""
         self.args = [config.ServerConfig('some url'), gen_string('utf8')]
 
     def test_default(self):
         """Run the method with a sane and normal set of arguments."""
-        result = gen_integer()  # unrealistic, but fine for test purposes
-        with mock.patch.object(client, 'get') as get:
-            get.return_value.json.return_value = {'results': [result]}
-            # pylint:disable=protected-access
-            self.assertEqual(entities._get_org_attrs(*self.args), result)
-        self.assertEqual(get.call_count, 1)
+        with mock.patch.object(entities.Organization, 'search') as search:
+            search.return_value = [mock.Mock()]
+            self.assertEqual(
+                entities._get_org(*self.args),  # pylint:disable=W0212
+                search.return_value[0].read.return_value,
+            )
+        self.assertEqual(search.call_count, 1)
 
     def test_api_response_error(self):
         """Trigger an :class:`nailgun.entities.APIResponseError`."""
-        for results in ([], [1, 2]):
-            with mock.patch.object(client, 'get') as get:
-                get.return_value.json.return_value = {'results': results}
+        for return_value in ([], [mock.Mock() for _ in range(2)]):
+            with mock.patch.object(entities.Organization, 'search') as search:
+                search.return_value = return_value
                 with self.assertRaises(entities.APIResponseError):
                     # pylint:disable=protected-access
-                    entities._get_org_attrs(*self.args)
-            self.assertEqual(get.call_count, 1)
+                    entities._get_org(*self.args)
+            self.assertEqual(search.call_count, 1)
 
 
 class HandleResponseTestCase(TestCase):
@@ -1437,8 +1435,8 @@ class VersionTestCase(TestCase):
         * :meth:`nailgun.entities.ContentView.read`
         * :meth:`nailgun.entities.Product.read`
 
-        Assert that ``read_json``, ``_get_org_attrs`` and ``read`` are all
-        called once, and that the second is called with the correct arguments.
+        Assert that ``read_json``, ``_get_org`` and ``read`` are all called
+        once, and that the second is called with the correct arguments.
 
         """
         for entity in (entities.ContentView, entities.Product):
@@ -1446,7 +1444,7 @@ class VersionTestCase(TestCase):
             label = gen_integer()  # unrealistic value
             with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
                 read_json.return_value = {'organization': {'label': label}}
-                with mock.patch.object(entities, '_get_org_attrs') as helper:
+                with mock.patch.object(entities, '_get_org') as helper:
                     with mock.patch.object(EntityReadMixin, 'read') as read:
                         entity(self.cfg_608).read()
             self.assertEqual(read_json.call_count, 1)
