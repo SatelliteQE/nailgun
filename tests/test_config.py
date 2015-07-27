@@ -2,7 +2,6 @@
 from mock import call, mock_open, patch
 from nailgun.config import BaseServerConfig, ServerConfig
 from packaging.version import parse
-from unittest import TestCase
 import json
 
 from sys import version_info
@@ -13,6 +12,10 @@ if version_info.major == 2:
     import __builtin__ as builtins  # pylint:disable=import-error
 else:
     import builtins  # pylint:disable=import-error
+if version_info < (3, 4):
+    from unittest2 import TestCase  # pylint:disable=import-error
+else:
+    from unittest import TestCase
 
 
 FILE_PATH = '/tmp/bogus.json'

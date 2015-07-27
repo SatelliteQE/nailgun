@@ -10,7 +10,6 @@ from nailgun.entity_mixins import (
     EntityUpdateMixin,
     NoSuchPathError,
 )
-from unittest2 import TestCase
 import mock
 
 from sys import version_info
@@ -18,6 +17,10 @@ if version_info.major == 2:
     from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
 else:
     from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
+if version_info < (3, 4):
+    from unittest2 import TestCase  # pylint:disable=import-error
+else:
+    from unittest import TestCase
 
 # pylint:disable=too-many-lines
 # The size of this file is a direct reflection of the size of module

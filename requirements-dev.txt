@@ -1,6 +1,6 @@
 # For `make test`
 mock
-unittest2
+unittest2 ; python_version < '3.4'
 
 # For `make lint`
 flake8

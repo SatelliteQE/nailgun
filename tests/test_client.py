@@ -2,10 +2,15 @@
 """Unit tests for :mod:`nailgun.client`."""
 from fauxfactory import gen_alpha
 from nailgun import client
-from unittest import TestCase
 import inspect
 import mock
 import requests
+
+from sys import version_info
+if version_info < (3, 4):
+    from unittest2 import TestCase  # pylint:disable=import-error
+else:
+    from unittest import TestCase
 
 
 class ContentTypeIsJsonTestCase(TestCase):
