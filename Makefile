@@ -22,8 +22,11 @@ lint:
 	pylint --reports=n --disable=I --ignore-imports=y \
 		nailgun tests setup.py docs/conf.py
 	pylint --reports=n --disable=I --ignore-imports=y --disable=similarities \
-		docs/create_organization_nailgun.py docs/create_organization_plain.py \
-		docs/create_user_nailgun.py docs/create_user_plain.py
+		docs/create_organization_nailgun.py \
+		docs/create_organization_nailgun_v2.py \
+		docs/create_organization_plain.py \
+		docs/create_user_nailgun.py \
+		docs/create_user_plain.py
 
 test:
 	python $(TEST_OPTIONS)
