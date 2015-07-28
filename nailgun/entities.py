@@ -33,7 +33,7 @@ from nailgun.entity_mixins import (
     EntityUpdateMixin,
     _poll_task,
 )
-from packaging.version import parse, Version
+from packaging.version import Version
 from time import sleep
 import random
 
@@ -164,6 +164,27 @@ def _get_org(server_config, label):
             u'Actual search results: {1}'.format(label, organizations)
         )
     return organizations[0].read()
+
+
+def _get_version(server_config):
+    """Return ``server_config.version``, or a default version if not present.
+
+    This method is especially useful when an entity must determine what version
+    the server is. :class:`nailgun.config.ServerConfig` does not currently
+    require the "version" attribute, and if none is provided then none is set.
+    This is often problematic - what version should the server be assumed to be
+    running? This method provides an answer to that question.
+
+    Also see #163.
+
+    :param nailgun.config.ServerConfig server_config: Any old server config may
+        be passed in.
+    :returns: A ``packaging.version.Version`` object. The version on
+        ``server_config`` is returned if present, or a default version of '1!0'
+        (epoch 1, version 0) otherwise.
+
+    """
+    return getattr(server_config, 'version', Version('1!0'))
 
 
 class ActivationKey(
@@ -1160,8 +1181,7 @@ class ContentView(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1237257>`_.
 
         """
-        if (getattr(self._server_config, 'version', parse('6.1')) <
-                parse('6.1')):
+        if _get_version(self._server_config) < Version('6.1'):
             if attrs is None:
                 attrs = self.read_json()
             org = _get_org(self._server_config, attrs['organization']['label'])
@@ -1608,7 +1628,7 @@ class HostGroup(
             'realm': entity_fields.OneToOneField(Realm),
             'subnet': entity_fields.OneToOneField(Subnet),
         }
-        if getattr(server_config, 'version', parse('6.1')) >= parse('6.1'):
+        if _get_version(server_config) >= Version('6.1'):
             self._fields.update({
                 'content_view': entity_fields.OneToOneField(ContentView),
                 'lifecycle_environment': entity_fields.OneToOneField(
@@ -1641,8 +1661,7 @@ class HostGroup(
             attrs = self.read_json()
         attrs['parent_id'] = attrs.pop('ancestry')  # either an ID or None
         # `version` is a single-use var, but it is used anyway for readability.
-        version = getattr(self._server_config, 'version', parse('6.1'))
-        if version >= parse('6.1'):
+        if _get_version(self._server_config) >= Version('6.1'):
             # We cannot call `self.update_json([])`, as an ID might not be
             # present on self. However, `attrs` is guaranteed to have an ID.
             attrs2 = HostGroup(
@@ -1911,12 +1930,11 @@ class LifecycleEnvironment(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1238757>`_.
 
         """
-        data = super(LifecycleEnvironment, self).create_payload()
-        # `version` is a single-use var, but it is used anyway for readability.
-        version = getattr(self._server_config, 'version', parse('6.1'))
-        if version < parse('6.1') and 'prior_id' in data:
-            data['prior'] = data.pop('prior_id')
-        return data
+        payload = super(LifecycleEnvironment, self).create_payload()
+        if (_get_version(self._server_config) < Version('6.1') and
+                'prior_id' in payload):
+            payload['prior'] = payload.pop('prior_id')
+        return payload
 
     def create_missing(self):
         """Automatically populate additional instance attributes.
@@ -2267,8 +2285,7 @@ class Organization(
             'title': entity_fields.StringField(),
             'user': entity_fields.OneToManyField(User),
         }
-        version = getattr(server_config, 'version', Version('1!0'))
-        if version >= Version('6.1.1'):  # default: True
+        if _get_version(server_config) >= Version('6.1.1'):  # default: True
             self._fields.update({
                 'default_content_view': entity_fields.OneToOneField(
                     ContentView
@@ -2614,8 +2631,7 @@ class Product(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1237283>`_.
 
         """
-        if (getattr(self._server_config, 'version', parse('6.1')) <
-                parse('6.1')):
+        if _get_version(self._server_config) < Version('6.1'):
             if attrs is None:
                 attrs = self.read_json()
             org = _get_org(self._server_config, attrs['organization']['label'])
@@ -2904,7 +2920,7 @@ class Repository(
                 required=True,
             ),
         }
-        if getattr(server_config, 'version', parse('6.1')) < parse('6.1'):
+        if _get_version(server_config) < Version('6.1'):
             # Adjust for Satellite 6.0
             del self._fields['docker_upstream_name']
             self._fields['content_type'].choices = (tuple(
@@ -3267,7 +3283,7 @@ class Subnet(
             'to': entity_fields.IPAddressField(),
             'vlanid': entity_fields.StringField(),
         }
-        if getattr(server_config, 'version', parse('6.1')) >= parse('6.1'):
+        if _get_version(server_config) >= Version('6.1'):
             self._fields.update({
                 'boot_mode': entity_fields.StringField(
                     choices=('Static', 'DHCP',),
