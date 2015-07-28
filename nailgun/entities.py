@@ -2254,11 +2254,13 @@ class Organization(
                 AbstractComputeResource
             ),
             'config_template': entity_fields.OneToManyField(ConfigTemplate),
+            'default_content_view': entity_fields.OneToOneField(ContentView),
             'description': entity_fields.StringField(),
             'domain': entity_fields.OneToManyField(Domain),
             'environment': entity_fields.OneToManyField(Environment),
             'hostgroup': entity_fields.OneToManyField(HostGroup),
             'label': entity_fields.StringField(str_type='alpha'),
+            'library': entity_fields.OneToOneField(LifecycleEnvironment),
             'media': entity_fields.OneToManyField(Media),
             'name': entity_fields.StringField(required=True),
             'realm': entity_fields.OneToManyField(Realm),
