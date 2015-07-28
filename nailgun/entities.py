@@ -33,7 +33,7 @@ from nailgun.entity_mixins import (
     EntityUpdateMixin,
     _poll_task,
 )
-from packaging.version import parse
+from packaging.version import parse, Version
 from time import sleep
 import random
 
@@ -2254,13 +2254,11 @@ class Organization(
                 AbstractComputeResource
             ),
             'config_template': entity_fields.OneToManyField(ConfigTemplate),
-            'default_content_view': entity_fields.OneToOneField(ContentView),
             'description': entity_fields.StringField(),
             'domain': entity_fields.OneToManyField(Domain),
             'environment': entity_fields.OneToManyField(Environment),
             'hostgroup': entity_fields.OneToManyField(HostGroup),
             'label': entity_fields.StringField(str_type='alpha'),
-            'library': entity_fields.OneToOneField(LifecycleEnvironment),
             'media': entity_fields.OneToManyField(Media),
             'name': entity_fields.StringField(required=True),
             'realm': entity_fields.OneToManyField(Realm),
@@ -2269,6 +2267,14 @@ class Organization(
             'title': entity_fields.StringField(),
             'user': entity_fields.OneToManyField(User),
         }
+        version = getattr(server_config, 'version', Version('1!0'))
+        if version >= Version('6.1.1'):  # default: True
+            self._fields.update({
+                'default_content_view': entity_fields.OneToOneField(
+                    ContentView
+                ),
+                'library': entity_fields.OneToOneField(LifecycleEnvironment),
+            })
         self._meta = {
             'api_path': 'katello/api/v2/organizations',
             'server_modes': ('sat', 'sam'),
