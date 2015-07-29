@@ -228,7 +228,6 @@ class PathTestCase(TestCase):
                 (entities.ContentView, 'copy'),
                 (entities.ContentView, 'publish'),
                 (entities.ContentViewVersion, 'promote'),
-                (entities.Organization, 'products'),
                 (entities.Organization, 'subscriptions'),
                 (entities.Organization, 'subscriptions/delete_manifest'),
                 (entities.Organization, 'subscriptions/refresh_manifest'),
@@ -1019,21 +1018,13 @@ class AbstractDockerContainerTestCase(TestCase):
             # `call_args` is a two-tuple of (positional, keyword) args.
             self.assertEqual(
                 client_put.call_args[0][1],
-                {'power_action': power_action},
+                power_action,
             )
-
-    def test_power_error(self):
-        """Call :meth:`nailgun.entities.AbstractDockerContainer.power`.
-
-        Pass an inappropriate argument and assert ``ValueError`` is raised.
-
-        """
-        with self.assertRaises(ValueError):
-            self.abstract_dc.power('foo')
 
     def test_logs(self):
         """Call :meth:`nailgun.entities.AbstractDockerContainer.logs`."""
-        for kwargs in (
+        for payload in (
+                None,
                 {},
                 {'stdout': gen_integer()},
                 {'stderr': gen_integer()},
@@ -1050,13 +1041,16 @@ class AbstractDockerContainerTestCase(TestCase):
                     '_handle_response',
                     return_value=gen_integer(),  # not realistic
                 ) as handler:
-                    response = self.abstract_dc.logs(**kwargs)
+                    response = self.abstract_dc.logs(payload)
             self.assertEqual(client_get.call_count, 1)
             self.assertEqual(handler.call_count, 1)
             self.assertEqual(handler.return_value, response)
 
             # `call_args` is a two-tuple of (positional, keyword) args.
-            self.assertEqual(client_get.call_args[1]['data'], kwargs)
+            self.assertEqual(
+                client_get.call_args[1]['data'],
+                payload if payload else {},
+            )
 
 
 class ActivationKeyTestCase(TestCase):
@@ -1096,10 +1090,10 @@ class ActivationKeyTestCase(TestCase):
             ) as handler:
                 content_label = gen_integer()
                 value = gen_integer()
-                response = self.activation_key.content_override(
-                    content_label=content_label,
-                    value=value,
-                )
+                response = self.activation_key.content_override({
+                    'content_label': content_label,
+                    'value': value,
+                })
         self.assertEqual(client_put.call_count, 1)
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value, response)
@@ -1132,6 +1126,90 @@ class DiscoveredHostsTestCase(TestCase):
         self.assertEqual(client_post.call_args[0][1], payload)
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value, response)
+
+
+class ContentViewVersion(TestCase):
+    """Tests for :class:`nailgun.entities.ContentViewVersion`."""
+
+    def setUp(self):
+        """Set ``self.cvv``."""
+        self.cvv = entities.ContentViewVersion(
+            config.ServerConfig('http://example.com'),
+            id=gen_integer(min_value=1),
+        )
+
+    def test_promote(self):
+        """Call :meth:`nailgun.entities.ContentViewVersion.promote`."""
+        with mock.patch.object(client, 'post') as client_post:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value=gen_integer(),  # not realistic
+            ) as handler:
+                response = self.cvv.promote({1: 2})
+        self.assertEqual(client_post.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
+
+        # This was just executed: client_post(path='…', data={…}, …)
+        # `call_args` is a two-tuple of (positional, keyword) args.
+        self.assertEqual(client_post.call_args[0][1], {1: 2})
+
+
+class ContentView(TestCase):
+    """Tests for :class:`nailgun.entities.ContentView`."""
+
+    def setUp(self):
+        """Set ``self.content_view``."""
+        self.content_view = entities.ContentView(
+            config.ServerConfig('http://example.com'),
+            id=gen_integer(min_value=1),
+        )
+
+    def test_publish(self):
+        """Call :meth:`nailgun.entities.ContentView.publish`."""
+        for payload in (
+                None,
+                {},
+                {1: 2},
+        ):
+            with mock.patch.object(client, 'post') as client_post:
+                with mock.patch.object(
+                    entities,
+                    '_handle_response',
+                    return_value=gen_integer(),  # not realistic
+                ) as handler:
+                    response = self.content_view.publish(payload)
+            self.assertEqual(client_post.call_count, 1)
+            self.assertEqual(handler.call_count, 1)
+            self.assertEqual(handler.return_value, response)
+
+        # This was just executed: client_post(path='…', data={…}, …)
+        # `call_args` is a two-tuple of (positional, keyword) args.
+        self.assertEqual(
+            client_post.call_args[0][1],
+            {1: 2, 'id': self.content_view.id}  # pylint:disable=no-member
+        )
+
+    def test_copy(self):
+        """Call :meth:`nailgun.entities.ContentView.copy`."""
+        with mock.patch.object(client, 'post') as client_post:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value=gen_integer(),  # not realistic
+            ) as handler:
+                response = self.content_view.copy({1: 2})
+        self.assertEqual(client_post.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
+
+        # This was just executed: client_post(path='…', data={…}, …)
+        # `call_args` is a two-tuple of (positional, keyword) args.
+        self.assertEqual(
+            client_post.call_args[0][1],
+            {1: 2, 'id': self.content_view.id}  # pylint:disable=no-member
+        )
 
 
 class HostGroupTestCase(TestCase):
@@ -1230,7 +1308,10 @@ class OrganizationTestCase(TestCase):
             ) as handler:
                 name = gen_integer()
                 interval = gen_integer()
-                response = self.org.sync_plan(name=name, interval=interval)
+                response = self.org.sync_plan({
+                    'name': name,
+                    'interval': interval,
+                })
         self.assertEqual(client_post.call_count, 1)
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value, response)
@@ -1245,19 +1326,6 @@ class OrganizationTestCase(TestCase):
         self.assertEqual(data['interval'], interval)
         self.assertEqual(data['name'], name)
         self.assertIsInstance('sync_date', type(''))
-
-    def test_list_rhproducts(self):
-        """Call :meth:`nailgun.entities.Organization.list_rhproducts`."""
-        with mock.patch.object(client, 'get') as client_get:
-            with mock.patch.object(
-                entities,
-                '_handle_response',
-                return_value={'results': gen_integer()},  # not realistic
-            ) as handler:
-                response = self.org.list_rhproducts()
-        self.assertEqual(client_get.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value['results'], response)
 
 
 class ProductTestCase(TestCase):

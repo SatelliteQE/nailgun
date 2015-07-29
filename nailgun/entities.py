@@ -263,10 +263,10 @@ class ActivationKey(
             )
         return super(ActivationKey, self).path(which)
 
-    def add_subscriptions(self, params):
+    def add_subscriptions(self, payload):
         """Helper for adding subscriptions to activation key.
 
-        :param params: Parameters that are encoded to JSON and passed in
+        :param payload: Parameters that are encoded to JSON and passed in
             with the request. See the API documentation page for a list of
             parameters and their descriptions.
         :returns: The server's response, with all JSON decoded.
@@ -276,16 +276,17 @@ class ActivationKey(
         """
         response = client.put(
             self.path('add_subscriptions'),
-            params,
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
-    def content_override(self, content_label, value):
+    def content_override(self, payload):
         """Override the content of an activation key.
 
-        :param content_label: Label for the new content.
-        :param value: The new content for this activation key.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
@@ -293,10 +294,7 @@ class ActivationKey(
         """
         response = client.put(
             self.path('content_override'),
-            {'content_override': {
-                'content_label': content_label,
-                'value': value,
-            }},
+            {'content_override': payload},
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
@@ -913,45 +911,34 @@ class AbstractDockerContainer(
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def power(self, power_action):
+    def power(self, payload):
         """Run a power operation on a container.
 
-        :param power_action: One of 'start', 'stop' or 'status'.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :returns: Information about the current state of the container.
 
         """
-        power_actions = ('start', 'stop', 'status')
-        if power_action not in power_actions:
-            raise ValueError('Received {0} but expected one of {1}'.format(
-                power_action, power_actions
-            ))
         response = client.put(
             self.path(which='power'),
-            {u'power_action': power_action},
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
-    def logs(self, stdout=None, stderr=None, tail=None):
+    def logs(self, payload=None):
         """Get logs from this container.
 
-        :param stdout: ???
-        :param stderr: ???
-        :param tail: How many lines should be tailed? Server does 100 by
-            default.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :returns: The server's response, with all JSON decoded.
 
         """
-        data = {}
-        if stdout is not None:
-            data['stdout'] = stdout
-        if stderr is not None:
-            data['stderr'] = stderr
-        if tail is not None:
-            data['tail'] = tail
         response = client.get(
             self.path(which='logs'),
-            data=data,
+            data=payload if payload else {},
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
@@ -1025,10 +1012,12 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
             )
         return super(ContentViewVersion, self).path(which)
 
-    def promote(self, environment_id, synchronous=True):
+    def promote(self, payload, synchronous=True):
         """Helper for promoting an existing published content view.
 
-        :param environment_id: The environment Id to promote to.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return a task ID otherwise.
@@ -1039,7 +1028,7 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
         """
         response = client.post(
             self.path('promote'),
-            {u'environment_id': environment_id},
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
@@ -1317,7 +1306,7 @@ class ContentView(
             )
         return super(ContentView, self).path(which)
 
-    def publish(self, synchronous=True):
+    def publish(self, payload=None, synchronous=True):
         """Helper for publishing an existing content view.
 
         :param synchronous: What should happen if the server returns an HTTP
@@ -1328,23 +1317,28 @@ class ContentView(
             JSON response otherwise.
 
         """
+        if payload is None:
+            payload = {}
+        payload['id'] = self.id  # pylint:disable=no-member
         response = client.post(
             self.path('publish'),
-            {u'id': self.id},  # pylint:disable=no-member
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def set_repository_ids(self, repo_ids):
+    def set_repository_ids(self, payload):
         """Give this content view some repositories.
 
-        :param repo_ids: A list of repository IDs.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :returns: The server's response, with all JSON decoded.
 
         """
         response = client.put(
             self.path(which='self'),
-            {u'repository_ids': repo_ids},
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
@@ -1361,31 +1355,35 @@ class ContentView(
         )
         return _handle_response(response, self._server_config)
 
-    def add_puppet_module(self, author, name):
+    def add_puppet_module(self, payload):
         """Add a puppet module to the content view.
 
-        :param author: The author of the puppet module.
-        :param name: The name of the puppet module.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :returns: The server's response, with all JSON decoded.
 
         """
         response = client.post(
             self.path('content_view_puppet_modules'),
-            {u'author': author, u'name': name},
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
-    def copy(self, name):
+    def copy(self, payload):
         """Clone provided content view.
 
-        :param name: The name for new cloned content view.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :returns: The server's response, with all JSON decoded.
 
         """
+        payload['id'] = self.id  # pylint:disable=no-member
         response = client.post(
             self.path('copy'),
-            {u'id': self.id, u'name': name},  # pylint:disable=no-member
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
@@ -2410,8 +2408,6 @@ class Organization(
             /organizations/<id>/subscriptions/refresh_manifest
         sync_plans
             /organizations/<id>/sync_plans
-        products
-            /organizations/<id>/products
         subscriptions
             /organizations/<id>/subscriptions
 
@@ -2419,7 +2415,6 @@ class Organization(
 
         """
         if which in (
-                'products',
                 'subscriptions/delete_manifest',
                 'subscriptions/refresh_manifest',
                 'subscriptions/upload',
@@ -2447,11 +2442,12 @@ class Organization(
         )
         return _handle_response(response, self._server_config)['results']
 
-    def upload_manifest(self, path, repository_url=None, synchronous=True):
+    def upload_manifest(self, payload, synchronous=True):
         """Helper method that uploads a subscription manifest file
 
-        :param path: Local path of the manifest file
-        :param repository_url: Optional repository URL
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return JSON response otherwise.
@@ -2466,13 +2462,11 @@ class Organization(
             completes with any result other than "success".
 
         """
-        data = None
-        if repository_url is not None:
-            data = {u'repository_url': repository_url}
+        path = payload.pop('content')
         with open(path, 'rb') as manifest:
             response = client.post(
                 self.path('subscriptions/upload'),
-                data,
+                payload,
                 files={'content': manifest},
                 **self._server_config.get_client_kwargs()
             )
@@ -2524,37 +2518,24 @@ class Organization(
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def sync_plan(self, name, interval):
+    def sync_plan(self, payload):
         """Helper for creating a sync_plan.
 
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
+        payload['sync_date'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         response = client.post(
             self.path('sync_plans'),
-            {
-                u'interval': interval,
-                u'name': name,
-                u'sync_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            },
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
-
-    def list_rhproducts(self, per_page=None):
-        """Lists all the RedHat Products after the importing of a manifest.
-
-        :param per_page: The no.of results to be shown per page.
-
-        """
-        response = client.get(
-            self.path('products'),
-            data={u'per_page': per_page},
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)['results']
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
