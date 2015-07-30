@@ -157,6 +157,7 @@ class InitTestCase(TestCase):
             (entities.ContentViewFilterRule, {'content_view_filter': 1}),
             (entities.ContentViewPuppetModule, {'content_view': 1}),
             (entities.OperatingSystemParameter, {'operatingsystem': 1}),
+            (entities.RepositorySet, {'product': 1}),
             (entities.SyncPlan, {'organization': 1}),
         ])
         for entity, params in entities_:
@@ -174,6 +175,7 @@ class InitTestCase(TestCase):
                 entities.ContentViewFilterRule,
                 entities.ContentViewPuppetModule,
                 entities.OperatingSystemParameter,
+                entities.RepositorySet,
                 entities.SyncPlan,
         ):
             with self.subTest():
@@ -233,11 +235,6 @@ class PathTestCase(TestCase):
                 (entities.Organization, 'subscriptions/refresh_manifest'),
                 (entities.Organization, 'subscriptions/upload'),
                 (entities.Organization, 'sync_plans'),
-                (entities.Product, 'repository_sets'),
-                (entities.Product, 'repository_sets/2396/disable'),
-                (entities.Product, 'repository_sets/2396/enable'),
-                (entities.Product,
-                 'repository_sets/2396/available_repositories'),
                 (entities.Product, 'sync'),
                 (entities.Repository, 'sync'),
                 (entities.Repository, 'upload_content'),
@@ -311,15 +308,44 @@ class PathTestCase(TestCase):
         ):
             self.assertIn('/foreman_tasks/api/tasks/bulk_search', path)
 
+    def test_repository_set(self):
+        """Test :meth:`nailgun.entities.RepositorySet.path`.
+
+        Assert that the following return appropriate paths:
+
+        * ``RepositorySet(id=…).path()``
+        * ``RepositorySet(id=…).path('available_repositories')``
+        * ``RepositorySet(id=…).path('disable')``
+        * ``RepositorySet(id=…).path('enable')``
+
+        """
+        self.assertIn(
+            'products/1/repository_sets/2',
+            entities.RepositorySet(self.cfg, id=2, product=1).path()
+        )
+        for which in ('available_repositories', 'disable', 'enable'):
+            path = entities.RepositorySet(
+                self.cfg,
+                id=2,
+                product=1,
+            ).path(which)
+            self.assertIn('products/1/repository_sets/2/' + which, path)
+            self.assertRegex(path, '{}$'.format(which))
+
     def test_sync_plan(self):
         """Test :meth:`nailgun.entities.SyncPlan.path`.
 
         Assert that the following return appropriate paths:
 
+        * ``SyncPlan(id=…).path()``
         * ``SyncPlan(id=…).path('add_products')``
         * ``SyncPlan(id=…).path('remove_products')``
 
         """
+        self.assertIn(
+            'organizations/1/sync_plans/2',
+            entities.SyncPlan(self.cfg, id=2, organization=1).path()
+        )
         for which in ('add_products', 'remove_products'):
             path = entities.SyncPlan(
                 self.cfg,
@@ -700,6 +726,7 @@ class ReadTestCase(TestCase):
                 ),
                 entities.ContentViewPuppetModule(self.cfg, content_view=2),
                 entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
+                entities.RepositorySet(self.cfg, product=2),
                 entities.SyncPlan(self.cfg, organization=2),
         ):
             # We mock read_json() because it may be called by read().
@@ -1338,26 +1365,6 @@ class ProductTestCase(TestCase):
             id=gen_integer(min_value=1),
         )
 
-    # pylint:disable=C0103
-    def test_repository_sets_available_repositories(self):
-        """Call
-        :meth:`nailgun.entities.Product.repository_sets_available_repositories`
-
-        """
-        with mock.patch.object(client, 'get') as client_get:
-            with mock.patch.object(
-                entities,
-                '_handle_response',
-                return_value={'results': gen_integer()},  # not realistic
-            ) as handler:
-                reposet_id = gen_integer(min_value=1)
-                response = self.product.repository_sets_available_repositories(
-                    reposet_id=reposet_id,
-                )
-        self.assertEqual(client_get.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value['results'], response)
-
     def test_sync(self):
         """Call :meth:`nailgun.entities.Product.sync`."""
         with mock.patch.object(client, 'post') as client_post:
@@ -1369,6 +1376,134 @@ class ProductTestCase(TestCase):
                 self.product.sync()
         self.assertEqual(client_post.call_count, 1)
         self.assertEqual(handler.call_count, 1)
+
+
+class RepositoryTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.Repository`."""
+
+    def setUp(self):
+        """Set ``self.repo``."""
+        self.repo = entities.Repository(
+            config.ServerConfig('http://example.com'),
+            id=gen_integer(min_value=1),
+        )
+
+    def test_sync(self):
+        """Call :meth:`nailgun.entities.Repository.sync`."""
+        with mock.patch.object(client, 'post') as client_post:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'results': gen_integer()},  # not realistic
+            ) as handler:
+                self.repo.sync()
+        self.assertEqual(client_post.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+
+    def test_upload_content(self):
+        """Call :meth:`nailgun.entities.Repository.upload_content`."""
+        with mock.patch.object(client, 'post') as client_post:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'status': 'success'},
+            ) as handler:
+                self.repo.upload_content({1: 2})
+        self.assertEqual(client_post.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+
+    def test_upload_content_error(self):
+        """Trigger an :class:`nailgun.entities.APIResponseError`."""
+        with mock.patch.object(client, 'post') as client_post:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'status': 'failure'},
+            ) as handler:
+                with self.assertRaises(entities.APIResponseError):
+                    self.repo.upload_content({1: 2})
+        self.assertEqual(client_post.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+
+
+class RepositorySetTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.RepositorySet`."""
+
+    def setUp(self):
+        """Set ``self.product``."""
+        self.product = entities.Product(
+            config.ServerConfig('http://example.com'),
+            id=gen_integer(min_value=1),
+        )
+        self.reposet = entities.RepositorySet(
+            config.ServerConfig('http://example.com'),
+            id=gen_integer(min_value=1),
+            product=self.product,
+        )
+
+    def test_available_repositories(self):
+        """Call
+        :meth:`nailgun.entities.RepositorySet.available_repositories`
+
+        """
+        with mock.patch.object(client, 'get') as client_get:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'results': gen_integer()},  # not realistic
+            ) as handler:
+                response = self.reposet.available_repositories()
+        self.assertEqual(client_get.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value['results'], response)
+
+    def test_enable(self):
+        """Call :meth:`nailgun.entities.RepositorySet.enable`"""
+        with mock.patch.object(client, 'put') as client_put:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'results': gen_integer()},  # not realistic
+            ) as handler:
+                response = self.reposet.enable({1: 2})
+        self.assertEqual(client_put.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
+
+    def test_disable(self):
+        """Call :meth:`nailgun.entities.RepositorySet.disable`"""
+        with mock.patch.object(client, 'put') as client_put:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'results': gen_integer()},  # not realistic
+            ) as handler:
+                response = self.reposet.disable({1: 2})
+        self.assertEqual(client_put.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
+
+    def test_list_all(self):
+        """Call :meth:`nailgun.entities.RepositorySet.list_all`"""
+        with mock.patch.object(client, 'get') as client_get:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'results': gen_integer()},  # not realistic
+            ) as handler:
+                response = self.reposet.list_all()
+        self.assertEqual(client_get.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value['results'], response)
+
+    def test_search_normalize(self):
+        """Call :meth:`nailgun.entities.RepositorySet.search_normalize`"""
+        with mock.patch.object(EntitySearchMixin, 'search_normalize') as s_n:
+            self.reposet.search_normalize([{}, {}])
+        self.assertEqual(s_n.call_count, 1)
+        for result in s_n.call_args[0][0]:
+            # pylint:disable=no-member
+            self.assertEqual(result['product_id'], self.product.id)
 
 
 class RHCIDeploymentTestCase(TestCase):
@@ -1390,7 +1525,9 @@ class RHCIDeploymentTestCase(TestCase):
                 return_value={'results': gen_integer()},  # not realistic
             ) as handler:
                 hypervisor_ids = [gen_integer(), gen_integer(), gen_integer()]
-                response = self.rhci_deployment.add_hypervisors(hypervisor_ids)
+                response = self.rhci_deployment.add_hypervisors({
+                    'discovered_host_ids': hypervisor_ids,
+                })
         self.assertEqual(client_put.call_count, 1)
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value, response)
@@ -1409,14 +1546,76 @@ class RHCIDeploymentTestCase(TestCase):
                 '_handle_response',
                 return_value={'results': gen_integer()},  # not realistic
             ) as handler:
-                params = {'foo': gen_integer()}
-                response = self.rhci_deployment.deploy(params)
+                payload = {'foo': gen_integer()}
+                response = self.rhci_deployment.deploy(payload)
         self.assertEqual(client_put.call_count, 1)
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value, response)
 
         # `call_args` is a two-tuple of (positional, keyword) args.
-        self.assertEqual(client_put.call_args[0][1], params)
+        self.assertEqual(client_put.call_args[0][1], payload)
+
+
+class SmartProxyTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.SmartProxy`."""
+
+    def setUp(self):
+        """Set ``self.proxy``."""
+        self.proxy = entities.SmartProxy(
+            config.ServerConfig('http://example.com'),
+            id=gen_integer(min_value=1),
+        )
+
+    def test_refresh(self):
+        """Call :meth:`nailgun.entities.SmartProxy.refresh`."""
+        with mock.patch.object(client, 'put') as client_put:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value=gen_integer(),  # not realistic
+            ) as handler:
+                response = self.proxy.refresh()
+        self.assertEqual(client_put.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
+
+
+class SyncPlanTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.SyncPlan`."""
+
+    def setUp(self):
+        """Set ``self.sync_plan``."""
+        self.sync_plan = entities.SyncPlan(
+            config.ServerConfig('http://example.com'),
+            id=gen_integer(min_value=1),
+            organization=gen_integer(min_value=1),
+        )
+
+    def test_add_products(self):
+        """Call :meth:`nailgun.entities.SyncPlan.add_products`."""
+        with mock.patch.object(client, 'put') as client_put:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value=gen_integer(),  # not realistic
+            ) as handler:
+                response = self.sync_plan.add_products({1: 2})
+        self.assertEqual(client_put.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
+
+    def test_remove_products(self):
+        """Call :meth:`nailgun.entities.SyncPlan.remove_products`."""
+        with mock.patch.object(client, 'put') as client_put:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value=gen_integer(),  # not realistic
+            ) as handler:
+                response = self.sync_plan.remove_products({1: 2})
+        self.assertEqual(client_put.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
 
 
 # 3. Other tests. -------------------------------------------------------- {{{1

@@ -2684,20 +2684,13 @@ class Product(
 
         The format of the returned path depends on the value of ``which``:
 
-        repository_sets
-            /products/<product_id>/repository_sets
-        repository_sets/<id>/enable
-            /products/<product_id>/repository_sets/<id>/enable
-        repository_sets/<id>/disable
-            /products/<product_id>/repository_sets/<id>/disable
         sync
             /products/<product_id>/sync
 
         ``super`` is called otherwise.
 
         """
-        if which is not None and (
-                which.startswith('repository_sets') or which == 'sync'):
+        if which == 'sync':
             return '{0}/{1}'.format(
                 super(Product, self).path(which='self'),
                 which,
@@ -2717,131 +2710,6 @@ class Product(
             org = _get_org(self._server_config, attrs['organization']['label'])
             attrs['organization'] = org.get_values()
         return super(Product, self).read(entity, attrs, ignore)
-
-    def list_repositorysets(self, per_page=None):
-        """Lists all the RepositorySets in a Product.
-
-        :param per_page: The no.of results to be shown per page.
-
-        """
-        response = client.get(
-            self.path('repository_sets'),
-            data={u'per_page': per_page},
-            **self._server_config.get_client_kwargs()
-        )
-        response.raise_for_status()
-        return response.json()['results']
-
-    def fetch_rhproduct_id(self, name, org_id):
-        """Fetches the RedHat Product Id for a given Product name.
-
-        To be used for the Products created when manifest is imported.
-        RedHat Product Id could vary depending upon other custom products.
-        So, we use the product name to fetch the RedHat Product Id.
-
-        :param org_id: The Organization Id.
-        :param name: The RedHat product's name who's ID is to be fetched.
-        :returns: The RedHat Product Id is returned.
-
-        """
-        response = client.get(
-            self.path(which='base'),
-            data={u'organization_id': org_id, u'name': name},
-            **self._server_config.get_client_kwargs()
-        )
-        response.raise_for_status()
-        results = response.json()['results']
-        if len(results) != 1:
-            raise APIResponseError(
-                "The length of the results is:", len(results))
-        return results[0]['id']
-
-    def fetch_reposet_id(self, name):
-        """Fetches the RepositorySet Id for a given name.
-
-        RedHat Products do not directly contain Repositories.
-        Product first contains many RepositorySets and each
-        RepositorySet contains many Repositories.
-        RepositorySet Id could vary. So, we use the reposet name
-        to fetch the RepositorySet Id.
-
-        :param name: The RepositorySet's name.
-        :returns: The RepositorySet's Id is returned.
-
-        """
-        response = client.get(
-            self.path('repository_sets'),
-            data={u'name': name},
-            **self._server_config.get_client_kwargs()
-        )
-        response.raise_for_status()
-        results = response.json()['results']
-        if len(results) != 1:
-            raise APIResponseError(
-                "The length of the results is:", len(results))
-        return results[0]['id']
-
-    def enable_rhrepo(self, base_arch,
-                      release_ver, reposet_id, synchronous=True):
-        """Enables the RedHat Repository
-
-        RedHat Repos needs to be enabled first, so that we can sync it.
-
-        :param reposet_id: The RepositorySet Id.
-        :param base_arch: The architecture type of the repo to enable.
-        :param release_ver: The release version type of the repo to enable.
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
-
-        """
-        response = client.put(
-            self.path('repository_sets/{0}/enable'.format(reposet_id)),
-            {u'basearch': base_arch, u'releasever': release_ver},
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config, synchronous)
-
-    def disable_rhrepo(self, base_arch,
-                       release_ver, reposet_id, synchronous=True):
-        """Disables the RedHat Repository
-
-        :param reposet_id: The RepositorySet Id.
-        :param base_arch: The architecture type of the repo to disable.
-        :param release_ver: The release version type of the repo to disable.
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
-
-        """
-        response = client.put(
-            self.path('repository_sets/{0}/disable'.format(reposet_id)),
-            {u'basearch': base_arch, u'releasever': release_ver},
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config, synchronous)
-
-    def repository_sets_available_repositories(self, reposet_id):  # noqa pylint:disable=C0103
-        """Lists available repositories for the repository set
-
-        :param reposet_id: The RepositorySet Id.
-        :returns: Returns list of available repositories for the repository set
-
-        """
-        response = client.get(
-            self.path(
-                'repository_sets/{0}/available_repositories'
-                .format(reposet_id)
-            ),
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)['results']
 
     def sync(self):
         """Synchronize :class:`repositories <Repository>` in this product."""
@@ -2972,6 +2840,7 @@ class Repository(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Repository entity."""
 
@@ -3061,42 +2930,12 @@ class Repository(
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def fetch_repoid(self, org_id, name):
-        """Fetch the repository Id.
-
-        This is required for RedHat Repositories, as products, reposets
-        and repositories get automatically populated upon the manifest import.
-
-        :param org_id: The org Id for which repository listing is required.
-        :param name: The repository name who's ID has to be searched.
-        :return: Returns the repository ID.
-        :raises: ``APIResponseError`` If the API does not return any results.
-
-        """
-        for _ in range(5):
-            response = client.get(
-                self.path(which=None),
-                data={u'organization_id': org_id, u'name': name},
-                **self._server_config.get_client_kwargs()
-            )
-            response.raise_for_status()
-            results = response.json()['results']
-            if len(results) == 0:
-                sleep(5)
-            else:
-                break
-        if len(results) != 1:
-            raise APIResponseError(
-                'Found {0} repositories named {1} in organization {2}: {3} '
-                .format(len(results), name, org_id, results)
-            )
-        return results[0]['id']
-
-    def upload_content(self, handle):
+    def upload_content(self, payload):
         """Upload a file to the current repository.
 
-        :param handle: A file object, such as the one returned by
-            ``open('path', 'rb')``.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :returns: The JSON-decoded response.
         :raises nailgun.entities.APIResponseError: If the response has a status
             other than "success".
@@ -3104,17 +2943,179 @@ class Repository(
         """
         response = client.post(
             self.path('upload_content'),
-            files={'content': handle},
+            files=payload,
             **self._server_config.get_client_kwargs()
         )
-        response.raise_for_status()
-        response_json = response.json()
+        response_json = _handle_response(response, self._server_config)
         if response_json['status'] != 'success':
             raise APIResponseError(
+                # pylint:disable=E1101
                 'Received error when uploading file {0} to repository {1}: {2}'
-                .format(handle, self.id, response_json)  # pylint:disable=E1101
+                .format(payload, self.id, response_json)
             )
         return response_json
+
+
+class RepositorySet(
+        Entity,
+        EntityReadMixin,
+        EntitySearchMixin):
+    """ A representation of a Repository Set entity"""
+    def __init__(self, server_config=None, **kwargs):
+        _check_for_value('product', kwargs)
+        self._fields = {
+            'contentUrl': entity_fields.URLField(required=True),
+            'gpgUrl': entity_fields.URLField(required=True),
+            'label': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(required=True),
+            'product': entity_fields.OneToOneField(Product, required=True),
+            'repositories': entity_fields.OneToManyField(Repository),
+            'type': entity_fields.StringField(
+                choices=('kickstart', 'yum', 'file'),
+                default='yum',
+                required=True,
+            ),
+            'vendor': entity_fields.StringField(required=True),
+        }
+        super(RepositorySet, self).__init__(server_config, **kwargs)
+        self._meta = {
+            # pylint:disable=no-member
+            'api_path': '{0}/repository_sets'.format(self.product.path()),
+        }
+
+    def available_repositories(self):
+        """Lists available repositories for the repository set
+
+        :returns: Returns list of available repositories for the repository set
+
+        """
+        response = client.get(
+            self.path('available_repositories'),
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config)['results']
+
+    def enable(self, payload, synchronous=True):
+        """Enables the RedHat Repository
+
+        RedHat Repos needs to be enabled first, so that we can sync it.
+
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return JSON response otherwise.
+        :returns: Returns information of the async task if an HTTP
+            202 response was received and synchronus set to ``True``.
+            Return JSON response otherwise.
+
+        """
+        response = client.put(
+            self.path('enable'),
+            payload,
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config, synchronous)
+
+    def disable(self, payload, synchronous=True):
+        """Disables the RedHat Repository
+
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return JSON response otherwise.
+        :returns: Returns information of the async task if an HTTP
+            202 response was received and synchronus set to ``True``.
+            Return JSON response otherwise.
+
+        """
+        response = client.put(
+            self.path('disable'),
+            payload,
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config, synchronous)
+
+    def list_all(self, per_page=None):
+        """Lists all the RepositorySets in a Product.
+
+        :param per_page: The no.of results to be shown per page.
+
+        """
+        response = client.get(
+            self.path('base'),
+            data={u'per_page': per_page},
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config)['results']
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        available_repositories
+            /products/<product_id>/repository_sets/<id>/available_repositories
+        enable
+            /products/<product_id>/repository_sets/<id>/enable
+        disable
+            /products/<product_id>/repository_sets/<id>/disable
+
+        ``super`` is called otherwise.
+
+        """
+        if which in (
+                'available_repositories',
+                'enable',
+                'disable',
+        ):
+            return '{0}/{1}'.format(
+                super(RepositorySet, self).path(which='self'),
+                which
+            )
+        return super(RepositorySet, self).path(which)
+
+    def read(self, entity=None, attrs=None, ignore=None):
+        """Provide a default value for ``entity``.
+
+        By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
+        default value for ``entity`` like so::
+
+            entity = type(self)()
+
+        However, :class:`RepositorySet` requires that a ``product`` be
+        provided, so this technique will not work. Do this instead::
+
+            entity = type(self)(product=self.product.id)
+
+        """
+        # read() should not change the state of the object it's called on, but
+        # super() alters the attributes of any entity passed in. Creating a new
+        # object and passing it to super() lets this one avoid changing state.
+        if entity is None:
+            entity = type(self)(
+                self._server_config,
+                product=self.product,  # pylint:disable=no-member
+            )
+        if ignore is None:
+            ignore = set()
+        ignore.add('product')
+        return super(RepositorySet, self).read(entity, attrs, ignore)
+
+    def search_normalize(self, results):
+        """Provide a value for `product` field.
+
+        Method ``search`` will create entities from search results. Search
+        results do not contain `product` field, which is required for
+        ``RepositorySet`` entity initialization.
+
+        """
+        for result in results:
+            result['product_id'] = self.product.id  # pylint:disable=no-member
+        return super(RepositorySet, self).search_normalize(results)
 
 
 class RHCIDeployment(
@@ -3193,11 +3194,11 @@ class RHCIDeployment(
             )
         return super(RHCIDeployment, self).path(which)
 
-    def add_hypervisors(self, hypervisor_ids):
+    def add_hypervisors(self, payload):
         """Helper for creating an RHCI deployment.
 
-        :param hypervisor_ids: A list of RHEV hypervisor ids to be added to the
-            deployment.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
@@ -3205,15 +3206,15 @@ class RHCIDeployment(
         """
         response = client.put(
             self.path(),
-            {'discovered_host_ids': hypervisor_ids},
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
-    def deploy(self, params):
+    def deploy(self, payload):
         """Kickoff the RHCI deployment.
 
-        :param params: Parameters that are encoded to JSON and passed in
+        :param payload: Parameters that are encoded to JSON and passed in
             with the request. See the API documentation page for a list of
             parameters and their descriptions.
         :returns: The server's response, with all JSON decoded.
@@ -3223,7 +3224,7 @@ class RHCIDeployment(
         """
         response = client.put(
             self.path('deploy'),
-            params,
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
@@ -3524,14 +3525,16 @@ class SyncPlan(
             )
         return super(SyncPlan, self).path(which)
 
-    def add_products(self, product_ids, synchronous=True):
+    def add_products(self, payload, synchronous=True):
         """Add products to this sync plan.
 
         .. NOTE:: The ``synchronous`` argument has no effect in certain
             versions of Satellite. See `Bugzilla #1199150
             <https://bugzilla.redhat.com/show_bug.cgi?id=1199150>`_.
 
-        :param product_ids: A list of product IDs to add to this sync plan.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's reponse otherwise.
@@ -3540,19 +3543,21 @@ class SyncPlan(
         """
         response = client.put(
             self.path('add_products'),
-            {'product_ids': product_ids},
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def remove_products(self, product_ids, synchronous=True):
+    def remove_products(self, payload, synchronous=True):
         """Remove products from this sync plan.
 
         .. NOTE:: The ``synchronous`` argument has no effect in certain
             versions of Satellite. See `Bugzilla #1199150
             <https://bugzilla.redhat.com/show_bug.cgi?id=1199150>`_.
 
-        :param product_ids: A list of product IDs to remove from this syn plan.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's reponse otherwise.
@@ -3561,7 +3566,7 @@ class SyncPlan(
         """
         response = client.put(
             self.path('remove_products'),
-            {'product_ids': product_ids},
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
