@@ -2702,9 +2702,13 @@ class Product(
             Return JSON response otherwise.
 
         """
+        data = {}
+        data[u'basearch'] = base_arch
+        if release_ver is not None:
+            data[u'releasever'] = release_ver
         response = client.put(
             self.path('repository_sets/{0}/enable'.format(reposet_id)),
-            {u'basearch': base_arch, u'releasever': release_ver},
+            data,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
@@ -2724,9 +2728,13 @@ class Product(
             Return JSON response otherwise.
 
         """
+        data = {}
+        data[u'basearch'] = base_arch
+        if release_ver is not None:
+            data[u'releasever'] = release_ver
         response = client.put(
             self.path('repository_sets/{0}/disable'.format(reposet_id)),
-            {u'basearch': base_arch, u'releasever': release_ver},
+            data,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
