@@ -3,7 +3,6 @@
 from fauxfactory.constants import VALID_NETMASKS
 from nailgun import entity_fields
 from random import randint
-from unittest2 import TestCase
 import datetime
 import socket
 
@@ -12,10 +11,14 @@ if version_info.major == 2:
     from urlparse import urlparse  # pylint:disable=import-error
 else:
     from urllib.parse import urlparse  # pylint:disable=E0611,F0401
+if version_info < (3, 4):
+    from unittest2 import TestCase  # pylint:disable=import-error
+else:
+    from unittest import TestCase
 
 
-# It is OK that this class has no public methods. It just needs to exist for use
-# by other tests, not be independently useful.
+# It is OK that this class has no public methods. It just needs to exist for
+# use by other tests, not be independently useful.
 class TestClass(object):  # pylint:disable=too-few-public-methods
     """A class that is used when testing the OneTo{One,Many}Field classes."""
 
@@ -66,10 +69,7 @@ class GenValueTestCase(TestCase):
 
         """
         email = entity_fields.EmailField().gen_value()
-        if version_info.major == 2:
-            self.assertIsInstance(email, unicode)  # flake8:noqa pylint:disable=undefined-variable
-        else:
-            self.assertIsInstance(email, str)
+        self.assertIsInstance(email, type(u''))
         self.assertIn('@', email)
 
     def test_float_field(self):
@@ -146,10 +146,7 @@ class StringFieldTestCase(TestCase):
     def test_str_is_returned(self):
         """Ensure a unicode string at least 1 char long is returned."""
         string = entity_fields.StringField().gen_value()
-        if version_info.major == 2:
-            self.assertIsInstance(string, unicode)  # flake8:noqa pylint:disable=undefined-variable
-        else:
-            self.assertIsInstance(string, str)
+        self.assertIsInstance(string, type(u''))
         self.assertGreater(len(string), 0)
 
     def test_length_arg(self):
