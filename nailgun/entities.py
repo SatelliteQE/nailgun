@@ -294,7 +294,7 @@ class ActivationKey(
         """
         response = client.put(
             self.path('content_override'),
-            {'content_override': payload},
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
@@ -1327,22 +1327,6 @@ class ContentView(
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def set_repository_ids(self, payload):
-        """Give this content view some repositories.
-
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
-        :returns: The server's response, with all JSON decoded.
-
-        """
-        response = client.put(
-            self.path(which='self'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
-
     def available_puppet_modules(self):
         """Get puppet modules available to be added to the content view.
 
@@ -1351,22 +1335,6 @@ class ContentView(
         """
         response = client.get(
             self.path('available_puppet_modules'),
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
-
-    def add_puppet_module(self, payload):
-        """Add a puppet module to the content view.
-
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
-        :returns: The server's response, with all JSON decoded.
-
-        """
-        response = client.post(
-            self.path('content_view_puppet_modules'),
-            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
@@ -2427,116 +2395,6 @@ class Organization(
             )
         return super(Organization, self).path(which)
 
-    def subscriptions(self):
-        """List the organization's subscriptions.
-
-        :returns: A list of available subscriptions.
-        :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP
-            4XX or 5XX status code.
-        :raises: ``ValueError`` If the response JSON could not be decoded.
-
-        """
-        response = client.get(
-            self.path('subscriptions'),
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)['results']
-
-    def upload_manifest(self, payload, synchronous=True):
-        """Helper method that uploads a subscription manifest file
-
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
-        :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP
-            4XX or 5XX status code.
-        :raises: ``ValueError`` If the response JSON could not be decoded.
-        :raises: ``nailgun.entity_mixins.TaskTimedOutError`` if an HTTP 202
-            response is received, ``synchronous is True`` and the task
-            completes with any result other than "success".
-
-        """
-        path = payload.pop('content')
-        with open(path, 'rb') as manifest:
-            response = client.post(
-                self.path('subscriptions/upload'),
-                payload,
-                files={'content': manifest},
-                **self._server_config.get_client_kwargs()
-            )
-        return _handle_response(response, self._server_config, synchronous)
-
-    def delete_manifest(self, synchronous=True):
-        """Helper method that deletes an organization's manifest
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
-        :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP
-            4XX or 5XX status code.
-        :raises: ``ValueError`` If the response JSON could not be decoded.
-        :raises: ``nailgun.entity_mixins.TaskTimedOutError`` if an HTTP 202
-            response is received, ``synchronous is True`` and the task
-            completes with any result other than "success".
-
-        """
-        response = client.post(
-            self.path('subscriptions/delete_manifest'),
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config, synchronous)
-
-    def refresh_manifest(self, synchronous=True):
-        """Helper method that refreshes an organization's manifest
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
-        :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP
-            4XX or 5XX status code.
-        :raises: ``ValueError`` If the response JSON could not be decoded.
-        :raises: ``nailgun.entity_mixins.TaskTimedOutError`` if an HTTP 202
-            response is received, ``synchronous is True`` and the task
-            completes with any result other than "success".
-
-        """
-        response = client.put(
-            self.path('subscriptions/refresh_manifest'),
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config, synchronous)
-
-    def sync_plan(self, payload):
-        """Helper for creating a sync_plan.
-
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        payload['sync_date'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        response = client.post(
-            self.path('sync_plans'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
-
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
 
@@ -2930,28 +2788,46 @@ class Repository(
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def upload_content(self, payload):
-        """Upload a file to the current repository.
+    def upload_content(self, content):
+        """Upload a file or files to the current repository.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        The syntax for uploading a single file is straightforward::
+
+            with open('my_content.rpm') as content:
+                repo.upload_content(content)
+
+        To upload multiple files, pass in a list as described in `POST Multiple
+        Multipart-Encoded Files`_::
+
+            repo.upload_content([
+                ('content', ('first.rpm', open('first.rpm')))
+                ('content', ('second.rpm', open('second.rpm')))
+            ])
+
+        :param content: Either a file-like object or a list.
         :returns: The JSON-decoded response.
         :raises nailgun.entities.APIResponseError: If the response has a status
             other than "success".
 
+        .. _POST Multiple Multipart-Encoded Files:
+            http://docs.python-requests.org/en/latest/user/advanced/#post-multiple-multipart-encoded-files
+
         """
+        if isinstance(content, list):
+            files = content
+        else:
+            files = {'content': content}
         response = client.post(
             self.path('upload_content'),
-            files=payload,
+            files=files,
             **self._server_config.get_client_kwargs()
         )
         response_json = _handle_response(response, self._server_config)
         if response_json['status'] != 'success':
             raise APIResponseError(
-                # pylint:disable=E1101
+                # pylint:disable=no-member
                 'Received error when uploading file {0} to repository {1}: {2}'
-                .format(payload, self.id, response_json)
+                .format(content, self.id, response_json)
             )
         return response_json
 
@@ -3038,19 +2914,6 @@ class RepositorySet(
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
-
-    def list_all(self, per_page=None):
-        """Lists all the RepositorySets in a Product.
-
-        :param per_page: The no.of results to be shown per page.
-
-        """
-        response = client.get(
-            self.path('base'),
-            data={u'per_page': per_page},
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)['results']
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -3193,23 +3056,6 @@ class RHCIDeployment(
                 which
             )
         return super(RHCIDeployment, self).path(which)
-
-    def add_hypervisors(self, payload):
-        """Helper for creating an RHCI deployment.
-
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        response = client.put(
-            self.path(),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
 
     def deploy(self, payload):
         """Kickoff the RHCI deployment.
@@ -3410,24 +3256,145 @@ class Subnet(
         return super(Subnet, self).read(entity, attrs, ignore)
 
 
-class Subscription(Entity):
+class Subscription(
+        Entity,
+        EntityReadMixin,
+        EntitySearchMixin):
     """A representation of a Subscription entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        # NOTE: When making an HTTP POST call, `pool_uuid` must be renamed to
-        # `id`. This logic can be packed in to create_payload().
         self._fields = {
             'activation_key': entity_fields.OneToOneField(ActivationKey),
-            'pool_uuid': entity_fields.StringField(),
+            'organization': entity_fields.OneToOneField(Organization),
             'quantity': entity_fields.IntegerField(),
             'subscriptions': entity_fields.OneToManyField(Subscription),
             'system': entity_fields.OneToOneField(System),
         }
         self._meta = {
-            'api_path': 'katello/api/v2/subscriptions/:id',
+            'api_path': 'katello/api/v2/subscriptions',
             'server_modes': ('sat', 'sam'),
         }
         super(Subscription, self).__init__(server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        delete_manifest
+            /katello/api/v2/organizations/:organization_id/subscriptions/delete_manifest
+        manifest_history
+            /katello/api/v2/organizations/:organization_id/subscriptions/manifest_history
+        refresh_manifest
+            /katello/api/v2/organizations/:organization_id/subscriptions/refresh_manifest
+        upload
+            /katello/api/v2/organizations/:organization_id/subscriptions/upload
+
+        """
+        if which in (
+                'delete_manifest',
+                'manifest_history',
+                'refresh_manifest',
+                'upload'):
+            _check_for_value('organization', self.get_values())
+            return '{0}/subscriptions/{1}'.format(
+                self.organization.path('self'),  # pylint:disable=no-member
+                which
+            )
+        return super(Subscription, self).path(which)
+
+    def _org_path(self, which, payload):
+        """A helper method for generating paths with organization IDs in them.
+
+        :param which: A path such as "manifest_history" that has an
+            organization ID in it.
+        :param payload: A dict with an "organization_id" key in it.
+        :returns: A string. The requested path.
+
+        """
+        return Subscription(
+            self._server_config,
+            organization=payload['organization_id'],
+        ).path(which)
+
+    def delete_manifest(self, payload, synchronous=True):
+        """Delete manifest from Red Hat provider.
+
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        response = client.post(
+            self._org_path('delete_manifest', payload),
+            payload,
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config, synchronous)
+
+    def manifest_history(self, payload, synchronous=True):
+        """Obtain manifest history for subscriptions.
+
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        response = client.get(
+            self._org_path('manifest_history', payload),
+            payload,
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config, synchronous)
+
+    def refresh_manifest(self, payload, synchronous=True):
+        """Refresh previously imported manifest for Red Hat provider.
+
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        response = client.put(
+            self._org_path('refresh_manifest', payload),
+            payload,
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config, synchronous)
+
+    def upload(self, payload, manifest, synchronous=True):
+        """Upload a subscription manifest.
+
+        Here is an example of how to use this method::
+
+            with open('my_manifest.zip') as manifest:
+                sub.upload({'organization_id': org.id}, manifest)
+
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :param manifest: A file-like object. The manifest file to upload.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        response = client.put(
+            self._org_path('upload', payload),
+            payload,
+            files={'content': manifest},
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class SyncPlan(
