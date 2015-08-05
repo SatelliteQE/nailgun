@@ -93,6 +93,7 @@ class InitTestCase(TestCase):
                 entities.ContentUpload,
                 entities.ContentView,
                 entities.ContentViewVersion,
+                entities.DiscoveredHosts,
                 entities.DockerComputeResource,
                 entities.DockerHubContainer,
                 entities.Domain,
@@ -197,6 +198,7 @@ class PathTestCase(TestCase):
                 (entities.ConfigTemplate, '/config_templates'),
                 (entities.ContentView, '/content_views'),
                 (entities.ContentViewVersion, '/content_view_versions'),
+                (entities.DiscoveredHosts, '/discovered_hosts'),
                 (entities.Organization, '/organizations'),
                 (entities.Product, '/products'),
                 (entities.RHCIDeployment, '/deployments'),
@@ -252,6 +254,7 @@ class PathTestCase(TestCase):
         for entity, which in (
                 (entities.ConfigTemplate, 'build_pxe_default'),
                 (entities.ConfigTemplate, 'revision'),
+                (entities.DiscoveredHosts, 'facts'),
         ):
             with self.subTest():
                 path = entity(self.cfg).path(which=which)
@@ -413,6 +416,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.AbstractDockerContainer,
                 entities.Architecture,
                 entities.ConfigTemplate,
+                entities.DiscoveredHosts,
                 entities.Domain,
                 entities.Environment,
                 entities.Host,
@@ -1103,6 +1107,33 @@ class ActivationKeyTestCase(TestCase):
             client_put.call_args[0][1]['content_override'],
             {'content_label': content_label, 'value': value},
         )
+
+
+class DiscoveredHostsTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.DiscoveredHosts`."""
+
+    def setUp(self):
+        """Set ``self.discovered_hosts``."""
+        self.discovered_hosts = entities.DiscoveredHosts(
+            config.ServerConfig('http://example.com'),
+            id=gen_integer(min_value=1),
+        )
+
+    def test_upload_facts(self):
+        """Call :meth:`nailgun.entities.DiscoveredHosts.upload_facts`."""
+        with mock.patch.object(client, 'post') as client_post:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'results': gen_integer()},  # not realistic
+            ) as handler:
+                params = {'facts': {'name': gen_integer(),
+                                    'ipaddress': gen_integer(),
+                                    'discovery_bootif': gen_integer()}}
+                response = self.discovered_hosts.upload_facts(params)
+        self.assertEqual(client_post.call_count, 1)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
 
 
 class HostGroupTestCase(TestCase):
