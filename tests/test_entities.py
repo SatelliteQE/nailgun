@@ -922,6 +922,7 @@ class UpdatePayloadTestCase(TestCase):
         """Instantiate a variety of entities and call ``update_payload``."""
         entities_payloads = [
             (entities.ConfigTemplate, {'config_template': {}}),
+            (entities.DiscoveredHosts, {'discovered_host': {}}),
             (entities.Domain, {'domain': {}}),
             (entities.Host, {'host': {}}),
             (entities.HostGroup, {'hostgroup': {}}),
@@ -1119,19 +1120,14 @@ class DiscoveredHostsTestCase(TestCase):
             id=gen_integer(min_value=1),
         )
 
-    def test_upload_facts(self):
-        """Call :meth:`nailgun.entities.DiscoveredHosts.upload_facts`."""
+    def test_facts(self):
+        """Call :meth:`nailgun.entities.DiscoveredHosts.facts`."""
         with mock.patch.object(client, 'post') as client_post:
-            with mock.patch.object(
-                entities,
-                '_handle_response',
-                return_value={'results': gen_integer()},  # not realistic
-            ) as handler:
-                params = {'facts': {'name': gen_integer(),
-                                    'ipaddress': gen_integer(),
-                                    'discovery_bootif': gen_integer()}}
-                response = self.discovered_hosts.upload_facts(params)
+            with mock.patch.object(entities, '_handle_response') as handler:
+                payload = gen_integer()
+                response = self.discovered_hosts.facts(payload)
         self.assertEqual(client_post.call_count, 1)
+        self.assertEqual(client_post.call_args[0][1], payload)
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value, response)
 

@@ -590,13 +590,19 @@ class DiscoveredHosts(
 
         """
         return {
+            u'discovered_host': super(DiscoveredHosts, self).create_payload()
+        }
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {
             u'discovered_host': super(
                 DiscoveredHosts,
                 self
-            ).create_payload()
+            ).update_payload(fields)
         }
 
-    def upload_facts(self, payload):
+    def facts(self, payload):
         """Helper to update facts for discovered host, and create the host.
 
         :param payload: Parameters that are encoded to JSON and passed in
