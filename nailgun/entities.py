@@ -544,6 +544,76 @@ class AbstractComputeResource(
         }
 
 
+class DiscoveredHosts(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
+    """A representation of a Foreman Discovered Host entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+            'ip': entity_fields.IPAddressField(required=True),
+            'mac': entity_fields.MACAddressField(required=True),
+        }
+        self._meta = {
+            'api_path': '/api/v2/discovered_hosts',
+            'server_modes': ('sat'),
+        }
+        super(DiscoveredHosts, self).__init__(server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        facts
+            /discovered_hosts/facts
+
+        ``super`` is called otherwise.
+
+        """
+        if which == 'facts':
+            return '{0}/{1}'.format(
+                super(DiscoveredHosts, self).path(which='base'),
+                which
+            )
+        return super(DiscoveredHosts, self).path(which)
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict.
+
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
+
+        """
+        return {
+            u'discovered_host': super(
+                DiscoveredHosts,
+                self
+            ).create_payload()
+        }
+
+    def upload_facts(self, payload):
+        """Helper to update facts for discovered host, and create the host.
+
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        response = client.post(
+            self.path('facts'),
+            payload,
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config)
+
+
 class DockerComputeResource(AbstractComputeResource):
     """A representation of a Docker Compute Resource entity."""
 
