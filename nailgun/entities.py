@@ -481,7 +481,11 @@ class ComputeProfile(
 
 
 class AbstractComputeResource(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Compute Resource entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -542,6 +546,25 @@ class AbstractComputeResource(
                 self
             ).create_payload()
         }
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {
+            u'compute_resource': super(
+                AbstractComputeResource,
+                self
+            ).update_payload(fields)
+        }
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1250922
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1250922>`_.
+
+        """
+        self.update_json(fields)
+        return self.read()
 
 
 class DiscoveredHosts(
