@@ -3388,7 +3388,7 @@ class Subscription(
             an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
+        response = client.post(
             self._org_path('upload', payload),
             payload,
             files={'content': manifest},

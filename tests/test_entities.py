@@ -1573,13 +1573,13 @@ class SubscriptionTestCase(TestCase):
         manifest = gen_integer()
         with mock.patch.object(self.subscription, '_org_path') as org_path:
             with mock.patch.object(entities, '_handle_response') as handler:
-                with mock.patch.object(client, 'put') as put:
+                with mock.patch.object(client, 'post') as post:
                     response = self.subscription.upload(self.payload, manifest)
         self.assertEqual(org_path.call_count, 1)
-        self.assertEqual(put.call_count, 1)
+        self.assertEqual(post.call_count, 1)
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(org_path.call_args[0], ('upload', self.payload))
-        self.assertEqual(put.call_args[1]['files'], {'content': manifest})
+        self.assertEqual(post.call_args[1]['files'], {'content': manifest})
         self.assertEqual(handler.return_value, response)
 
 
