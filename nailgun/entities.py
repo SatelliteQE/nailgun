@@ -263,10 +263,10 @@ class ActivationKey(
             )
         return super(ActivationKey, self).path(which)
 
-    def add_subscriptions(self, params):
+    def add_subscriptions(self, payload):
         """Helper for adding subscriptions to activation key.
 
-        :param params: Parameters that are encoded to JSON and passed in
+        :param payload: Parameters that are encoded to JSON and passed in
             with the request. See the API documentation page for a list of
             parameters and their descriptions.
         :returns: The server's response, with all JSON decoded.
@@ -276,16 +276,17 @@ class ActivationKey(
         """
         response = client.put(
             self.path('add_subscriptions'),
-            params,
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
-    def content_override(self, content_label, value):
+    def content_override(self, payload):
         """Override the content of an activation key.
 
-        :param content_label: Label for the new content.
-        :param value: The new content for this activation key.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
@@ -293,10 +294,7 @@ class ActivationKey(
         """
         response = client.put(
             self.path('content_override'),
-            {'content_override': {
-                'content_label': content_label,
-                'value': value,
-            }},
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
@@ -913,45 +911,34 @@ class AbstractDockerContainer(
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def power(self, power_action):
+    def power(self, payload):
         """Run a power operation on a container.
 
-        :param power_action: One of 'start', 'stop' or 'status'.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :returns: Information about the current state of the container.
 
         """
-        power_actions = ('start', 'stop', 'status')
-        if power_action not in power_actions:
-            raise ValueError('Received {0} but expected one of {1}'.format(
-                power_action, power_actions
-            ))
         response = client.put(
             self.path(which='power'),
-            {u'power_action': power_action},
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
 
-    def logs(self, stdout=None, stderr=None, tail=None):
+    def logs(self, payload=None):
         """Get logs from this container.
 
-        :param stdout: ???
-        :param stderr: ???
-        :param tail: How many lines should be tailed? Server does 100 by
-            default.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :returns: The server's response, with all JSON decoded.
 
         """
-        data = {}
-        if stdout is not None:
-            data['stdout'] = stdout
-        if stderr is not None:
-            data['stderr'] = stderr
-        if tail is not None:
-            data['tail'] = tail
         response = client.get(
             self.path(which='logs'),
-            data=data,
+            data=payload if payload else {},
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
@@ -1025,10 +1012,12 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
             )
         return super(ContentViewVersion, self).path(which)
 
-    def promote(self, environment_id, synchronous=True):
+    def promote(self, payload, synchronous=True):
         """Helper for promoting an existing published content view.
 
-        :param environment_id: The environment Id to promote to.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return a task ID otherwise.
@@ -1039,7 +1028,7 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
         """
         response = client.post(
             self.path('promote'),
-            {u'environment_id': environment_id},
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
@@ -1317,7 +1306,7 @@ class ContentView(
             )
         return super(ContentView, self).path(which)
 
-    def publish(self, synchronous=True):
+    def publish(self, payload=None, synchronous=True):
         """Helper for publishing an existing content view.
 
         :param synchronous: What should happen if the server returns an HTTP
@@ -1328,26 +1317,15 @@ class ContentView(
             JSON response otherwise.
 
         """
+        if payload is None:
+            payload = {}
+        payload['id'] = self.id  # pylint:disable=no-member
         response = client.post(
             self.path('publish'),
-            {u'id': self.id},  # pylint:disable=no-member
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
-
-    def set_repository_ids(self, repo_ids):
-        """Give this content view some repositories.
-
-        :param repo_ids: A list of repository IDs.
-        :returns: The server's response, with all JSON decoded.
-
-        """
-        response = client.put(
-            self.path(which='self'),
-            {u'repository_ids': repo_ids},
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
 
     def available_puppet_modules(self):
         """Get puppet modules available to be added to the content view.
@@ -1361,31 +1339,19 @@ class ContentView(
         )
         return _handle_response(response, self._server_config)
 
-    def add_puppet_module(self, author, name):
-        """Add a puppet module to the content view.
-
-        :param author: The author of the puppet module.
-        :param name: The name of the puppet module.
-        :returns: The server's response, with all JSON decoded.
-
-        """
-        response = client.post(
-            self.path('content_view_puppet_modules'),
-            {u'author': author, u'name': name},
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
-
-    def copy(self, name):
+    def copy(self, payload):
         """Clone provided content view.
 
-        :param name: The name for new cloned content view.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :returns: The server's response, with all JSON decoded.
 
         """
+        payload['id'] = self.id  # pylint:disable=no-member
         response = client.post(
             self.path('copy'),
-            {u'id': self.id, u'name': name},  # pylint:disable=no-member
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
@@ -2410,8 +2376,6 @@ class Organization(
             /organizations/<id>/subscriptions/refresh_manifest
         sync_plans
             /organizations/<id>/sync_plans
-        products
-            /organizations/<id>/products
         subscriptions
             /organizations/<id>/subscriptions
 
@@ -2419,7 +2383,6 @@ class Organization(
 
         """
         if which in (
-                'products',
                 'subscriptions/delete_manifest',
                 'subscriptions/refresh_manifest',
                 'subscriptions/upload',
@@ -2431,130 +2394,6 @@ class Organization(
                 which
             )
         return super(Organization, self).path(which)
-
-    def subscriptions(self):
-        """List the organization's subscriptions.
-
-        :returns: A list of available subscriptions.
-        :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP
-            4XX or 5XX status code.
-        :raises: ``ValueError`` If the response JSON could not be decoded.
-
-        """
-        response = client.get(
-            self.path('subscriptions'),
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)['results']
-
-    def upload_manifest(self, path, repository_url=None, synchronous=True):
-        """Helper method that uploads a subscription manifest file
-
-        :param path: Local path of the manifest file
-        :param repository_url: Optional repository URL
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
-        :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP
-            4XX or 5XX status code.
-        :raises: ``ValueError`` If the response JSON could not be decoded.
-        :raises: ``nailgun.entity_mixins.TaskTimedOutError`` if an HTTP 202
-            response is received, ``synchronous is True`` and the task
-            completes with any result other than "success".
-
-        """
-        data = None
-        if repository_url is not None:
-            data = {u'repository_url': repository_url}
-        with open(path, 'rb') as manifest:
-            response = client.post(
-                self.path('subscriptions/upload'),
-                data,
-                files={'content': manifest},
-                **self._server_config.get_client_kwargs()
-            )
-        return _handle_response(response, self._server_config, synchronous)
-
-    def delete_manifest(self, synchronous=True):
-        """Helper method that deletes an organization's manifest
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
-        :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP
-            4XX or 5XX status code.
-        :raises: ``ValueError`` If the response JSON could not be decoded.
-        :raises: ``nailgun.entity_mixins.TaskTimedOutError`` if an HTTP 202
-            response is received, ``synchronous is True`` and the task
-            completes with any result other than "success".
-
-        """
-        response = client.post(
-            self.path('subscriptions/delete_manifest'),
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config, synchronous)
-
-    def refresh_manifest(self, synchronous=True):
-        """Helper method that refreshes an organization's manifest
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
-        :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP
-            4XX or 5XX status code.
-        :raises: ``ValueError`` If the response JSON could not be decoded.
-        :raises: ``nailgun.entity_mixins.TaskTimedOutError`` if an HTTP 202
-            response is received, ``synchronous is True`` and the task
-            completes with any result other than "success".
-
-        """
-        response = client.put(
-            self.path('subscriptions/refresh_manifest'),
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config, synchronous)
-
-    def sync_plan(self, name, interval):
-        """Helper for creating a sync_plan.
-
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        response = client.post(
-            self.path('sync_plans'),
-            {
-                u'interval': interval,
-                u'name': name,
-                u'sync_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            },
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
-
-    def list_rhproducts(self, per_page=None):
-        """Lists all the RedHat Products after the importing of a manifest.
-
-        :param per_page: The no.of results to be shown per page.
-
-        """
-        response = client.get(
-            self.path('products'),
-            data={u'per_page': per_page},
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)['results']
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
@@ -2703,20 +2542,13 @@ class Product(
 
         The format of the returned path depends on the value of ``which``:
 
-        repository_sets
-            /products/<product_id>/repository_sets
-        repository_sets/<id>/enable
-            /products/<product_id>/repository_sets/<id>/enable
-        repository_sets/<id>/disable
-            /products/<product_id>/repository_sets/<id>/disable
         sync
             /products/<product_id>/sync
 
         ``super`` is called otherwise.
 
         """
-        if which is not None and (
-                which.startswith('repository_sets') or which == 'sync'):
+        if which == 'sync':
             return '{0}/{1}'.format(
                 super(Product, self).path(which='self'),
                 which,
@@ -2736,131 +2568,6 @@ class Product(
             org = _get_org(self._server_config, attrs['organization']['label'])
             attrs['organization'] = org.get_values()
         return super(Product, self).read(entity, attrs, ignore)
-
-    def list_repositorysets(self, per_page=None):
-        """Lists all the RepositorySets in a Product.
-
-        :param per_page: The no.of results to be shown per page.
-
-        """
-        response = client.get(
-            self.path('repository_sets'),
-            data={u'per_page': per_page},
-            **self._server_config.get_client_kwargs()
-        )
-        response.raise_for_status()
-        return response.json()['results']
-
-    def fetch_rhproduct_id(self, name, org_id):
-        """Fetches the RedHat Product Id for a given Product name.
-
-        To be used for the Products created when manifest is imported.
-        RedHat Product Id could vary depending upon other custom products.
-        So, we use the product name to fetch the RedHat Product Id.
-
-        :param org_id: The Organization Id.
-        :param name: The RedHat product's name who's ID is to be fetched.
-        :returns: The RedHat Product Id is returned.
-
-        """
-        response = client.get(
-            self.path(which='base'),
-            data={u'organization_id': org_id, u'name': name},
-            **self._server_config.get_client_kwargs()
-        )
-        response.raise_for_status()
-        results = response.json()['results']
-        if len(results) != 1:
-            raise APIResponseError(
-                "The length of the results is:", len(results))
-        return results[0]['id']
-
-    def fetch_reposet_id(self, name):
-        """Fetches the RepositorySet Id for a given name.
-
-        RedHat Products do not directly contain Repositories.
-        Product first contains many RepositorySets and each
-        RepositorySet contains many Repositories.
-        RepositorySet Id could vary. So, we use the reposet name
-        to fetch the RepositorySet Id.
-
-        :param name: The RepositorySet's name.
-        :returns: The RepositorySet's Id is returned.
-
-        """
-        response = client.get(
-            self.path('repository_sets'),
-            data={u'name': name},
-            **self._server_config.get_client_kwargs()
-        )
-        response.raise_for_status()
-        results = response.json()['results']
-        if len(results) != 1:
-            raise APIResponseError(
-                "The length of the results is:", len(results))
-        return results[0]['id']
-
-    def enable_rhrepo(self, base_arch,
-                      release_ver, reposet_id, synchronous=True):
-        """Enables the RedHat Repository
-
-        RedHat Repos needs to be enabled first, so that we can sync it.
-
-        :param reposet_id: The RepositorySet Id.
-        :param base_arch: The architecture type of the repo to enable.
-        :param release_ver: The release version type of the repo to enable.
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
-
-        """
-        response = client.put(
-            self.path('repository_sets/{0}/enable'.format(reposet_id)),
-            {u'basearch': base_arch, u'releasever': release_ver},
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config, synchronous)
-
-    def disable_rhrepo(self, base_arch,
-                       release_ver, reposet_id, synchronous=True):
-        """Disables the RedHat Repository
-
-        :param reposet_id: The RepositorySet Id.
-        :param base_arch: The architecture type of the repo to disable.
-        :param release_ver: The release version type of the repo to disable.
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
-
-        """
-        response = client.put(
-            self.path('repository_sets/{0}/disable'.format(reposet_id)),
-            {u'basearch': base_arch, u'releasever': release_ver},
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config, synchronous)
-
-    def repository_sets_available_repositories(self, reposet_id):  # noqa pylint:disable=C0103
-        """Lists available repositories for the repository set
-
-        :param reposet_id: The RepositorySet Id.
-        :returns: Returns list of available repositories for the repository set
-
-        """
-        response = client.get(
-            self.path(
-                'repository_sets/{0}/available_repositories'
-                .format(reposet_id)
-            ),
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)['results']
 
     def sync(self):
         """Synchronize :class:`repositories <Repository>` in this product."""
@@ -2991,6 +2698,7 @@ class Repository(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Repository entity."""
 
@@ -3080,60 +2788,197 @@ class Repository(
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def fetch_repoid(self, org_id, name):
-        """Fetch the repository Id.
+    def upload_content(self, content):
+        """Upload a file or files to the current repository.
 
-        This is required for RedHat Repositories, as products, reposets
-        and repositories get automatically populated upon the manifest import.
+        The syntax for uploading a single file is straightforward::
 
-        :param org_id: The org Id for which repository listing is required.
-        :param name: The repository name who's ID has to be searched.
-        :return: Returns the repository ID.
-        :raises: ``APIResponseError`` If the API does not return any results.
+            with open('my_content.rpm') as content:
+                repo.upload_content(content)
 
-        """
-        for _ in range(5):
-            response = client.get(
-                self.path(which=None),
-                data={u'organization_id': org_id, u'name': name},
-                **self._server_config.get_client_kwargs()
-            )
-            response.raise_for_status()
-            results = response.json()['results']
-            if len(results) == 0:
-                sleep(5)
-            else:
-                break
-        if len(results) != 1:
-            raise APIResponseError(
-                'Found {0} repositories named {1} in organization {2}: {3} '
-                .format(len(results), name, org_id, results)
-            )
-        return results[0]['id']
+        To upload multiple files, pass in a list as described in `POST Multiple
+        Multipart-Encoded Files`_::
 
-    def upload_content(self, handle):
-        """Upload a file to the current repository.
+            repo.upload_content([
+                ('content', ('first.rpm', open('first.rpm')))
+                ('content', ('second.rpm', open('second.rpm')))
+            ])
 
-        :param handle: A file object, such as the one returned by
-            ``open('path', 'rb')``.
+        :param content: Either a file-like object or a list.
         :returns: The JSON-decoded response.
         :raises nailgun.entities.APIResponseError: If the response has a status
             other than "success".
 
+        .. _POST Multiple Multipart-Encoded Files:
+            http://docs.python-requests.org/en/latest/user/advanced/#post-multiple-multipart-encoded-files
+
         """
+        if isinstance(content, list):
+            files = content
+        else:
+            files = {'content': content}
         response = client.post(
             self.path('upload_content'),
-            files={'content': handle},
+            files=files,
             **self._server_config.get_client_kwargs()
         )
-        response.raise_for_status()
-        response_json = response.json()
+        response_json = _handle_response(response, self._server_config)
         if response_json['status'] != 'success':
             raise APIResponseError(
+                # pylint:disable=no-member
                 'Received error when uploading file {0} to repository {1}: {2}'
-                .format(handle, self.id, response_json)  # pylint:disable=E1101
+                .format(content, self.id, response_json)
             )
         return response_json
+
+
+class RepositorySet(
+        Entity,
+        EntityReadMixin,
+        EntitySearchMixin):
+    """ A representation of a Repository Set entity"""
+    def __init__(self, server_config=None, **kwargs):
+        _check_for_value('product', kwargs)
+        self._fields = {
+            'contentUrl': entity_fields.URLField(required=True),
+            'gpgUrl': entity_fields.URLField(required=True),
+            'label': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(required=True),
+            'product': entity_fields.OneToOneField(Product, required=True),
+            'repositories': entity_fields.OneToManyField(Repository),
+            'type': entity_fields.StringField(
+                choices=('kickstart', 'yum', 'file'),
+                default='yum',
+                required=True,
+            ),
+            'vendor': entity_fields.StringField(required=True),
+        }
+        super(RepositorySet, self).__init__(server_config, **kwargs)
+        self._meta = {
+            # pylint:disable=no-member
+            'api_path': '{0}/repository_sets'.format(self.product.path()),
+        }
+
+    def available_repositories(self):
+        """Lists available repositories for the repository set
+
+        :returns: Returns list of available repositories for the repository set
+
+        """
+        response = client.get(
+            self.path('available_repositories'),
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config)['results']
+
+    def enable(self, payload, synchronous=True):
+        """Enables the RedHat Repository
+
+        RedHat Repos needs to be enabled first, so that we can sync it.
+
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return JSON response otherwise.
+        :returns: Returns information of the async task if an HTTP
+            202 response was received and synchronus set to ``True``.
+            Return JSON response otherwise.
+
+        """
+        response = client.put(
+            self.path('enable'),
+            payload,
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config, synchronous)
+
+    def disable(self, payload, synchronous=True):
+        """Disables the RedHat Repository
+
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return JSON response otherwise.
+        :returns: Returns information of the async task if an HTTP
+            202 response was received and synchronus set to ``True``.
+            Return JSON response otherwise.
+
+        """
+        response = client.put(
+            self.path('disable'),
+            payload,
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config, synchronous)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        available_repositories
+            /products/<product_id>/repository_sets/<id>/available_repositories
+        enable
+            /products/<product_id>/repository_sets/<id>/enable
+        disable
+            /products/<product_id>/repository_sets/<id>/disable
+
+        ``super`` is called otherwise.
+
+        """
+        if which in (
+                'available_repositories',
+                'enable',
+                'disable',
+        ):
+            return '{0}/{1}'.format(
+                super(RepositorySet, self).path(which='self'),
+                which
+            )
+        return super(RepositorySet, self).path(which)
+
+    def read(self, entity=None, attrs=None, ignore=None):
+        """Provide a default value for ``entity``.
+
+        By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
+        default value for ``entity`` like so::
+
+            entity = type(self)()
+
+        However, :class:`RepositorySet` requires that a ``product`` be
+        provided, so this technique will not work. Do this instead::
+
+            entity = type(self)(product=self.product.id)
+
+        """
+        # read() should not change the state of the object it's called on, but
+        # super() alters the attributes of any entity passed in. Creating a new
+        # object and passing it to super() lets this one avoid changing state.
+        if entity is None:
+            entity = type(self)(
+                self._server_config,
+                product=self.product,  # pylint:disable=no-member
+            )
+        if ignore is None:
+            ignore = set()
+        ignore.add('product')
+        return super(RepositorySet, self).read(entity, attrs, ignore)
+
+    def search_normalize(self, results):
+        """Provide a value for `product` field.
+
+        Method ``search`` will create entities from search results. Search
+        results do not contain `product` field, which is required for
+        ``RepositorySet`` entity initialization.
+
+        """
+        for result in results:
+            result['product_id'] = self.product.id  # pylint:disable=no-member
+        return super(RepositorySet, self).search_normalize(results)
 
 
 class RHCIDeployment(
@@ -3212,27 +3057,10 @@ class RHCIDeployment(
             )
         return super(RHCIDeployment, self).path(which)
 
-    def add_hypervisors(self, hypervisor_ids):
-        """Helper for creating an RHCI deployment.
-
-        :param hypervisor_ids: A list of RHEV hypervisor ids to be added to the
-            deployment.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        response = client.put(
-            self.path(),
-            {'discovered_host_ids': hypervisor_ids},
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
-
-    def deploy(self, params):
+    def deploy(self, payload):
         """Kickoff the RHCI deployment.
 
-        :param params: Parameters that are encoded to JSON and passed in
+        :param payload: Parameters that are encoded to JSON and passed in
             with the request. See the API documentation page for a list of
             parameters and their descriptions.
         :returns: The server's response, with all JSON decoded.
@@ -3242,7 +3070,7 @@ class RHCIDeployment(
         """
         response = client.put(
             self.path('deploy'),
-            params,
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config)
@@ -3428,24 +3256,145 @@ class Subnet(
         return super(Subnet, self).read(entity, attrs, ignore)
 
 
-class Subscription(Entity):
+class Subscription(
+        Entity,
+        EntityReadMixin,
+        EntitySearchMixin):
     """A representation of a Subscription entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        # NOTE: When making an HTTP POST call, `pool_uuid` must be renamed to
-        # `id`. This logic can be packed in to create_payload().
         self._fields = {
             'activation_key': entity_fields.OneToOneField(ActivationKey),
-            'pool_uuid': entity_fields.StringField(),
+            'organization': entity_fields.OneToOneField(Organization),
             'quantity': entity_fields.IntegerField(),
             'subscriptions': entity_fields.OneToManyField(Subscription),
             'system': entity_fields.OneToOneField(System),
         }
         self._meta = {
-            'api_path': 'katello/api/v2/subscriptions/:id',
+            'api_path': 'katello/api/v2/subscriptions',
             'server_modes': ('sat', 'sam'),
         }
         super(Subscription, self).__init__(server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        delete_manifest
+            /katello/api/v2/organizations/:organization_id/subscriptions/delete_manifest
+        manifest_history
+            /katello/api/v2/organizations/:organization_id/subscriptions/manifest_history
+        refresh_manifest
+            /katello/api/v2/organizations/:organization_id/subscriptions/refresh_manifest
+        upload
+            /katello/api/v2/organizations/:organization_id/subscriptions/upload
+
+        """
+        if which in (
+                'delete_manifest',
+                'manifest_history',
+                'refresh_manifest',
+                'upload'):
+            _check_for_value('organization', self.get_values())
+            return '{0}/subscriptions/{1}'.format(
+                self.organization.path('self'),  # pylint:disable=no-member
+                which
+            )
+        return super(Subscription, self).path(which)
+
+    def _org_path(self, which, payload):
+        """A helper method for generating paths with organization IDs in them.
+
+        :param which: A path such as "manifest_history" that has an
+            organization ID in it.
+        :param payload: A dict with an "organization_id" key in it.
+        :returns: A string. The requested path.
+
+        """
+        return Subscription(
+            self._server_config,
+            organization=payload['organization_id'],
+        ).path(which)
+
+    def delete_manifest(self, payload, synchronous=True):
+        """Delete manifest from Red Hat provider.
+
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        response = client.post(
+            self._org_path('delete_manifest', payload),
+            payload,
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config, synchronous)
+
+    def manifest_history(self, payload, synchronous=True):
+        """Obtain manifest history for subscriptions.
+
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        response = client.get(
+            self._org_path('manifest_history', payload),
+            payload,
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config, synchronous)
+
+    def refresh_manifest(self, payload, synchronous=True):
+        """Refresh previously imported manifest for Red Hat provider.
+
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        response = client.put(
+            self._org_path('refresh_manifest', payload),
+            payload,
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config, synchronous)
+
+    def upload(self, payload, manifest, synchronous=True):
+        """Upload a subscription manifest.
+
+        Here is an example of how to use this method::
+
+            with open('my_manifest.zip') as manifest:
+                sub.upload({'organization_id': org.id}, manifest)
+
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
+        :param manifest: A file-like object. The manifest file to upload.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        response = client.put(
+            self._org_path('upload', payload),
+            payload,
+            files={'content': manifest},
+            **self._server_config.get_client_kwargs()
+        )
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class SyncPlan(
@@ -3543,14 +3492,16 @@ class SyncPlan(
             )
         return super(SyncPlan, self).path(which)
 
-    def add_products(self, product_ids, synchronous=True):
+    def add_products(self, payload, synchronous=True):
         """Add products to this sync plan.
 
         .. NOTE:: The ``synchronous`` argument has no effect in certain
             versions of Satellite. See `Bugzilla #1199150
             <https://bugzilla.redhat.com/show_bug.cgi?id=1199150>`_.
 
-        :param product_ids: A list of product IDs to add to this sync plan.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's reponse otherwise.
@@ -3559,19 +3510,21 @@ class SyncPlan(
         """
         response = client.put(
             self.path('add_products'),
-            {'product_ids': product_ids},
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def remove_products(self, product_ids, synchronous=True):
+    def remove_products(self, payload, synchronous=True):
         """Remove products from this sync plan.
 
         .. NOTE:: The ``synchronous`` argument has no effect in certain
             versions of Satellite. See `Bugzilla #1199150
             <https://bugzilla.redhat.com/show_bug.cgi?id=1199150>`_.
 
-        :param product_ids: A list of product IDs to remove from this syn plan.
+        :param payload: Parameters that are encoded to JSON and passed in
+            with the request. See the API documentation page for a list of
+            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's reponse otherwise.
@@ -3580,7 +3533,7 @@ class SyncPlan(
         """
         response = client.put(
             self.path('remove_products'),
-            {'product_ids': product_ids},
+            payload,
             **self._server_config.get_client_kwargs()
         )
         return _handle_response(response, self._server_config, synchronous)
