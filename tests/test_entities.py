@@ -873,6 +873,7 @@ class UpdateTestCase(TestCase):
     def test_generic(self):
         """Call ``update`` on a variety of entities."""
         entities_ = (
+            entities.AbstractComputeResource(self.cfg),
             entities.Architecture(self.cfg),
             entities.ConfigTemplate(self.cfg),
             entities.Domain(self.cfg),
@@ -921,6 +922,7 @@ class UpdatePayloadTestCase(TestCase):
     def test_generic(self):
         """Instantiate a variety of entities and call ``update_payload``."""
         entities_payloads = [
+            (entities.AbstractComputeResource, {'compute_resource': {}}),
             (entities.ConfigTemplate, {'config_template': {}}),
             (entities.DiscoveredHosts, {'discovered_host': {}}),
             (entities.Domain, {'domain': {}}),
