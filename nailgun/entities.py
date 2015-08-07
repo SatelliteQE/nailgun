@@ -31,6 +31,7 @@ from nailgun.entity_mixins import (
     EntityReadMixin,
     EntitySearchMixin,
     EntityUpdateMixin,
+    MissingValueError,
     _poll_task,
 )
 from packaging.version import Version
@@ -248,6 +249,8 @@ class ActivationKey(
             /activation_keys/<id>/releases
         remove_subscriptions
             /activation_keys/<id>/remove_subscriptions
+        subscriptions
+            /activation_keys/<id>/subscriptions
 
         ``super`` is called otherwise.
 
@@ -256,7 +259,8 @@ class ActivationKey(
                 'add_subscriptions',
                 'content_override',
                 'releases',
-                'remove_subscriptions'):
+                'remove_subscriptions',
+                'subscriptions'):
             return '{0}/{1}'.format(
                 super(ActivationKey, self).path(which='self'),
                 which
@@ -2368,6 +2372,8 @@ class Organization(
 
         The format of the returned path depends on the value of ``which``:
 
+        subscriptions
+            /organizations/<id>/subscriptions
         subscriptions/upload
             /organizations/<id>/subscriptions/upload
         subscriptions/delete_manifest
@@ -2376,18 +2382,17 @@ class Organization(
             /organizations/<id>/subscriptions/refresh_manifest
         sync_plans
             /organizations/<id>/sync_plans
-        subscriptions
-            /organizations/<id>/subscriptions
 
         Otherwise, call ``super``.
 
         """
         if which in (
+                'subscriptions',
                 'subscriptions/delete_manifest',
+                'subscriptions/manifest_history',
                 'subscriptions/refresh_manifest',
                 'subscriptions/upload',
                 'sync_plans',
-                'subscriptions',
         ):
             return '{0}/{1}'.format(
                 super(Organization, self).path(which='self'),
@@ -3297,11 +3302,44 @@ class Subscription(
                 'refresh_manifest',
                 'upload'):
             _check_for_value('organization', self.get_values())
-            return '{0}/subscriptions/{1}'.format(
-                self.organization.path('self'),  # pylint:disable=no-member
-                which
-            )
+            # pylint:disable=no-member
+            return self.organization.path('subscriptions/{0}'.format(which))
         return super(Subscription, self).path(which)
+
+    def search_raw(self, fields=None, query=None):
+        """Completely override the inherited ``search_raw`` method.
+
+        The ``GET /katello/api/v2/subscriptions`` API call is not available.
+        Instead, one of the following must be used:
+
+        * ``GET /katello/api/v2/activation_keys/<id>/subscriptions``
+        * ``GET /katello/api/v2/organizations/<id>/subscriptions``
+        * ``GET /katello/api/v2/systems/<id>/subscriptions``
+
+        Use the activation key path if ``self.activation_key`` is set, use the
+        organization path if ``self.organization`` is set, use the system path
+        if ``self.system`` is set, or raise an exception otherwise.
+
+        """
+        path = None
+        attrs = ('activation_key', 'organization', 'system')
+        for attr in attrs:
+            if hasattr(self, attr):
+                path = getattr(self, attr).path('subscriptions')
+                break
+        if path is None:
+            raise MissingValueError(
+                'A value must be provided for one of the following fields: '
+                '{0}. This is because the "GET /katello/api/v2/subscriptions" '
+                'API call is not available. See the documentation for method '
+                '`nailgun.entities.Subscription.search_raw` for details.'
+                .format(attrs)
+            )
+        return client.get(
+            path,
+            data=self.search_payload(fields, query),
+            **self._server_config.get_client_kwargs()
+        )
 
     def _org_path(self, which, payload):
         """A helper method for generating paths with organization IDs in them.
@@ -3618,10 +3656,20 @@ class System(
         .. _Bugzilla #1202917:
             https://bugzilla.redhat.com/show_bug.cgi?id=1202917
 
+        Finally, return a path in the form
+        ``katello/api/v2/systems/<uuid>/subscriptions`` if ``'subscriptions'``
+        is passed in.
+
         """
+        if which == 'subscriptions':
+            return '{0}/{1}/{2}'.format(
+                super(System, self).path('base'),
+                self.uuid,  # pylint:disable=no-member
+                which,
+            )
         if hasattr(self, 'uuid') and (which is None or which == 'self'):
             return '{0}/{1}'.format(
-                super(System, self).path(which='base'),
+                super(System, self).path('base'),
                 self.uuid  # pylint:disable=no-member
             )
         return super(System, self).path(which)
