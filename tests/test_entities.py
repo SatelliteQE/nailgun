@@ -8,6 +8,7 @@ from nailgun.entity_mixins import (
     EntityReadMixin,
     EntitySearchMixin,
     EntityUpdateMixin,
+    MissingValueError,
     NoSuchPathError,
 )
 import mock
@@ -225,6 +226,7 @@ class PathTestCase(TestCase):
                 (entities.ActivationKey, 'content_override'),
                 (entities.ActivationKey, 'releases'),
                 (entities.ActivationKey, 'remove_subscriptions'),
+                (entities.ActivationKey, 'subscriptions'),
                 (entities.ContentView, 'available_puppet_module_names'),
                 (entities.ContentView, 'content_view_puppet_modules'),
                 (entities.ContentView, 'content_view_versions'),
@@ -233,6 +235,7 @@ class PathTestCase(TestCase):
                 (entities.ContentViewVersion, 'promote'),
                 (entities.Organization, 'subscriptions'),
                 (entities.Organization, 'subscriptions/delete_manifest'),
+                (entities.Organization, 'subscriptions/manifest_history'),
                 (entities.Organization, 'subscriptions/refresh_manifest'),
                 (entities.Organization, 'subscriptions/upload'),
                 (entities.Organization, 'sync_plans'),
@@ -362,24 +365,26 @@ class PathTestCase(TestCase):
 
         Assert that the following return appropriate paths:
 
-        * ``System().path('base')``
         * ``System().path()``
-        * ``System(uuid=…).path('self')``
+        * ``System().path('base')``
         * ``System(uuid=…).path()``
+        * ``System(uuid=…).path('self')``
+        * ``System(uuid=…).path('subscriptions')``
 
         """
-        for path in (
-                entities.System(self.cfg).path('base'),
-                entities.System(self.cfg).path(),
-        ):
+        system = entities.System(self.cfg)
+        for path in (system.path(), system.path('base')):
             self.assertIn('/systems', path)
             self.assertRegex(path, 'systems$')
-        for path in (
-                entities.System(self.cfg, uuid=self.id_).path('self'),
-                entities.System(self.cfg, uuid=self.id_).path(),
-        ):
+
+        system = entities.System(self.cfg, uuid=self.id_)
+        for path in (system.path(), system.path('self')):
             self.assertIn('/systems/{}'.format(self.id_), path)
             self.assertRegex(path, '{}$'.format(self.id_))
+
+        path = system.path('subscriptions')
+        self.assertIn('/systems/{}/subscriptions'.format(self.id_), path)
+        self.assertRegex(path, '{}$'.format('subscriptions'))
 
     def test_subscription(self):
         """Test :meth:`nailgun.entities.Subscription.path`.
@@ -912,6 +917,45 @@ class ReadTestCase(TestCase):
                     entities.User(self.cfg).read(ignore=input_ignore)
                 # `call_args` is a two-tuple of (positional, keyword) args.
                 self.assertEqual(actual_ignore, read.call_args[0][2])
+
+
+class SearchRawTestCase(TestCase):
+    """Tests for :meth:`nailgun.entity_mixins.EntitySearchMixin.search_raw`."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set a server configuration at ``cls.cfg``."""
+        cls.cfg = config.ServerConfig('http://example.com')
+
+    def test_subscription_v1(self):
+        """Test :meth:`nailgun.entities.Subscription.search_raw`.
+
+        Sucessfully call the ``search_raw`` method.
+
+        """
+        kwargs_iter = (
+            {'activation_key': entities.ActivationKey(self.cfg, id=1)},
+            {'organization': entities.Organization(self.cfg, id=1)},
+            {'system': entities.System(self.cfg, uuid=1)},
+        )
+        for kwargs in kwargs_iter:
+            sub = entities.Subscription(self.cfg, **kwargs)
+            with self.subTest(sub):
+                with mock.patch.object(client, 'get') as get:
+                    with mock.patch.object(sub, 'search_payload'):
+                        sub.search_raw()
+                self.assertEqual(get.call_count, 1)
+                self.assertIn('subscriptions', get.call_args[0][0])
+
+    def test_subscription_v2(self):
+        """Test :meth:`nailgun.entities.Subscription.search_raw`.
+
+        Raise a :class:`nailgun.entity_mixins.MissingValueError` by failing to
+        provide necessary values.
+
+        """
+        with self.assertRaises(MissingValueError):
+            entities.Subscription(self.cfg).search_raw()
 
 
 class UpdateTestCase(TestCase):
