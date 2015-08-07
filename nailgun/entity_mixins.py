@@ -985,7 +985,11 @@ class EntitySearchMixin(object):
         2. Merge ``query`` in to the generated search query.
         3. Return the result.
 
-        The rules for generating a search query can be illustrated by example::
+        The rules for generating a search query can be illustrated by example.
+        Let's say that we have an entity with an
+        :class:`nailgun.entity_fields.IntegerField`, a
+        :class:`nailgun.entity_fields.OneToOneField` and a
+        :class:`nailgun.entity_fields.OneToManyField`::
 
             >>> some_entity = SomeEntity(id=1, one=2, many=[3, 4])
             >>> fields = some_entity.get_fields()
@@ -995,13 +999,28 @@ class EntitySearchMixin(object):
             True
             >>> isinstance(fields['many'], OneToManyField)
             True
-            >>> some_entity.search_payload()  # Field types determine names.
+
+        This method appends "_id" and "_ids" on to the names of each
+        ``OneToOneField`` and ``OneToManyField``, respectively::
+
+            >>> some_entity.search_payload()
             {'id': 1, 'one_id': 2, 'many_ids': [3, 4]}
-            >>> some_entity.search_payload({'id'})  # i.e. fields=set(['id'])
+
+        By default, all fields are used. But you can specify a set of field
+        names to use::
+
+            >>> some_entity.search_payload({'id'})
             {'id': 1}
-            >>> some_entity.search_payload(query={'id': 5})  # gen, then merge
+            >>> some_entity.search_payload({'one'})
+            {'one_id': 2}
+            >>> some_entity.search_payload({'id', 'one'})
+            {'id': 1, 'one_id': 2}
+
+        If a ``query`` is specified, it is merged in to the generated query::
+
+            >>> some_entity.search_payload(query={'id': 5})
             {'id': 5, 'one_id': 2, 'many_ids': [3, 4]}
-            >>> some_entity.search_payload(query={'per_page': 1000})  # same
+            >>> some_entity.search_payload(query={'per_page': 1000})
             {'id': 1, 'one_id': 2, 'many_ids': [3, 4], 'per_page': 1000}
 
         .. WARNING:: This method currently generates an extremely naive search
