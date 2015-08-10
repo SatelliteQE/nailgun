@@ -1089,6 +1089,7 @@ class GenericTestCase(TestCase):
             (entities.ContentView(**generic).publish, 'post'),
             (entities.ContentViewVersion(**generic).promote, 'post'),
             (entities.DiscoveredHosts(cfg).facts, 'post'),
+            (entities.Product(**generic).sync, 'post'),
         )
 
     def test_generic(self):
@@ -1224,26 +1225,6 @@ class HostGroupTestCase(TestCase):
                 'parent_id': None,
             },
         )
-
-
-class ProductTestCase(TestCase):
-    """Tests for :class:`nailgun.entities.Product`."""
-
-    def setUp(self):
-        """Set ``self.product``."""
-        self.product = entities.Product(
-            config.ServerConfig('http://example.com'),
-            id=gen_integer(min_value=1),
-        )
-
-    def test_sync(self):
-        """Call :meth:`nailgun.entities.Product.sync`."""
-        with mock.patch.object(client, 'post') as client_post:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                response = self.product.sync()
-        self.assertEqual(client_post.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(response, handler.return_value)
 
 
 class RepositoryTestCase(TestCase):
