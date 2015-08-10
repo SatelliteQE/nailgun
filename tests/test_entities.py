@@ -1090,6 +1090,7 @@ class GenericTestCase(TestCase):
             (entities.ContentViewVersion(**generic).promote, 'post'),
             (entities.DiscoveredHosts(cfg).facts, 'post'),
             (entities.Product(**generic).sync, 'post'),
+            (entities.Repository(**generic).sync, 'post'),
         )
 
     def test_generic(self):
@@ -1237,61 +1238,36 @@ class RepositoryTestCase(TestCase):
             id=gen_integer(min_value=1),
         )
 
-    def test_sync(self):
-        """Call :meth:`nailgun.entities.Repository.sync`."""
-        with mock.patch.object(client, 'post') as post:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                self.repo.sync()
-        self.assertEqual(post.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-
     def test_upload_content_v1(self):
         """Call :meth:`nailgun.entities.Repository.upload_content`.
 
-        Assert that the ``content`` argument is wrapped in a dict before being
-        passed to the server.
+        Make the (mock) server return a "success" status. Make the same
+        assertions as for
+        :meth:`tests.test_entities.GenericTestCase.test_generic`.
 
         """
-        content = gen_integer()
+        kwargs = {'kwarg': gen_integer()}
         with mock.patch.object(client, 'post') as post:
             with mock.patch.object(
                 entities,
                 '_handle_response',
                 return_value={'status': 'success'},
             ) as handler:
-                response = self.repo.upload_content(content)
+                response = self.repo.upload_content(**kwargs)
         self.assertEqual(post.call_count, 1)
-        self.assertEqual(post.call_args[1]['files'], {'content': content})
+        self.assertEqual(len(post.call_args[0]), 1)
+        self.assertEqual(post.call_args[1], kwargs)
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value, response)
 
     def test_upload_content_v2(self):
         """Call :meth:`nailgun.entities.Repository.upload_content`.
 
-        Assert that the ``content`` argument is passed directly to the server
-        if it is a list.
+        Assert that :class:`nailgun.entities.APIResponseError` is raised when
+        the (mock) server fails to return a "success" status.
 
         """
-        content = [gen_integer()]
-        with mock.patch.object(client, 'post') as post:
-            with mock.patch.object(
-                entities,
-                '_handle_response',
-                return_value={'status': 'success'},
-            ) as handler:
-                response = self.repo.upload_content(content)
-        self.assertEqual(post.call_count, 1)
-        self.assertEqual(post.call_args[1]['files'], content)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
-
-    def test_upload_content_v3(self):
-        """Trigger an :class:`nailgun.entities.APIResponseError`.
-
-        Assert that an ``APIResponseError`` is raised if the server's response
-        has a status of "failure".
-
-        """
+        kwargs = {'kwarg': gen_integer()}
         with mock.patch.object(client, 'post') as post:
             with mock.patch.object(
                 entities,
@@ -1299,8 +1275,10 @@ class RepositoryTestCase(TestCase):
                 return_value={'status': 'failure'},
             ) as handler:
                 with self.assertRaises(entities.APIResponseError):
-                    self.repo.upload_content('content')
+                    self.repo.upload_content(**kwargs)
         self.assertEqual(post.call_count, 1)
+        self.assertEqual(len(post.call_args[0]), 1)
+        self.assertEqual(post.call_args[1], kwargs)
         self.assertEqual(handler.call_count, 1)
 
 

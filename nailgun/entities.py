@@ -2785,65 +2785,64 @@ class Repository(
             self._fields['docker_upstream_name'].required = True
         super(Repository, self).create_missing()
 
-    def sync(self, synchronous=True):
+    def sync(self, synchronous=True, **kwargs):
         """Helper for syncing an existing repository.
 
-        :param synchronous: What should happen if the server returns an
-            HTTP 202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.post(
-            self.path('sync'),
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('sync'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
-    def upload_content(self, content):
+    def upload_content(self, synchronous=True, **kwargs):
         """Upload a file or files to the current repository.
 
-        The syntax for uploading a single file is straightforward::
+        Here is an example of how to upload content::
 
             with open('my_content.rpm') as content:
-                repo.upload_content(content)
+                repo.upload_content(files={'content': content})
 
-        To upload multiple files, pass in a list as described in `POST Multiple
-        Multipart-Encoded Files`_::
+        This method accepts the same keyword arguments as Requests. As a
+        result, the following examples can be adapted for use here:
 
-            repo.upload_content([
-                ('content', ('first.rpm', open('first.rpm')))
-                ('content', ('second.rpm', open('second.rpm')))
-            ])
+        * `POST a Multipart-Encoded File`_
+        * `POST Multiple Multipart-Encoded Files`_
 
-        :param content: Either a file-like object or a list.
-        :returns: The JSON-decoded response.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
         :raises nailgun.entities.APIResponseError: If the response has a status
             other than "success".
 
+        .. _POST a Multipart-Encoded File:
+            http://docs.python-requests.org/en/latest/user/quickstart/#post-a-multipart-encoded-file
         .. _POST Multiple Multipart-Encoded Files:
             http://docs.python-requests.org/en/latest/user/advanced/#post-multiple-multipart-encoded-files
 
         """
-        if isinstance(content, list):
-            files = content
-        else:
-            files = {'content': content}
-        response = client.post(
-            self.path('upload_content'),
-            files=files,
-            **self._server_config.get_client_kwargs()
-        )
-        response_json = _handle_response(response, self._server_config)
-        if response_json['status'] != 'success':
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('upload_content'), **kwargs)
+        json = _handle_response(response, self._server_config, synchronous)
+        if json['status'] != 'success':
             raise APIResponseError(
                 # pylint:disable=no-member
                 'Received error when uploading file {0} to repository {1}: {2}'
-                .format(content, self.id, response_json)
+                .format(kwargs.get('files'), self.id, json)
             )
-        return response_json
+        return json
 
 
 class RepositorySet(
