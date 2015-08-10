@@ -1084,6 +1084,9 @@ class GenericTestCase(TestCase):
             (entities.AbstractDockerContainer(**generic).power, 'put'),
             (entities.ActivationKey(**generic).add_subscriptions, 'put'),
             (entities.ActivationKey(**generic).content_override, 'put'),
+            (entities.ContentView(**generic).available_puppet_modules, 'get'),
+            (entities.ContentView(**generic).copy, 'post'),
+            (entities.ContentView(**generic).publish, 'post'),
             (entities.ContentViewVersion(**generic).promote, 'post'),
             (entities.DiscoveredHosts(cfg).facts, 'post'),
         )
@@ -1153,63 +1156,6 @@ class AbstractDockerContainerTestCase(TestCase):
         for attr in ['repository_name', 'tag']:
             self.assertIn(attr, docker_hub)
             self.assertNotIn(attr, abstract_docker)
-
-
-class ContentViewTestCase(TestCase):
-    """Tests for :class:`nailgun.entities.ContentView`."""
-
-    def setUp(self):
-        """Set ``self.content_view``."""
-        self.content_view = entities.ContentView(
-            config.ServerConfig('http://example.com'),
-            id=gen_integer(min_value=1),
-        )
-
-    def test_publish(self):
-        """Call :meth:`nailgun.entities.ContentView.publish`."""
-        for payload in (
-                None,
-                {},
-                {1: 2},
-        ):
-            with mock.patch.object(entities, '_handle_response') as handler:
-                with mock.patch.object(client, 'post') as client_post:
-                    response = self.content_view.publish(payload)
-            self.assertEqual(client_post.call_count, 1)
-            self.assertEqual(handler.call_count, 1)
-            self.assertEqual(handler.return_value, response)
-
-        # This was just executed: client_post(path='…', data={…}, …)
-        # `call_args` is a two-tuple of (positional, keyword) args.
-        self.assertEqual(
-            client_post.call_args[0][1],
-            {1: 2, 'id': self.content_view.id}  # pylint:disable=no-member
-        )
-
-    def test_available_puppet_modules(self):
-        """Run :meth:`nailgun.entities.ContentView.available_puppet_modules`"""
-        with mock.patch.object(client, 'get') as client_get:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                response = self.content_view.available_puppet_modules()
-        self.assertEqual(client_get.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
-
-    def test_copy(self):
-        """Call :meth:`nailgun.entities.ContentView.copy`."""
-        with mock.patch.object(client, 'post') as client_post:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                response = self.content_view.copy({1: 2})
-        self.assertEqual(client_post.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
-
-        # This was just executed: client_post(path='…', data={…}, …)
-        # `call_args` is a two-tuple of (positional, keyword) args.
-        self.assertEqual(
-            client_post.call_args[0][1],
-            {1: 2, 'id': self.content_view.id}  # pylint:disable=no-member
-        )
 
 
 class ForemanTaskTestCase(TestCase):

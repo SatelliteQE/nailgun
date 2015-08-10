@@ -1306,55 +1306,60 @@ class ContentView(
             )
         return super(ContentView, self).path(which)
 
-    def publish(self, payload=None, synchronous=True):
+    def publish(self, synchronous=True, **kwargs):
         """Helper for publishing an existing content view.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return a task ID otherwise.
-        :return: Return information about the completed foreman task if an HTTP
-            202 response is received and ``synchronous`` is true. Return the
-            JSON response otherwise.
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        if payload is None:
-            payload = {}
-        payload['id'] = self.id  # pylint:disable=no-member
-        response = client.post(
-            self.path('publish'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        if 'data' in kwargs and 'id' not in kwargs['data']:
+            kwargs['data']['id'] = self.id  # pylint:disable=no-member
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('publish'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
-    def available_puppet_modules(self):
+    def available_puppet_modules(self, synchronous=True, **kwargs):
         """Get puppet modules available to be added to the content view.
 
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.get(
-            self.path('available_puppet_modules'),
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('available_puppet_modules'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
-    def copy(self, payload):
+    def copy(self, synchronous=True, **kwargs):
         """Clone provided content view.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        payload['id'] = self.id  # pylint:disable=no-member
-        response = client.post(
-            self.path('copy'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        if 'data' in kwargs and 'id' not in kwargs['data']:
+            kwargs['data']['id'] = self.id  # pylint:disable=no-member
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('copy'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
     def delete_from_environment(self, environment, synchronous=True):
         """Delete this content view version from an environment.
