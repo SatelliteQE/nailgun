@@ -1080,6 +1080,8 @@ class GenericTestCase(TestCase):
         cfg = config.ServerConfig('http://example.com')
         generic = {'server_config': cfg, 'id': 1}
         cls.methods_requests = (
+            (entities.AbstractDockerContainer(**generic).logs, 'get'),
+            (entities.AbstractDockerContainer(**generic).power, 'put'),
             (entities.ActivationKey(**generic).add_subscriptions, 'put'),
             (entities.ActivationKey(**generic).content_override, 'put'),
             (entities.ContentViewVersion(**generic).promote, 'post'),
@@ -1151,49 +1153,6 @@ class AbstractDockerContainerTestCase(TestCase):
         for attr in ['repository_name', 'tag']:
             self.assertIn(attr, docker_hub)
             self.assertNotIn(attr, abstract_docker)
-
-    def test_power(self):
-        """Call :meth:`nailgun.entities.AbstractDockerContainer.power`."""
-        for power_action in ('start', 'stop', 'status'):
-            with mock.patch.object(entities, '_handle_response') as handler:
-                with mock.patch.object(client, 'put') as client_put:
-                    response = self.abstract_dc.power(power_action)
-            self.assertEqual(client_put.call_count, 1)
-            self.assertEqual(handler.call_count, 1)
-            self.assertEqual(handler.return_value, response)
-
-            # `call_args` is a two-tuple of (positional, keyword) args.
-            self.assertEqual(
-                client_put.call_args[0][1],
-                power_action,
-            )
-
-    def test_logs(self):
-        """Call :meth:`nailgun.entities.AbstractDockerContainer.logs`."""
-        for payload in (
-                None,
-                {},
-                {'stdout': gen_integer()},
-                {'stderr': gen_integer()},
-                {'tail': gen_integer()},
-                {
-                    'stderr': gen_integer(),
-                    'stdout': gen_integer(),
-                    'tail': gen_integer(),
-                },
-        ):
-            with mock.patch.object(entities, '_handle_response') as handler:
-                with mock.patch.object(client, 'get') as client_get:
-                    response = self.abstract_dc.logs(payload)
-            self.assertEqual(client_get.call_count, 1)
-            self.assertEqual(handler.call_count, 1)
-            self.assertEqual(handler.return_value, response)
-
-            # `call_args` is a two-tuple of (positional, keyword) args.
-            self.assertEqual(
-                client_get.call_args[1]['data'],
-                payload if payload else {},
-            )
 
 
 class ContentViewTestCase(TestCase):

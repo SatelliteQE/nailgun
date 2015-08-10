@@ -913,37 +913,39 @@ class AbstractDockerContainer(
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def power(self, payload):
+    def power(self, synchronous=True, **kwargs):
         """Run a power operation on a container.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
-        :returns: Information about the current state of the container.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path(which='power'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('power'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
-    def logs(self, payload=None):
+    def logs(self, synchronous=True, **kwargs):
         """Get logs from this container.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.get(
-            self.path(which='logs'),
-            data=payload if payload else {},
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('logs'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class DockerHubContainer(AbstractDockerContainer):
