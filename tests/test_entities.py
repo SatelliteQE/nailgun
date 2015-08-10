@@ -1080,6 +1080,7 @@ class GenericTestCase(TestCase):
         cfg = config.ServerConfig('http://example.com')
         generic = {'server_config': cfg, 'id': 1}
         repo_set = {'server_config': cfg, 'id': 1, 'product': 2}
+        sync_plan = {'server_config': cfg, 'id': 1, 'organization': 2}
         cls.methods_requests = (
             (entities.AbstractDockerContainer(**generic).logs, 'get'),
             (entities.AbstractDockerContainer(**generic).power, 'put'),
@@ -1097,6 +1098,8 @@ class GenericTestCase(TestCase):
             (entities.RepositorySet(**repo_set).disable, 'put'),
             (entities.RepositorySet(**repo_set).enable, 'put'),
             (entities.SmartProxy(**generic).refresh, 'put'),
+            (entities.SyncPlan(**sync_plan).add_products, 'put'),
+            (entities.SyncPlan(**sync_plan).remove_products, 'put'),
         )
 
     def test_generic(self):
@@ -1380,36 +1383,6 @@ class SubscriptionTestCase(TestCase):
                 self.assertEqual(handlr.return_value, response)
                 self.assertEqual(org_path.call_count, 1)
                 self.assertEqual(org_path.call_args[0][1], kwargs['data'])
-
-
-class SyncPlanTestCase(TestCase):
-    """Tests for :class:`nailgun.entities.SyncPlan`."""
-
-    def setUp(self):
-        """Set ``self.sync_plan``."""
-        self.sync_plan = entities.SyncPlan(
-            config.ServerConfig('http://example.com'),
-            id=gen_integer(min_value=1),
-            organization=gen_integer(min_value=1),
-        )
-
-    def test_add_products(self):
-        """Call :meth:`nailgun.entities.SyncPlan.add_products`."""
-        with mock.patch.object(client, 'put') as client_put:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                response = self.sync_plan.add_products({1: 2})
-        self.assertEqual(client_put.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
-
-    def test_remove_products(self):
-        """Call :meth:`nailgun.entities.SyncPlan.remove_products`."""
-        with mock.patch.object(client, 'put') as client_put:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                response = self.sync_plan.remove_products({1: 2})
-        self.assertEqual(client_put.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
 
 
 # 3. Other tests. -------------------------------------------------------- {{{1

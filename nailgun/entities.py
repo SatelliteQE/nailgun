@@ -3541,50 +3541,46 @@ class SyncPlan(
             )
         return super(SyncPlan, self).path(which)
 
-    def add_products(self, payload, synchronous=True):
+    def add_products(self, synchronous=True, **kwargs):
         """Add products to this sync plan.
 
         .. NOTE:: The ``synchronous`` argument has no effect in certain
             versions of Satellite. See `Bugzilla #1199150
             <https://bugzilla.redhat.com/show_bug.cgi?id=1199150>`_.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's reponse otherwise.
-        :returns: The server's JSON-decoded response.
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('add_products'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('add_products'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
-    def remove_products(self, payload, synchronous=True):
+    def remove_products(self, synchronous=True, **kwargs):
         """Remove products from this sync plan.
 
         .. NOTE:: The ``synchronous`` argument has no effect in certain
             versions of Satellite. See `Bugzilla #1199150
             <https://bugzilla.redhat.com/show_bug.cgi?id=1199150>`_.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's reponse otherwise.
-        :returns: The server's JSON-decoded response.
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('remove_products'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('remove_products'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
     def update_payload(self, fields=None):
