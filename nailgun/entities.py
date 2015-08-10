@@ -625,22 +625,22 @@ class DiscoveredHosts(
             ).update_payload(fields)
         }
 
-    def facts(self, payload):
+    def facts(self, synchronous=True, **kwargs):
         """Helper to update facts for discovered host, and create the host.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
-        response = client.post(
-            self.path('facts'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('facts'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class DockerComputeResource(AbstractComputeResource):

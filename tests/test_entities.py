@@ -1082,6 +1082,7 @@ class GenericTestCase(TestCase):
         cls.methods_requests = (
             (entities.ActivationKey(**generic).add_subscriptions, 'put'),
             (entities.ActivationKey(**generic).content_override, 'put'),
+            (entities.DiscoveredHosts(cfg).facts, 'post'),
         )
 
     def test_generic(self):
@@ -1192,28 +1193,6 @@ class AbstractDockerContainerTestCase(TestCase):
                 client_get.call_args[1]['data'],
                 payload if payload else {},
             )
-
-
-class DiscoveredHostsTestCase(TestCase):
-    """Tests for :class:`nailgun.entities.DiscoveredHosts`."""
-
-    def setUp(self):
-        """Set ``self.discovered_hosts``."""
-        self.discovered_hosts = entities.DiscoveredHosts(
-            config.ServerConfig('http://example.com'),
-            id=gen_integer(min_value=1),
-        )
-
-    def test_facts(self):
-        """Call :meth:`nailgun.entities.DiscoveredHosts.facts`."""
-        with mock.patch.object(client, 'post') as client_post:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                payload = gen_integer()
-                response = self.discovered_hosts.facts(payload)
-        self.assertEqual(client_post.call_count, 1)
-        self.assertEqual(client_post.call_args[0][1], payload)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
 
 
 class ContentViewVersionTestCase(TestCase):
