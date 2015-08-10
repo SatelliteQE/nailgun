@@ -1096,6 +1096,7 @@ class GenericTestCase(TestCase):
             (entities.RepositorySet(**repo_set).available_repositories, 'get'),
             (entities.RepositorySet(**repo_set).disable, 'put'),
             (entities.RepositorySet(**repo_set).enable, 'put'),
+            (entities.SmartProxy(**generic).refresh, 'put'),
         )
 
     def test_generic(self):
@@ -1310,26 +1311,6 @@ class RepositorySetTestCase(TestCase):
         for result in s_n.call_args[0][0]:
             # pylint:disable=no-member
             self.assertEqual(result['product_id'], self.product.id)
-
-
-class SmartProxyTestCase(TestCase):
-    """Tests for :class:`nailgun.entities.SmartProxy`."""
-
-    def setUp(self):
-        """Set ``self.proxy``."""
-        self.proxy = entities.SmartProxy(
-            config.ServerConfig('http://example.com'),
-            id=gen_integer(min_value=1),
-        )
-
-    def test_refresh(self):
-        """Call :meth:`nailgun.entities.SmartProxy.refresh`."""
-        with mock.patch.object(client, 'put') as client_put:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                response = self.proxy.refresh()
-        self.assertEqual(client_put.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
 
 
 class SubscriptionTestCase(TestCase):
