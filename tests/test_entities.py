@@ -1079,6 +1079,7 @@ class GenericTestCase(TestCase):
         """
         cfg = config.ServerConfig('http://example.com')
         generic = {'server_config': cfg, 'id': 1}
+        repo_set = {'server_config': cfg, 'id': 1, 'product': 2}
         cls.methods_requests = (
             (entities.AbstractDockerContainer(**generic).logs, 'get'),
             (entities.AbstractDockerContainer(**generic).power, 'put'),
@@ -1091,6 +1092,9 @@ class GenericTestCase(TestCase):
             (entities.DiscoveredHosts(cfg).facts, 'post'),
             (entities.Product(**generic).sync, 'post'),
             (entities.Repository(**generic).sync, 'post'),
+            (entities.RepositorySet(**repo_set).available_repositories, 'get'),
+            (entities.RepositorySet(**repo_set).disable, 'put'),
+            (entities.RepositorySet(**repo_set).enable, 'put'),
         )
 
     def test_generic(self):
@@ -1296,36 +1300,6 @@ class RepositorySetTestCase(TestCase):
             id=gen_integer(min_value=1),
             product=self.product,
         )
-
-    def test_available_repositories(self):
-        """Call
-        :meth:`nailgun.entities.RepositorySet.available_repositories`
-
-        """
-        with mock.patch.object(client, 'get') as client_get:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                response = self.reposet.available_repositories()
-        self.assertEqual(client_get.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value['results'], response)
-
-    def test_enable(self):
-        """Call :meth:`nailgun.entities.RepositorySet.enable`"""
-        with mock.patch.object(client, 'put') as client_put:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                response = self.reposet.enable({1: 2})
-        self.assertEqual(client_put.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
-
-    def test_disable(self):
-        """Call :meth:`nailgun.entities.RepositorySet.disable`"""
-        with mock.patch.object(client, 'put') as client_put:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                response = self.reposet.disable({1: 2})
-        self.assertEqual(client_put.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
 
     def test_search_normalize(self):
         """Call :meth:`nailgun.entities.RepositorySet.search_normalize`"""

@@ -2872,60 +2872,57 @@ class RepositorySet(
             'api_path': '{0}/repository_sets'.format(self.product.path()),
         }
 
-    def available_repositories(self):
+    def available_repositories(self, synchronous=True, **kwargs):
         """Lists available repositories for the repository set
 
-        :returns: Returns list of available repositories for the repository set
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.get(
-            self.path('available_repositories'),
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)['results']
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('available_repositories'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
-    def enable(self, payload, synchronous=True):
+    def enable(self, synchronous=True, **kwargs):
         """Enables the RedHat Repository
 
         RedHat Repos needs to be enabled first, so that we can sync it.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('enable'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('enable'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
-    def disable(self, payload, synchronous=True):
+    def disable(self, synchronous=True, **kwargs):
         """Disables the RedHat Repository
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('disable'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('disable'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
     def path(self, which=None):
