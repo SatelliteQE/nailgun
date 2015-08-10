@@ -1091,6 +1091,7 @@ class GenericTestCase(TestCase):
             (entities.ContentViewVersion(**generic).promote, 'post'),
             (entities.DiscoveredHosts(cfg).facts, 'post'),
             (entities.Product(**generic).sync, 'post'),
+            (entities.RHCIDeployment(**generic).deploy, 'put'),
             (entities.Repository(**generic).sync, 'post'),
             (entities.RepositorySet(**repo_set).available_repositories, 'get'),
             (entities.RepositorySet(**repo_set).disable, 'put'),
@@ -1309,30 +1310,6 @@ class RepositorySetTestCase(TestCase):
         for result in s_n.call_args[0][0]:
             # pylint:disable=no-member
             self.assertEqual(result['product_id'], self.product.id)
-
-
-class RHCIDeploymentTestCase(TestCase):
-    """Tests for :class:`nailgun.entities.RHCIDeployment`."""
-
-    def setUp(self):
-        """Set ``self.rhci_deployment``."""
-        self.rhci_deployment = entities.RHCIDeployment(
-            config.ServerConfig('http://example.com'),
-            id=gen_integer(min_value=1),
-        )
-
-    def test_deploy(self):
-        """Call :meth:`nailgun.entities.RHCIDeployment.deploy`."""
-        with mock.patch.object(client, 'put') as client_put:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                payload = {'foo': gen_integer()}
-                response = self.rhci_deployment.deploy(payload)
-        self.assertEqual(client_put.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
-
-        # `call_args` is a two-tuple of (positional, keyword) args.
-        self.assertEqual(client_put.call_args[0][1], payload)
 
 
 class SmartProxyTestCase(TestCase):
