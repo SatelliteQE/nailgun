@@ -11,6 +11,7 @@ from nailgun.entity_mixins import (
     MissingValueError,
     NoSuchPathError,
 )
+import inspect
 import mock
 
 from sys import version_info
@@ -1058,6 +1059,56 @@ class UpdatePayloadTestCase(TestCase):
 
 # 2. Tests for entity-specific methods. ---------------------------------- {{{1
 
+
+class GenericTestCase(TestCase):
+    """Generic tests for the helper methods on entities."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Create test data as ``cls.methods_requests``.
+
+        ``methods_requests`` is a tuple of two-tuples, like so::
+
+            (
+                entity_obj1.method, 'post',
+                entity_obj2.method, 'post',
+                entity_obj3.method1, 'get',
+                entity_obj3.method2, 'put',
+            )
+
+        """
+        cfg = config.ServerConfig('http://example.com')
+        generic = {'server_config': cfg, 'id': 1}
+        cls.methods_requests = (
+        )
+
+    def test_generic(self):
+        """Check that a variety of helper method sane.
+
+        Assert that:
+
+        * Each method has a correct signature.
+        * Each method calls `client.*` once.
+        * Each method passes the right arguments to `client.*`.
+        * Each method calls `entities._handle_response` once.
+        * The result of `_handle_response(…)` is the return value.
+
+        """
+        for method, request in self.methods_requests:
+            with self.subTest((method, request)):
+                self.assertEqual(
+                    inspect.getargspec(method),
+                    (['self', 'synchronous'], None, 'kwargs', (True,))
+                )
+                kwargs = {'kwarg': gen_integer()}
+                with mock.patch.object(entities, '_handle_response') as handlr:
+                    with mock.patch.object(client, request) as client_request:
+                        response = method(**kwargs)
+                self.assertEqual(client_request.call_count, 1)
+                self.assertEqual(len(client_request.call_args[0]), 1)
+                self.assertEqual(client_request.call_args[1], kwargs)
+                self.assertEqual(handlr.call_count, 1)
+                self.assertEqual(handlr.return_value, response)
 
 class AbstractDockerContainerTestCase(TestCase):
     """Tests for :class:`nailgun.entities.AbstractDockerContainer`."""
