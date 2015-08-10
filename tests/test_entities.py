@@ -1082,6 +1082,7 @@ class GenericTestCase(TestCase):
         cls.methods_requests = (
             (entities.ActivationKey(**generic).add_subscriptions, 'put'),
             (entities.ActivationKey(**generic).content_override, 'put'),
+            (entities.ContentViewVersion(**generic).promote, 'post'),
             (entities.DiscoveredHosts(cfg).facts, 'post'),
         )
 
@@ -1193,30 +1194,6 @@ class AbstractDockerContainerTestCase(TestCase):
                 client_get.call_args[1]['data'],
                 payload if payload else {},
             )
-
-
-class ContentViewVersionTestCase(TestCase):
-    """Tests for :class:`nailgun.entities.ContentViewVersion`."""
-
-    def setUp(self):
-        """Set ``self.cvv``."""
-        self.cvv = entities.ContentViewVersion(
-            config.ServerConfig('http://example.com'),
-            id=gen_integer(min_value=1),
-        )
-
-    def test_promote(self):
-        """Call :meth:`nailgun.entities.ContentViewVersion.promote`."""
-        with mock.patch.object(client, 'post') as client_post:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                response = self.cvv.promote({1: 2})
-        self.assertEqual(client_post.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
-
-        # This was just executed: client_post(path='…', data={…}, …)
-        # `call_args` is a two-tuple of (positional, keyword) args.
-        self.assertEqual(client_post.call_args[0][1], {1: 2})
 
 
 class ContentViewTestCase(TestCase):

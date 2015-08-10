@@ -1014,25 +1014,21 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
             )
         return super(ContentViewVersion, self).path(which)
 
-    def promote(self, payload, synchronous=True):
+    def promote(self, synchronous=True, **kwargs):
         """Helper for promoting an existing published content view.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return a task ID otherwise.
-        :return: Return information about the completed foreman task if an HTTP
-            202 response is received and ``synchronous`` is true. Return the
-            JSON response otherwise.
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.post(
-            self.path('promote'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('promote'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
