@@ -194,7 +194,7 @@ class ActivationKey(
         EntityDeleteMixin,
         EntityReadMixin,
         EntityUpdateMixin):
-    """A representation of a Activtion Key entity."""
+    """A representation of a Activation Key entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
@@ -267,41 +267,39 @@ class ActivationKey(
             )
         return super(ActivationKey, self).path(which)
 
-    def add_subscriptions(self, payload):
+    def add_subscriptions(self, synchronous=True, **kwargs):
         """Helper for adding subscriptions to activation key.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('add_subscriptions'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('add_subscriptions'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
-    def content_override(self, payload):
+    def content_override(self, synchronous=True, **kwargs):
         """Override the content of an activation key.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('content_override'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('content_override'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class Architecture(

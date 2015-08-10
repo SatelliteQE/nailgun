@@ -1080,6 +1080,8 @@ class GenericTestCase(TestCase):
         cfg = config.ServerConfig('http://example.com')
         generic = {'server_config': cfg, 'id': 1}
         cls.methods_requests = (
+            (entities.ActivationKey(**generic).add_subscriptions, 'put'),
+            (entities.ActivationKey(**generic).content_override, 'put'),
         )
 
     def test_generic(self):
@@ -1109,6 +1111,7 @@ class GenericTestCase(TestCase):
                 self.assertEqual(client_request.call_args[1], kwargs)
                 self.assertEqual(handlr.call_count, 1)
                 self.assertEqual(handlr.return_value, response)
+
 
 class AbstractDockerContainerTestCase(TestCase):
     """Tests for :class:`nailgun.entities.AbstractDockerContainer`."""
@@ -1189,44 +1192,6 @@ class AbstractDockerContainerTestCase(TestCase):
                 client_get.call_args[1]['data'],
                 payload if payload else {},
             )
-
-
-class ActivationKeyTestCase(TestCase):
-    """Tests for :class:`nailgun.entities.ActivationKey`."""
-
-    def setUp(self):
-        """Set ``self.activation_key``."""
-        self.activation_key = entities.ActivationKey(
-            config.ServerConfig('http://example.com'),
-            id=gen_integer(min_value=1),
-        )
-
-    def test_add_subscriptions(self):
-        """Call :meth:`nailgun.entities.ActivationKey.add_subscriptions`."""
-        with mock.patch.object(client, 'put') as client_put:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                response = self.activation_key.add_subscriptions({1: 2})
-        self.assertEqual(client_put.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
-
-        # This was just executed: client_put(path='…', data={…}, …)
-        # `call_args` is a two-tuple of (positional, keyword) args.
-        self.assertEqual(client_put.call_args[0][1], {1: 2})
-
-    def test_content_override(self):
-        """Call :meth:`nailgun.entities.ActivationKey.content_override`."""
-        with mock.patch.object(client, 'put') as client_put:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                payload = gen_integer()
-                response = self.activation_key.content_override(payload)
-        self.assertEqual(client_put.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(handler.return_value, response)
-
-        # This was just executed: client_put(path='…', data={…}, …)
-        # `call_args` is a two-tuple of (positional, keyword) args.
-        self.assertEqual(client_put.call_args[0][1], payload)
 
 
 class DiscoveredHostsTestCase(TestCase):
