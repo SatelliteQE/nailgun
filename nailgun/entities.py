@@ -3360,61 +3360,67 @@ class Subscription(
             organization=payload['organization_id'],
         ).path(which)
 
-    def delete_manifest(self, payload, synchronous=True):
+    def delete_manifest(self, synchronous=True, **kwargs):
         """Delete manifest from Red Hat provider.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(
-            self._org_path('delete_manifest', payload),
-            payload,
-            **self._server_config.get_client_kwargs()
+            self._org_path('delete_manifest', kwargs['data']),
+            **kwargs
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def manifest_history(self, payload, synchronous=True):
+    def manifest_history(self, synchronous=True, **kwargs):
         """Obtain manifest history for subscriptions.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(
-            self._org_path('manifest_history', payload),
-            payload,
-            **self._server_config.get_client_kwargs()
+            self._org_path('manifest_history', kwargs['data']),
+            **kwargs
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def refresh_manifest(self, payload, synchronous=True):
+    def refresh_manifest(self, synchronous=True, **kwargs):
         """Refresh previously imported manifest for Red Hat provider.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(
-            self._org_path('refresh_manifest', payload),
-            payload,
-            **self._server_config.get_client_kwargs()
+            self._org_path('refresh_manifest', kwargs['data']),
+            **kwargs
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def upload(self, payload, manifest, synchronous=True):
+    def upload(self, synchronous=True, **kwargs):
         """Upload a subscription manifest.
 
         Here is an example of how to use this method::
@@ -3422,20 +3428,20 @@ class Subscription(
             with open('my_manifest.zip') as manifest:
                 sub.upload({'organization_id': org.id}, manifest)
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
-        :param manifest: A file-like object. The manifest file to upload.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(
-            self._org_path('upload', payload),
-            payload,
-            files={'content': manifest},
-            **self._server_config.get_client_kwargs()
+            self._org_path('upload', kwargs['data']),
+            **kwargs
         )
         return _handle_response(response, self._server_config, synchronous)
 

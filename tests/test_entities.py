@@ -1335,64 +1335,51 @@ class SubscriptionTestCase(TestCase):
         self.assertEqual(path.return_value, response)
         self.assertFalse(hasattr(self.subscription, 'organization'))
 
-    def test_delete_manifest(self):
-        """Call :meth:`nailgun.entities.Subscription.delete_manifest`."""
-        with mock.patch.object(self.subscription, '_org_path') as org_path:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                with mock.patch.object(client, 'post') as post:
-                    response = self.subscription.delete_manifest(self.payload)
-        self.assertEqual(org_path.call_count, 1)
-        self.assertEqual(post.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(
-            org_path.call_args[0],
-            ('delete_manifest', self.payload),
-        )
-        self.assertEqual(handler.return_value, response)
+    def test_methods(self):
+        """Check that several helper methods are sane.
 
-    def test_manifest_history(self):
-        """Call :meth:`nailgun.entities.Subscription.manifest_history`."""
-        with mock.patch.object(self.subscription, '_org_path') as org_path:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                with mock.patch.object(client, 'get') as get:
-                    response = self.subscription.manifest_history(self.payload)
-        self.assertEqual(org_path.call_count, 1)
-        self.assertEqual(get.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(
-            org_path.call_args[0],
-            ('manifest_history', self.payload),
-        )
-        self.assertEqual(handler.return_value, response)
+        This method is just like
+        :meth:`tests.test_entities.GenericTestCase.test_generic`, but with a
+        slightly different set of mocks. Test the following:
 
-    def test_refresh_manifest(self):
-        """Call :meth:`nailgun.entities.Subscription.refresh_manifest`."""
-        with mock.patch.object(self.subscription, '_org_path') as org_path:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                with mock.patch.object(client, 'put') as put:
-                    response = self.subscription.refresh_manifest(self.payload)
-        self.assertEqual(org_path.call_count, 1)
-        self.assertEqual(put.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(
-            org_path.call_args[0],
-            ('refresh_manifest', self.payload),
-        )
-        self.assertEqual(handler.return_value, response)
+        * :meth:`nailgun.entities.Subscription.delete_manifest`
+        * :meth:`nailgun.entities.Subscription.manifest_history`
+        * :meth:`nailgun.entities.Subscription.refresh_manifest`
+        * :meth:`nailgun.entities.Subscription.upload`
 
-    def test_upload(self):
-        """Call :meth:`nailgun.entities.Subscription.upload`."""
-        manifest = gen_integer()
-        with mock.patch.object(self.subscription, '_org_path') as org_path:
-            with mock.patch.object(entities, '_handle_response') as handler:
-                with mock.patch.object(client, 'post') as post:
-                    response = self.subscription.upload(self.payload, manifest)
-        self.assertEqual(org_path.call_count, 1)
-        self.assertEqual(post.call_count, 1)
-        self.assertEqual(handler.call_count, 1)
-        self.assertEqual(org_path.call_args[0], ('upload', self.payload))
-        self.assertEqual(post.call_args[1]['files'], {'content': manifest})
-        self.assertEqual(handler.return_value, response)
+        It would be ideal if these method could be refactored such that this
+        unit test could be dropped.
+
+        """
+        cfg = config.ServerConfig('http://example.com')
+        generic = {'server_config': cfg, 'id': 1}
+        methods_requests = (
+            (entities.Subscription(**generic).delete_manifest, 'post'),
+            (entities.Subscription(**generic).manifest_history, 'get'),
+            (entities.Subscription(**generic).refresh_manifest, 'put'),
+            (entities.Subscription(**generic).upload, 'post'),
+        )
+        for method, request in methods_requests:
+            with self.subTest((method, request)):
+                self.assertEqual(
+                    inspect.getargspec(method),
+                    (['self', 'synchronous'], None, 'kwargs', (True,))
+                )
+                kwargs = {'data': gen_integer()}
+                with mock.patch.object(entities, '_handle_response') as handlr:
+                    with mock.patch.object(client, request) as client_request:
+                        with mock.patch.object(
+                            entities.Subscription,
+                            '_org_path'
+                        ) as org_path:
+                            response = method(**kwargs)
+                self.assertEqual(client_request.call_count, 1)
+                self.assertEqual(len(client_request.call_args[0]), 1)
+                self.assertEqual(client_request.call_args[1], kwargs)
+                self.assertEqual(handlr.call_count, 1)
+                self.assertEqual(handlr.return_value, response)
+                self.assertEqual(org_path.call_count, 1)
+                self.assertEqual(org_path.call_args[0][1], kwargs['data'])
 
 
 class SyncPlanTestCase(TestCase):
