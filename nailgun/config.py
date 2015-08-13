@@ -156,9 +156,9 @@ class BaseServerConfig(object):
         :param path: A string. The configuration file to be manipulated.
             Defaults to what is returned by
             :func:`nailgun.config._get_config_file_path`.
-        :returns: A brand new :class:`nailgun.config.ServerConfig` object whose
-            attributes have been populated as appropriate.
-        :rtype: ServerConfig
+        :returns: A brand new :class:`nailgun.config.BaseServerConfig` object
+            whose attributes have been populated as appropriate.
+        :rtype: BaseServerConfig
 
         """
         if path is None:
@@ -167,7 +167,7 @@ class BaseServerConfig(object):
                 cls._xdg_config_file
             )
         with open(path) as config_file:
-            return ServerConfig(**json.load(config_file)[label])
+            return cls(**json.load(config_file)[label])
 
     @classmethod
     def get_labels(cls, path=None):
