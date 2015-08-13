@@ -194,7 +194,7 @@ class ActivationKey(
         EntityDeleteMixin,
         EntityReadMixin,
         EntityUpdateMixin):
-    """A representation of a Activtion Key entity."""
+    """A representation of a Activation Key entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
@@ -267,41 +267,39 @@ class ActivationKey(
             )
         return super(ActivationKey, self).path(which)
 
-    def add_subscriptions(self, payload):
+    def add_subscriptions(self, synchronous=True, **kwargs):
         """Helper for adding subscriptions to activation key.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('add_subscriptions'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('add_subscriptions'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
-    def content_override(self, payload):
+    def content_override(self, synchronous=True, **kwargs):
         """Override the content of an activation key.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('content_override'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('content_override'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class Architecture(
@@ -627,22 +625,22 @@ class DiscoveredHosts(
             ).update_payload(fields)
         }
 
-    def facts(self, payload):
+    def facts(self, synchronous=True, **kwargs):
         """Helper to update facts for discovered host, and create the host.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
-        response = client.post(
-            self.path('facts'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('facts'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class DockerComputeResource(AbstractComputeResource):
@@ -915,37 +913,39 @@ class AbstractDockerContainer(
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def power(self, payload):
+    def power(self, synchronous=True, **kwargs):
         """Run a power operation on a container.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
-        :returns: Information about the current state of the container.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path(which='power'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('power'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
-    def logs(self, payload=None):
+    def logs(self, synchronous=True, **kwargs):
         """Get logs from this container.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.get(
-            self.path(which='logs'),
-            data=payload if payload else {},
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('logs'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class DockerHubContainer(AbstractDockerContainer):
@@ -1016,25 +1016,21 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
             )
         return super(ContentViewVersion, self).path(which)
 
-    def promote(self, payload, synchronous=True):
+    def promote(self, synchronous=True, **kwargs):
         """Helper for promoting an existing published content view.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return a task ID otherwise.
-        :return: Return information about the completed foreman task if an HTTP
-            202 response is received and ``synchronous`` is true. Return the
-            JSON response otherwise.
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.post(
-            self.path('promote'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('promote'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
@@ -1310,55 +1306,60 @@ class ContentView(
             )
         return super(ContentView, self).path(which)
 
-    def publish(self, payload=None, synchronous=True):
+    def publish(self, synchronous=True, **kwargs):
         """Helper for publishing an existing content view.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return a task ID otherwise.
-        :return: Return information about the completed foreman task if an HTTP
-            202 response is received and ``synchronous`` is true. Return the
-            JSON response otherwise.
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        if payload is None:
-            payload = {}
-        payload['id'] = self.id  # pylint:disable=no-member
-        response = client.post(
-            self.path('publish'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        if 'data' in kwargs and 'id' not in kwargs['data']:
+            kwargs['data']['id'] = self.id  # pylint:disable=no-member
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('publish'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
-    def available_puppet_modules(self):
+    def available_puppet_modules(self, synchronous=True, **kwargs):
         """Get puppet modules available to be added to the content view.
 
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.get(
-            self.path('available_puppet_modules'),
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('available_puppet_modules'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
-    def copy(self, payload):
+    def copy(self, synchronous=True, **kwargs):
         """Clone provided content view.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        payload['id'] = self.id  # pylint:disable=no-member
-        response = client.post(
-            self.path('copy'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        if 'data' in kwargs and 'id' not in kwargs['data']:
+            kwargs['data']['id'] = self.id  # pylint:disable=no-member
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('copy'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
     def delete_from_environment(self, environment, synchronous=True):
         """Delete this content view version from an environment.
@@ -2574,14 +2575,22 @@ class Product(
             attrs['organization'] = org.get_values()
         return super(Product, self).read(entity, attrs, ignore)
 
-    def sync(self):
-        """Synchronize :class:`repositories <Repository>` in this product."""
-        response = client.post(
-            self.path('sync'),
-            {},
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+    def sync(self, synchronous=True, **kwargs):
+        """Synchronize :class:`repositories <Repository>` in this product.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('sync'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class PartitionTable(
@@ -2776,65 +2785,64 @@ class Repository(
             self._fields['docker_upstream_name'].required = True
         super(Repository, self).create_missing()
 
-    def sync(self, synchronous=True):
+    def sync(self, synchronous=True, **kwargs):
         """Helper for syncing an existing repository.
 
-        :param synchronous: What should happen if the server returns an
-            HTTP 202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.post(
-            self.path('sync'),
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('sync'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
-    def upload_content(self, content):
+    def upload_content(self, synchronous=True, **kwargs):
         """Upload a file or files to the current repository.
 
-        The syntax for uploading a single file is straightforward::
+        Here is an example of how to upload content::
 
             with open('my_content.rpm') as content:
-                repo.upload_content(content)
+                repo.upload_content(files={'content': content})
 
-        To upload multiple files, pass in a list as described in `POST Multiple
-        Multipart-Encoded Files`_::
+        This method accepts the same keyword arguments as Requests. As a
+        result, the following examples can be adapted for use here:
 
-            repo.upload_content([
-                ('content', ('first.rpm', open('first.rpm')))
-                ('content', ('second.rpm', open('second.rpm')))
-            ])
+        * `POST a Multipart-Encoded File`_
+        * `POST Multiple Multipart-Encoded Files`_
 
-        :param content: Either a file-like object or a list.
-        :returns: The JSON-decoded response.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
         :raises nailgun.entities.APIResponseError: If the response has a status
             other than "success".
 
+        .. _POST a Multipart-Encoded File:
+            http://docs.python-requests.org/en/latest/user/quickstart/#post-a-multipart-encoded-file
         .. _POST Multiple Multipart-Encoded Files:
             http://docs.python-requests.org/en/latest/user/advanced/#post-multiple-multipart-encoded-files
 
         """
-        if isinstance(content, list):
-            files = content
-        else:
-            files = {'content': content}
-        response = client.post(
-            self.path('upload_content'),
-            files=files,
-            **self._server_config.get_client_kwargs()
-        )
-        response_json = _handle_response(response, self._server_config)
-        if response_json['status'] != 'success':
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('upload_content'), **kwargs)
+        json = _handle_response(response, self._server_config, synchronous)
+        if json['status'] != 'success':
             raise APIResponseError(
                 # pylint:disable=no-member
                 'Received error when uploading file {0} to repository {1}: {2}'
-                .format(content, self.id, response_json)
+                .format(kwargs.get('files'), self.id, json)
             )
-        return response_json
+        return json
 
 
 class RepositorySet(
@@ -2864,60 +2872,57 @@ class RepositorySet(
             'api_path': '{0}/repository_sets'.format(self.product.path()),
         }
 
-    def available_repositories(self):
+    def available_repositories(self, synchronous=True, **kwargs):
         """Lists available repositories for the repository set
 
-        :returns: Returns list of available repositories for the repository set
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.get(
-            self.path('available_repositories'),
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)['results']
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('available_repositories'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
-    def enable(self, payload, synchronous=True):
+    def enable(self, synchronous=True, **kwargs):
         """Enables the RedHat Repository
 
         RedHat Repos needs to be enabled first, so that we can sync it.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('enable'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('enable'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
-    def disable(self, payload, synchronous=True):
+    def disable(self, synchronous=True, **kwargs):
         """Disables the RedHat Repository
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return JSON response otherwise.
-        :returns: Returns information of the async task if an HTTP
-            202 response was received and synchronus set to ``True``.
-            Return JSON response otherwise.
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('disable'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('disable'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
     def path(self, which=None):
@@ -3062,23 +3067,22 @@ class RHCIDeployment(
             )
         return super(RHCIDeployment, self).path(which)
 
-    def deploy(self, payload):
+    def deploy(self, synchronous=True, **kwargs):
         """Kickoff the RHCI deployment.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('deploy'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
-        return _handle_response(response, self._server_config)
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('deploy'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class RoleLDAPGroups(Entity):
@@ -3149,20 +3153,21 @@ class SmartProxy(Entity, EntityReadMixin):
             )
         return super(SmartProxy, self).path(which)
 
-    def refresh(self, synchronous=True):
+    def refresh(self, synchronous=True, **kwargs):
         """Refresh Capsule features
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's reponse otherwise.
-        :returns: The server's JSON-decoded response.
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('refresh'),
-            {},
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('refresh'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
@@ -3355,61 +3360,67 @@ class Subscription(
             organization=payload['organization_id'],
         ).path(which)
 
-    def delete_manifest(self, payload, synchronous=True):
+    def delete_manifest(self, synchronous=True, **kwargs):
         """Delete manifest from Red Hat provider.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(
-            self._org_path('delete_manifest', payload),
-            payload,
-            **self._server_config.get_client_kwargs()
+            self._org_path('delete_manifest', kwargs['data']),
+            **kwargs
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def manifest_history(self, payload, synchronous=True):
+    def manifest_history(self, synchronous=True, **kwargs):
         """Obtain manifest history for subscriptions.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(
-            self._org_path('manifest_history', payload),
-            payload,
-            **self._server_config.get_client_kwargs()
+            self._org_path('manifest_history', kwargs['data']),
+            **kwargs
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def refresh_manifest(self, payload, synchronous=True):
+    def refresh_manifest(self, synchronous=True, **kwargs):
         """Refresh previously imported manifest for Red Hat provider.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(
-            self._org_path('refresh_manifest', payload),
-            payload,
-            **self._server_config.get_client_kwargs()
+            self._org_path('refresh_manifest', kwargs['data']),
+            **kwargs
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def upload(self, payload, manifest, synchronous=True):
+    def upload(self, synchronous=True, **kwargs):
         """Upload a subscription manifest.
 
         Here is an example of how to use this method::
@@ -3417,20 +3428,20 @@ class Subscription(
             with open('my_manifest.zip') as manifest:
                 sub.upload({'organization_id': org.id}, manifest)
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
-        :param manifest: A file-like object. The manifest file to upload.
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
         """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(
-            self._org_path('upload', payload),
-            payload,
-            files={'content': manifest},
-            **self._server_config.get_client_kwargs()
+            self._org_path('upload', kwargs['data']),
+            **kwargs
         )
         return _handle_response(response, self._server_config, synchronous)
 
@@ -3530,50 +3541,46 @@ class SyncPlan(
             )
         return super(SyncPlan, self).path(which)
 
-    def add_products(self, payload, synchronous=True):
+    def add_products(self, synchronous=True, **kwargs):
         """Add products to this sync plan.
 
         .. NOTE:: The ``synchronous`` argument has no effect in certain
             versions of Satellite. See `Bugzilla #1199150
             <https://bugzilla.redhat.com/show_bug.cgi?id=1199150>`_.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's reponse otherwise.
-        :returns: The server's JSON-decoded response.
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('add_products'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('add_products'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
-    def remove_products(self, payload, synchronous=True):
+    def remove_products(self, synchronous=True, **kwargs):
         """Remove products from this sync plan.
 
         .. NOTE:: The ``synchronous`` argument has no effect in certain
             versions of Satellite. See `Bugzilla #1199150
             <https://bugzilla.redhat.com/show_bug.cgi?id=1199150>`_.
 
-        :param payload: Parameters that are encoded to JSON and passed in
-            with the request. See the API documentation page for a list of
-            parameters and their descriptions.
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's reponse otherwise.
-        :returns: The server's JSON-decoded response.
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
 
         """
-        response = client.put(
-            self.path('remove_products'),
-            payload,
-            **self._server_config.get_client_kwargs()
-        )
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('remove_products'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
     def update_payload(self, fields=None):
