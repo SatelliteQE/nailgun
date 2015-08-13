@@ -73,6 +73,7 @@ class BaseServerConfigTestCase(TestCase):
             open_ = mock_open(read_data=json.dumps(CONFIGS))
             with patch.object(builtins, 'open', open_):
                 server_config = BaseServerConfig.get(label, FILE_PATH)
+            self.assertEqual(type(server_config), BaseServerConfig)
             open_.assert_called_once_with(FILE_PATH)
             _compare_configs(self, config, server_config)
             if hasattr(server_config, 'auth'):
@@ -183,6 +184,7 @@ class ServerConfigTestCase(TestCase):
             open_ = mock_open(read_data=json.dumps(CONFIGS))
             with patch.object(builtins, 'open', open_):
                 server_config = ServerConfig.get(label, FILE_PATH)
+            self.assertEqual(type(server_config), ServerConfig)
             if hasattr(server_config, 'auth'):
                 self.assertIsInstance(server_config.auth, tuple)
 
