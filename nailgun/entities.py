@@ -567,7 +567,7 @@ class AbstractComputeResource(
         return self.read()
 
 
-class DiscoveredHosts(
+class DiscoveredHost(
         Entity,
         EntityCreateMixin,
         EntityDeleteMixin,
@@ -585,7 +585,7 @@ class DiscoveredHosts(
             'api_path': '/api/v2/discovered_hosts',
             'server_modes': ('sat'),
         }
-        super(DiscoveredHosts, self).__init__(server_config, **kwargs)
+        super(DiscoveredHost, self).__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -600,10 +600,10 @@ class DiscoveredHosts(
         """
         if which == 'facts':
             return '{0}/{1}'.format(
-                super(DiscoveredHosts, self).path(which='base'),
+                super(DiscoveredHost, self).path(which='base'),
                 which
             )
-        return super(DiscoveredHosts, self).path(which)
+        return super(DiscoveredHost, self).path(which)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -613,14 +613,14 @@ class DiscoveredHosts(
 
         """
         return {
-            u'discovered_host': super(DiscoveredHosts, self).create_payload()
+            u'discovered_host': super(DiscoveredHost, self).create_payload()
         }
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {
             u'discovered_host': super(
-                DiscoveredHosts,
+                DiscoveredHost,
                 self
             ).update_payload(fields)
         }
