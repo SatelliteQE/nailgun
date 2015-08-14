@@ -32,19 +32,21 @@ CONFIGS2.update({
 })
 
 
-def _compare_configs(self, dict_config, server_config):
-    """Compare a server config in two different forms.
+def _convert_bsc_attrs(bsc_attrs):
+    """Alter a dict of attributes in the same way as ``BaseServerConfig``.
 
-    :param dict_config: A dict of values, such as might be returned by
-        ``json.load`` when reading a config file.
-    :param server_config: A :class:`nailgun.config.BaseServerConfig` or a
-        subclass thereof.
+    ``bsc_attrs`` is not altered. If changes are made, a copy is returned.
+
+    :param bsc_attrs: A dict of attributes as might be passed to
+        :class:`nailgun.config.BaseServerConfig`.
+    :returns: A dict of attributes as is returned by
+        ``vars(BaseServerConfig(bsc_attrs))``.
 
     """
-    if 'version' in dict_config:
-        dict_config = dict_config.copy()  # shadow the passed in dict
-        dict_config['version'] = parse(dict_config.pop('version'))
-    self.assertEqual(dict_config, vars(server_config))
+    if 'version' in bsc_attrs:
+        bsc_attrs = bsc_attrs.copy()  # shadow the passed in dict
+        bsc_attrs['version'] = parse(bsc_attrs.pop('version'))
+    return bsc_attrs
 
 
 class BaseServerConfigTestCase(TestCase):
@@ -57,8 +59,10 @@ class BaseServerConfigTestCase(TestCase):
 
         """
         for config in CONFIGS.values():
-            server_config = BaseServerConfig(**config)
-            _compare_configs(self, config, server_config)
+            self.assertEqual(
+                _convert_bsc_attrs(config),
+                vars(BaseServerConfig(**config)),
+            )
 
     def test_get(self):
         """Test :meth:`nailgun.config.BaseServerConfig.get`.
@@ -75,7 +79,7 @@ class BaseServerConfigTestCase(TestCase):
                 server_config = BaseServerConfig.get(label, FILE_PATH)
             self.assertEqual(type(server_config), BaseServerConfig)
             open_.assert_called_once_with(FILE_PATH)
-            _compare_configs(self, config, server_config)
+            self.assertEqual(_convert_bsc_attrs(config), vars(server_config))
             if hasattr(server_config, 'auth'):
                 self.assertIsInstance(server_config.auth, list)
 
@@ -151,7 +155,10 @@ class ServerConfigTestCase(TestCase):
 
         """
         for config in CONFIGS2.values():
-            _compare_configs(self, config, ServerConfig(**config))
+            self.assertEqual(
+                _convert_bsc_attrs(config),
+                vars(ServerConfig(**config)),
+            )
 
     def test_get_client_kwargs(self):
         """Test :meth:`nailgun.config.ServerConfig.get_client_kwargs`.
@@ -230,14 +237,9 @@ class ReprTestCase(TestCase):
         are specified.
 
         """
-        ver = repr(parse('1'))
         targets = (
-            "nailgun.config.BaseServerConfig(url='flim', version={0})".format(
-                ver
-            ),
-            "nailgun.config.BaseServerConfig(version={0}, url='flim')".format(
-                ver
-            ),
+            "nailgun.config.BaseServerConfig(url='flim', version='1')",
+            "nailgun.config.BaseServerConfig(version='1', url='flim')",
         )
         self.assertIn(repr(BaseServerConfig('flim', version='1')), targets)
 
@@ -279,10 +281,9 @@ class ReprTestCase(TestCase):
         are specified.
 
         """
-        ver = repr(parse('1'))
         targets = (
-            "nailgun.config.ServerConfig(url='flim', version={0})".format(ver),
-            "nailgun.config.ServerConfig(version={0}, url='flim')".format(ver),
+            "nailgun.config.ServerConfig(url='flim', version='1')",
+            "nailgun.config.ServerConfig(version='1', url='flim')",
         )
         self.assertIn(repr(ServerConfig('flim', version='1')), targets)
 

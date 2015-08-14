@@ -108,13 +108,16 @@ class BaseServerConfig(object):
             self.version = parse(version)
 
     def __repr__(self):
+        attrs = vars(self).copy()
+        if 'version' in attrs:
+            attrs['version'] = str(attrs.pop('version'))
         return '{0}.{1}({2})'.format(
             self.__module__,
             type(self).__name__,
             ', '.join(
                 '{0}={1}'.format(key, repr(value))
                 for key, value
-                in vars(self).items()
+                in attrs.items()
             )
         )
 
