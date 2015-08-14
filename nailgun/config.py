@@ -254,6 +254,8 @@ class ServerConfig(BaseServerConfig):
     _xdg_config_file = 'server_configs.json'
 
     def __init__(self, url, auth=None, version=None, verify=None):
+        if version is None:
+            version = '1!0'
         super(ServerConfig, self).__init__(url, auth, version)
         if verify is not None:
             self.verify = verify
