@@ -108,13 +108,16 @@ class BaseServerConfig(object):
             self.version = parse(version)
 
     def __repr__(self):
+        attrs = vars(self).copy()
+        if 'version' in attrs:
+            attrs['version'] = str(attrs.pop('version'))
         return '{0}.{1}({2})'.format(
             self.__module__,
             type(self).__name__,
             ', '.join(
                 '{0}={1}'.format(key, repr(value))
                 for key, value
-                in vars(self).items()
+                in attrs.items()
             )
         )
 
@@ -251,6 +254,8 @@ class ServerConfig(BaseServerConfig):
     _xdg_config_file = 'server_configs.json'
 
     def __init__(self, url, auth=None, version=None, verify=None):
+        if version is None:
+            version = '1!0'
         super(ServerConfig, self).__init__(url, auth, version)
         if verify is not None:
             self.verify = verify
