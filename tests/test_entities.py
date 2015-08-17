@@ -95,7 +95,7 @@ class InitTestCase(TestCase):
                 entities.ContentUpload,
                 entities.ContentView,
                 entities.ContentViewVersion,
-                entities.DiscoveredHosts,
+                entities.DiscoveredHost,
                 entities.DockerComputeResource,
                 entities.DockerHubContainer,
                 entities.Domain,
@@ -202,7 +202,7 @@ class PathTestCase(TestCase):
                 (entities.ConfigTemplate, '/config_templates'),
                 (entities.ContentView, '/content_views'),
                 (entities.ContentViewVersion, '/content_view_versions'),
-                (entities.DiscoveredHosts, '/discovered_hosts'),
+                (entities.DiscoveredHost, '/discovered_hosts'),
                 (entities.Organization, '/organizations'),
                 (entities.Product, '/products'),
                 (entities.RHCIDeployment, '/deployments'),
@@ -255,7 +255,7 @@ class PathTestCase(TestCase):
         for entity, which in (
                 (entities.ConfigTemplate, 'build_pxe_default'),
                 (entities.ConfigTemplate, 'revision'),
-                (entities.DiscoveredHosts, 'facts'),
+                (entities.DiscoveredHost, 'facts'),
         ):
             with self.subTest((entity, which)):
                 path = entity(self.cfg).path(which=which)
@@ -473,7 +473,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.AbstractDockerContainer,
                 entities.Architecture,
                 entities.ConfigTemplate,
-                entities.DiscoveredHosts,
+                entities.DiscoveredHost,
                 entities.Domain,
                 entities.Environment,
                 entities.Host,
@@ -1019,7 +1019,7 @@ class UpdatePayloadTestCase(TestCase):
         entities_payloads = [
             (entities.AbstractComputeResource, {'compute_resource': {}}),
             (entities.ConfigTemplate, {'config_template': {}}),
-            (entities.DiscoveredHosts, {'discovered_host': {}}),
+            (entities.DiscoveredHost, {'discovered_host': {}}),
             (entities.Domain, {'domain': {}}),
             (entities.Host, {'host': {}}),
             (entities.HostGroup, {'hostgroup': {}}),
@@ -1090,7 +1090,7 @@ class GenericTestCase(TestCase):
             (entities.ContentView(**generic).copy, 'post'),
             (entities.ContentView(**generic).publish, 'post'),
             (entities.ContentViewVersion(**generic).promote, 'post'),
-            (entities.DiscoveredHosts(cfg).facts, 'post'),
+            (entities.DiscoveredHost(cfg).facts, 'post'),
             (entities.Product(**generic).sync, 'post'),
             (entities.RHCIDeployment(**generic).deploy, 'put'),
             (entities.Repository(**generic).sync, 'post'),
