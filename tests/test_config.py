@@ -1,5 +1,4 @@
 """Unit tests for :mod:`nailgun.config`."""
-from itertools import permutations
 from mock import call, mock_open, patch
 from nailgun.config import BaseServerConfig, ServerConfig
 from packaging.version import parse
@@ -48,24 +47,6 @@ def _convert_bsc_attrs(bsc_attrs):
         bsc_attrs = bsc_attrs.copy()  # shadow the passed in dict
         bsc_attrs['version'] = parse(bsc_attrs.pop('version'))
     return bsc_attrs
-
-
-def _convert_sc_attrs(sc_attrs):
-    """Alter a dict of attributes in the same way as ``ServerConfig``.
-
-    ``sc_attrs`` is not altered. If changes are made, a copy is returned.
-
-    :param sc_attrs: A dict of attributes as might be passed to
-        :class:`nailgun.config.ServerConfig`.
-    :returns: A dict of attributes as is returned by
-        ``vars(ServerConfig(bsc_attrs))``.
-
-    """
-    sc_attrs = _convert_bsc_attrs(sc_attrs)
-    if 'version' not in sc_attrs:
-        sc_attrs = sc_attrs.copy()
-        sc_attrs['version'] = parse('1!0')
-    return sc_attrs
 
 
 class BaseServerConfigTestCase(TestCase):
@@ -175,7 +156,7 @@ class ServerConfigTestCase(TestCase):
         """
         for config in CONFIGS2.values():
             self.assertEqual(
-                _convert_sc_attrs(config),
+                _convert_bsc_attrs(config),
                 vars(ServerConfig(**config)),
             )
 
@@ -268,14 +249,11 @@ class ReprTestCase(TestCase):
         Assert that ``__repr__`` works correctly when only a URL is passed in.
 
         """
-        targets = (
-            "nailgun.config.ServerConfig(url='bogus', version='1!0')",
-            "nailgun.config.ServerConfig(version='1!0', url='bogus')",
-        )
-        self.assertIn(repr(ServerConfig('bogus')), targets)
+        target = "nailgun.config.ServerConfig(url='bogus')"
+        self.assertEqual(target, repr(ServerConfig('bogus')))
         import nailgun  # noqa pylint:disable=unused-variable
         # pylint:disable=eval-used
-        self.assertIn(repr(eval(repr(ServerConfig('bogus')))), targets)
+        self.assertEqual(target, repr(eval(repr(ServerConfig('bogus')))))
 
     def test_sc_v2(self):
         """Test :class:`nailgun.config.ServerConfig`.
@@ -284,10 +262,9 @@ class ReprTestCase(TestCase):
         specified.
 
         """
-        targets = list(
-            "nailgun.config.ServerConfig({0})".format(', '.join(permutation))
-            for permutation
-            in permutations(("url='flim'", "auth='flam'", "version='1!0'"))
+        targets = (
+            "nailgun.config.ServerConfig(url='flim', auth='flam')",
+            "nailgun.config.ServerConfig(auth='flam', url='flim')",
         )
         self.assertIn(repr(ServerConfig('flim', auth='flam')), targets)
         import nailgun  # noqa pylint:disable=unused-variable
@@ -317,10 +294,9 @@ class ReprTestCase(TestCase):
         are specified.
 
         """
-        targets = list(
-            "nailgun.config.ServerConfig({0})".format(', '.join(permutation))
-            for permutation
-            in permutations(("url='flim'", "verify='flub'", "version='1!0'"))
+        targets = (
+            "nailgun.config.ServerConfig(url='flim', verify='flub')",
+            "nailgun.config.ServerConfig(verify='flub', url='flim')",
         )
         self.assertIn(repr(ServerConfig('flim', verify='flub')), targets)
         import nailgun  # noqa pylint:disable=unused-variable
