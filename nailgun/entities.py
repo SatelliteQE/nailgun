@@ -643,6 +643,54 @@ class DiscoveredHost(
         return _handle_response(response, self._server_config, synchronous)
 
 
+class DiscoveryRule(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
+    """A representation of a Foreman Discovery Rule entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+            'search': entity_fields.StringField(required=True),
+            'hostgroup': entity_fields.OneToOneField(
+                HostGroup,
+                required=True,
+            ),
+            'hostname': entity_fields.StringField(),
+            'max_count': entity_fields.IntegerField(),
+            'priority': entity_fields.IntegerField(),
+            'enabled': entity_fields.BooleanField(),
+        }
+        self._meta = {
+            'api_path': '/api/v2/discovery_rules',
+            'server_modes': ('sat'),
+        }
+        super(DiscoveryRule, self).__init__(server_config, **kwargs)
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict.
+
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
+
+        """
+        return {
+            u'discovery_rule': super(DiscoveryRule, self).create_payload()
+        }
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {
+            u'discovery_rule': super(
+                DiscoveryRule,
+                self
+            ).update_payload(fields)
+        }
+
+
 class DockerComputeResource(AbstractComputeResource):
     """A representation of a Docker Compute Resource entity."""
 
