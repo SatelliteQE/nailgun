@@ -648,6 +648,7 @@ class DiscoveryRule(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Foreman Discovery Rule entity."""
 
@@ -1728,6 +1729,7 @@ class HostGroup(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Host Group entity."""
 
