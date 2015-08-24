@@ -538,6 +538,15 @@ class CreatePayloadTestCase(TestCase):
         self.assertNotIn('path_', payload['medium'])
         self.assertIn('path', payload['medium'])
 
+    def test_discovery_rule(self):
+        """Create a :class:`nailgun.entities.DiscoveryRule`."""
+        payload = entities.DiscoveryRule(
+            self.cfg,
+            search_='foo',
+        ).create_payload()
+        self.assertNotIn('search_', payload['discovery_rule'])
+        self.assertIn('search', payload['discovery_rule'])
+
 
 class CreateMissingTestCase(TestCase):
     """Tests for extensions of ``create_missing``."""
@@ -785,6 +794,7 @@ class ReadTestCase(TestCase):
                 # entities.HostGroup,  # see HostGroupTestCase.test_read
                 # entities.Product,  # See Product.test_read
                 # entities.UserGroup,  # see test_attrs_arg_v2
+                entities.DiscoveryRule,
                 entities.Domain,
                 entities.Host,
                 entities.Media,
@@ -1059,6 +1069,20 @@ class UpdatePayloadTestCase(TestCase):
                     entities.SyncPlan(self.cfg, **kwargs).update_payload(),
                     payload,
                 )
+
+    def test_discovery_rule_search(self):
+        """Check whether ``DiscoveryRule`` updates its ``search_`` field.
+
+        The field should be renamed from ``search_`` to ``search`` when
+        ``update_payload`` is called.
+
+        """
+        payload = entities.DiscoveryRule(
+            self.cfg,
+            search_='foo',
+        ).update_payload()
+        self.assertNotIn('search_', payload['discovery_rule'])
+        self.assertIn('search', payload['discovery_rule'])
 
 
 # 2. Tests for entity-specific methods. ---------------------------------- {{{1
