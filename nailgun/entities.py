@@ -895,7 +895,8 @@ class AbstractDockerContainer(
                 str_type='latin1',
             ),
             'compute_resource': entity_fields.OneToOneField(
-                AbstractComputeResource
+                AbstractComputeResource,
+                required=True,
             ),
             'cpu_set': entity_fields.StringField(),
             'cpu_shares': entity_fields.StringField(),
@@ -998,7 +999,13 @@ class AbstractDockerContainer(
 
 
 class DockerHubContainer(AbstractDockerContainer):
-    """A docker container that comes from Docker Hub."""
+    """A docker container that comes from Docker Hub.
+
+    .. WARNING:: The ``repository_name`` field references an image repository
+        on the `Docker Hub <https://hub.docker.com/>`, not a locally created
+        :class:`nailgun.entities.Repository`.
+
+    """
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
