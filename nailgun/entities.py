@@ -650,20 +650,22 @@ class DiscoveryRule(
         EntityReadMixin,
         EntitySearchMixin,
         EntityUpdateMixin):
-    """A representation of a Foreman Discovery Rule entity."""
+    """A representation of a Foreman Discovery Rule entity.
+
+    .. NOTE:: The ``search_`` field is named as such due to a naming conflict
+        with :meth:`nailgun.entity_mixins.Entity.path`.
+
+    """
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'name': entity_fields.StringField(required=True),
-            'search': entity_fields.StringField(required=True),
-            'hostgroup': entity_fields.OneToOneField(
-                HostGroup,
-                required=True,
-            ),
+            'enabled': entity_fields.BooleanField(),
+            'hostgroup': entity_fields.OneToOneField(HostGroup, required=True),
             'hostname': entity_fields.StringField(),
             'max_count': entity_fields.IntegerField(),
+            'name': entity_fields.StringField(required=True),
             'priority': entity_fields.IntegerField(),
-            'enabled': entity_fields.BooleanField(),
+            'search_': entity_fields.StringField(required=True),
         }
         self._meta = {
             'api_path': '/api/v2/discovery_rules',
@@ -677,19 +679,27 @@ class DiscoveryRule(
         For more information, see `Bugzilla #1151220
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
+        In addition, rename the ``search_`` field to ``search``.
+
         """
-        return {
-            u'discovery_rule': super(DiscoveryRule, self).create_payload()
-        }
+        payload = super(DiscoveryRule, self).create_payload()
+        if 'search_' in payload:
+            payload['search'] = payload.pop('search_')
+        return {u'discovery_rule': payload}
+
+    def read(self, entity=None, attrs=None, ignore=None):
+        """Rename ``search`` to ``search_``."""
+        if attrs is None:
+            attrs = self.read_json()
+        attrs['search_'] = attrs.pop('search')
+        return super(DiscoveryRule, self).read(entity, attrs, ignore)
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {
-            u'discovery_rule': super(
-                DiscoveryRule,
-                self
-            ).update_payload(fields)
-        }
+        payload = super(DiscoveryRule, self).update_payload(fields)
+        if 'search_' in payload:
+            payload['search'] = payload.pop('search_')
+        return {u'discovery_rule': payload}
 
 
 class DockerComputeResource(AbstractComputeResource):
