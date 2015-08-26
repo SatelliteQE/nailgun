@@ -790,11 +790,11 @@ class ReadTestCase(TestCase):
 
         """
         for entity in (
+                # entities.DiscoveryRule,  # see test_discovery_rule
                 # entities.DockerComputeResource,  # see test_attrs_arg_v2
                 # entities.HostGroup,  # see HostGroupTestCase.test_read
                 # entities.Product,  # See Product.test_read
                 # entities.UserGroup,  # see test_attrs_arg_v2
-                entities.DiscoveryRule,
                 entities.Domain,
                 entities.Host,
                 entities.Media,
@@ -931,6 +931,22 @@ class ReadTestCase(TestCase):
                     entities.User(self.cfg).read(ignore=input_ignore)
                 # `call_args` is a two-tuple of (positional, keyword) args.
                 self.assertEqual(actual_ignore, read.call_args[0][2])
+
+    def test_discovery_rule(self):
+        """Call :meth:`nailgun.entities.DiscoveryRule.read`.
+
+        Ensure that the ``max_count`` attribute is fetched.
+
+        """
+        with mock.patch.object(EntityUpdateMixin, 'update_json') as u_json:
+            u_json.return_value = {'max_count': 'max_count'}
+            with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
+                read_json.return_value = {'id': 'id', 'search': 'search'}
+                with mock.patch.object(EntityReadMixin, 'read') as read:
+                    entities.DiscoveryRule(self.cfg).read()
+        for mock_obj in (u_json, read_json, read):
+            self.assertEqual(mock_obj.call_count, 1)
+        self.assertEqual(u_json.call_args, mock.call([]))
 
 
 class SearchRawTestCase(TestCase):

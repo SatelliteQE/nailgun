@@ -689,10 +689,27 @@ class DiscoveryRule(
         return {u'discovery_rule': payload}
 
     def read(self, entity=None, attrs=None, ignore=None):
-        """Rename ``search`` to ``search_``."""
+        """Work around a bug. Rename ``search`` to ``search_``.
+
+        For more information on the bug, see `Bugzilla #1257255
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1257255>`_.
+
+        """
         if attrs is None:
             attrs = self.read_json()
         attrs['search_'] = attrs.pop('search')
+
+        # Satellite doesn't return this attribute. See BZ 1257255.
+        attr = 'max_count'
+        if ignore is None:
+            ignore = set()
+        if attr not in ignore:
+            # We cannot call `self.update_json([])`, as an ID might not be
+            # present on self. However, `attrs` is guaranteed to have an ID.
+            attrs[attr] = DiscoveryRule(
+                self._server_config,
+                id=attrs['id'],
+            ).update_json([])[attr]
         return super(DiscoveryRule, self).read(entity, attrs, ignore)
 
     def update_payload(self, fields=None):
