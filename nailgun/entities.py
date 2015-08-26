@@ -307,6 +307,7 @@ class Architecture(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Architecture entity."""
 
@@ -791,6 +792,7 @@ class ConfigTemplate(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Config Template entity."""
 
@@ -1458,6 +1460,7 @@ class Domain(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Domain entity."""
 
@@ -2188,7 +2191,11 @@ class Location(
 
 
 class Media(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
     """A representation of a Media entity.
 
     .. NOTE:: The ``path_`` field is named as such due to a naming conflict
@@ -2665,6 +2672,7 @@ class PartitionTable(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Partition Table entity.
 
@@ -3190,7 +3198,7 @@ class Role(
         super(Role, self).__init__(server_config, **kwargs)
 
 
-class SmartProxy(Entity, EntityReadMixin):
+class SmartProxy(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of a Smart Proxy entity."""
 
     def __init__(self, server_config=None, **kwargs):
