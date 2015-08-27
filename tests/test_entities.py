@@ -131,6 +131,7 @@ class InitTestCase(TestCase):
                 entities.PuppetModule,
                 entities.RPMContentViewFilter,
                 entities.Realm,
+                entities.Registry,
                 entities.Report,
                 entities.Repository,
                 entities.Role,
@@ -486,6 +487,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.Location,
                 entities.Media,
                 entities.OperatingSystem,
+                entities.Registry,
                 entities.Subnet,
                 entities.User,
                 entities.UserGroup,
@@ -1055,6 +1057,7 @@ class UpdatePayloadTestCase(TestCase):
             (entities.HostGroup, {'hostgroup': {}}),
             (entities.Location, {'location': {}}),
             (entities.Organization, {'organization': {}}),
+            (entities.Registry, {'registry': {}}),
             (entities.User, {'user': {}}),
         ]
         for entity, payload in entities_payloads:
