@@ -2769,6 +2769,44 @@ class Realm(
         ).read()
 
 
+class Registry(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
+    """A representation of a Registry entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'description': entity_fields.StringField(),
+            'name': entity_fields.StringField(required=True),
+            'password': entity_fields.StringField(),
+            'url': entity_fields.StringField(required=True),
+            'username': entity_fields.StringField(),
+        }
+        self._meta = {
+            'api_path': 'docker/api/v2/registries',
+            'server_modes': ('sat'),
+        }
+        super(Registry, self).__init__(server_config, **kwargs)
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict.
+
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
+
+        """
+        return {
+            u'registry': super(Registry, self).create_payload()
+        }
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {u'registry': super(Registry, self).update_payload(fields)}
+
+
 class Report(Entity):
     """A representation of a Report entity."""
 
