@@ -2799,7 +2799,7 @@ class Registry(
             'description': entity_fields.StringField(),
             'name': entity_fields.StringField(required=True),
             'password': entity_fields.StringField(),
-            'url': entity_fields.StringField(required=True),
+            'url': entity_fields.URLField(required=True),
             'username': entity_fields.StringField(),
         }
         self._meta = {
