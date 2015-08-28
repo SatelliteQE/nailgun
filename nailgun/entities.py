@@ -445,7 +445,7 @@ class CommonParameter(Entity):
         super(CommonParameter, self).__init__(server_config, **kwargs)
 
 
-class ComputeAttribute(Entity):
+class ComputeAttribute(Entity, EntityCreateMixin, EntityReadMixin):
     """A representation of a Compute Attribute entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2305,7 +2305,11 @@ class Model(
 
 
 class OperatingSystem(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
     """A representation of a Operating System entity.
 
     ``major`` is listed as a string field in the API docs, but only numeric
@@ -2337,6 +2341,7 @@ class OperatingSystem(
             ),
             'name': entity_fields.StringField(required=True),
             'ptable': entity_fields.OneToManyField(PartitionTable),
+            'config_template': entity_fields.OneToManyField(ConfigTemplate),
             'release_name': entity_fields.StringField(),
         }
         self._meta = {
