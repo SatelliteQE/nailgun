@@ -19,6 +19,7 @@ unpleasant to work with manually.
 
 """
 from fauxfactory import (
+    gen_alpha,
     gen_boolean,
     gen_choice,
     gen_date,
@@ -265,4 +266,4 @@ class URLField(StringField):
 
     def gen_value(self):
         """Return a value suitable for a :class:`URLField`."""
-        return gen_url()
+        return gen_url(subdomain=gen_alpha())
