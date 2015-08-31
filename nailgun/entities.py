@@ -820,6 +820,7 @@ class ConfigTemplate(
             'name': entity_fields.StringField(required=True),
             'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
             'organization': entity_fields.OneToManyField(Organization),
+            'location': entity_fields.OneToManyField(Location),
             'snippet': entity_fields.BooleanField(required=True),
             'template': entity_fields.StringField(required=True),
             'template_combinations': entity_fields.ListField(),
@@ -2309,7 +2310,8 @@ class OperatingSystem(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
-        EntitySearchMixin):
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Operating System entity.
 
     ``major`` is listed as a string field in the API docs, but only numeric
