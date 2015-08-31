@@ -22,7 +22,7 @@ workings of entity classes.
 
 """
 from datetime import datetime
-from fauxfactory import gen_alpha, gen_alphanumeric, gen_url
+from fauxfactory import gen_alphanumeric
 from nailgun import client, entity_fields
 from nailgun.entity_mixins import (
     Entity,
@@ -1496,9 +1496,9 @@ class Domain(
     def create_missing(self):
         """Customize the process of auto-generating instance attributes.
 
-        By default, :meth:`nailgun.entity_fields.URLField.gen_value` does not
-        return especially unique values. This is problematic, as all domain
-        names must be unique.
+        By default, :meth:`nailgun.entity_fields.StringField.gen_value` can
+        produce strings in both lower and upper cases, but domain name should
+        be always in lower case due logical reason.
 
         """
         if not hasattr(self, 'name'):
@@ -2244,18 +2244,6 @@ class Media(
         }
         self._meta = {'api_path': 'api/v2/media', 'server_modes': ('sat')}
         super(Media, self).__init__(server_config, **kwargs)
-
-    def create_missing(self):
-        """Give the ``path_`` instance attribute a value if it is unset.
-
-        By default, :meth:`nailgun.entity_fields.URLField.gen_value` does not
-        return especially unique values. This is problematic, as all media must
-        have a unique path.
-
-        """
-        if not hasattr(self, 'path_'):
-            self.path_ = gen_url(subdomain=gen_alpha())
-        return super(Media, self).create_missing()
 
     def create_payload(self):
         """Wrap submitted data within an extra dict and rename ``path_``.

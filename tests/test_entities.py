@@ -715,23 +715,6 @@ class CreateMissingTestCase(TestCase):
                 with self.assertRaises(entities.APIResponseError):
                     entity.create_missing()
 
-    def test_media_v1(self):
-        """Test ``Media()``."""
-        entity = entities.Media(self.cfg)
-        with mock.patch.object(EntityCreateMixin, 'create_raw'):
-            with mock.patch.object(EntityReadMixin, 'read_raw'):
-                entity.create_missing()
-        self.assertTrue('path_' in entity.get_values())
-
-    def test_media_v2(self):
-        """Test ``Media(path_=…)``."""
-        path = gen_string('alphanumeric')
-        entity = entities.Media(self.cfg, path_=path)
-        with mock.patch.object(EntityCreateMixin, 'create_raw'):
-            with mock.patch.object(EntityReadMixin, 'read_raw'):
-                entity.create_missing()
-        self.assertEqual(entity.path_, path)
-
     def test_repository_v1(self):
         """Test ``Repository(content_type='docker')``."""
         entity = entities.Repository(self.cfg, content_type='docker')
