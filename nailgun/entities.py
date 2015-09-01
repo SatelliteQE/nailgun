@@ -1120,7 +1120,11 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
 
 
 class ContentViewFilterRule(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
     """A representation of a Content View Filter Rule entity."""
 
     def __init__(self, server_config=None, **kwargs):
