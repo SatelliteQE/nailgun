@@ -1337,7 +1337,9 @@ class ContentView(
             'composite': entity_fields.BooleanField(),
             'description': entity_fields.StringField(),
             'label': entity_fields.StringField(),
+            'last_published': entity_fields.StringField(),
             'name': entity_fields.StringField(required=True),
+            'next_version': entity_fields.IntegerField(),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
@@ -2850,6 +2852,7 @@ class Repository(
             'checksum_type': entity_fields.StringField(
                 choices=('sha1', 'sha256'),
             ),
+            'content_counts': entity_fields.DictField(),
             'content_type': entity_fields.StringField(
                 choices=('puppet', 'yum', 'file', 'docker'),
                 default='yum',
