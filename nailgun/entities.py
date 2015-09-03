@@ -1619,12 +1619,22 @@ class Environment(
         return {u'environment': super(Environment, self).create_payload()}
 
 
-class Errata(Entity):
+class Errata(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of an Errata entity."""
     # You cannot create an errata. Errata are a read-only entity.
 
     def __init__(self, server_config=None, **kwargs):
-        self._meta = {'api_path': 'api/v2/errata', 'server_modes': ('sat')}
+        self._fields = {
+            'content_view_version': entity_fields.OneToOneField(
+                ContentViewVersion
+            ),
+            'repository': entity_fields.OneToOneField(Repository),
+            'search': entity_fields.StringField(),
+        }
+        self._meta = {
+            'api_path': '/katello/api/v2/errata',
+            'server_modes': ('sat')
+        }
         super(Errata, self).__init__(server_config, **kwargs)
 
 
@@ -3790,7 +3800,11 @@ class SystemPackage(Entity):
 
 
 class System(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
     """A representation of a System entity."""
 
     def __init__(self, server_config=None, **kwargs):
