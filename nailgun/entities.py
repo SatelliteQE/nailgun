@@ -486,6 +486,7 @@ class AbstractComputeResource(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Compute Resource entity."""
 
@@ -720,7 +721,7 @@ class DiscoveryRule(
         return {u'discovery_rule': payload}
 
 
-class DockerComputeResource(AbstractComputeResource):
+class DockerComputeResource(AbstractComputeResource):  # pylint:disable=R0901
     """A representation of a Docker Compute Resource entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -773,7 +774,7 @@ class DockerComputeResource(AbstractComputeResource):
         return super(DockerComputeResource, self).read(entity, attrs, ignore)
 
 
-class LibvirtComputeResource(AbstractComputeResource):
+class LibvirtComputeResource(AbstractComputeResource):  # pylint:disable=R0901
     """A representation of a Libvirt Compute Resource entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -904,7 +905,11 @@ class ConfigTemplate(
 
 
 class AbstractDockerContainer(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
     """A representation of a docker container.
 
     This class is abstract because all containers must come from somewhere, but
