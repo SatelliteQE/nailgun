@@ -1095,6 +1095,9 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
 
         The format of the returned path depends on the value of ``which``:
 
+        incremental_update
+            /content_view_versions/<id>/incremental_update
+
         promote
             /content_view_versions/<id>/promote
 
@@ -1105,7 +1108,28 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
             return '{0}/promote'.format(
                 super(ContentViewVersion, self).path(which='self')
             )
+        if which == 'incremental_update':
+            return '{0}/incremental_update'.format(
+                super(ContentViewVersion, self).path(which)
+            )
         return super(ContentViewVersion, self).path(which)
+
+    def incremental_update(self, synchronous=True, **kwargs):
+        """Helper for content view version incremental update
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('incremental_update'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
     def promote(self, synchronous=True, **kwargs):
         """Helper for promoting an existing published content view.
@@ -1598,12 +1622,22 @@ class Environment(
         return {u'environment': super(Environment, self).create_payload()}
 
 
-class Errata(Entity):
+class Errata(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of an Errata entity."""
     # You cannot create an errata. Errata are a read-only entity.
 
     def __init__(self, server_config=None, **kwargs):
-        self._meta = {'api_path': 'api/v2/errata', 'server_modes': ('sat')}
+        self._fields = {
+            'content_view_version': entity_fields.OneToOneField(
+                ContentViewVersion
+            ),
+            'repository': entity_fields.OneToOneField(Repository),
+            'search': entity_fields.StringField(),
+        }
+        self._meta = {
+            'api_path': '/katello/api/v2/errata',
+            'server_modes': ('sat')
+        }
         super(Errata, self).__init__(server_config, **kwargs)
 
 
@@ -3769,7 +3803,11 @@ class SystemPackage(Entity):
 
 
 class System(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
     """A representation of a System entity."""
 
     def __init__(self, server_config=None, **kwargs):
