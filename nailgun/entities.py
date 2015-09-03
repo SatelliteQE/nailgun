@@ -3336,7 +3336,12 @@ class Status(Entity):
 
 
 class Subnet(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Subnet entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -3396,6 +3401,10 @@ class Subnet(
             ignore = set()
         ignore.add('discovery')
         return super(Subnet, self).read(entity, attrs, ignore)
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {u'subnet': super(Subnet, self).update_payload(fields)}
 
 
 class Subscription(
