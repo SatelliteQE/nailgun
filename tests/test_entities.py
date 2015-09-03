@@ -1041,6 +1041,7 @@ class UpdatePayloadTestCase(TestCase):
             (entities.HostGroup, {'hostgroup': {}}),
             (entities.Location, {'location': {}}),
             (entities.Organization, {'organization': {}}),
+            (entities.Subnet, {'subnet': {}}),
             (entities.Registry, {'registry': {}}),
             (entities.User, {'user': {}}),
         ]
