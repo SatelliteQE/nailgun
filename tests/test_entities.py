@@ -433,6 +433,7 @@ class CreateTestCase(TestCase):
             entities.AbstractDockerContainer(self.cfg),
             entities.DockerComputeResource(self.cfg),
             entities.Domain(self.cfg),
+            entities.HostGroup(self.cfg),
             entities.Location(self.cfg),
             entities.Media(self.cfg),
             entities.Organization(self.cfg),
@@ -1248,6 +1249,7 @@ class HostGroupTestCase(TestCase):
                 entities.HostGroup,
                 'update_json',
                 return_value={
+                    'content_source_id': None,
                     'content_view_id': None,
                     'lifecycle_environment_id': None,
                 },
@@ -1259,6 +1261,7 @@ class HostGroupTestCase(TestCase):
         self.assertEqual(
             read.call_args[0][1],
             {
+                'content_source_id': None,
                 'content_view_id': None,
                 'id': 641212,
                 'lifecycle_environment_id': None,

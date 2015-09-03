@@ -1781,6 +1781,9 @@ class HostGroup(
         self._fields = {
             'architecture': entity_fields.OneToOneField(Architecture),
             'domain': entity_fields.OneToOneField(Domain),
+            'puppet_proxy': entity_fields.OneToOneField(SmartProxy),
+            'puppet_ca_proxy': entity_fields.OneToOneField(SmartProxy),
+            'content_source': entity_fields.OneToOneField(SmartProxy),
             'environment': entity_fields.OneToOneField(Environment),
             'location': entity_fields.OneToManyField(Location),
             'medium': entity_fields.OneToOneField(Media),
@@ -1800,6 +1803,16 @@ class HostGroup(
             })
         self._meta = {'api_path': 'api/v2/hostgroups', 'server_modes': ('sat')}
         super(HostGroup, self).__init__(server_config, **kwargs)
+
+    def create(self, create_missing=None):
+        """Do extra work to fetch a complete set of attributes for this entity.
+        For more information, see `Github issue #197
+        <https://github.com/SatelliteQE/nailgun/issues/197>`_.
+        """
+        return HostGroup(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -1832,7 +1845,9 @@ class HostGroup(
                 self._server_config,
                 id=attrs['id']
             ).update_json([])
-            for attr in ('content_view_id', 'lifecycle_environment_id'):
+            for attr in ('content_source_id',
+                         'content_view_id',
+                         'lifecycle_environment_id'):
                 attrs[attr] = attrs2[attr]
         return super(HostGroup, self).read(entity, attrs, ignore)
 
