@@ -258,6 +258,7 @@ class PathTestCase(TestCase):
         for entity, which in (
                 (entities.ConfigTemplate, 'build_pxe_default'),
                 (entities.ConfigTemplate, 'revision'),
+                (entities.ContentViewVersion, 'incremental_update'),
                 (entities.DiscoveredHost, 'facts'),
         ):
             with self.subTest((entity, which)):
@@ -1121,6 +1122,10 @@ class GenericTestCase(TestCase):
             (entities.ContentView(**generic).available_puppet_modules, 'get'),
             (entities.ContentView(**generic).copy, 'post'),
             (entities.ContentView(**generic).publish, 'post'),
+            (
+                entities.ContentViewVersion(**generic).incremental_update,
+                'post'
+            ),
             (entities.ContentViewVersion(**generic).promote, 'post'),
             (entities.DiscoveredHost(cfg).facts, 'post'),
             (entities.Product(**generic).sync, 'post'),
