@@ -3306,6 +3306,30 @@ class Role(
         super(Role, self).__init__(server_config, **kwargs)
 
 
+class Setting(Entity, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin):
+    """A representation of a Setting entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'created_at': entity_fields.DateTimeField(),
+            'default': entity_fields.StringField(),
+            'description': entity_fields.StringField(),
+            'name': entity_fields.StringField(),
+            'settings_type': entity_fields.StringField(),
+            'updated_at': entity_fields.DateTimeField(),
+            'value': entity_fields.StringField(),
+        }
+        self._meta = {
+            'api_path': 'api/v2/settings',
+            'server_modes': ('sat'),
+        }
+        super(Setting, self).__init__(server_config, **kwargs)
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {u'setting': super(Setting, self).update_payload(fields)}
+
+
 class SmartProxy(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of a Smart Proxy entity."""
 
