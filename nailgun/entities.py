@@ -1674,10 +1674,24 @@ class Filter(
         super(Filter, self).__init__(server_config, **kwargs)
 
 
-class ForemanTask(Entity, EntityReadMixin):
+class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of a Foreman task."""
 
     def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'cli_example': entity_fields.StringField(),
+            'ended_at': entity_fields.DateTimeField(),
+            'humanized': entity_fields.DictField(),
+            'input': entity_fields.DictField(),
+            'label': entity_fields.StringField(),
+            'output': entity_fields.DictField(),
+            'pending': entity_fields.BooleanField(),
+            'progress': entity_fields.FloatField(),
+            'result': entity_fields.StringField(),
+            'started_at': entity_fields.DateTimeField(),
+            'state': entity_fields.StringField(),
+            'username': entity_fields.StringField(),
+        }
         self._meta = {
             'api_path': 'foreman_tasks/api/tasks',
             'server_modes': ('sat'),
@@ -1689,18 +1703,22 @@ class ForemanTask(Entity, EntityReadMixin):
 
         The format of the returned path depends on the value of ``which``:
 
+        bulk_resume
+            /foreman_tasks/api/tasks/bulk_resume
         bulk_search
             /foreman_tasks/api/tasks/bulk_search
+        summary
+            /foreman_tasks/api/tasks/summary
 
-        ``super(which='self')`` is called otherwise. There is no path available
-        for fetching all tasks.
+        Otherwise, call ``super``.
 
         """
-        if which == 'bulk_search':
-            return '{0}/bulk_search'.format(
-                super(ForemanTask, self).path(which='base')
+        if which in ('bulk_resume', 'bulk_search', 'summary'):
+            return '{0}/{1}'.format(
+                super(ForemanTask, self).path('base'),
+                which
             )
-        return super(ForemanTask, self).path(which='self')
+        return super(ForemanTask, self).path(which)
 
     def poll(self, poll_rate=None, timeout=None):
         """Return the status of a task or timeout.
@@ -1733,6 +1751,23 @@ class ForemanTask(Entity, EntityReadMixin):
             poll_rate,
             timeout
         )
+
+    def summary(self, synchronous=True, **kwargs):
+        """Helper to view a summary of tasks.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('summary'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class GPGKey(

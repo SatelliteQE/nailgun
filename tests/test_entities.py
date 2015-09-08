@@ -262,9 +262,12 @@ class PathTestCase(TestCase):
                 (entities.ConfigTemplate, 'revision'),
                 (entities.ContentViewVersion, 'incremental_update'),
                 (entities.DiscoveredHost, 'facts'),
+                (entities.ForemanTask, 'bulk_resume'),
+                (entities.ForemanTask, 'bulk_search'),
+                (entities.ForemanTask, 'summary'),
         ):
             with self.subTest((entity, which)):
-                path = entity(self.cfg).path(which=which)
+                path = entity(self.cfg).path(which)
                 self.assertIn(which, path)
                 self.assertRegex(path, which + '$')
 
@@ -299,26 +302,6 @@ class PathTestCase(TestCase):
             with self.subTest((entity, which)):
                 with self.assertRaises(NoSuchPathError):
                     entity(self.cfg).path(which=which)
-
-    def test_foreman_task(self):
-        """Test :meth:`nailgun.entities.ForemanTask.path`.
-
-        Assert that the following return appropriate paths:
-
-        * ``ForemanTask(id=…).path()``
-        * ``ForemanTask().path('bulk_search')``
-        * ``ForemanTask(id=…).path('bulk_search')``
-
-        """
-        self.assertIn(
-            '/foreman_tasks/api/tasks/{}'.format(self.id_),
-            entities.ForemanTask(self.cfg, id=self.id_).path()
-        )
-        for path in (
-                entities.ForemanTask(self.cfg).path('bulk_search'),
-                entities.ForemanTask(self.cfg, id=self.id_).path('bulk_search')
-        ):
-            self.assertIn('/foreman_tasks/api/tasks/bulk_search', path)
 
     def test_repository_set(self):
         """Test :meth:`nailgun.entities.RepositorySet.path`.
@@ -1137,6 +1120,7 @@ class GenericTestCase(TestCase):
             ),
             (entities.ContentViewVersion(**generic).promote, 'post'),
             (entities.DiscoveredHost(cfg).facts, 'post'),
+            (entities.ForemanTask(cfg).summary, 'get'),
             (entities.Product(**generic).sync, 'post'),
             (entities.RHCIDeployment(**generic).deploy, 'put'),
             (entities.Repository(**generic).sync, 'post'),
@@ -1149,7 +1133,7 @@ class GenericTestCase(TestCase):
         )
 
     def test_generic(self):
-        """Check that a variety of helper method sane.
+        """Check that a variety of helper methods are sane.
 
         Assert that:
 
