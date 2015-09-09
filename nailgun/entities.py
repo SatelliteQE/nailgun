@@ -1591,7 +1591,8 @@ class Environment(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
-        EntitySearchMixin):
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Environment entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1617,6 +1618,25 @@ class Environment(
 
         """
         return {u'environment': super(Environment, self).create_payload()}
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        For more information, see `Github #202
+        <https://github.com/SatelliteQE/nailgun/issues/202>`_.
+
+        """
+        self.update_json(fields)
+        return self.read()
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {
+            u'environment': super(
+                Environment,
+                self
+            ).update_payload(fields)
+        }
 
 
 class Errata(Entity, EntityReadMixin, EntitySearchMixin):
@@ -2270,7 +2290,8 @@ class Media(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
-        EntitySearchMixin):
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Media entity.
 
     .. NOTE:: The ``path_`` field is named as such due to a naming conflict
@@ -2333,6 +2354,23 @@ class Media(
             attrs = self.read_json()
         attrs['path_'] = attrs.pop('path')
         return super(Media, self).read(entity, attrs, ignore)
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        Beware of `Bugzilla #1261047
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1261047>`_:
+        "PUT /api/v2/medium/:id doesn't return all attributes"
+
+        """
+        self.update_json(fields)
+        return self.read()
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {
+            u'medium': super(Media, self).update_payload(fields)
+        }
 
 
 class Model(
@@ -3330,13 +3368,19 @@ class Setting(Entity, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin):
         return {u'setting': super(Setting, self).update_payload(fields)}
 
 
-class SmartProxy(Entity, EntityReadMixin, EntitySearchMixin):
+class SmartProxy(
+        Entity,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Smart Proxy entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(required=True),
             'url': entity_fields.URLField(required=True),
+            'location': entity_fields.OneToManyField(Location),
+            'organization': entity_fields.OneToManyField(Organization),
         }
         self._meta = {
             'api_path': 'api/v2/smart_proxies',
@@ -3376,6 +3420,22 @@ class SmartProxy(Entity, EntityReadMixin, EntitySearchMixin):
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('refresh'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        For more information, see `Github #203
+        <https://github.com/SatelliteQE/nailgun/issues/203>`_.
+
+        """
+        self.update_json(fields)
+        return self.read()
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {
+            u'smart_proxy': super(SmartProxy, self).update_payload(fields)
+        }
 
 
 class SmartVariable(Entity):
