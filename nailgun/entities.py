@@ -3460,8 +3460,8 @@ class SmartProxy(
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
-        For more information, see `Github #203
-        <https://github.com/SatelliteQE/nailgun/issues/203>`_.
+        For more information, see `Bugzilla #1262037
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1262037>`_.
 
         """
         self.update_json(fields)
