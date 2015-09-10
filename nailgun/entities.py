@@ -1622,8 +1622,8 @@ class Environment(
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
-        For more information, see `Github #202
-        <https://github.com/SatelliteQE/nailgun/issues/202>`_.
+        For more information, see `Bugzilla #1262029
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1262029>`_.
 
         """
         self.update_json(fields)
