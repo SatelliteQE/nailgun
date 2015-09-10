@@ -1897,8 +1897,10 @@ class HostGroup(
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
-        For more information, see `Github issue #197
-        <https://github.com/SatelliteQE/nailgun/issues/197>`_.
+
+        For more information, see `Bugzilla #1235377
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1235377>`_.
+
         """
         return HostGroup(
             self._server_config,
@@ -1928,7 +1930,6 @@ class HostGroup(
         if attrs is None:
             attrs = self.read_json()
         attrs['parent_id'] = attrs.pop('ancestry')  # either an ID or None
-        # `version` is a single-use var, but it is used anyway for readability.
         if _get_version(self._server_config) >= Version('6.1'):
             # We cannot call `self.update_json([])`, as an ID might not be
             # present on self. However, `attrs` is guaranteed to have an ID.
