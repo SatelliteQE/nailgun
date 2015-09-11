@@ -23,7 +23,7 @@ def main():
             mail='alice@example.com',
             organization=[org],
             password='hackme',
-        )
+        ).create()
         pprint(user.get_values())  # e.g. {'login': 'Alice', …}
 
 

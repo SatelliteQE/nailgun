@@ -383,8 +383,8 @@ easy to make a mistake and waste time troubleshooting the resultant error.
 NailGun shields the developer from this issue — not a single path is present!
 
 Fifth, the NailGun script shields developers from idiosyncrasies in JSON request
-formats. Notice how no nested hass is necessary when issuing a GET request for
-organizations, but a nested hash is necessary when issuing a POST request for
+formats. Notice how no nested dict is necessary when issuing a GET request for
+organizations, but a nested dict is necessary when issuing a POST request for
 users. Differences like this abound. NailGun packages data for you.
 
 Sixth, and perhaps most obviously, the NailGun script is *significantly*
