@@ -193,6 +193,7 @@ class ActivationKey(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Activation Key entity."""
 
