@@ -771,7 +771,7 @@ class DockerComputeResource(AbstractComputeResource):  # pylint:disable=R0901
                 **self._server_config.get_client_kwargs()
             )
             response.raise_for_status()
-            attrs['email'] = response.json()['email']
+            attrs['email'] = response.json().get('email')
         return super(DockerComputeResource, self).read(entity, attrs, ignore)
 
 
