@@ -211,27 +211,46 @@ class MakeEntitiesFromIdsTestCase(TestCase):
 class PollTaskTestCase(TestCase):
     """Tests for :func:`nailgun.entity_mixins._poll_task`."""
 
-    def test__poll_task_failed_task(self):
-        """Test what happens when an asynchronous task completes and fails.
+    def setUp(self):
+        """Create a bogus server configuration object."""
+        self.cfg = config.ServerConfig('bogus url')
+
+    def test__poll_task_failure(self):
+        """What happens when a foreman task completes but does not succeed?
 
         Assert that a :class:`nailgun.entity_mixins.TaskFailedError` exception
         is raised.
 
         """
-        get_return = mock.Mock()
-        get_return.json.return_value = {
-            'state': 'not running',
-            'result': 'not success',
-            'humanized': {'errors': 'bogus error'},
-        }
-        with mock.patch.object(client, 'get') as client_get:
-            client_get.return_value = get_return
-            with self.assertRaises(entity_mixins.TaskFailedError):
-                # pylint:disable=protected-access
-                entity_mixins._poll_task(
-                    gen_integer(),
-                    config.ServerConfig('bogus url')
-                )
+        for state in ('paused', 'stopped'):
+            with self.subTest(state):
+                with mock.patch.object(client, 'get') as get:
+                    get.return_value.json.return_value = {
+                        'state': state,
+                        'result': 'not success'
+                    }
+                    with self.assertRaises(entity_mixins.TaskFailedError):
+                        # pylint:disable=protected-access
+                        entity_mixins._poll_task(gen_integer(), self.cfg)
+
+    def test__poll_task_success(self):
+        """What happens when a foreman task completes and does succeed?
+
+        Assert that the server's response is returned.
+
+        """
+        for state in ('paused', 'stopped'):
+            with self.subTest(state):
+                with mock.patch.object(client, 'get') as get:
+                    get.return_value.json.return_value = {
+                        'state': state,
+                        'result': 'success'
+                    }
+                    self.assertEqual(
+                        get.return_value.json.return_value,
+                        # pylint:disable=protected-access
+                        entity_mixins._poll_task(gen_integer(), self.cfg),
+                    )
 
 
 # 3. Tests for public methods. ------------------------------------------- {{{1
