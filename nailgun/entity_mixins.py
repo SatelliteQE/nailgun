@@ -82,34 +82,31 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
     timer = threading.Timer(timeout, raise_task_timeout)
 
     # Poll until the task finishes. The timeout prevents an infinite loop.
+    path = '{0}/foreman_tasks/api/tasks/{1}'.format(server_config.url, task_id)
     try:
         timer.start()
-        path = '{0}/foreman_tasks/api/tasks/{1}'.format(
-            server_config.url,
-            task_id
-        )
         while True:
             response = client.get(path, **server_config.get_client_kwargs())
             response.raise_for_status()
             task_info = response.json()
-            if task_info['state'] != 'running':
+            if task_info['state'] in ('paused', 'stopped'):
                 break
             time.sleep(poll_rate)
     except KeyboardInterrupt:
         # raise_task_timeout will raise a KeyboardInterrupt when the timeout
         # expires. Catch the exception and raise TaskTimedOutError
-        raise TaskTimedOutError('Timed out polling task {0}'.format(task_id))
+        raise TaskTimedOutError(
+            'Timed out polling task {0}. Task information: {1}'
+            .format(task_id, task_info)
+        )
     finally:
         timer.cancel()
 
     # Check for task success or failure.
     if task_info['result'] != 'success':
         raise TaskFailedError(
-            'Task {0} completed with result {1}. Error message(s): {2}'.format(
-                task_id,
-                task_info['result'],
-                task_info['humanized']['errors']
-            )
+            'Task {0} did not succeed. Task information: {1}'
+            .format(task_id, task_info)
         )
     return task_info
 
