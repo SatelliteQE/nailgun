@@ -904,6 +904,22 @@ class ConfigTemplate(
             )
         return super(ConfigTemplate, self).path(which)
 
+    def build_pxe_default(self, synchronous=True, **kwargs):
+        """Helper to build pxe default template.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('build_pxe_default'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
 
 class AbstractDockerContainer(
         Entity,

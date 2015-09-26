@@ -1111,6 +1111,7 @@ class GenericTestCase(TestCase):
             (entities.AbstractDockerContainer(**generic).power, 'put'),
             (entities.ActivationKey(**generic).add_subscriptions, 'put'),
             (entities.ActivationKey(**generic).content_override, 'put'),
+            (entities.ConfigTemplate(**generic).build_pxe_default, 'get'),
             (entities.ContentView(**generic).available_puppet_modules, 'get'),
             (entities.ContentView(**generic).copy, 'post'),
             (entities.ContentView(**generic).publish, 'post'),
