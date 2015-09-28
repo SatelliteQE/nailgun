@@ -4152,7 +4152,7 @@ class User(
             'login': entity_fields.StringField(
                 length=(1, 100),
                 required=True,
-                str_type=('alpha', 'alphanumeric', 'cjk', 'latin1', 'utf8'),
+                str_type=('alpha', 'alphanumeric', 'cjk', 'latin1'),
             ),
             'mail': entity_fields.EmailField(required=True),
             'organization': entity_fields.OneToManyField(Organization),
