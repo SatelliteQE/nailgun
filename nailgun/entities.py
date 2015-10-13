@@ -958,6 +958,7 @@ class AbstractDockerContainer(
             # The "name" field may be any of a-zA-Z0-9_.-,
             # "alphanumeric" is a subset of those legal characters.
             'name': entity_fields.StringField(
+                length=(2, 30),
                 required=True,
                 str_type='alphanumeric',
             ),
