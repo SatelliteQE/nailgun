@@ -100,7 +100,9 @@ def _handle_response(response, server_config, synchronous=False):
     2. Poll the server for a foreman task to complete if an HTTP 202 (accepted)
        status code is returned and ``synchronous is True``.
     3. Immediately return if an HTTP "NO CONTENT" response is received.
-    4. Return the server's response, with all JSON decoded.
+    4. Determine what type of the content returned from server. Depending on
+       the type method should return server's response, with all JSON decoded
+       or just response content itself.
 
     :param response: A response object as returned by one of the functions in
         :mod:`nailgun.client` or the requests library.
@@ -113,7 +115,10 @@ def _handle_response(response, server_config, synchronous=False):
         return ForemanTask(server_config, id=response.json()['id']).poll()
     if response.status_code == NO_CONTENT:
         return
-    return response.json()
+    if response.headers.get('content-type', '').lower() == 'application/json':
+        return response.json()
+    else:
+        return response.content
 
 
 def _check_for_value(field_name, field_values):
@@ -2608,6 +2613,8 @@ class Organization(
 
         The format of the returned path depends on the value of ``which``:
 
+        download_debug_certificate
+            /organizations/<id>/download_debug_certificate
         subscriptions
             /organizations/<id>/subscriptions
         subscriptions/upload
@@ -2623,6 +2630,7 @@ class Organization(
 
         """
         if which in (
+                'download_debug_certificate',
                 'subscriptions',
                 'subscriptions/delete_manifest',
                 'subscriptions/manifest_history',
@@ -2679,6 +2687,24 @@ class Organization(
         return {
             u'organization': super(Organization, self).update_payload(fields)
         }
+
+    def download_debug_certificate(self, synchronous=True, **kwargs):
+        """Get debug certificate for particular organization.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(
+            self.path('download_debug_certificate'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class OSDefaultTemplate(Entity):
