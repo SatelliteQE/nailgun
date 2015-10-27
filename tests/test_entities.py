@@ -239,6 +239,7 @@ class PathTestCase(TestCase):
                 (entities.ContentView, 'copy'),
                 (entities.ContentView, 'publish'),
                 (entities.ContentViewVersion, 'promote'),
+                (entities.Organization, 'download_debug_certificate'),
                 (entities.Organization, 'subscriptions'),
                 (entities.Organization, 'subscriptions/delete_manifest'),
                 (entities.Organization, 'subscriptions/manifest_history'),
@@ -288,6 +289,7 @@ class PathTestCase(TestCase):
                 (entities.Organization, 'products'),
                 (entities.Organization, 'self'),
                 (entities.Organization, 'subscriptions'),
+                (entities.Organization, 'download_debug_certificate'),
                 (entities.Organization, 'subscriptions/delete_manifest'),
                 (entities.Organization, 'subscriptions/refresh_manifest'),
                 (entities.Organization, 'subscriptions/upload'),
@@ -1122,6 +1124,10 @@ class GenericTestCase(TestCase):
             (entities.ContentViewVersion(**generic).promote, 'post'),
             (entities.DiscoveredHost(cfg).facts, 'post'),
             (entities.ForemanTask(cfg).summary, 'get'),
+            (
+                entities.Organization(**generic).download_debug_certificate,
+                'get'
+            ),
             (entities.Product(**generic).sync, 'post'),
             (entities.RHCIDeployment(**generic).deploy, 'put'),
             (entities.Repository(**generic).sync, 'post'),
@@ -1457,6 +1463,23 @@ class HandleResponseTestCase(TestCase):
         response = mock.Mock()
         self.assertEqual(
             entities._handle_response(response, 'foo'),  # pylint:disable=W0212
+            response.content,
+        )
+        self.assertEqual(
+            response.mock_calls,
+            [
+                mock.call.raise_for_status(),
+                mock.call.headers.get('content-type', ''),
+                mock.call.headers.get().lower()
+            ],
+        )
+
+    def test_json_content(self):
+        """Give the response JSON content type"""
+        response = mock.Mock()
+        response.headers = {'content-type': 'application/json'}
+        self.assertEqual(
+            entities._handle_response(response, 'foo'),  # pylint:disable=W0212
             response.json.return_value,
         )
         self.assertEqual(
@@ -1488,11 +1511,15 @@ class HandleResponseTestCase(TestCase):
         for args in [response, 'foo'], [response, 'foo', False]:
             self.assertEqual(
                 entities._handle_response(*args),  # pylint:disable=W0212
-                response.json.return_value,
+                response.content,
             )
             self.assertEqual(
                 response.mock_calls,
-                [mock.call.raise_for_status(), mock.call.json()],
+                [
+                    mock.call.raise_for_status(),
+                    mock.call.headers.get('content-type', ''),
+                    mock.call.headers.get().lower()
+                ],
             )
             response.reset_mock()
 
