@@ -1461,22 +1461,6 @@ class HandleResponseTestCase(TestCase):
     def test_default(self):
         """Don't give the response any special status code."""
         response = mock.Mock()
-        self.assertEqual(
-            entities._handle_response(response, 'foo'),  # pylint:disable=W0212
-            response.content,
-        )
-        self.assertEqual(
-            response.mock_calls,
-            [
-                mock.call.raise_for_status(),
-                mock.call.headers.get('content-type', ''),
-                mock.call.headers.get().lower()
-            ],
-        )
-
-    def test_json_content(self):
-        """Give the response JSON content type"""
-        response = mock.Mock()
         response.headers = {'content-type': 'application/json'}
         self.assertEqual(
             entities._handle_response(response, 'foo'),  # pylint:disable=W0212
@@ -1485,6 +1469,32 @@ class HandleResponseTestCase(TestCase):
         self.assertEqual(
             response.mock_calls,
             [mock.call.raise_for_status(), mock.call.json()],
+        )
+
+    def test_json_content(self):
+        """Give the response JSON content type"""
+        response = mock.Mock()
+        response.headers = {'content-type': 'application/json; charset=utf-8'}
+        self.assertEqual(
+            entities._handle_response(response, 'foo'),  # pylint:disable=W0212
+            response.json.return_value,
+        )
+        self.assertEqual(
+            response.mock_calls,
+            [mock.call.raise_for_status(), mock.call.json()],
+        )
+
+    def test_no_json_content(self):
+        """Check if no JSON content type response return response.content."""
+        response = mock.Mock()
+        response.headers = {'content-type': 'not_application_json'}
+        self.assertEqual(
+            entities._handle_response(response, 'foo'),  # pylint:disable=W0212
+            response.content,
+        )
+        self.assertEqual(
+            response.mock_calls,
+            [mock.call.raise_for_status()],
         )
 
     def test_no_content(self):
@@ -1508,18 +1518,15 @@ class HandleResponseTestCase(TestCase):
         """
         response = mock.Mock()
         response.status_code = ACCEPTED
+        response.headers = {'content-type': 'application/json'}
         for args in [response, 'foo'], [response, 'foo', False]:
             self.assertEqual(
                 entities._handle_response(*args),  # pylint:disable=W0212
-                response.content,
+                response.json.return_value,
             )
             self.assertEqual(
                 response.mock_calls,
-                [
-                    mock.call.raise_for_status(),
-                    mock.call.headers.get('content-type', ''),
-                    mock.call.headers.get().lower()
-                ],
+                [mock.call.raise_for_status(), mock.call.json()],
             )
             response.reset_mock()
 

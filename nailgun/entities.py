@@ -115,7 +115,7 @@ def _handle_response(response, server_config, synchronous=False):
         return ForemanTask(server_config, id=response.json()['id']).poll()
     if response.status_code == NO_CONTENT:
         return
-    if response.headers.get('content-type', '').lower() == 'application/json':
+    if 'application/json' in response.headers.get('content-type', '').lower():
         return response.json()
     else:
         return response.content
