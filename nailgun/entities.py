@@ -1377,6 +1377,7 @@ class ContentView(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Content View entity."""
 
