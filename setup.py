@@ -40,7 +40,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'fauxfactory',
-        'inflector',
+        'inflection',
         'packaging',
         'pyxdg',
         'requests>=2.7',
