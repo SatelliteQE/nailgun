@@ -980,6 +980,7 @@ class UpdateTestCase(TestCase):
             entities.Environment(self.cfg),
             entities.Host(self.cfg),
             entities.HostGroup(self.cfg),
+            entities.LifecycleEnvironment(self.cfg),
             entities.Location(self.cfg),
             entities.Media(self.cfg),
             entities.Organization(self.cfg),
