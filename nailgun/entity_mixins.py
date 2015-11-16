@@ -2,7 +2,7 @@
 """Defines a set of mixins that provide tools for interacting with entities."""
 from collections import Iterable
 from fauxfactory import gen_choice
-from inflector import Inflector
+from inflection import pluralize
 from nailgun import client, config
 from nailgun.entity_fields import IntegerField, OneToManyField, OneToOneField
 import threading
@@ -260,7 +260,7 @@ def _get_entity_ids(field_name, attrs):
 
     """
     field_name_ids = field_name + '_ids'
-    plural_field_name = Inflector().pluralize(field_name)
+    plural_field_name = pluralize(field_name)
     if field_name_ids in attrs:
         return attrs[field_name_ids]
     elif field_name in attrs:
