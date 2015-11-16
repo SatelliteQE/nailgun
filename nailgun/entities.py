@@ -2198,7 +2198,8 @@ class LifecycleEnvironment(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
-        EntitySearchMixin):
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Lifecycle Environment entity."""
 
     def __init__(self, server_config=None, **kwargs):
