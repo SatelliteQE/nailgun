@@ -72,10 +72,12 @@ else:  # pragma: no cover
 _FAKE_YUM_REPO = 'http://inecas.fedorapeople.org/fakerepos/zoo3/'
 _OPERATING_SYSTEMS = (
     'AIX',
+    'Altlinux',
     'Archlinux',
     'Debian',
     'Freebsd',
     'Gentoo',
+    'Junos'
     'Redhat',
     'Solaris',
     'Suse',
@@ -2367,20 +2369,7 @@ class Media(
             'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
             'organization': entity_fields.OneToManyField(Organization),
             'location': entity_fields.OneToManyField(Location),
-            'os_family': entity_fields.StringField(
-                choices=(
-                    'AIX',
-                    'Archlinux',
-                    'Debian',
-                    'Freebsd',
-                    'Gentoo',
-                    'Junos',
-                    'Redhat',
-                    'Solaris',
-                    'Suse',
-                    'Windows',
-                ),
-            ),
+            'os_family': entity_fields.StringField(choices=_OPERATING_SYSTEMS),
         }
         self._meta = {'api_path': 'api/v2/media', 'server_modes': ('sat')}
         super(Media, self).__init__(server_config, **kwargs)
