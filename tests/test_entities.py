@@ -1084,6 +1084,17 @@ class UpdatePayloadTestCase(TestCase):
         self.assertNotIn('search_', payload['discovery_rule'])
         self.assertIn('search', payload['discovery_rule'])
 
+    def test_media_path(self):
+        """Check whether ``Media`` updates its ``path_`` field.
+
+        The field should be renamed from ``path_`` to ``path`` when
+        ``update_payload`` is called.
+
+        """
+        payload = entities.Media(self.cfg, path_='foo').update_payload()
+        self.assertNotIn('path_', payload['medium'])
+        self.assertIn('path', payload['medium'])
+
 
 # 2. Tests for entity-specific methods. ---------------------------------- {{{1
 
