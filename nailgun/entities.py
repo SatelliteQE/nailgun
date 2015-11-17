@@ -2418,9 +2418,10 @@ class Media(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {
-            u'medium': super(Media, self).update_payload(fields)
-        }
+        payload = super(Media, self).update_payload(fields)
+        if 'path_' in payload:
+            payload['path'] = payload.pop('path_')
+        return {u'medium': payload}
 
 
 class Model(
