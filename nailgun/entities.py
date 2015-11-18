@@ -77,7 +77,7 @@ _OPERATING_SYSTEMS = (
     'Debian',
     'Freebsd',
     'Gentoo',
-    'Junos'
+    'Junos',
     'Redhat',
     'Solaris',
     'Suse',
