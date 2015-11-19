@@ -1018,7 +1018,7 @@ class AbstractDockerContainer(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1223540>`_.
 
         """
-        return AbstractDockerContainer(
+        return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -3019,6 +3019,7 @@ class Repository(
                 default='yum',
                 required=True,
             ),
+            'container_repository_name': entity_fields.StringField(),
             # Just setting `str_type='alpha'` will fail with this error:
             # {"docker_upstream_name":["must be a valid docker name"]}}
             'docker_upstream_name': entity_fields.StringField(
