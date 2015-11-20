@@ -2479,6 +2479,10 @@ class OperatingSystem(
             'ptable': entity_fields.OneToManyField(PartitionTable),
             'config_template': entity_fields.OneToManyField(ConfigTemplate),
             'release_name': entity_fields.StringField(),
+            'password_hash': entity_fields.StringField(
+                choices=('MD5', 'SHA256', 'SHA512'),
+                default='MD5',
+            ),
         }
         self._meta = {
             'api_path': 'api/v2/operatingsystems',
