@@ -2470,7 +2470,7 @@ class OperatingSystem(
                 required=True,
                 str_type='numeric',
             ),
-            'media': entity_fields.OneToManyField(Media),
+            'medium': entity_fields.OneToManyField(Media),
             'minor': entity_fields.StringField(
                 length=(1, 16),
                 str_type='numeric',
