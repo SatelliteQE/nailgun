@@ -2501,6 +2501,15 @@ class OperatingSystem(
             u'operatingsystem': super(OperatingSystem, self).create_payload()
         }
 
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {
+            u'operatingsystem': super(
+                OperatingSystem,
+                self
+            ).update_payload(fields)
+        }
+
 
 class OperatingSystemParameter(
         Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
