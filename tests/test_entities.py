@@ -1034,6 +1034,7 @@ class UpdatePayloadTestCase(TestCase):
             (entities.HostGroup, {'hostgroup': {}}),
             (entities.Location, {'location': {}}),
             (entities.Media, {'medium': {}}),
+            (entities.OperatingSystem, {'operatingsystem': {}}),
             (entities.Organization, {'organization': {}}),
             (entities.Setting, {'setting': {}}),
             (entities.SmartProxy, {'smart_proxy': {}}),
