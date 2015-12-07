@@ -2450,14 +2450,12 @@ class OperatingSystem(
 
     ``major`` is listed as a string field in the API docs, but only numeric
     values are accepted, and they may be no longer than 5 digits long. Also see
-    bugzilla bug #1122261.
+    `Bugzilla #1122261 <https://bugzilla.redhat.com/show_bug.cgi?id=1122261>`_.
 
-    The following fields are valid despite not being listed in the API docs:
-
-    * architecture
-    * medium
-    * ptable
-
+    ``title`` field is valid despite not being listed in the API docs. This may
+    be changed in future as both ``title`` and ``description`` fields share
+    similar purpose. See `Bugzilla #1290359
+    <https://bugzilla.redhat.com/show_bug.cgi?id=1290359>`_ for more details.
     """
 
     def __init__(self, server_config=None, **kwargs):
@@ -2483,6 +2481,7 @@ class OperatingSystem(
                 choices=('MD5', 'SHA256', 'SHA512'),
                 default='MD5',
             ),
+            'title': entity_fields.StringField(),
         }
         self._meta = {
             'api_path': 'api/v2/operatingsystems',
