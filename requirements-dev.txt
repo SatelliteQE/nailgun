@@ -2,9 +2,11 @@
 mock
 unittest2 ; python_version < '3.4'
 
-# For `make lint`
+# For `make lint`. See: https://github.com/SatelliteQE/nailgun/issues/246
+# and https://github.com/SatelliteQE/nailgun/issues/247
 flake8
-pylint
+pylint<1.5.0
+astroid<1.4.0
 
 # For `make docs-html` and `make docs-clean`
 sphinx
