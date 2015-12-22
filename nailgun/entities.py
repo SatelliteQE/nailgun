@@ -1856,7 +1856,11 @@ class HostCollectionPackage(Entity):
 
 
 class HostCollection(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Host Collection entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1880,6 +1884,13 @@ class HostCollection(
     def create_payload(self):
         """Rename ``system_ids`` to ``system_uuids``."""
         payload = super(HostCollection, self).create_payload()
+        if 'system_ids' in payload:
+            payload['system_uuids'] = payload.pop('system_ids')
+        return payload
+
+    def update_payload(self, fields=None):
+        """Rename ``system_ids`` to ``system_uuids``."""
+        payload = super(HostCollection, self).update_payload(fields)
         if 'system_ids' in payload:
             payload['system_uuids'] = payload.pop('system_ids')
         return payload

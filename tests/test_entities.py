@@ -979,6 +979,7 @@ class UpdateTestCase(TestCase):
             entities.Domain(self.cfg),
             entities.Environment(self.cfg),
             entities.Host(self.cfg),
+            entities.HostCollection(self.cfg),
             entities.HostGroup(self.cfg),
             entities.LifecycleEnvironment(self.cfg),
             entities.Location(self.cfg),
@@ -1095,6 +1096,19 @@ class UpdatePayloadTestCase(TestCase):
         payload = entities.Media(self.cfg, path_='foo').update_payload()
         self.assertNotIn('path_', payload['medium'])
         self.assertIn('path', payload['medium'])
+
+    def test_hostcollection_system_uuid(self):
+        """Check whether ``HostCollection`` updates its ``system_ids`` field.
+
+        The field should be renamed from ``system_ids`` to ``system_uuids``
+        when ``update_payload`` is called.
+        """
+        payload = entities.HostCollection(
+            self.cfg,
+            system=[1],
+        ).update_payload()
+        self.assertNotIn('system_ids', payload)
+        self.assertIn('system_uuids', payload)
 
 
 # 2. Tests for entity-specific methods. ---------------------------------- {{{1
