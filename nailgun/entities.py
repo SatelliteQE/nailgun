@@ -35,7 +35,6 @@ from nailgun.entity_mixins import (
     _poll_task,
 )
 from packaging.version import Version
-from time import sleep
 import random
 
 from sys import version_info
@@ -224,25 +223,6 @@ class ActivationKey(
             'server_modes': ('sat', 'sam'),
         }
         super(ActivationKey, self).__init__(server_config, **kwargs)
-
-    def read_raw(self):
-        """Work around `Redmine #4638`_.
-
-        Poll the server several times upon receiving a 404, just to be *really*
-        sure that the requested activation key is non-existent. Do this because
-        elasticsearch can be slow about indexing newly created activation keys,
-        especially when the server is under load.
-
-        .. _Redmine #4638: http://projects.theforeman.org/issues/4638
-
-        """
-        super_read_raw = super(ActivationKey, self).read_raw
-        response = super_read_raw()
-        for _ in range(5):
-            if response.status_code == 404:
-                sleep(5)
-                response = super_read_raw()
-        return response
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.

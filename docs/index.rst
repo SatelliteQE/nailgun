@@ -52,10 +52,6 @@ the challenges developers face:
   experienced developers may find the API hard to work with.
 * The Satellite 6 API is not consistent in its implementation. For example, see
   the "Payload Generation" section of `this blog post`_.
-* The Satellite 6 API contains bugs. For example, `Foreman bug #4638`_ describes
-  how it is impossible to definitively know whether a given activation key
-  exists. (:meth:`nailgun.entities.ActivationKey.read_raw` contains a
-  work-around.)
 
 All of the above issues are compounded by the size of the Satellite 6 API. As of
 this writing, there are 405 paths. This makes it tough to design compact and
