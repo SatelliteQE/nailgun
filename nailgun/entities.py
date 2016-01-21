@@ -404,7 +404,13 @@ class AuthSourceLDAP(
         return super(AuthSourceLDAP, self).read(entity, attrs, ignore)
 
 
-class Bookmark(Entity):
+class Bookmark(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Bookmark entity."""
 
     def __init__(self, server_config=None, **kwargs):
