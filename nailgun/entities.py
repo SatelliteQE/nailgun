@@ -1992,6 +1992,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
             'architecture': entity_fields.OneToOneField(Architecture),
             'build': entity_fields.BooleanField(),
             'capabilities': entity_fields.StringField(),
+            'comment': entity_fields.StringField(),
             'compute_profile': entity_fields.OneToOneField(ComputeProfile),
             'compute_resource': entity_fields.OneToOneField(
                 AbstractComputeResource),
@@ -2019,6 +2020,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
             ),
             'provision_method': entity_fields.StringField(),
             'ptable': entity_fields.OneToOneField(PartitionTable),
+            'puppet_ca_proxy': entity_fields.OneToOneField(SmartProxy),
             'puppet_class': entity_fields.OneToManyField(PuppetClass),
             'puppet_proxy': entity_fields.OneToOneField(SmartProxy),
             'realm': entity_fields.OneToOneField(Realm),
