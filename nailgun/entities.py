@@ -455,7 +455,11 @@ class ComputeAttribute(Entity, EntityCreateMixin, EntityReadMixin):
 
 
 class ComputeProfile(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Compute Profile entity."""
 
     def __init__(self, server_config=None, **kwargs):
