@@ -426,6 +426,7 @@ class CreateTestCase(TestCase):
             entities.Media(self.cfg),
             entities.Organization(self.cfg),
             entities.Realm(self.cfg),
+            entities.UserGroup(self.cfg),
         )
         for entity in entities_:
             with self.subTest(entity):

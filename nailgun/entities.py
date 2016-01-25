@@ -4123,6 +4123,18 @@ class UserGroup(
         """
         return {u'usergroup': super(UserGroup, self).create_payload()}
 
+    def create(self, create_missing=None):
+        """Do extra work to fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1301658
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1301658>`_.
+
+        """
+        return UserGroup(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
+
     def read(self, entity=None, attrs=None, ignore=None):
         """Work around `Redmine #9594`_.
 
