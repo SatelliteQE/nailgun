@@ -975,6 +975,7 @@ class UpdateTestCase(TestCase):
         entities_ = (
             entities.AbstractComputeResource(self.cfg),
             entities.Architecture(self.cfg),
+            entities.ComputeProfile(self.cfg),
             entities.ConfigTemplate(self.cfg),
             entities.Domain(self.cfg),
             entities.Environment(self.cfg),
