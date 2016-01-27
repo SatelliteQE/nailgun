@@ -88,10 +88,6 @@ class APIResponseError(Exception):
     """Indicates an error if response returns unexpected result."""
 
 
-class HostCreateMissingError(Exception):
-    """Indicates that ``Host.create_missing`` was unable to execute."""
-
-
 def _handle_response(response, server_config, synchronous=False):
     """Handle a server's response in a typical fashion.
 
@@ -2049,11 +2045,8 @@ class Host(  # pylint:disable=too-many-instance-attributes
         attributes should be filled in are mildly complex, and it is hard to
         know which scenario a user is aiming for.
 
-        Populate the values necessary to create a bogus managed host. However,
-        _only_ do so if no instance attributes are present. Raise an exception
-        if any instance attributes are present. Assuming that this method
-        executes in full, the resultant dependency graph will look, in part,
-        like this::
+        Populate the values necessary to create a bogus managed host. The
+        resultant dependency graph will look, in part, like this::
 
                  .-> medium --------.
                  |-> architecture <-V-.
@@ -2062,47 +2055,86 @@ class Host(  # pylint:disable=too-many-instance-attributes
                  |-> domain
                  '-> environment
 
-        :raises nailgun.entities.HostCreateMissingError: If any instance
-            attributes are present.
-
         """
-        if len(self.get_values()) != 0:
-            raise HostCreateMissingError(
-                'Found instance attributes: {0}'.format(self.get_values())
-            )
+        # pylint:disable=no-member,too-many-branches,too-many-statements
         super(Host, self).create_missing()
         # See: https://bugzilla.redhat.com/show_bug.cgi?id=1227854
         self.name = self.name.lower()
-        self.mac = self._fields['mac'].gen_value()
-        self.root_pass = self._fields['root_pass'].gen_value()
+        if not hasattr(self, 'mac'):
+            self.mac = self._fields['mac'].gen_value()
+        if not hasattr(self, 'root_pass'):
+            self.root_pass = self._fields['root_pass'].gen_value()
 
         # Flesh out the dependency graph shown in the docstring.
-        self.domain = Domain(
-            self._server_config,
-            # pylint:disable=no-member
-            location=[self.location],
-            organization=[self.organization],
-        ).create(True)
-        self.environment = Environment(
-            self._server_config,
-            # pylint:disable=no-member
-            location=[self.location],
-            organization=[self.organization],
-        ).create(True)
-        self.architecture = Architecture(self._server_config).create(True)
-        self.ptable = PartitionTable(self._server_config).create(True)
-        self.operatingsystem = OperatingSystem(
-            self._server_config,
-            architecture=[self.architecture],
-            ptable=[self.ptable],
-        ).create(True)
-        self.medium = Media(
-            self._server_config,
-            operatingsystem=[self.operatingsystem],
-            # pylint:disable=no-member
-            location=[self.location],
-            organization=[self.organization],
-        ).create(True)
+        if not hasattr(self, 'domain'):
+            self.domain = Domain(
+                self._server_config,
+                location=[self.location],
+                organization=[self.organization],
+            ).create(True)
+        else:
+            if self.location.id not in [
+                    loc.id for loc in self.domain.location]:
+                self.domain.location.append(self.location)
+                self.domain.update(['location'])
+            if self.organization.id not in [
+                    org.id for org in self.domain.organization]:
+                self.domain.organization.append(self.organization)
+                self.domain.update(['organization'])
+        if not hasattr(self, 'environment'):
+            self.environment = Environment(
+                self._server_config,
+                location=[self.location],
+                organization=[self.organization],
+            ).create(True)
+        else:
+            if self.location.id not in [
+                    loc.id for loc in self.environment.location]:
+                self.environment.location.append(self.location)
+                self.environment.update(['location'])
+            if self.organization.id not in [
+                    org.id for org in self.environment.organization]:
+                self.environment.organization.append(self.organization)
+                self.environment.update(['organization'])
+        if not hasattr(self, 'architecture'):
+            self.architecture = Architecture(self._server_config).create(True)
+        if not hasattr(self, 'ptable'):
+            self.ptable = PartitionTable(self._server_config).create(True)
+        if not hasattr(self, 'operatingsystem'):
+            self.operatingsystem = OperatingSystem(
+                self._server_config,
+                architecture=[self.architecture],
+                ptable=[self.ptable],
+            ).create(True)
+        else:
+            if self.architecture.id not in [
+                    arch.id for arch in self.operatingsystem.architecture]:
+                self.operatingsystem.architecture.append(self.architecture)
+                self.operatingsystem.update(['architecture'])
+            if self.ptable.id not in [
+                    ptable.id for ptable in self.operatingsystem.ptable]:
+                self.operatingsystem.ptable.append(self.ptable)
+                self.operatingsystem.update(['ptable'])
+        if not hasattr(self, 'medium'):
+            self.medium = Media(
+                self._server_config,
+                operatingsystem=[self.operatingsystem],
+                location=[self.location],
+                organization=[self.organization],
+            ).create(True)
+        else:
+            if self.operatingsystem.id not in [
+                    os.id for os in self.medium.operatingsystem]:
+                self.medium.operatingsystem.append(self.operatingsystem)
+                self.medium.update(['operatingsystem'])
+            if self.location.id not in [
+                    loc.id for loc in self.medium.location]:
+                self.medium.location.append(self.location)
+                self.medium.update(['location'])
+            if self.organization.id not in [
+                    org.id for org in self.medium.organization]:
+                self.medium.organization.append(self.organization)
+                self.medium.update(['organization'])
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
