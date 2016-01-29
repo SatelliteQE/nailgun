@@ -645,11 +645,6 @@ class CreateMissingTestCase(TestCase):
         self.assertTrue(entity.name.islower())
 
     def test_host_v1(self):
-        """Test ``Host(any_attribute=…)``."""
-        with self.assertRaises(entities.HostCreateMissingError):
-            entities.Host(self.cfg, name='foo').create_missing()
-
-    def test_host_v2(self):
         """Test ``Host()``."""
         entity = entities.Host(self.cfg)
         with mock.patch.object(EntityCreateMixin, 'create_json'):
@@ -669,6 +664,61 @@ class CreateMissingTestCase(TestCase):
                 'root_pass',
             )),
         )
+
+    def test_host_v2(self):
+        """Test ``Host()`` with providing all the optional entities unlinked"""
+        # pylint:disable=no-member,too-many-locals
+        org = entities.Organization(self.cfg, id=1)
+        loc = entities.Location(self.cfg, id=1)
+        domain = entities.Domain(
+            self.cfg,
+            id=1,
+            location=[2],
+            organization=[2],
+        )
+        env = entities.Environment(
+            self.cfg,
+            id=1,
+            location=[2],
+            organization=[2],
+        )
+        arch = entities.Architecture(self.cfg, id=1)
+        ptable = entities.PartitionTable(self.cfg, id=1)
+        oper_sys = entities.OperatingSystem(
+            self.cfg,
+            id=1,
+            architecture=[2],
+            ptable=[2],
+        )
+        media = entities.Media(
+            self.cfg,
+            id=1,
+            location=[2],
+            operatingsystem=[2],
+            organization=[2],
+        )
+        entity = entities.Host(
+            self.cfg,
+            architecture=arch,
+            domain=domain,
+            environment=env,
+            location=loc,
+            medium=media,
+            operatingsystem=oper_sys,
+            organization=org,
+            ptable=ptable,
+        )
+        with mock.patch.object(EntityCreateMixin, 'create_json'):
+            with mock.patch.object(EntityReadMixin, 'read_json'):
+                with mock.patch.object(EntityUpdateMixin, 'update_json'):
+                    with mock.patch.object(EntityReadMixin, 'read'):
+                        entity.create_missing()
+        for subentity in domain, env, media:
+            self.assertIn(loc.id, [loc_.id for loc_ in subentity.location])
+            self.assertIn(org.id, [org_.id for org_ in subentity.organization])
+        self.assertIn(arch.id, [arch_.id for arch_ in oper_sys.architecture])
+        self.assertIn(ptable.id, [ptable_.id for ptable_ in oper_sys.ptable])
+        self.assertIn(oper_sys.id, [os_.id for os_ in media.operatingsystem])
 
     def test_lifecycle_environment_v1(self):
         """Test ``LifecycleEnvironment(name='Library')``."""
