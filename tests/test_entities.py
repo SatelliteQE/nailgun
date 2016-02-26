@@ -973,6 +973,27 @@ class ReadTestCase(TestCase):
             self.assertEqual(mock_obj.call_count, 1)
         self.assertEqual(u_json.call_args, mock.call([]))
 
+    def test_product_with_sync_plan(self):
+        """Call :meth:`nailgun.entities.Product.read` for a product with sync
+        plan assigned.
+
+        Ensure that the sync plan entity was correctly fetched.
+
+        """
+        sync_plan = entities.SyncPlan(self.cfg, id=1, organization=1)
+        product = entities.Product(self.cfg, id=1, organization=1)
+        with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
+            with mock.patch.object(EntityReadMixin, 'read') as read:
+                read_json.return_value = {
+                    'sync_plan_id': 1,
+                    'sync_plan': {'name': 'test_sync_plan'},
+                }
+                read.return_value = product
+                product = product.read()
+                self.assertTrue(hasattr(product, 'sync_plan'))
+                # pylint:disable=no-member
+                self.assertEqual(product.sync_plan.id, sync_plan.id)
+
 
 class SearchRawTestCase(TestCase):
     """Tests for :meth:`nailgun.entity_mixins.EntitySearchMixin.search_raw`."""
@@ -1662,9 +1683,13 @@ class VersionTestCase(TestCase):
             self.assertEqual(helper.call_args[0], (self.cfg_608, label))
 
             # Version 6.1.0
-            with mock.patch.object(EntityReadMixin, 'read') as read:
-                entity(self.cfg_610).read()
-            self.assertEqual(read.call_args[0][2], None)
+            with mock.patch.object(EntityReadMixin, 'read_json'):
+                with mock.patch.object(EntityReadMixin, 'read') as read:
+                    entity(self.cfg_610).read()
+            self.assertTrue(
+                read.call_args[0][2] is None or
+                'organization' not in read.call_args[0][2]
+            )
 
     def test_lifecycle_environment(self):
         """Create a :class:`nailgun.entities.LifecycleEnvironment`.

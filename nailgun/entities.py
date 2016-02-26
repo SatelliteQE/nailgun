@@ -2864,16 +2864,31 @@ class Product(
     def read(self, entity=None, attrs=None, ignore=None):
         """Fetch an attribute missing from the server's response.
 
+        Also add sync plan to the responce if needed, as
+        :meth:`nailgun.entity_mixins.EntityReadMixin.read` can't initialize
+        sync plan.
+
         For more information, see `Bugzilla #1237283
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1237283>`_.
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1237283>`_ and
+        `nailgun#261 <https://github.com/SatelliteQE/nailgun/issues/261>`_.
 
         """
+        if attrs is None:
+            attrs = self.read_json()
         if _get_version(self._server_config) < Version('6.1'):
-            if attrs is None:
-                attrs = self.read_json()
             org = _get_org(self._server_config, attrs['organization']['label'])
             attrs['organization'] = org.get_values()
-        return super(Product, self).read(entity, attrs, ignore)
+        if ignore is None:
+            ignore = set()
+        ignore.add('sync_plan')
+        result = super(Product, self).read(entity, attrs, ignore)
+        if 'sync_plan' in attrs:
+            result.sync_plan = SyncPlan(
+                server_config=self._server_config,
+                id=attrs.get('sync_plan_id'),
+                organization=result.organization,
+            )
+        return result
 
     def sync(self, synchronous=True, **kwargs):
         """Synchronize :class:`repositories <Repository>` in this product.
