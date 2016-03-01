@@ -1030,6 +1030,7 @@ class UpdateTestCase(TestCase):
             entities.ConfigTemplate(self.cfg),
             entities.Domain(self.cfg),
             entities.Environment(self.cfg),
+            entities.GPGKey(self.cfg),
             entities.Host(self.cfg),
             entities.HostCollection(self.cfg),
             entities.HostGroup(self.cfg),
