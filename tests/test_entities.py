@@ -1006,7 +1006,7 @@ class SearchRawTestCase(TestCase):
     def test_subscription_v1(self):
         """Test :meth:`nailgun.entities.Subscription.search_raw`.
 
-        Sucessfully call the ``search_raw`` method.
+        Successfully call the ``search_raw`` method.
 
         """
         kwargs_iter = (
@@ -1375,6 +1375,80 @@ class HostGroupTestCase(TestCase):
                 'parent_id': None,
             },
         )
+
+
+class HostTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.Host`."""
+
+    def test_init_with_owner_type(self):
+        """Assert ``owner`` attribute is an entity of correct type, according
+        to ``owner_type`` field value"""
+        for owner_type, entity in (
+                ('User', entities.User),
+                ('Usergroup', entities.UserGroup)):
+            host = entities.Host(
+                config.ServerConfig('http://example.com'),
+                id=gen_integer(min_value=1),
+                owner=gen_integer(min_value=1),
+                owner_type=owner_type,
+            )
+            self.assertTrue(isinstance(host.owner, entity))
+
+    def test_update_owner_type(self):
+        """Ensure that in case ``owner_type`` value changes, ``owner`` changes
+        it's type accordingly.
+        """
+        host = entities.Host(
+            config.ServerConfig('http://example.com'),
+            id=gen_integer(min_value=1),
+            owner=gen_integer(min_value=1),
+            owner_type='User',
+        )
+        host.owner_type = 'Usergroup'
+        self.assertTrue(isinstance(host.owner, entities.UserGroup))
+        host.owner_type = 'User'
+        self.assertTrue(isinstance(host.owner, entities.User))
+
+    def test_owner_type_property(self):
+        """Verify ``owner_type`` property works as expected.
+
+        Assert that:
+
+        * ``owner_type`` property reflects ``_owner_type`` attribute value
+        * ``owner_type`` property is included in attributes list,
+          ``_owner_type`` attribute - is not
+        """
+        host = entities.Host(
+            config.ServerConfig('http://example.com'),
+            owner_type='User',
+            id=gen_integer(min_value=1),
+            owner=gen_integer(min_value=1),
+        )
+        # pylint:disable=protected-access
+        self.assertEqual(host._owner_type, host.owner_type)
+        result = host.get_values()
+        self.assertTrue('owner_type' in result)
+        self.assertFalse('_owner_type' in result)
+
+    def test_init_with_owner(self):
+        """Assert that both ``id`` or ``entity`` can be passed as a value for
+        ``owner`` attribute.
+        """
+        owner_id = gen_integer(min_value=1)
+        owner_entity = entities.UserGroup(
+            config.ServerConfig('http://example.com'),
+            id=owner_id,
+        )
+        for owner in (owner_id, owner_entity):
+            host = entities.Host(
+                config.ServerConfig('http://example.com'),
+                owner=owner,
+                owner_type='Usergroup',
+                id=gen_integer(min_value=1),
+            )
+            self.assertTrue(isinstance(host.owner, entities.UserGroup))
+            # pylint:disable=no-member
+            self.assertEqual(owner_id, host.owner.id)
 
 
 class RepositoryTestCase(TestCase):

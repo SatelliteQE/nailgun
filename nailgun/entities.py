@@ -2034,8 +2034,59 @@ class Host(  # pylint:disable=too-many-instance-attributes
             'root_pass': entity_fields.StringField(length=(8, 30)),
             'subnet': entity_fields.OneToOneField(Subnet),
         }
+        self._owner_type = None  # actual ``owner_type`` value
         self._meta = {'api_path': 'api/v2/hosts', 'server_modes': ('sat')}
         super(Host, self).__init__(server_config, **kwargs)
+
+        # See https://github.com/SatelliteQE/nailgun/issues/258
+        if (
+                hasattr(self, 'owner') and
+                hasattr(self.owner, 'id') and
+                isinstance(self.owner.id, Entity)):  # pylint:disable=no-member
+            self.owner = self.owner.id  # pylint:disable=no-member
+
+    @property
+    def owner_type(self):
+        """Return ``_owner_type``."""
+        return self._owner_type
+
+    @owner_type.setter
+    def owner_type(self, value):
+        """Set ``owner_type`` to the given value.
+
+        In addition:
+
+        * Update the internal type of the ``owner`` field.
+        * Update the value of the ``owner`` field if a value is already set.
+        """
+        self._owner_type = value
+        if value == 'User':
+            self._fields['owner'] = entity_fields.OneToOneField(User)
+            if hasattr(self, 'owner'):
+                # pylint:disable=no-member
+                self.owner = User(
+                    self._server_config,
+                    id=self.owner.id if isinstance(self.owner, Entity)
+                    else self.owner
+                )
+        elif value == 'Usergroup':
+            self._fields['owner'] = entity_fields.OneToOneField(UserGroup)
+            if hasattr(self, 'owner'):
+                # pylint:disable=no-member
+                self.owner = UserGroup(
+                    self._server_config,
+                    id=self.owner.id if isinstance(self.owner, Entity)
+                    else self.owner
+                )
+
+    def get_values(self):
+        """Correctly set the ``owner_type`` attribute."""
+        attrs = super(Host, self).get_values()
+        if '_owner_type' in attrs and attrs['_owner_type'] is not None:
+            attrs['owner_type'] = attrs.pop('_owner_type')
+        else:
+            attrs.pop('_owner_type')
+        return attrs
 
     def create_missing(self):
         """Create a bogus managed host.
