@@ -1787,7 +1787,8 @@ class GPGKey(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
-        EntitySearchMixin):
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a GPG Key entity."""
 
     def __init__(self, server_config=None, **kwargs):
