@@ -1954,7 +1954,8 @@ class HostGroup(
         if attrs is None:
             attrs = self.read_json()
         attrs['parent_id'] = attrs.pop('ancestry')  # either an ID or None
-        if _get_version(self._server_config) >= Version('6.1'):
+        version = _get_version(self._server_config)
+        if version >= Version('6.1') and version < Version('6.2'):
             # We cannot call `self.update_json([])`, as an ID might not be
             # present on self. However, `attrs` is guaranteed to have an ID.
             attrs2 = HostGroup(

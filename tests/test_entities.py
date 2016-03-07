@@ -1341,40 +1341,89 @@ class ForemanTaskTestCase(TestCase):
 
 class HostGroupTestCase(TestCase):
     """Tests for :class:`nailgun.entities.HostGroup`."""
+    def setUp(self):
+        self.entity = entities.HostGroup(config.ServerConfig('some url'))
+        self.read_json_pacther = mock.patch.object(self.entity, 'read_json')
+        self.read_pacther = mock.patch.object(EntityReadMixin, 'read')
+        self.update_json_patcher = mock.patch.object(
+            entities.HostGroup, 'update_json')
 
-    def test_read(self):
+    def test_read_sat61z(self):
         """Ensure ``read``, ``read_json`` and ``update_json`` are called once.
 
         This test is only appropriate for entities that override the ``read``
         method in order to fiddle with the ``attrs`` argument.
-
         """
-        entity = entities.HostGroup(config.ServerConfig('some url'))
-        with mock.patch.object(entity, 'read_json') as read_json:
-            read_json.return_value = {'ancestry': None, 'id': 641212}  # random
-            with mock.patch.object(
-                entities.HostGroup,
-                'update_json',
-                return_value={
+        for version in ('6.1', '6.1.0', '6.1.8'):
+            read_json = self.read_json_pacther.start()
+            read = self.read_pacther.start()
+            update_json = self.update_json_patcher.start()
+            with self.subTest(version=version):
+                # pylint:disable=protected-access
+                self.entity._server_config.version = entities.Version(version)
+                read_json.return_value = {
+                    'ancestry': None,
+                    'id': 641212,  # random
+                }
+                update_json.return_value = {
                     'content_source_id': None,
                     'content_view_id': None,
                     'lifecycle_environment_id': None,
-                },
-            ) as update_json:
-                with mock.patch.object(EntityReadMixin, 'read') as read:
-                    entity.read()
-        for meth in (read_json, update_json, read):
-            self.assertEqual(meth.call_count, 1)
-        self.assertEqual(
-            read.call_args[0][1],
-            {
+                }
+                self.entity.read()
+                for meth in (read_json, update_json, read):
+                    self.assertEqual(meth.call_count, 1)
+                self.assertEqual(
+                    read.call_args[0][1],
+                    {
+                        'content_source_id': None,
+                        'content_view_id': None,
+                        'id': 641212,
+                        'lifecycle_environment_id': None,
+                        'parent_id': None,
+                    },
+                )
+            self.read_json_pacther.stop()
+            self.read_pacther.stop()
+            self.update_json_patcher.stop()
+
+    def test_read_sat62z(self):
+        """Ensure ``read`` and ``read_json`` are called once. And
+        ``update_json`` are not called.
+
+        This test is only appropriate for entities that override the ``read``
+        method in order to fiddle with the ``attrs`` argument.
+        """
+        for version in ('6.2', '6.2.0', '6.2.8'):
+            read_json = self.read_json_pacther.start()
+            read = self.read_pacther.start()
+            update_json = self.update_json_patcher.start()
+            read_json.return_value = {
+                'ancestry': None, 'id': 641212,  # random
                 'content_source_id': None,
                 'content_view_id': None,
-                'id': 641212,
                 'lifecycle_environment_id': None,
-                'parent_id': None,
-            },
-        )
+            }
+            with self.subTest(version=version):
+                # pylint:disable=protected-access
+                self.entity._server_config.version = entities.Version(version)
+                self.entity.read()
+                for meth in (read_json, read):
+                    self.assertEqual(meth.call_count, 1)
+                self.assertEqual(update_json.call_count, 0)
+                self.assertEqual(
+                    read.call_args[0][1],
+                    {
+                        'content_source_id': None,
+                        'content_view_id': None,
+                        'id': 641212,
+                        'lifecycle_environment_id': None,
+                        'parent_id': None,
+                    },
+                )
+            self.read_json_pacther.stop()
+            self.read_pacther.stop()
+            self.update_json_patcher.stop()
 
 
 class HostTestCase(TestCase):
