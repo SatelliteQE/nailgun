@@ -1853,15 +1853,23 @@ class HostCollection(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'description': entity_fields.StringField(),
-            'max_content_hosts': entity_fields.IntegerField(),
+            'max_hosts': entity_fields.IntegerField(),
             'name': entity_fields.StringField(required=True),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
             ),
             'system': entity_fields.OneToManyField(System),
-            'unlimited_content_hosts': entity_fields.BooleanField(),
+            'unlimited_hosts': entity_fields.BooleanField(),
         }
+        # The following attributes have been renamed with Satellite
+        # 6.2, so we revert them to their old values if we have an
+        # older version of Satellite
+        if _get_version(server_config) < Version('6.2'):
+            self._fields['max_content_hosts'] = self._fields.pop('max_hosts')
+            self._fields['unlimited_content_hosts'] = self._fields.pop(
+                'unlimited_hosts')
+
         self._meta = {
             'api_path': 'katello/api/v2/host_collections',
             'server_modes': ('sat', 'sam'),
