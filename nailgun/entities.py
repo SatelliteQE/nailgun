@@ -2160,7 +2160,14 @@ class Host(  # pylint:disable=too-many-instance-attributes
         if not hasattr(self, 'architecture'):
             self.architecture = Architecture(self._server_config).create(True)
         if not hasattr(self, 'ptable'):
-            self.ptable = PartitionTable(self._server_config).create(True)
+            if _get_version(self._server_config) >= Version('6.2'):
+                self.ptable = PartitionTable(
+                    self._server_config,
+                    location=[self.location],
+                    organization=[self.organization],
+                ).create(True)
+            else:
+                self.ptable = PartitionTable(self._server_config).create(True)
         if not hasattr(self, 'operatingsystem'):
             self.operatingsystem = OperatingSystem(
                 self._server_config,
@@ -2990,11 +2997,18 @@ class PartitionTable(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'layout': entity_fields.StringField(required=True),
+            'location': entity_fields.OneToManyField(Location),
             'name': entity_fields.StringField(required=True, length=(4, 30)),
+            'organization': entity_fields.OneToManyField(Organization),
             'os_family': entity_fields.StringField(choices=_OPERATING_SYSTEMS),
         }
         self._meta = {'api_path': 'api/v2/ptables', 'server_modes': ('sat')}
         super(PartitionTable, self).__init__(server_config, **kwargs)
+        # The following fields were added in Satellite 6.2, removing them if we
+        # have previous version of Satellite
+        if _get_version(self._server_config) < Version('6.2'):
+            self._fields.pop('location')
+            self._fields.pop('organization')
 
 
 class PuppetClass(

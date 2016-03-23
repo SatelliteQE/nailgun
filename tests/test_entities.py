@@ -683,7 +683,12 @@ class CreateMissingTestCase(TestCase):
             organization=[2],
         )
         arch = entities.Architecture(self.cfg, id=1)
-        ptable = entities.PartitionTable(self.cfg, id=1)
+        ptable = entities.PartitionTable(
+            self.cfg,
+            id=1,
+            location=[2],
+            organization=[2],
+        )
         oper_sys = entities.OperatingSystem(
             self.cfg,
             id=1,
