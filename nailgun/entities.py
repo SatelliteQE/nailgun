@@ -785,7 +785,12 @@ class LibvirtComputeResource(AbstractComputeResource):  # pylint:disable=R0901
         self._fields['provider_friendly_name'].default = 'Libvirt'
 
 
-class ConfigGroup(Entity):
+class ConfigGroup(
+        Entity,
+        EntityCreateMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Config Group entity."""
 
     def __init__(self, server_config=None, **kwargs):
