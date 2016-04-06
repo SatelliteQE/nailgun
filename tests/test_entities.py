@@ -419,6 +419,7 @@ class CreateTestCase(TestCase):
         """Call ``create`` on a variety of entities."""
         entities_ = (
             entities.AbstractDockerContainer(self.cfg),
+            entities.ConfigGroup(self.cfg),
             entities.DockerComputeResource(self.cfg),
             entities.Domain(self.cfg),
             entities.HostGroup(self.cfg),
@@ -465,6 +466,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.AbstractComputeResource,
                 entities.AbstractDockerContainer,
                 entities.Architecture,
+                entities.ConfigGroup,
                 entities.ConfigTemplate,
                 entities.DiscoveredHost,
                 entities.DiscoveryRule,
@@ -1048,6 +1050,7 @@ class UpdateTestCase(TestCase):
             entities.AbstractComputeResource(self.cfg),
             entities.Architecture(self.cfg),
             entities.ComputeProfile(self.cfg),
+            entities.ConfigGroup(self.cfg),
             entities.ConfigTemplate(self.cfg),
             entities.Domain(self.cfg),
             entities.Environment(self.cfg),
