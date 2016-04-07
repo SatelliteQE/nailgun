@@ -4233,7 +4233,11 @@ class TemplateKind(Entity, EntityReadMixin):
 
 
 class UserGroup(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a User Group entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -4241,7 +4245,7 @@ class UserGroup(
             'admin': entity_fields.BooleanField(),
             'name': entity_fields.StringField(required=True),
             'role': entity_fields.OneToManyField(Role),
-            'user': entity_fields.OneToManyField(User, required=True),
+            'user': entity_fields.OneToManyField(User),
             'usergroup': entity_fields.OneToManyField(UserGroup),
         }
         self._meta = {'api_path': 'api/v2/usergroups', 'server_modes': ('sat')}
@@ -4255,6 +4259,15 @@ class UserGroup(
 
         """
         return {u'usergroup': super(UserGroup, self).create_payload()}
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict.
+
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
+
+        """
+        return {u'usergroup': super(UserGroup, self).update_payload(fields)}
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.

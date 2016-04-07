@@ -1069,6 +1069,7 @@ class UpdateTestCase(TestCase):
             entities.Organization(self.cfg),
             entities.SmartProxy(self.cfg),
             entities.User(self.cfg),
+            entities.UserGroup(self.cfg),
         )
         for entity in entities_:
             with self.subTest(entity):
@@ -1124,6 +1125,7 @@ class UpdatePayloadTestCase(TestCase):
             (entities.Subnet, {'subnet': {}}),
             (entities.Registry, {'registry': {}}),
             (entities.User, {'user': {}}),
+            (entities.UserGroup, {'usergroup': {}}),
         ]
         for entity, payload in entities_payloads:
             with self.subTest((entity, payload)):
