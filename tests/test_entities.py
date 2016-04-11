@@ -472,6 +472,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.DiscoveryRule,
                 entities.Domain,
                 entities.Environment,
+                entities.Filter,
                 entities.Host,
                 entities.HostCollection,
                 entities.HostGroup,

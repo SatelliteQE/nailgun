@@ -1690,6 +1690,15 @@ class Filter(
         self._meta = {'api_path': 'api/v2/filters', 'server_modes': ('sat')}
         super(Filter, self).__init__(server_config, **kwargs)
 
+    def create_payload(self):
+        """Wrap submitted data within an extra dict.
+
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
+
+        """
+        return {u'filter': super(Filter, self).create_payload()}
+
 
 class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of a Foreman task."""
