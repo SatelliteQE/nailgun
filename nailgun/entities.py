@@ -1858,13 +1858,13 @@ class HostCollection(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'description': entity_fields.StringField(),
+            'host': entity_fields.OneToManyField(Host),
             'max_hosts': entity_fields.IntegerField(),
             'name': entity_fields.StringField(required=True),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
             ),
-            'system': entity_fields.OneToManyField(System),
             'unlimited_hosts': entity_fields.BooleanField(),
         }
         # The following attributes have been renamed with Satellite
@@ -1874,6 +1874,8 @@ class HostCollection(
             self._fields['max_content_hosts'] = self._fields.pop('max_hosts')
             self._fields['unlimited_content_hosts'] = self._fields.pop(
                 'unlimited_hosts')
+            self._fields['system'] = entity_fields.OneToManyField(System)
+            self._fields.pop('host')
 
         self._meta = {
             'api_path': 'katello/api/v2/host_collections',
@@ -1887,6 +1889,18 @@ class HostCollection(
         if 'system_ids' in payload:
             payload['system_uuids'] = payload.pop('system_ids')
         return payload
+
+    def read(self, entity=None, attrs=None, ignore=None):
+        """Ignore 'host' field as it is not returned by the server.
+
+        For more information, see `Bugzilla #1325989
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1325989>`_.
+
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('host')
+        return super(HostCollection, self).read(entity, attrs, ignore)
 
     def update_payload(self, fields=None):
         """Rename ``system_ids`` to ``system_uuids``."""
@@ -1998,6 +2012,53 @@ class HostGroup(
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {u'hostgroup': super(HostGroup, self).update_payload(fields)}
+
+
+class HostPackage(Entity):
+    """A representation of a Host Package entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        if _get_version(server_config) < Version('6.2'):
+            raise NotImplementedError(
+                'Your current version of Satellite does not support '
+                'HostPackage entity. Please, use SystemPackage entity instead.'
+            )
+        _check_for_value('host', kwargs)
+        self._fields = {
+            'groups': entity_fields.ListField(),
+            'host': entity_fields.OneToOneField(Host, required=True),
+            'packages': entity_fields.ListField(),
+        }
+        super(HostPackage, self).__init__(server_config, **kwargs)
+        self._meta = {
+            # pylint:disable=no-member
+            'api_path': '{0}/packages'.format(self.host.path()),
+            'server_modes': ('sat'),
+        }
+
+
+class HostSubscription(Entity):
+    """A representation of a Host Subscription entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        if _get_version(server_config) < Version('6.2'):
+            raise NotImplementedError(
+                'Your current version of Satellite does not support'
+                'HostSubscription entity. Please, use System entity instead.'
+            )
+        _check_for_value('host', kwargs)
+        self._fields = {
+            'content_label': entity_fields.StringField(),
+            'host': entity_fields.OneToOneField(Host, required=True),
+            'subscriptions': entity_fields.DictField(),
+            'value': entity_fields.StringField(),
+        }
+        super(HostSubscription, self).__init__(server_config, **kwargs)
+        self._meta = {
+            # pylint:disable=no-member
+            'api_path': '{0}/subscriptions'.format(self.host.path()),
+            'server_modes': ('sat'),
+        }
 
 
 class Host(  # pylint:disable=too-many-instance-attributes
@@ -3766,11 +3827,15 @@ class Subscription(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'activation_key': entity_fields.OneToOneField(ActivationKey),
+            'host': entity_fields.OneToOneField(Host),
             'organization': entity_fields.OneToOneField(Organization),
             'quantity': entity_fields.IntegerField(),
             'subscriptions': entity_fields.OneToManyField(Subscription),
-            'system': entity_fields.OneToOneField(System),
         }
+        # Before Satellite 6.2 System entity was used instead of Host
+        if _get_version(server_config) < Version('6.2'):
+            self._fields['system'] = entity_fields.OneToOneField(System)
+            self._fields.pop('host')
         self._meta = {
             'api_path': 'katello/api/v2/subscriptions',
             'server_modes': ('sat', 'sam'),
@@ -3803,7 +3868,8 @@ class Subscription(
         return super(Subscription, self).path(which)
 
     def search_raw(self, fields=None, query=None):
-        """Completely override the inherited ``search_raw`` method.
+        """Completely override the inherited ``search_raw`` method for older
+        Satellite versions.
 
         The ``GET /katello/api/v2/subscriptions`` API call is not available.
         Instead, one of the following must be used:
@@ -3817,6 +3883,8 @@ class Subscription(
         if ``self.system`` is set, or raise an exception otherwise.
 
         """
+        if _get_version(self._server_config) >= Version('6.2'):
+            return super(Subscription, self).search_raw(fields, query)
         path = None
         attrs = ('activation_key', 'organization', 'system')
         for attr in attrs:
@@ -4086,6 +4154,11 @@ class SystemPackage(Entity):
     """A representation of a System Package entity."""
 
     def __init__(self, server_config=None, **kwargs):
+        if _get_version(server_config) >= Version('6.2'):
+            raise DeprecationWarning(
+                'SystemPackage entity was removed in Satellite 6.2. Please, '
+                'use HostPackage entity instead.'
+            )
         self._fields = {
             'groups': entity_fields.ListField(),
             'packages': entity_fields.ListField(),
@@ -4107,6 +4180,11 @@ class System(
     """A representation of a System entity."""
 
     def __init__(self, server_config=None, **kwargs):
+        if _get_version(server_config) >= Version('6.2'):
+            raise DeprecationWarning(
+                'System entity was removed in Satellite 6.2. Please, use Host '
+                'entity instead.'
+            )
         self._fields = {
             'content_view': entity_fields.OneToOneField(ContentView),
             'description': entity_fields.StringField(),

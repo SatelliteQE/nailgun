@@ -65,6 +65,8 @@ class InitTestCase(TestCase):
     def setUpClass(cls):
         """Set a server configuration at ``cls.cfg``."""
         cls.cfg = config.ServerConfig('http://example.com')
+        cls.cfg_610 = config.ServerConfig(
+            'http://example.com', version='6.1.0')
 
     def test_init_succeeds(self):
         """Instantiate every entity.
@@ -142,8 +144,8 @@ class InitTestCase(TestCase):
                 entities.Status,
                 entities.Subnet,
                 entities.Subscription,
-                entities.System,
-                entities.SystemPackage,
+                # entities.System,  # see below
+                # entities.SystemPackage,  # see below
                 entities.TemplateCombination,
                 entities.TemplateKind,
                 entities.User,
@@ -161,13 +163,26 @@ class InitTestCase(TestCase):
             ),
             (entities.ContentViewFilterRule, {'content_view_filter': 1}),
             (entities.ContentViewPuppetModule, {'content_view': 1}),
+            (entities.HostPackage, {'host': 1}),
+            (entities.HostSubscription, {'host': 1}),
             (entities.OperatingSystemParameter, {'operatingsystem': 1}),
             (entities.RepositorySet, {'product': 1}),
             (entities.SyncPlan, {'organization': 1}),
         ])
         for entity, params in entities_:
-            with self.subTest():
+            with self.subTest(entity):
                 self.assertIsInstance(entity(self.cfg, **params), entity)
+        # Deprecated entities
+        deprecated_entities = [
+            (entity, {})
+            for entity in (
+                entities.System,
+                entities.SystemPackage,
+            )
+        ]
+        for entity, params in deprecated_entities:
+            with self.subTest(entity):
+                self.assertIsInstance(entity(self.cfg_610, **params), entity)
 
     def test_required_params(self):
         """Instantiate entities that require extra parameters.
@@ -179,6 +194,8 @@ class InitTestCase(TestCase):
         for entity in (
                 entities.ContentViewFilterRule,
                 entities.ContentViewPuppetModule,
+                entities.HostPackage,
+                entities.HostSubscription,
                 entities.OperatingSystemParameter,
                 entities.RepositorySet,
                 entities.SyncPlan,
@@ -195,6 +212,8 @@ class PathTestCase(TestCase):
     def setUp(self):
         """Set ``self.cfg`` and ``self.id_``."""
         self.cfg = config.ServerConfig('http://example.com')
+        self.cfg_610 = config.ServerConfig(
+            'http://example.com', version='6.1.0')
         self.id_ = gen_integer(min_value=1)
 
     def test_nowhich(self):
@@ -214,13 +233,22 @@ class PathTestCase(TestCase):
                 (entities.Setting, '/settings'),
                 (entities.SmartProxy, '/smart_proxies'),
                 (entities.Subscription, '/subscriptions'),
-                (entities.System, '/systems'),
         ):
             with self.subTest((entity, path)):
                 self.assertIn(path, entity(self.cfg).path())
                 self.assertIn(
                     '{}/{}'.format(path, self.id_),
                     entity(self.cfg, id=self.id_).path()
+                )
+        # Deprecated entities
+        for entity, path in (
+                (entities.System, '/systems'),
+        ):
+            with self.subTest((entity, path)):
+                self.assertIn(path, entity(self.cfg_610).path())
+                self.assertIn(
+                    '{}/{}'.format(path, self.id_),
+                    entity(self.cfg_610, id=self.id_).path()
                 )
 
     def test_id_and_which(self):
@@ -299,11 +327,17 @@ class PathTestCase(TestCase):
                 (entities.Repository, 'upload_content'),
                 (entities.RHCIDeployment, 'deploy'),
                 (entities.SmartProxy, 'refresh'),
-                (entities.System, 'self'),
         ):
             with self.subTest((entity, which)):
                 with self.assertRaises(NoSuchPathError):
                     entity(self.cfg).path(which=which)
+        # Deprecated entities
+        for entity, which in (
+                (entities.System, 'self'),
+        ):
+            with self.subTest((entity, which)):
+                with self.assertRaises(NoSuchPathError):
+                    entity(self.cfg_610).path(which=which)
 
     def test_repository_set(self):
         """Test :meth:`nailgun.entities.RepositorySet.path`.
@@ -364,12 +398,12 @@ class PathTestCase(TestCase):
         * ``System(uuid=…).path('subscriptions')``
 
         """
-        system = entities.System(self.cfg)
+        system = entities.System(self.cfg_610)
         for path in (system.path(), system.path('base')):
             self.assertIn('/systems', path)
             self.assertRegex(path, 'systems$')
 
-        system = entities.System(self.cfg, uuid=self.id_)
+        system = entities.System(self.cfg_610, uuid=self.id_)
         for path in (system.path(), system.path('self')):
             self.assertIn('/systems/{}'.format(self.id_), path)
             self.assertRegex(path, '{}$'.format(self.id_))
@@ -457,6 +491,8 @@ class CreatePayloadTestCase(TestCase):
     def setUpClass(cls):
         """Set a server configuration at ``cls.cfg``."""
         cls.cfg = config.ServerConfig('http://example.com')
+        cls.cfg_610 = config.ServerConfig(
+            'http://example.com', version='6.1.0')
 
     def test_no_attributes(self):
         """Instantiate an entity and call ``create_payload`` on it."""
@@ -520,7 +556,7 @@ class CreatePayloadTestCase(TestCase):
     def test_host_collection(self):
         """Create a :class:`nailgun.entities.HostCollection`."""
         payload = entities.HostCollection(
-            self.cfg,
+            self.cfg_610,
             system=[1],
         ).create_payload()
         self.assertNotIn('system_ids', payload)
@@ -783,6 +819,8 @@ class ReadTestCase(TestCase):
     def setUp(self):
         """Set a server configuration at ``self.cfg``."""
         self.cfg = config.ServerConfig('http://example.com')
+        self.cfg_610 = config.ServerConfig(
+            'http://example.com', version='6.1.0')
 
     def test_entity_arg(self):
         """Call ``read`` on entities that require parameters for instantiation.
@@ -831,12 +869,21 @@ class ReadTestCase(TestCase):
                 entities.Host,
                 entities.Media,
                 entities.RHCIDeployment,
-                entities.System,
         ):
             with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
                 with mock.patch.object(EntityReadMixin, 'read') as read:
                     with self.subTest():
                         entity(self.cfg).read()
+                        self.assertEqual(read_json.call_count, 1)
+                        self.assertEqual(read.call_count, 1)
+        # Deprecated entities
+        for entity in (
+                entities.System,
+        ):
+            with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
+                with mock.patch.object(EntityReadMixin, 'read') as read:
+                    with self.subTest():
+                        entity(self.cfg_610).read()
                         self.assertEqual(read_json.call_count, 1)
                         self.assertEqual(read.call_count, 1)
 
@@ -886,7 +933,7 @@ class ReadTestCase(TestCase):
                 {'host_parameters_attributes': None, 'puppet_class': None},
             ),
             (
-                entities.System(self.cfg),
+                entities.System(self.cfg_610),
                 {
                     'checkin_time': None,
                     'hostCollections': None,
@@ -912,6 +959,7 @@ class ReadTestCase(TestCase):
 
         """
         for entity, ignored_attrs in (
+                (entities.HostCollection, {'host'}),
                 (entities.Subnet, {'discovery'}),
                 (entities.User, {'password'}),
         ):
@@ -1008,7 +1056,8 @@ class SearchRawTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         """Set a server configuration at ``cls.cfg``."""
-        cls.cfg = config.ServerConfig('http://example.com')
+        cls.cfg_610 = config.ServerConfig(
+            'http://example.com', version='6.1.0')
 
     def test_subscription_v1(self):
         """Test :meth:`nailgun.entities.Subscription.search_raw`.
@@ -1017,12 +1066,12 @@ class SearchRawTestCase(TestCase):
 
         """
         kwargs_iter = (
-            {'activation_key': entities.ActivationKey(self.cfg, id=1)},
-            {'organization': entities.Organization(self.cfg, id=1)},
-            {'system': entities.System(self.cfg, uuid=1)},
+            {'activation_key': entities.ActivationKey(self.cfg_610, id=1)},
+            {'organization': entities.Organization(self.cfg_610, id=1)},
+            {'system': entities.System(self.cfg_610, uuid=1)},
         )
         for kwargs in kwargs_iter:
-            sub = entities.Subscription(self.cfg, **kwargs)
+            sub = entities.Subscription(self.cfg_610, **kwargs)
             with self.subTest(sub):
                 with mock.patch.object(client, 'get') as get:
                     with mock.patch.object(sub, 'search_payload'):
@@ -1038,7 +1087,7 @@ class SearchRawTestCase(TestCase):
 
         """
         with self.assertRaises(MissingValueError):
-            entities.Subscription(self.cfg).search_raw()
+            entities.Subscription(self.cfg_610).search_raw()
 
 
 class UpdateTestCase(TestCase):
@@ -1103,6 +1152,8 @@ class UpdatePayloadTestCase(TestCase):
     def setUpClass(cls):
         """Set a server configuration at ``cls.cfg``."""
         cls.cfg = config.ServerConfig('http://example.com')
+        cls.cfg_610 = config.ServerConfig(
+            'http://example.com', version='6.1.0')
 
     def test_generic(self):
         """Instantiate a variety of entities and call ``update_payload``."""
@@ -1186,7 +1237,7 @@ class UpdatePayloadTestCase(TestCase):
         when ``update_payload`` is called.
         """
         payload = entities.HostCollection(
-            self.cfg,
+            self.cfg_610,
             system=[1],
         ).update_payload()
         self.assertNotIn('system_ids', payload)
@@ -1788,6 +1839,7 @@ class VersionTestCase(TestCase):
         super(VersionTestCase, cls).setUpClass()
         cls.cfg_608 = config.ServerConfig('bogus url', version='6.0.8')
         cls.cfg_610 = config.ServerConfig('bogus url', version='6.1.0')
+        cls.cfg_620 = config.ServerConfig('bogus url', version='6.2.0')
 
     def test_missing_org_id(self):
         """Test methods for which no organization ID is returned.
@@ -1903,3 +1955,49 @@ class VersionTestCase(TestCase):
                 'tftp'):
             self.assertNotIn(field_name, subnet_608.get_fields())
             self.assertIn(field_name, subnet_610.get_fields())
+
+    def test_hostpackage(self):
+        """Attempt to create a :class:`nailgun.entities.HostPackage` for the
+        Satellite 6.1.
+
+        Assert that ``HostPackage`` raises ``NotImplementedError`` exception.
+        """
+        with self.assertRaises(NotImplementedError):
+            entities.HostPackage(self.cfg_610, host=1)
+
+    def test_hostsubscription(self):
+        """Attempt to create a :class:`nailgun.entities.HostSubscription` for
+        the Satellite 6.1.
+
+        Assert that ``HostSubscription`` raises ``NotImplementedError``
+        exception.
+        """
+        with self.assertRaises(NotImplementedError):
+            entities.HostSubscription(self.cfg_610, host=1)
+
+    def test_subscription_search(self):
+        """Verify :meth:`nailgun.entities.Subscription.search_raw` calls
+        :meth:`nailgun.entity_mixins.EntitySearchMixin.search_raw` for
+        Satellite 6.2.
+        """
+        with mock.patch.object(EntitySearchMixin, 'search_raw') as search_raw:
+            entities.Subscription(self.cfg_620).search_raw()
+        self.assertEqual(search_raw.call_count, 1)
+
+    def test_system(self):
+        """Attempt to create a :class:`nailgun.entities.System` for the
+        Satellite 6.2.
+
+        Assert that ``System`` raises ``DeprecationWarning`` exception.
+        """
+        with self.assertRaises(DeprecationWarning):
+            entities.System(self.cfg_620)
+
+    def test_systempackage(self):
+        """Attempt to create a :class:`nailgun.entities.SystemPackage` for the
+        Satellite 6.1.
+
+        Assert that ``SystemPackage`` raises ``DeprecationWarning`` exception.
+        """
+        with self.assertRaises(DeprecationWarning):
+            entities.SystemPackage(self.cfg_620)
