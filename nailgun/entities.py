@@ -1347,6 +1347,11 @@ class ContentViewPuppetModule(
                 content_view=self.content_view,  # pylint:disable=no-member
             )
 
+        if attrs is None:
+            attrs = self.read_json()
+        # The puppet_module_id is returned as uuid
+        attrs['puppet_module_id'] = attrs.pop('uuid')
+
         if ignore is None:
             ignore = set()
         ignore.add('content_view')
