@@ -930,8 +930,12 @@ class ReadTestCase(TestCase):
             ),
             (
                 entities.Host(self.cfg),
-                {'parameters': None, 'puppetclasses': None},
-                {'host_parameters_attributes': None, 'puppet_class': None},
+                {'content': 1, 'parameters': None, 'puppetclasses': None},
+                {
+                    'content_facet_attributes': 1,
+                    'host_parameters_attributes': None,
+                    'puppet_class': None,
+                },
             ),
             (
                 entities.System(self.cfg_610),
@@ -1491,6 +1495,10 @@ class HostGroupTestCase(TestCase):
 class HostTestCase(TestCase):
     """Tests for :class:`nailgun.entities.Host`."""
 
+    def setUp(self):
+        """Set a server configuration at ``self.cfg``."""
+        self.cfg = config.ServerConfig('http://example.com')
+
     def test_init_with_owner_type(self):
         """Assert ``owner`` attribute is an entity of correct type, according
         to ``owner_type`` field value"""
@@ -1498,7 +1506,7 @@ class HostTestCase(TestCase):
                 ('User', entities.User),
                 ('Usergroup', entities.UserGroup)):
             host = entities.Host(
-                config.ServerConfig('http://example.com'),
+                self.cfg,
                 id=gen_integer(min_value=1),
                 owner=gen_integer(min_value=1),
                 owner_type=owner_type,
@@ -1510,7 +1518,7 @@ class HostTestCase(TestCase):
         it's type accordingly.
         """
         host = entities.Host(
-            config.ServerConfig('http://example.com'),
+            self.cfg,
             id=gen_integer(min_value=1),
             owner=gen_integer(min_value=1),
             owner_type='User',
@@ -1530,7 +1538,7 @@ class HostTestCase(TestCase):
           ``_owner_type`` attribute - is not
         """
         host = entities.Host(
-            config.ServerConfig('http://example.com'),
+            self.cfg,
             owner_type='User',
             id=gen_integer(min_value=1),
             owner=gen_integer(min_value=1),
@@ -1547,12 +1555,12 @@ class HostTestCase(TestCase):
         """
         owner_id = gen_integer(min_value=1)
         owner_entity = entities.UserGroup(
-            config.ServerConfig('http://example.com'),
+            self.cfg,
             id=owner_id,
         )
         for owner in (owner_id, owner_entity):
             host = entities.Host(
-                config.ServerConfig('http://example.com'),
+                self.cfg,
                 owner=owner,
                 owner_type='Usergroup',
                 id=gen_integer(min_value=1),
@@ -1560,6 +1568,19 @@ class HostTestCase(TestCase):
             self.assertTrue(isinstance(host.owner, entities.UserGroup))
             # pylint:disable=no-member
             self.assertEqual(owner_id, host.owner.id)
+
+    def test_no_facet_attributes(self):
+        """Assert that ``content_facet_attributes`` attribute is ignored when
+        ``content`` attribute is not returned for host
+        """
+        with mock.patch.object(EntityReadMixin, 'read') as read:
+            entities.Host(self.cfg).read(attrs={
+                'parameters': None,
+                'puppetclasses': None,
+            })
+            self.assertNotIn('content', read.call_args[0][1])
+            self.assertNotIn('content_facet_attributes', read.call_args[0][1])
+            self.assertIn('content_facet_attributes', read.call_args[0][2])
 
 
 class RepositoryTestCase(TestCase):
