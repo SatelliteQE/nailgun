@@ -3177,6 +3177,7 @@ class Registry(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Registry entity."""
 
