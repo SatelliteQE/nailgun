@@ -4032,6 +4032,7 @@ class SyncPlan(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Sync Plan entity.
 
