@@ -1,4 +1,5 @@
 TEST_OPTIONS=-m unittest discover --start-directory tests --top-level-directory .
+CPU_COUNT=$(shell python -c "from multiprocessing import cpu_count; print(cpu_count())")
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of:"
@@ -19,9 +20,9 @@ docs-clean:
 
 lint:
 	flake8 .
-	pylint --reports=n --disable=I --ignore-imports=y \
+	pylint -j $(CPU_COUNT) --reports=n --disable=I --ignore-imports=y \
 		nailgun tests setup.py docs/conf.py
-	pylint --reports=n --disable=I --ignore-imports=y --disable=similarities \
+	pylint -j $(CPU_COUNT) --reports=n --disable=I --ignore-imports=y --disable=similarities \
 		docs/create_organization_nailgun.py \
 		docs/create_organization_nailgun_v2.py \
 		docs/create_organization_plain.py \
