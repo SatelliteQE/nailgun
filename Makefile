@@ -11,6 +11,7 @@ help:
 	@echo "  docs-clean     to remove documentation"
 	@echo "  package        to generate installable Python packages"
 	@echo "  package-clean  to remove generated Python packages"
+	@echo "  publish        to upload dist/* to PyPI"
 
 docs-html:
 	@cd docs; $(MAKE) html
@@ -41,4 +42,7 @@ package:
 package-clean:
 	rm -rf build dist nailgun.egg-info
 
-.PHONY: help docs-html docs-clean lint test test-coverage package package-clean
+publish: package
+	twine upload dist/*
+
+.PHONY: help docs-html docs-clean lint test test-coverage package package-clean publish

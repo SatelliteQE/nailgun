@@ -14,5 +14,8 @@ sphinx
 # For `make package`
 wheel
 
+# For `make publish`
+twine
+
 # For code coverage
 coveralls
