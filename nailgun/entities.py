@@ -214,6 +214,10 @@ class ActivationKey(
             ),
             'unlimited_hosts': entity_fields.BooleanField(),
         }
+        if _get_version(server_config) < Version('6.2'):
+            self._fields['max_content_hosts'] = self._fields.pop('max_hosts')
+            self._fields['unlimited_content_hosts'] = self._fields.pop(
+                'unlimited_hosts')
         self._meta = {
             'api_path': 'katello/api/v2/activation_keys',
             'server_modes': ('sat', 'sam'),
