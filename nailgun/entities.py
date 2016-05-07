@@ -206,13 +206,13 @@ class ActivationKey(
             'description': entity_fields.StringField(),
             'environment': entity_fields.OneToOneField(LifecycleEnvironment),
             'host_collection': entity_fields.OneToManyField(HostCollection),
-            'max_content_hosts': entity_fields.IntegerField(),
+            'max_hosts': entity_fields.IntegerField(),
             'name': entity_fields.StringField(required=True),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
             ),
-            'unlimited_content_hosts': entity_fields.BooleanField(),
+            'unlimited_hosts': entity_fields.BooleanField(),
         }
         self._meta = {
             'api_path': 'katello/api/v2/activation_keys',
