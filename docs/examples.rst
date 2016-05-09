@@ -392,4 +392,4 @@ shorter! This makes it easier to focus on high-level business logic instead of
 worrying about implementation details.
 
 .. _Requests: http://docs.python-requests.org/en/latest/
-.. _Robottelo: http://robottelo.readthedocs.org/en/latest/
+.. _Robottelo: http://robottelo.readthedocs.io/en/latest/
