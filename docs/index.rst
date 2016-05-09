@@ -128,6 +128,6 @@ Please adhere to the following guidelines:
 .. _good commit messages: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 .. _Rebasing: http://www.git-scm.com/book/en/v2/Git-Branching-Rebasing
 .. _Requests: http://docs.python-requests.org/en/latest/
-.. _Robottelo: http://robottelo.readthedocs.org/en/latest/
+.. _Robottelo: http://robottelo.readthedocs.io/en/latest/
 .. _Robottelo source code: https://github.com/SatelliteQE/robottelo
 .. _this blog post: http://www.ichimonji10.name/blog/4/
