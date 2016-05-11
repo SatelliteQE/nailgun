@@ -774,7 +774,7 @@ class LibvirtComputeResource(AbstractComputeResource):  # pylint:disable=R0901
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'display_type': entity_fields.StringField(
-                choices=(u'VNC', u'SPICE'),
+                choices=(u'vnc', u'spice'),
                 required=True,
             ),
             'set_console_password': entity_fields.BooleanField(),
