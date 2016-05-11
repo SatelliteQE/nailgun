@@ -4167,7 +4167,7 @@ class SyncPlan(
 
     def update_payload(self, fields=None):
         """Convert ``sync_date`` to a string if datetime object provided."""
-        data = super(SyncPlan, self).update_payload()
+        data = super(SyncPlan, self).update_payload(fields)
         if isinstance(data.get('sync_date'), datetime):
             data['sync_date'] = data['sync_date'].strftime('%Y-%m-%d %H:%M:%S')
         return data
