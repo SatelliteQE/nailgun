@@ -523,8 +523,7 @@ class CreatePayloadTestCase(TestCase):
             )
         ]
         entities_.extend([
-            (entities.SyncPlan, {'organization': 1}),
-            (entities.ContentViewPuppetModule, {'content_view': 1}),
+            (entities.SyncPlan, {'organization': 1})
         ])
         for entity, params in entities_:
             with self.subTest():
@@ -543,16 +542,6 @@ class CreatePayloadTestCase(TestCase):
             ).create_payload()['sync_date'],
             type('')  # different for Python 2 and 3
         )
-
-    def test_content_view_puppet_module(self):
-        """Create a :class:`nailgun.entities.ContentViewPuppetModule`."""
-        payload = entities.ContentViewPuppetModule(
-            self.cfg,
-            content_view=1,
-            puppet_module=2,
-        ).create_payload()
-        self.assertNotIn('puppet_module_id', payload)
-        self.assertIn('uuid', payload)
 
     def test_host_collection(self):
         """Create a :class:`nailgun.entities.HostCollection`."""
