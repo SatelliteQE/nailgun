@@ -3,7 +3,7 @@
 from collections import Iterable
 from fauxfactory import gen_choice
 from inflection import pluralize
-from nailgun import client, config
+from nailgun import client, config, signals
 from nailgun.entity_fields import IntegerField, OneToManyField, OneToOneField
 import threading
 import time
@@ -562,17 +562,25 @@ class EntityDeleteMixin(object):
             out.
 
         """
+        signals.pre_delete.send(self, synchronous=synchronous)
+
         response = self.delete_raw()
         response.raise_for_status()
+
         if (synchronous is True and
                 response.status_code == http_client.ACCEPTED):
-            return _poll_task(response.json()['id'], self._server_config)
-        if response.status_code == http_client.NO_CONTENT:
+            result = _poll_task(response.json()['id'], self._server_config)
+        elif response.status_code == http_client.NO_CONTENT:
             # "The server successfully processed the request, but is not
             # returning any content. Usually used as a response to a successful
             # delete request."
-            return
-        return response.json()
+            result = None
+        else:
+            result = response.json()
+
+        signals.post_delete.send(self, synchronous=synchronous, result=result)
+
+        return result
 
 
 class EntityReadMixin(object):
@@ -839,7 +847,10 @@ class EntityCreateMixin(object):
             on the current object.
 
         """
-        return self.read(attrs=self.create_json(create_missing))
+        signals.pre_create.send(self, create_missing=create_missing)
+        entity = self.read(attrs=self.create_json(create_missing))
+        signals.post_create.send(self, entity=entity)
+        return entity
 
 
 class EntityUpdateMixin(object):
@@ -935,7 +946,10 @@ class EntityUpdateMixin(object):
             available for that field on the current entity.
 
         """
-        return self.read(attrs=self.update_json(fields))
+        signals.pre_update.send(self, fields=fields)
+        entity = self.read(attrs=self.update_json(fields))
+        signals.post_update.send(self, entity=entity, fields=fields)
+        return entity
 
 
 class EntitySearchMixin(object):
@@ -1237,6 +1251,8 @@ class EntitySearchMixin(object):
         #   names, misnamed attributes (e.g. BZ 1233245) and weirdly named
         #   fields (e.g. Media.path_).
         #
+        signals.pre_search.send(self, fields=fields, query=query,
+                                filters=filters)
         results = self.search_json(fields, query)['results']
         results = self.search_normalize(results)
         entities = [
@@ -1245,6 +1261,9 @@ class EntitySearchMixin(object):
         ]
         if filters is not None:
             entities = self.search_filter(entities, filters)
+
+        signals.post_search.send(self, entities=entities, fields=fields,
+                                 query=query, filters=filters)
         return entities
 
     @staticmethod

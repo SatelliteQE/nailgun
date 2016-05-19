@@ -23,7 +23,7 @@ workings of entity classes.
 """
 from datetime import datetime
 from fauxfactory import gen_alphanumeric
-from nailgun import client, entity_fields
+from nailgun import client, entity_fields, signals
 from nailgun.entity_mixins import (
     Entity,
     EntityCreateMixin,
@@ -2956,10 +2956,13 @@ class Organization(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1230873>`_.
 
         """
-        return Organization(
+        signals.pre_create.send(self, create_missing=create_missing)
+        entity = Organization(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
+        signals.post_create.send(self, entity=entity)
+        return entity
 
     def read(self, entity=None, attrs=None, ignore=None):
         """Fetch as many attributes as possible for this entity.
@@ -2984,8 +2987,11 @@ class Organization(
             #1230865 <https://bugzilla.redhat.com/show_bug.cgi?id=1230865>`_.
 
         """
+        signals.pre_update.send(self, fields=fields)
         self.update_json(fields)
-        return self.read()
+        entity = self.read()
+        signals.post_update.send(self, entity=entity, fields=fields)
+        return entity
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
@@ -3300,10 +3306,13 @@ class Realm(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1232855>`_.
 
         """
-        return Realm(
+        signals.pre_create.send(self, create_missing=create_missing)
+        entity = Realm(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
+        signals.post_create.send(self, entity=entity)
+        return entity
 
 
 class Registry(
@@ -3880,8 +3889,11 @@ class SmartProxy(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1262037>`_.
 
         """
+        signals.pre_update.send(self, fields=fields)
         self.update_json(fields)
-        return self.read()
+        entity = self.read()
+        signals.post_update.send(self, entity=entity, fields=fields)
+        return entity
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
@@ -4547,10 +4559,13 @@ class UserGroup(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1301658>`_.
 
         """
-        return UserGroup(
+        signals.pre_create.send(self, create_missing=create_missing)
+        entity = UserGroup(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
+        signals.post_create.send(self, entity=entity)
+        return entity
 
     def read(self, entity=None, attrs=None, ignore=None):
         """Work around `Redmine #9594`_.
@@ -4650,5 +4665,8 @@ class User(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1235012>`_.
 
         """
+        signals.pre_update.send(self, fields=fields)
         self.update_json(fields)
-        return self.read()
+        entity = self.read()
+        signals.post_update.send(self, entity=entity, fields=fields)
+        return entity
