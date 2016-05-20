@@ -207,7 +207,11 @@ class ActivationKey(
             'environment': entity_fields.OneToOneField(LifecycleEnvironment),
             'host_collection': entity_fields.OneToManyField(HostCollection),
             'max_hosts': entity_fields.IntegerField(),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
@@ -297,7 +301,11 @@ class Architecture(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
         }
         self._meta = {
@@ -340,8 +348,16 @@ class AuthSourceLDAP(
             'attr_photo': entity_fields.StringField(),
             'base_dn': entity_fields.StringField(),
             'groups_base': entity_fields.StringField(),
-            'host': entity_fields.StringField(required=True, length=(1, 60)),
-            'name': entity_fields.StringField(required=True, length=(1, 60)),
+            'host': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(1, 60),
+            ),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(1, 60),
+            ),
             'onthefly_register': entity_fields.BooleanField(),
             'port': entity_fields.IntegerField(),
             'server_type': entity_fields.StringField(
@@ -412,7 +428,11 @@ class Bookmark(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'controller': entity_fields.StringField(required=True),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'public': entity_fields.BooleanField(),
             'query': entity_fields.StringField(required=True),
         }
@@ -466,7 +486,11 @@ class ComputeProfile(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
         }
         self._meta = {
             'api_path': 'api/v2/compute_profiles',
@@ -573,7 +597,11 @@ class DiscoveredHost(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'ip': entity_fields.IPAddressField(required=True),
             'mac': entity_fields.MACAddressField(required=True),
         }
@@ -659,7 +687,11 @@ class DiscoveryRule(
             'hostgroup': entity_fields.OneToOneField(HostGroup, required=True),
             'hostname': entity_fields.StringField(),
             'max_count': entity_fields.IntegerField(),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'priority': entity_fields.IntegerField(),
             'search_': entity_fields.StringField(required=True),
         }
@@ -795,7 +827,11 @@ class ConfigGroup(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
         }
         self._meta = {
             'api_path': 'api/v2/config_groups',
@@ -817,7 +853,11 @@ class ConfigTemplate(
         self._fields = {
             'audit_comment': entity_fields.StringField(),
             'locked': entity_fields.BooleanField(),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
             'organization': entity_fields.OneToManyField(Organization),
             'location': entity_fields.OneToManyField(Location),
@@ -1181,7 +1221,10 @@ class ContentViewFilterRule(
             'errata': entity_fields.OneToOneField(Errata),
             'max_version': entity_fields.StringField(),
             'min_version': entity_fields.StringField(),
-            'name': entity_fields.StringField(),
+            'name': entity_fields.StringField(
+                str_type='alpha',
+                length=(6, 12)
+            ),
             'start_date': entity_fields.DateField(),
             'types': entity_fields.ListField(),
             'version': entity_fields.StringField(),
@@ -1250,7 +1293,11 @@ class AbstractContentViewFilter(
                 required=True,
             ),
             'inclusion': entity_fields.BooleanField(),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'repository': entity_fields.OneToManyField(Repository),
         }
         fields.update(getattr(self, '_fields', {}))
@@ -1312,7 +1359,10 @@ class ContentViewPuppetModule(
                 ContentView,
                 required=True,
             ),
-            'name': entity_fields.StringField(),
+            'name': entity_fields.StringField(
+                str_type='alpha',
+                length=(6, 12)
+            ),
             'puppet_module': entity_fields.OneToOneField(PuppetModule),
         }
         super(ContentViewPuppetModule, self).__init__(server_config, **kwargs)
@@ -1386,7 +1436,11 @@ class ContentView(
             'description': entity_fields.StringField(),
             'label': entity_fields.StringField(),
             'last_published': entity_fields.StringField(),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'next_version': entity_fields.IntegerField(),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -1542,7 +1596,11 @@ class Domain(
             'domain_parameters_attributes': entity_fields.ListField(),
             'fullname': entity_fields.StringField(),
             'location': entity_fields.OneToManyField(Location),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'organization': entity_fields.OneToManyField(Organization),
         }
         self._meta = {'api_path': 'api/v2/domains', 'server_modes': ('sat')}
@@ -1623,6 +1681,7 @@ class Environment(
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alphanumeric',  # cannot contain whitespace
+                length=(6, 12),
             ),
             'organization': entity_fields.OneToManyField(Organization),
         }
@@ -1813,7 +1872,11 @@ class GPGKey(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'content': entity_fields.StringField(required=True),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
@@ -1874,7 +1937,11 @@ class HostCollection(
             'description': entity_fields.StringField(),
             'host': entity_fields.OneToManyField(Host),
             'max_hosts': entity_fields.IntegerField(),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
@@ -1943,7 +2010,11 @@ class HostGroup(
             'environment': entity_fields.OneToOneField(Environment),
             'location': entity_fields.OneToManyField(Location),
             'medium': entity_fields.OneToOneField(Media),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'operatingsystem': entity_fields.OneToOneField(OperatingSystem),
             'organization': entity_fields.OneToManyField(Organization),
             'parent': entity_fields.OneToOneField(HostGroup),
@@ -2105,7 +2176,11 @@ class Host(  # pylint:disable=too-many-instance-attributes
             'managed': entity_fields.BooleanField(),
             'medium': entity_fields.OneToOneField(Media),
             'model': entity_fields.OneToOneField(Model),
-            'name': entity_fields.StringField(required=True, str_type='alpha'),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'operatingsystem': entity_fields.OneToOneField(OperatingSystem),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -2347,7 +2422,11 @@ class Image(Entity):
                 AbstractComputeResource,
                 required=True
             ),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'operatingsystem': entity_fields.OneToOneField(
                 OperatingSystem,
                 required=True
@@ -2372,7 +2451,11 @@ class Interface(Entity):
             'type': entity_fields.StringField(required=True),
             'ip': entity_fields.IPAddressField(required=True),
             'mac': entity_fields.MACAddressField(required=True),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'password': entity_fields.StringField(),
             'provider': entity_fields.StringField(),
             'subnet': entity_fields.OneToOneField(Subnet),
@@ -2398,7 +2481,11 @@ class LifecycleEnvironment(
         # NOTE: The "prior" field is unusual. See `create_missing`'s docstring.
         self._fields = {
             'description': entity_fields.StringField(),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
@@ -2477,7 +2564,11 @@ class Location(
             'environment': entity_fields.OneToManyField(Environment),
             'hostgroup': entity_fields.OneToManyField(HostGroup),
             'media': entity_fields.OneToManyField(Media),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'organization': entity_fields.OneToManyField(Organization),
             'realm': entity_fields.OneToManyField(Realm),
             'smart_proxy': entity_fields.OneToManyField(SmartProxy),
@@ -2555,7 +2646,11 @@ class Media(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'path_': entity_fields.URLField(required=True),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
             'organization': entity_fields.OneToManyField(Organization),
             'location': entity_fields.OneToManyField(Location),
@@ -2622,7 +2717,11 @@ class Model(
         self._fields = {
             'hardware_model': entity_fields.StringField(),
             'info': entity_fields.StringField(),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'vendor_class': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'api/v2/models', 'server_modes': ('sat')}
@@ -2663,7 +2762,11 @@ class OperatingSystem(
                 length=(1, 16),
                 str_type='numeric',
             ),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'ptable': entity_fields.OneToManyField(PartitionTable),
             'config_template': entity_fields.OneToManyField(ConfigTemplate),
             'release_name': entity_fields.StringField(),
@@ -2713,7 +2816,11 @@ class OperatingSystemParameter(
     def __init__(self, server_config=None, **kwargs):
         _check_for_value('operatingsystem', kwargs)
         self._fields = {
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'operatingsystem': entity_fields.OneToOneField(
                 OperatingSystem,
                 required=True,
@@ -2782,8 +2889,11 @@ class Organization(
             'hostgroup': entity_fields.OneToManyField(HostGroup),
             'label': entity_fields.StringField(str_type='alpha'),
             'media': entity_fields.OneToManyField(Media),
-            'name': entity_fields.StringField(str_type='alpha', length=8,
-                                              required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'realm': entity_fields.OneToManyField(Realm),
             'smart_proxy': entity_fields.OneToManyField(SmartProxy),
             'subnet': entity_fields.OneToManyField(Subnet),
@@ -2950,7 +3060,11 @@ class Permission(Entity, EntityReadMixin, EntitySearchMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'resource_type': entity_fields.StringField(required=True),
         }
         self._meta = {
@@ -2985,7 +3099,11 @@ class Product(
             'description': entity_fields.StringField(),
             'gpg_key': entity_fields.OneToOneField(GPGKey),
             'label': entity_fields.StringField(),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True
@@ -3086,7 +3204,11 @@ class PartitionTable(
         self._fields = {
             'layout': entity_fields.StringField(required=True),
             'location': entity_fields.OneToManyField(Location),
-            'name': entity_fields.StringField(required=True, length=(4, 30)),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(4, 30),
+            ),
             'organization': entity_fields.OneToManyField(Organization),
             'os_family': entity_fields.StringField(choices=_OPERATING_SYSTEMS),
         }
@@ -3105,7 +3227,11 @@ class PuppetClass(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
         }
         self._meta = {
             'api_path': 'api/v2/puppetclasses',
@@ -3124,7 +3250,10 @@ class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
             'dependencies': entity_fields.ListField(),
             'description': entity_fields.StringField(),
             'license': entity_fields.StringField(),
-            'name': entity_fields.StringField(),
+            'name': entity_fields.StringField(
+                str_type='alpha',
+                length=(6, 12)
+            ),
             'project_page': entity_fields.URLField(),
             'repository': entity_fields.OneToManyField(Repository),
             'source': entity_fields.URLField(),
@@ -3146,7 +3275,11 @@ class Realm(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'location': entity_fields.OneToManyField(Location),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'organization': entity_fields.OneToManyField(Organization),
             'realm_proxy': entity_fields.OneToOneField(
                 SmartProxy,
@@ -3185,7 +3318,11 @@ class Registry(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'description': entity_fields.StringField(),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'password': entity_fields.StringField(),
             'url': entity_fields.URLField(required=True),
             'username': entity_fields.StringField(),
@@ -3253,7 +3390,11 @@ class Repository(
             ),
             'gpg_key': entity_fields.OneToOneField(GPGKey),
             'label': entity_fields.StringField(),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'product': entity_fields.OneToOneField(Product, required=True),
             'unprotected': entity_fields.BooleanField(),
             'url': entity_fields.URLField(
@@ -3376,7 +3517,11 @@ class RepositorySet(
             'contentUrl': entity_fields.URLField(required=True),
             'gpgUrl': entity_fields.URLField(required=True),
             'label': entity_fields.StringField(required=True),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'product': entity_fields.OneToOneField(Product, required=True),
             'repositories': entity_fields.OneToManyField(Repository),
             'type': entity_fields.StringField(
@@ -3610,7 +3755,11 @@ class RoleLDAPGroups(Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
         }
         self._meta = {
             'api_path': 'katello/api/v2/roles/:role_id/ldap_groups',
@@ -3676,7 +3825,11 @@ class SmartProxy(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'url': entity_fields.URLField(required=True),
             'location': entity_fields.OneToManyField(Location),
             'organization': entity_fields.OneToManyField(Organization),
@@ -3786,7 +3939,11 @@ class Subnet(
             'from': entity_fields.IPAddressField(),
             'gateway': entity_fields.StringField(),
             'mask': entity_fields.NetmaskField(required=True),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'network': entity_fields.IPAddressField(required=True),
             'to': entity_fields.IPAddressField(),
             'vlanid': entity_fields.StringField(),
@@ -4052,7 +4209,11 @@ class SyncPlan(
                 choices=('hourly', 'daily', 'weekly'),
                 required=True,
             ),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
@@ -4221,7 +4382,11 @@ class System(
             'installed_products': entity_fields.ListField(),
             'last_checkin': entity_fields.DateTimeField(),
             'location': entity_fields.StringField(),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
@@ -4345,7 +4510,11 @@ class UserGroup(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'admin': entity_fields.BooleanField(),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'role': entity_fields.OneToManyField(Role),
             'user': entity_fields.OneToManyField(User),
             'usergroup': entity_fields.OneToManyField(UserGroup),
