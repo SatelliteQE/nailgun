@@ -1363,7 +1363,7 @@ class ContentViewPuppetModule(
                 str_type='alpha',
                 length=(6, 12)
             ),
-            'puppet_module': entity_fields.OneToOneField(PuppetModule),
+            'uuid': entity_fields.StringField(),
         }
         super(ContentViewPuppetModule, self).__init__(server_config, **kwargs)
         self._meta = {
@@ -1396,28 +1396,10 @@ class ContentViewPuppetModule(
                 self._server_config,
                 content_view=self.content_view,  # pylint:disable=no-member
             )
-
-        if attrs is None:
-            attrs = self.read_json()
-        # The puppet_module_id is returned as uuid
-        attrs['puppet_module_id'] = attrs.pop('uuid')
-
         if ignore is None:
             ignore = set()
         ignore.add('content_view')
         return super(ContentViewPuppetModule, self).read(entity, attrs, ignore)
-
-    def create_payload(self):
-        """Rename the ``puppet_module_id`` field to ``uuid``.
-
-        For more information, see `Bugzilla #1238731
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1238731>`_.
-
-        """
-        payload = super(ContentViewPuppetModule, self).create_payload()
-        if 'puppet_module_id' in payload:
-            payload['uuid'] = payload.pop('puppet_module_id')
-        return payload
 
 
 class ContentView(
