@@ -88,7 +88,7 @@ class APIResponseError(Exception):
     """Indicates an error if response returns unexpected result."""
 
 
-def _handle_response(response, server_config, synchronous=False):
+def _handle_response(response, server_config, synchronous=False, timeout=None):
     """Handle a server's response in a typical fashion.
 
     Do the following:
@@ -105,11 +105,14 @@ def _handle_response(response, server_config, synchronous=False):
         :mod:`nailgun.client` or the requests library.
     :param server_config: A `nailgun.config.ServerConfig` object.
     :param synchronous: Should this function poll the server?
+    :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
 
     """
     response.raise_for_status()
     if synchronous is True and response.status_code == ACCEPTED:
-        return ForemanTask(server_config, id=response.json()['id']).poll()
+        return ForemanTask(
+            server_config, id=response.json()['id']).poll(timeout=timeout)
     if response.status_code == NO_CONTENT:
         return
     if 'application/json' in response.headers.get('content-type', '').lower():
@@ -4194,7 +4197,14 @@ class Subscription(
             self._org_path('upload', kwargs['data']),
             **kwargs
         )
-        return _handle_response(response, self._server_config, synchronous)
+        # Setting custom timeout as manifest upload can take enormously huge
+        # amount of time. See BZ#1339696 for more details
+        return _handle_response(
+            response,
+            self._server_config,
+            synchronous,
+            timeout=900,
+        )
 
 
 class SyncPlan(
