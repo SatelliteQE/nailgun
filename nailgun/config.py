@@ -209,7 +209,7 @@ class BaseServerConfig(object):
         """
         # What will we write out?
         cfg = vars(self)
-        if 'version' in cfg:
+        if 'version' in cfg:  # pragma: no cover
             cfg['version'] = str(cfg['version'])
 
         # Where is the file we're writing to?
@@ -226,7 +226,7 @@ class BaseServerConfig(object):
             try:
                 with open(path) as config_file:
                     config = json.load(config_file)
-            except IOError:
+            except IOError:  # pragma: no cover
                 config = {}
             config[label] = cfg
             with open(path, 'w') as config_file:

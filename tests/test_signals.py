@@ -68,87 +68,90 @@ class SignalsTestCase(TestCase):
     and if the arguments were passed and catch by connected listeners
     """
 
-    def test_patching(self, client_get, organization_read):
+    def test_signals_available(self, *args, **kwargs):
+        self.assertTrue(signals.SIGNALS_AVAILABLE)
+
+    def test_patching(self, *args, **kwargs):
         '''Make sure patching works'''
         self.assertIsInstance(client.get('http://example.com'), FakeResponse)
         self.assertEqual(entities.Organization(cfg).read(), org)
 
-    def test_pre_create_signal(self, client_get, Organization_read):
+    def test_pre_create_signal(self, *args, **kwargs):
         self.assertIsNone(getattr(org, 'pre_create_emitted', None))
 
         @signals.pre_create.connect
-        def pre_create(sender, create_missing):
+        def pre_create(sender, create_missing, **kwargs):
             sender.pre_create_emitted = True
 
         org.create()
         self.assertTrue(org.pre_create_emitted)
 
-    def test_post_create_signal(self, client_get, Organization_read):
+    def test_post_create_signal(self, *args, **kwargs):
         self.assertIsNone(getattr(org, 'post_create_emitted', None))
 
         @signals.post_create.connect
-        def post_create(sender, entity):
+        def post_create(sender, entity, **kwargs):
             entity.post_create_emitted = True
 
         org.create()
         self.assertTrue(org.post_create_emitted)
 
-    def test_pre_update_signal(self, client_get, Organization_read):
+    def test_pre_update_signal(self, *args, **kwargs):
         self.assertIsNone(getattr(org, 'pre_update_emitted', None))
 
         @signals.pre_update.connect
-        def pre_update(sender, fields):
+        def pre_update(sender, fields, **kwargs):
             sender.pre_update_emitted = True
 
         org.update()
         self.assertTrue(org.pre_update_emitted)
 
-    def test_post_update_signal(self, client_get, Organization_read):
+    def test_post_update_signal(self, *args, **kwargs):
         self.assertIsNone(getattr(org, 'post_update_emitted', None))
 
         @signals.post_update.connect
-        def post_update(sender, entity, fields):
+        def post_update(sender, entity, fields, **kwargs):
             entity.post_update_emitted = True
 
         org.update()
         self.assertTrue(org.post_update_emitted)
 
-    def test_pre_delete_signal(self, client_get, Organization_read):
+    def test_pre_delete_signal(self, *args, **kwargs):
         self.assertIsNone(getattr(org, 'pre_delete_emitted', None))
 
         @signals.pre_delete.connect
-        def pre_delete(sender, synchronous):
+        def pre_delete(sender, synchronous, **kwargs):
             sender.pre_delete_emitted = True
 
         org.delete()
         self.assertTrue(org.pre_delete_emitted)
 
-    def test_post_delete_signal(self, client_get, Organization_read):
+    def test_post_delete_signal(self, *args, **kwargs):
         self.assertIsNone(getattr(org, 'post_delete_emitted', None))
 
         @signals.post_delete.connect
-        def post_delete(sender, synchronous, result):
+        def post_delete(sender, synchronous, result, **kwargs):
             sender.post_delete_emitted = True
 
         deletion_result = org.delete()
         self.assertTrue(org.post_delete_emitted)
         self.assertEqual(deletion_result, ORG_DATA)
 
-    def test_pre_search_signal(self, client_get, Organization_read):
+    def test_pre_search_signal(self, *args, **kwargs):
         self.assertIsNone(getattr(org, 'pre_search_emitted', None))
 
         @signals.pre_search.connect
-        def pre_search(sender, fields, query, filters):
+        def pre_search(sender, fields, query, filters, **kwargs):
             sender.pre_search_emitted = True
 
         org.search()
         self.assertTrue(org.pre_search_emitted)
 
-    def test_post_search_signal(self, client_get, Organization_read):
+    def test_post_search_signal(self, *args, **kwargs):
         self.assertIsNone(getattr(org, 'post_search_emitted', None))
 
         @signals.post_search.connect
-        def post_search(sender, entities, fields, query, filters):
+        def post_search(sender, entities, fields, query, filters, **kwargs):
             sender.post_search_emitted = True
 
         org.search()

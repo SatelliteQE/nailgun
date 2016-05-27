@@ -1,6 +1,8 @@
 """Unit tests for :mod:`nailgun.config`."""
 from mock import call, mock_open, patch
-from nailgun.config import BaseServerConfig, ServerConfig
+from nailgun.config import (
+    BaseServerConfig, ServerConfig, _get_config_file_path, ConfigFileError
+)
 from packaging.version import parse
 import json
 
@@ -159,6 +161,12 @@ class ServerConfigTestCase(TestCase):
                 _convert_bsc_attrs(config),
                 vars(ServerConfig(**config)),
             )
+
+    def test_raise_config_file_error(self):
+        """Should raise error if path not found"""
+        with self.assertRaises(ConfigFileError):
+            # pylint:disable=protected-access
+            _get_config_file_path('foo', 'bar')
 
     def test_get_client_kwargs(self):
         """Test :meth:`nailgun.config.ServerConfig.get_client_kwargs`.

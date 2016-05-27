@@ -323,6 +323,7 @@ class Architecture(
         """
         return {u'architecture': super(Architecture, self).create_payload()}
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
@@ -576,6 +577,7 @@ class AbstractComputeResource(
             ).update_payload(fields)
         }
 
+    @signals.emit(sender=signals.SENDER_CLASS)
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
@@ -762,6 +764,7 @@ class DockerComputeResource(AbstractComputeResource):  # pylint:disable=R0901
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'Docker'
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
 
@@ -903,6 +906,7 @@ class ConfigTemplate(
             u'config_template': super(ConfigTemplate, self).create_payload()
         }
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
@@ -1042,6 +1046,7 @@ class AbstractDockerContainer(
             u'container': super(AbstractDockerContainer, self).create_payload()
         }
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
 
@@ -1627,6 +1632,7 @@ class Domain(
         """
         return {u'domain': super(Domain, self).create_payload()}
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def create(self, create_missing=None):
         """Manually fetch a complete set of attributes for this entity.
 
@@ -1651,6 +1657,7 @@ class Domain(
         attrs['domain_parameters_attributes'] = attrs.pop('parameters')
         return super(Domain, self).read(entity, attrs, ignore)
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
@@ -1700,6 +1707,7 @@ class Environment(
         """
         return {u'environment': super(Environment, self).create_payload()}
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
@@ -2031,6 +2039,7 @@ class HostGroup(
         self._meta = {'api_path': 'api/v2/hostgroups', 'server_modes': ('sat')}
         super(HostGroup, self).__init__(server_config, **kwargs)
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
 
@@ -2080,6 +2089,7 @@ class HostGroup(
                 attrs[attr] = attrs2[attr]
         return super(HostGroup, self).read(entity, attrs, ignore)
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Deal with several bugs.
 
@@ -2391,6 +2401,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
         attrs['puppet_class'] = attrs.pop('puppetclasses')
         return super(Host, self).read(entity, attrs, ignore)
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
@@ -2589,6 +2600,7 @@ class Location(
             u'location': super(Location, self).create_payload()
         }
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def create(self, create_missing=None):
         """Manually fetch a complete set of attributes for this entity.
 
@@ -2611,6 +2623,7 @@ class Location(
         ignore.add('realm')
         return super(Location, self).read(entity, attrs, ignore)
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
@@ -2671,6 +2684,7 @@ class Media(
             payload['path'] = payload.pop('path_')
         return {u'medium': payload}
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def create(self, create_missing=None):
         """Manually fetch a complete set of attributes for this entity.
 
@@ -2690,6 +2704,7 @@ class Media(
         attrs['path_'] = attrs.pop('path')
         return super(Media, self).read(entity, attrs, ignore)
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
@@ -2949,6 +2964,7 @@ class Organization(
             )
         return super(Organization, self).path(which)
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
 
@@ -2956,13 +2972,10 @@ class Organization(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1230873>`_.
 
         """
-        signals.pre_create.send(self, create_missing=create_missing)
-        entity = Organization(
+        return Organization(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
-        signals.post_create.send(self, entity=entity)
-        return entity
 
     def read(self, entity=None, attrs=None, ignore=None):
         """Fetch as many attributes as possible for this entity.
@@ -2977,6 +2990,7 @@ class Organization(
         ignore.add('realm')
         return super(Organization, self).read(entity, attrs, ignore)
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
@@ -2987,11 +3001,8 @@ class Organization(
             #1230865 <https://bugzilla.redhat.com/show_bug.cgi?id=1230865>`_.
 
         """
-        signals.pre_update.send(self, fields=fields)
         self.update_json(fields)
-        entity = self.read()
-        signals.post_update.send(self, entity=entity, fields=fields)
-        return entity
+        return self.read()
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
@@ -3223,6 +3234,7 @@ class PartitionTable(
         # The following fields were added in Satellite 6.2, removing them if we
         # have previous version of Satellite
         if _get_version(self._server_config) < Version('6.2'):
+            # pragma: no cover
             self._fields.pop('location')
             self._fields.pop('organization')
 
@@ -3299,6 +3311,7 @@ class Realm(
         self._meta = {'api_path': 'api/v2/realms', 'server_modes': ('sat')}
         super(Realm, self).__init__(server_config, **kwargs)
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
 
@@ -3306,13 +3319,10 @@ class Realm(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1232855>`_.
 
         """
-        signals.pre_create.send(self, create_missing=create_missing)
-        entity = Realm(
+        return Realm(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
-        signals.post_create.send(self, entity=entity)
-        return entity
 
 
 class Registry(
@@ -3882,6 +3892,7 @@ class SmartProxy(
         response = client.put(self.path('refresh'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
@@ -3889,11 +3900,8 @@ class SmartProxy(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1262037>`_.
 
         """
-        signals.pre_update.send(self, fields=fields)
         self.update_json(fields)
-        entity = self.read()
-        signals.post_update.send(self, entity=entity, fields=fields)
-        return entity
+        return self.read()
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
@@ -4552,6 +4560,7 @@ class UserGroup(
         """
         return {u'usergroup': super(UserGroup, self).update_payload(fields)}
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
 
@@ -4559,13 +4568,10 @@ class UserGroup(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1301658>`_.
 
         """
-        signals.pre_create.send(self, create_missing=create_missing)
-        entity = UserGroup(
+        return UserGroup(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
-        signals.post_create.send(self, entity=entity)
-        return entity
 
     def read(self, entity=None, attrs=None, ignore=None):
         """Work around `Redmine #9594`_.
@@ -4658,6 +4664,7 @@ class User(
         """Wrap submitted data within an extra dict."""
         return {u'user': super(User, self).update_payload(fields)}
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
 
@@ -4665,8 +4672,5 @@ class User(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1235012>`_.
 
         """
-        signals.pre_update.send(self, fields=fields)
         self.update_json(fields)
-        entity = self.read()
-        signals.post_update.send(self, entity=entity, fields=fields)
-        return entity
+        return self.read()
