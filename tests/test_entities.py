@@ -919,9 +919,8 @@ class ReadTestCase(TestCase):
             ),
             (
                 entities.Host(self.cfg),
-                {'content': 1, 'parameters': None, 'puppetclasses': None},
+                {'parameters': None, 'puppetclasses': None},
                 {
-                    'content_facet_attributes': 1,
                     'host_parameters_attributes': None,
                     'puppet_class': None,
                 },
@@ -1560,14 +1559,13 @@ class HostTestCase(TestCase):
 
     def test_no_facet_attributes(self):
         """Assert that ``content_facet_attributes`` attribute is ignored when
-        ``content`` attribute is not returned for host
+        ``content_facet_attributes`` attribute is not returned for host
         """
         with mock.patch.object(EntityReadMixin, 'read') as read:
             entities.Host(self.cfg).read(attrs={
                 'parameters': None,
                 'puppetclasses': None,
             })
-            self.assertNotIn('content', read.call_args[0][1])
             self.assertNotIn('content_facet_attributes', read.call_args[0][1])
             self.assertIn('content_facet_attributes', read.call_args[0][2])
 

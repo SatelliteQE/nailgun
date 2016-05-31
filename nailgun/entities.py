@@ -2357,16 +2357,14 @@ class Host(  # pylint:disable=too-many-instance-attributes
         For more information, see `Bugzilla #1235019
         <https://bugzilla.redhat.com/show_bug.cgi?id=1235019>`_.
 
-        `content_facet_attributes` are returned as `content`, and only in case
-        any of facet attributes were actually set.
+        `content_facet_attributes` are returned only in case any of facet
+        attributes were actually set.
         """
         if attrs is None:
             attrs = self.read_json()
         if ignore is None:
             ignore = set()
-        if attrs.get('content'):
-            attrs['content_facet_attributes'] = attrs.pop('content')
-        else:
+        if 'content_facet_attributes' not in attrs:
             ignore.add('content_facet_attributes')
         ignore.add('root_pass')
         attrs['host_parameters_attributes'] = attrs.pop('parameters')
