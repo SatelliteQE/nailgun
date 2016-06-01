@@ -15,6 +15,9 @@ Signals
 Overview
 --------
 
+The nailgun signals are provided by `blinker_herald`_ module and offers the same
+features as `blinker`_.
+
 Signals are found within the `nailgun.signals` module.
 The first positional argument of a signal handler is always `sender` which is a
 reference to the caller object (self).
@@ -79,6 +82,19 @@ A handler (also called listener) is a function like the following::
         sender.domain = "http://example.com"
 
 
+The first argument is always the **sender** which defaults to the **self** or **cls**
+of the caller. Note that handlers can accept only one positional argument,
+all the others arguments must be named or captured by the ``**kwargs``
+also note that **signal_emitter** argument will always be passed to handlers
+to keep a reference to caller object in the cases where **sender** argument
+is explicitly specified in the caller.
+
+.. note::
+  NOTE: Always end your handler signature with
+  ``**kwargs`` to capture all possible arguments
+  otherwise signals will fail if new arguments added to emitter function.
+
+
 You attach the event handler to a signal that will be emitted to all entities in general::
 
     from nailgun import signals
@@ -88,9 +104,11 @@ You attach the event handler to a signal that will be emitted to all entities in
 Everytime the `.create` method is called the all the connected handlers will be called
 by signaling and any kind of manipulation can be performed.
 
-If your handler meant to deal only with a specific type of entity you'll need
-to inspect its instance type. `if isinstance(sender, entities.Organization)` otherwise
-the action will be performed for all types of entities.
+.. note::
+  If your handler meant to deal only with a specific type of entity you'll need
+  to inspect its instance type. :code:`if isinstance(sender, entities.Organization)` otherwise
+  the action will be performed for all types of entities. Or use a specific
+  sender and connect using :code:`.connect_via()` decorator os specifying **sender** while connecting.
 
 Finally, you can also use signals as decorators to quickly create a number of
 signals handlers and attach them::
@@ -103,3 +121,4 @@ signals handlers and attach them::
             # do something in post create only for Organizations
 
 .. _blinker: http://pypi.python.org/pypi/blinker
+.. _blinker_herald: http://pypi.python.org/pypi/blinker_herald

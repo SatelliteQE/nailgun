@@ -115,7 +115,7 @@ def _log_response(response):
         response.status_code,
         response.text
     )
-    if response.status_code >= 400:
+    if response.status_code >= 400:  # pragma: no cover
         logger.warning(message)
     else:
         logger.debug(message)

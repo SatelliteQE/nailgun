@@ -44,5 +44,6 @@ setup(
         'packaging',
         'pyxdg',
         'requests>=2.7',
+        'blinker_herald'
     ],
 )

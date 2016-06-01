@@ -76,7 +76,7 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
         timeout = TASK_TIMEOUT
 
     # Implement the timeout.
-    def raise_task_timeout():
+    def raise_task_timeout():  # pragma: no cover
         """Raise a KeyboardInterrupt exception in the main thread."""
         thread.interrupt_main()
     timer = threading.Timer(timeout, raise_task_timeout)
@@ -92,7 +92,7 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
             if task_info['state'] in ('paused', 'stopped'):
                 break
             time.sleep(poll_rate)
-    except KeyboardInterrupt:
+    except KeyboardInterrupt:  # pragma: no cover
         # raise_task_timeout will raise a KeyboardInterrupt when the timeout
         # expires. Catch the exception and raise TaskTimedOutError
         raise TaskTimedOutError(
@@ -541,6 +541,7 @@ class EntityDeleteMixin(object):
             **self._server_config.get_client_kwargs()
         )
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='result')
     def delete(self, synchronous=True):
         """Delete the current entity.
 
@@ -562,25 +563,19 @@ class EntityDeleteMixin(object):
             out.
 
         """
-        signals.pre_delete.send(self, synchronous=synchronous)
 
         response = self.delete_raw()
         response.raise_for_status()
 
         if (synchronous is True and
                 response.status_code == http_client.ACCEPTED):
-            result = _poll_task(response.json()['id'], self._server_config)
+            return _poll_task(response.json()['id'], self._server_config)
         elif response.status_code == http_client.NO_CONTENT:
             # "The server successfully processed the request, but is not
             # returning any content. Usually used as a response to a successful
             # delete request."
-            result = None
-        else:
-            result = response.json()
-
-        signals.post_delete.send(self, synchronous=synchronous, result=result)
-
-        return result
+            return
+        return response.json()
 
 
 class EntityReadMixin(object):
@@ -821,6 +816,7 @@ class EntityCreateMixin(object):
         response.raise_for_status()
         return response.json()
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def create(self, create_missing=None):
         """Create an entity.
 
@@ -847,10 +843,7 @@ class EntityCreateMixin(object):
             on the current object.
 
         """
-        signals.pre_create.send(self, create_missing=create_missing)
-        entity = self.read(attrs=self.create_json(create_missing))
-        signals.post_create.send(self, entity=entity)
-        return entity
+        return self.read(attrs=self.create_json(create_missing))
 
 
 class EntityUpdateMixin(object):
@@ -926,6 +919,7 @@ class EntityUpdateMixin(object):
         response.raise_for_status()
         return response.json()
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Update the current entity.
 
@@ -946,10 +940,7 @@ class EntityUpdateMixin(object):
             available for that field on the current entity.
 
         """
-        signals.pre_update.send(self, fields=fields)
-        entity = self.read(attrs=self.update_json(fields))
-        signals.post_update.send(self, entity=entity, fields=fields)
-        return entity
+        return self.read(attrs=self.update_json(fields))
 
 
 class EntitySearchMixin(object):
@@ -1172,6 +1163,7 @@ class EntitySearchMixin(object):
             normalized.append(attrs)
         return normalized
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entities')
     def search(self, fields=None, query=None, filters=None):
         """Search for entities.
 
@@ -1251,8 +1243,6 @@ class EntitySearchMixin(object):
         #   names, misnamed attributes (e.g. BZ 1233245) and weirdly named
         #   fields (e.g. Media.path_).
         #
-        signals.pre_search.send(self, fields=fields, query=query,
-                                filters=filters)
         results = self.search_json(fields, query)['results']
         results = self.search_normalize(results)
         entities = [
@@ -1261,9 +1251,6 @@ class EntitySearchMixin(object):
         ]
         if filters is not None:
             entities = self.search_filter(entities, filters)
-
-        signals.post_search.send(self, entities=entities, fields=fields,
-                                 query=query, filters=filters)
         return entities
 
     @staticmethod

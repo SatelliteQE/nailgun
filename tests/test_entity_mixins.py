@@ -329,7 +329,8 @@ class EntityTestCase(TestCase):
         # Call `path()` on an entity with an ID.
         self.assertEqual(SampleEntity(self.cfg, id=5).path(), path + '/5')
         self.assertEqual(SampleEntity(self.cfg, id=5).path('base'), path)
-        self.assertEqual(SampleEntity(self.cfg, id=5).path('self'), path+'/5')
+        self.assertEqual(
+            SampleEntity(self.cfg, id=5).path('self'), path + '/5')
 
     def test_no_such_field_error(self):
         """Try to raise a :class:`nailgun.entity_mixins.NoSuchFieldError`."""

@@ -34,6 +34,11 @@ class ContentTypeIsJsonTestCase(TestCase):
             # pylint:disable=protected-access
             self.assertFalse(client._content_type_is_json(kwargs))
 
+    def test_false_with_no_headers(self):
+        """If no headers passed should return None"""
+        # pylint:disable=protected-access
+        self.assertFalse(client._content_type_is_json({}))
+
 
 class SetContentTypeTestCase(TestCase):
     """Tests for function ``_set_content_type``."""
