@@ -192,9 +192,9 @@ class MakeEntitiesFromIdsTestCase(TestCase):
                 self.cfg
             )
             self.assertEqual(len(entities), len(entity_ids))
-            for i in range(len(entity_ids)):
+            for i, entity_id in enumerate(entity_ids):
                 self.assertIsInstance(entities[i], SampleEntity)
-                self.assertEqual(entities[i].id, entity_ids[i])
+                self.assertEqual(entities[i].id, entity_id)
 
     def test_pass_in_both(self):
         """Let ``entity_objs_and_ids`` be an iterable of integers and IDs."""
