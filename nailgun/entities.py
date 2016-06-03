@@ -21,8 +21,11 @@ makes use of a work-around notes so in its docstring.
 workings of entity classes.
 
 """
+import random
 from datetime import datetime
+from sys import version_info
 from fauxfactory import gen_alphanumeric
+from packaging.version import Version
 from nailgun import client, entity_fields, signals
 from nailgun.entity_mixins import (
     Entity,
@@ -34,10 +37,7 @@ from nailgun.entity_mixins import (
     MissingValueError,
     _poll_task,
 )
-from packaging.version import Version
-import random
 
-from sys import version_info
 if version_info.major == 2:  # pragma: no cover
     from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
 else:  # pragma: no cover
@@ -2146,7 +2146,8 @@ class Host(  # pylint:disable=too-many-instance-attributes
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
-        EntityUpdateMixin):
+        EntityUpdateMixin,
+        EntitySearchMixin):
     """A representation of a Host entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2199,9 +2200,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
         super(Host, self).__init__(server_config, **kwargs)
 
         # See https://github.com/SatelliteQE/nailgun/issues/258
-        if (
-                hasattr(self, 'owner') and
-                hasattr(self.owner, 'id') and
+        if (hasattr(self, 'owner') and hasattr(self.owner, 'id') and
                 isinstance(self.owner.id, Entity)):  # pylint:disable=no-member
             self.owner = self.owner.id  # pylint:disable=no-member
 
