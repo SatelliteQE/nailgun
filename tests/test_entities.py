@@ -258,6 +258,7 @@ class PathTestCase(TestCase):
                 (entities.AbstractDockerContainer, 'power'),
                 (entities.ActivationKey, 'add_subscriptions'),
                 (entities.ActivationKey, 'content_override'),
+                (entities.ActivationKey, 'host_collections'),
                 (entities.ActivationKey, 'releases'),
                 (entities.ActivationKey, 'remove_subscriptions'),
                 (entities.ActivationKey, 'subscriptions'),
@@ -1266,8 +1267,10 @@ class GenericTestCase(TestCase):
         cls.methods_requests = (
             (entities.AbstractDockerContainer(**generic).logs, 'get'),
             (entities.AbstractDockerContainer(**generic).power, 'put'),
+            (entities.ActivationKey(**generic).add_host_collection, 'post'),
             (entities.ActivationKey(**generic).add_subscriptions, 'put'),
             (entities.ActivationKey(**generic).content_override, 'put'),
+            (entities.ActivationKey(**generic).remove_host_collection, 'put'),
             (entities.ConfigTemplate(**generic).build_pxe_default, 'get'),
             (entities.ContentView(**generic).available_puppet_modules, 'get'),
             (entities.ContentView(**generic).copy, 'post'),
