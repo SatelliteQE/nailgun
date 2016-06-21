@@ -969,17 +969,20 @@ class ConfigTemplate(
 
         The format of the returned path depends on the value of ``which``:
 
-        revision
-            /config_templates/revision
         build_pxe_default
             /config_templates/build_pxe_default
+        clone
+            /config_templates/clone
+        revision
+            /config_templates/revision
 
         ``super`` is called otherwise.
 
         """
-        if which in ('revision', 'build_pxe_default'):
+        if which in ('build_pxe_default', 'clone', 'revision'):
+            prefix = 'self' if which == 'clone' else 'base'
             return '{0}/{1}'.format(
-                super(ConfigTemplate, self).path(which='base'),
+                super(ConfigTemplate, self).path(prefix),
                 which
             )
         return super(ConfigTemplate, self).path(which)
@@ -998,6 +1001,22 @@ class ConfigTemplate(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('build_pxe_default'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def clone(self, synchronous=True, **kwargs):
+        """Helper to clone an existing provision template
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('clone'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
