@@ -101,6 +101,7 @@ class InitTestCase(TestCase):
                 entities.DiscoveryRule,
                 entities.DockerComputeResource,
                 entities.DockerHubContainer,
+                entities.DockerRegistryContainer,
                 entities.Domain,
                 entities.Environment,
                 entities.Errata,
@@ -1342,27 +1343,38 @@ class AbstractDockerContainerTestCase(TestCase):
     def test_get_fields(self):
         """Call ``nailgun.entity_mixins.Entity.get_fields``.
 
-        Assert that ``nailgun.entities.DockerHubContainer.get_fields`` returns
+        Assert that ``nailgun.entities.DockerHubContainer.get_fields`` and
+        ``nailgun.entities.DockerRegistryContainer.get_fields`` return
         a dictionary of attributes that match what is returned by
         ``nailgun.entities.AbstractDockerContainer.get_fields`` but also
-        returns extra attibutes unique to
-        :class:`nailgun.entities.DockerHubContainer`.
+        returns extra attributes unique to them.
 
         """
         abstract_docker = entities.AbstractDockerContainer(
             self.cfg
         ).get_fields()
         docker_hub = entities.DockerHubContainer(self.cfg).get_fields()
+        docker_registry = entities.DockerRegistryContainer(
+            self.cfg).get_fields()
         # Attributes should not match
         self.assertNotEqual(abstract_docker, docker_hub)
+        self.assertNotEqual(abstract_docker, docker_registry)
         # All attributes from a `entities.AbstractDockerContainer`
-        # should be found in a `entities.DockerHubContainer`.
+        # should be found in `entities.DockerHubContainer` and
+        # `entities.DockerRegistyContainer`.
         for key in abstract_docker:
             self.assertIn(key, docker_hub)
+            self.assertIn(key, docker_registry)
         # These fields should be present in a `entities.DockerHubContainer`
         # class but not in a `entities.AbstractDockerContainer` class.
         for attr in ['repository_name', 'tag']:
             self.assertIn(attr, docker_hub)
+            self.assertNotIn(attr, abstract_docker)
+        # These fields should be present in a
+        # `entities.DockerRegistryContainer` class but not in a
+        # `entities.AbstractDockerContainer` class.
+        for attr in ['registry', 'repository_name', 'tag']:
+            self.assertIn(attr, docker_registry)
             self.assertNotIn(attr, abstract_docker)
 
 
