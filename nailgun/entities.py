@@ -1041,10 +1041,7 @@ class AbstractDockerContainer(
             'attach_stderr': entity_fields.BooleanField(),
             'attach_stdin': entity_fields.BooleanField(),
             'attach_stdout': entity_fields.BooleanField(),
-            'command': entity_fields.StringField(
-                required=True,
-                str_type='latin1',
-            ),
+            'command': entity_fields.StringField(required=True, default='top'),
             'compute_resource': entity_fields.OneToOneField(
                 AbstractComputeResource,
                 required=True,
@@ -1169,6 +1166,24 @@ class DockerHubContainer(AbstractDockerContainer):
             'tag': entity_fields.StringField(required=True, default='latest'),
         }
         super(DockerHubContainer, self).__init__(server_config, **kwargs)
+
+
+class DockerRegistryContainer(AbstractDockerContainer):
+    """A docker container that comes from custom external registry.
+
+    .. WARNING:: The ``repository_name`` field references an image repository
+        on the custom registry, not a locally created
+        :class:`nailgun.entities.Repository`.
+
+    """
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'registry': entity_fields.OneToOneField(Registry, required=True),
+            'repository_name': entity_fields.StringField(required=True),
+            'tag': entity_fields.StringField(required=True, default='latest'),
+        }
+        super(DockerRegistryContainer, self).__init__(server_config, **kwargs)
 
 
 class ContentUpload(Entity):
