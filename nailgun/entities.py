@@ -3448,7 +3448,7 @@ class Repository(
             ),
             'content_counts': entity_fields.DictField(),
             'content_type': entity_fields.StringField(
-                choices=('puppet', 'yum', 'file', 'docker'),
+                choices=('puppet', 'yum', 'file', 'docker', 'ostree'),
                 default='yum',
                 required=True,
             ),
