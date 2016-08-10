@@ -1212,7 +1212,10 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
         self._fields = {
             'content_view': entity_fields.OneToOneField(ContentView),
             'environment': entity_fields.OneToManyField(Environment),
+            'major': entity_fields.IntegerField(),
+            'minor': entity_fields.IntegerField(),
             'puppet_module': entity_fields.OneToManyField(PuppetModule),
+            'version': entity_fields.StringField(),
         }
         self._meta = {
             'api_path': 'katello/api/v2/content_view_versions',
