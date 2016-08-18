@@ -3449,6 +3449,11 @@ class Repository(
             'docker_upstream_name': entity_fields.StringField(
                 default='busybox'
             ),
+            'download_policy': entity_fields.StringField(
+                choices=('background', 'immediate', 'on_demand'),
+                default='immediate',
+                required=True,
+            ),
             'gpg_key': entity_fields.OneToOneField(GPGKey),
             'label': entity_fields.StringField(),
             'name': entity_fields.StringField(
