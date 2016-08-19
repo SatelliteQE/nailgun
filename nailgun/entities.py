@@ -3452,7 +3452,6 @@ class Repository(
             'download_policy': entity_fields.StringField(
                 choices=('background', 'immediate', 'on_demand'),
                 default='immediate',
-                required=True,
             ),
             'gpg_key': entity_fields.OneToOneField(GPGKey),
             'label': entity_fields.StringField(),
@@ -3475,6 +3474,8 @@ class Repository(
                 set(self._fields['content_type'].choices) - set(['docker'])
             ))
             del self._fields['checksum_type']
+        if self._fields['content_type'].choices == 'yum':
+            self._fields['download_policy'].required = True
         self._meta = {
             'api_path': 'katello/api/v2/repositories',
             'server_modes': ('sat'),
