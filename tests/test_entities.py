@@ -124,7 +124,6 @@ class InitTestCase(TestCase):
                 entities.OSDefaultTemplate,
                 entities.OperatingSystem,
                 entities.Organization,
-                entities.OverrideValue,
                 entities.PackageGroupContentViewFilter,
                 entities.PartitionTable,
                 entities.Permission,
@@ -140,6 +139,7 @@ class InitTestCase(TestCase):
                 entities.Role,
                 entities.RoleLDAPGroups,
                 entities.Setting,
+                entities.SmartClassParameters,
                 entities.SmartProxy,
                 entities.SmartVariable,
                 entities.Status,
@@ -167,6 +167,8 @@ class InitTestCase(TestCase):
             (entities.HostPackage, {'host': 1}),
             (entities.HostSubscription, {'host': 1}),
             (entities.OperatingSystemParameter, {'operatingsystem': 1}),
+            (entities.OverrideValue, {'smart_class_parameter': 1}),
+            (entities.OverrideValue, {'smart_variable': 1}),
             (entities.RepositorySet, {'product': 1}),
             (entities.SyncPlan, {'organization': 1}),
         ])
@@ -197,6 +199,7 @@ class InitTestCase(TestCase):
                 entities.ContentViewPuppetModule,
                 entities.HostPackage,
                 entities.HostSubscription,
+                entities.OverrideValue,
                 entities.OperatingSystemParameter,
                 entities.RepositorySet,
                 entities.SyncPlan,
@@ -227,8 +230,12 @@ class PathTestCase(TestCase):
                 (entities.ContentViewVersion, '/content_view_versions'),
                 (entities.DiscoveredHost, '/discovered_hosts'),
                 (entities.DiscoveryRule, '/discovery_rules'),
+                (entities.Environment, '/environments'),
                 (entities.Organization, '/organizations'),
+                (entities.Host, '/hosts'),
+                (entities.HostGroup, '/hostgroups'),
                 (entities.Product, '/products'),
+                (entities.PuppetClass, '/puppetclasses'),
                 (entities.RHCIDeployment, '/deployments'),
                 (entities.Repository, '/repositories'),
                 (entities.Setting, '/settings'),
@@ -270,7 +277,11 @@ class PathTestCase(TestCase):
                 (entities.ContentView, 'copy'),
                 (entities.ContentView, 'publish'),
                 (entities.ContentViewVersion, 'promote'),
+                (entities.Environment, 'smart_class_parameters'),
+                (entities.Host, 'smart_class_parameters'),
                 (entities.HostGroup, 'clone'),
+                (entities.HostGroup, 'puppetclass_ids'),
+                (entities.HostGroup, 'smart_class_parameters'),
                 (entities.Organization, 'download_debug_certificate'),
                 (entities.Organization, 'subscriptions'),
                 (entities.Organization, 'subscriptions/delete_manifest'),
@@ -279,6 +290,7 @@ class PathTestCase(TestCase):
                 (entities.Organization, 'subscriptions/upload'),
                 (entities.Organization, 'sync_plans'),
                 (entities.Product, 'sync'),
+                (entities.PuppetClass, 'smart_class_parameters'),
                 (entities.Repository, 'packages'),
                 (entities.Repository, 'puppet_modules'),
                 (entities.Repository, 'remove_content'),
@@ -837,6 +849,8 @@ class ReadTestCase(TestCase):
                 ),
                 entities.ContentViewPuppetModule(self.cfg, content_view=2),
                 entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
+                entities.OverrideValue(self.cfg, smart_class_parameter=2),
+                entities.OverrideValue(self.cfg, smart_variable=2),
                 entities.RepositorySet(self.cfg, product=2),
                 entities.SyncPlan(self.cfg, organization=2),
         ):
@@ -1287,13 +1301,18 @@ class GenericTestCase(TestCase):
             ),
             (entities.ContentViewVersion(**generic).promote, 'post'),
             (entities.DiscoveredHost(cfg).facts, 'post'),
+            (entities.Environment(**generic).list_scparams, 'get'),
             (entities.ForemanTask(cfg).summary, 'get'),
             (
                 entities.Organization(**generic).download_debug_certificate,
                 'get'
             ),
             (entities.HostGroup(**generic).clone, 'post'),
+            (entities.Host(**generic).list_scparams, 'get'),
+            (entities.HostGroup(**generic).add_puppetclass, 'post'),
+            (entities.HostGroup(**generic).list_scparams, 'get'),
             (entities.Product(**generic).sync, 'post'),
+            (entities.PuppetClass(**generic).list_scparams, 'get'),
             (entities.RHCIDeployment(**generic).deploy, 'put'),
             (entities.Repository(**generic).packages, 'get'),
             (entities.Repository(**generic).puppet_modules, 'get'),
@@ -1302,6 +1321,7 @@ class GenericTestCase(TestCase):
             (entities.RepositorySet(**repo_set).available_repositories, 'get'),
             (entities.RepositorySet(**repo_set).disable, 'put'),
             (entities.RepositorySet(**repo_set).enable, 'put'),
+            (entities.SmartProxy(**generic).import_puppetclasses, 'post'),
             (entities.SmartProxy(**generic).refresh, 'put'),
             (entities.SyncPlan(**sync_plan).add_products, 'put'),
             (entities.SyncPlan(**sync_plan).remove_products, 'put'),
@@ -1617,6 +1637,34 @@ class HostTestCase(TestCase):
             self.assertIn('content_facet_attributes', read.call_args[0][2])
 
 
+class PuppetClassTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.PuppetClass`."""
+
+    def setUp(self):
+        """Set ``self.puppet_class``."""
+        self.puppet_class = entities.PuppetClass(
+            config.ServerConfig('http://example.com'),
+            id=gen_integer(min_value=1),
+        )
+
+    def test_search_normalize(self):
+        """Call :meth:`nailgun.entities.PuppetClass.search_normalize`.
+        Assert that returned value is a list and contains all subdictionaries.
+        """
+        with mock.patch.object(EntitySearchMixin, 'search_normalize') as s_n:
+            self.puppet_class.search_normalize({
+                'class1': [
+                    {'name': 'subclass1'},
+                    {'name': 'subclass2'}],
+                'class2': [
+                    {'name': 'subclass1'},
+                    {'name': 'subclass2'}]
+            })
+        self.assertEqual(s_n.call_count, 1)
+        self.assertIsInstance(s_n.call_args[0][0], list)
+        self.assertEqual(len(s_n.call_args[0][0]), 4)
+
+
 class RepositoryTestCase(TestCase):
     """Tests for :class:`nailgun.entities.Repository`."""
 
@@ -1694,6 +1742,37 @@ class RepositorySetTestCase(TestCase):
         for result in s_n.call_args[0][0]:
             # pylint:disable=no-member
             self.assertEqual(result['product_id'], self.product.id)
+
+
+class SmartProxyTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.SmartProxy`."""
+
+    def setUp(self):
+        """Set ``self.smart_proxy``."""
+        self.cfg = config.ServerConfig('http://example.com')
+        self.smart_proxy = entities.SmartProxy(self.cfg)
+        self.env = entities.Environment(self.cfg, id='2')
+
+    def test_import_puppetclasses(self):
+        """Call :meth:`nailgun.entities.SmartProxy.import_puppetclasses`.
+        Assert that
+        * ``environment`` parameter is not sent to requests,
+        * proper path is built
+        """
+        params = [
+            {},
+            {'environment': 2},
+            {'environment': self.env}
+        ]
+        for param in params:
+            with self.subTest(param):
+                with mock.patch.object(client, 'post') as post:
+                    self.smart_proxy.import_puppetclasses(**param)
+                self.assertEqual(post.call_count, 1)
+                self.assertNotIn('environment', post.call_args[1])
+                self.assertIn('/import_puppetclasses', post.call_args[0][0])
+                if 'environment' in param:
+                    self.assertIn('/environments', post.call_args[0][0])
 
 
 class SubscriptionTestCase(TestCase):
