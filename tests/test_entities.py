@@ -969,7 +969,6 @@ class ReadTestCase(TestCase):
 
         """
         for entity, ignored_attrs in (
-                (entities.HostCollection, {'host'}),
                 (entities.Subnet, {'discovery'}),
                 (entities.User, {'password'}),
         ):
