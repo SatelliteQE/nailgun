@@ -1828,14 +1828,72 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
             'content_view_version': entity_fields.OneToOneField(
                 ContentViewVersion
             ),
+            'cves': entity_fields.DictField(),
+            'description': entity_fields.StringField(),
+            'environment': entity_fields.OneToOneField(LifecycleEnvironment),
+            'hosts_applicable_count': entity_fields.IntegerField(),
+            'hosts_available_count': entity_fields.IntegerField(),
+            'issued': entity_fields.DateField(),
+            'packages': entity_fields.DictField(),
+            'reboot_suggested': entity_fields.BooleanField(),
             'repository': entity_fields.OneToOneField(Repository),
-            'search': entity_fields.StringField(),
+            'severity': entity_fields.StringField(),
+            'solution': entity_fields.StringField(),
+            'summary': entity_fields.StringField(),
+            'type': entity_fields.StringField(
+                choices=('bugfix', 'enhancement', 'security'),
+            ),
+            'updated': entity_fields.DateField(),
         }
         self._meta = {
             'api_path': '/katello/api/v2/errata',
             'server_modes': ('sat')
         }
         super(Errata, self).__init__(server_config, **kwargs)
+
+    def compare(self, synchronous=True, **kwargs):
+        """Compare errata from different content view versions
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('compare'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        compare
+            /katello/api/errata/compare
+
+        Otherwise, call ``super``.
+
+        """
+        if which in ('compare',):
+            return '{0}/{1}'.format(super(Errata, self).path('base'), which)
+        return super(Errata, self).path(which)
+
+    def read(self, entity=None, attrs=None, ignore=None):
+        """Following fields are only accessible for filtering search results
+        and are never returned by the server: ``content_view_version_id``,
+        ``environment_id``, ``repository_id``.
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('content_view_version')
+        ignore.add('environment')
+        ignore.add('repository')
+        return super(Errata, self).read(entity, attrs, ignore)
 
 
 class Filter(
@@ -2535,6 +2593,57 @@ class Host(  # pylint:disable=too-many-instance-attributes
         """
         return {u'host': super(Host, self).create_payload()}
 
+    def errata(self, synchronous=True, **kwargs):
+        """List errata available for the host
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('errata'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def errata_apply(self, synchronous=True, **kwargs):
+        """Schedule errata for installation
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('errata/apply'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def install_content(self, synchronous=True, **kwargs):
+        """Install content on one or more hosts
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('bulk/install_content'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
     def read(self, entity=None, attrs=None, ignore=None):
         """Deal with oddly named and structured data returned by the server.
 
@@ -2577,6 +2686,12 @@ class Host(  # pylint:disable=too-many-instance-attributes
         """Extend ``nailgun.entity_mixins.Entity.path``.
         The format of the returned path depends on the value of ``which``:
 
+        bulk/install_content
+            /api/hosts/:host_id/bulk/install_content
+        errata
+            /api/hosts/:host_id/errata
+        errata/apply
+            /api/hosts/:host_id/errata/apply
         smart_class_parameters
             /api/hosts/:host_id/smart_class_parameters
         smart_variables
@@ -2585,9 +2700,19 @@ class Host(  # pylint:disable=too-many-instance-attributes
         Otherwise, call ``super``.
 
         """
-        if which in ('smart_class_parameters', 'smart_variables'):
+        if which in (
+                'errata',
+                'errata/apply',
+                'smart_class_parameters',
+                'smart_variables',
+        ):
             return '{0}/{1}'.format(
                 super(Host, self).path(which='self'),
+                which
+            )
+        elif which in ('bulk/install_content',):
+            return '{0}/{1}'.format(
+                super(Host, self).path(which='base'),
                 which
             )
         return super(Host, self).path(which)
@@ -3774,6 +3899,8 @@ class Repository(
 
         The format of the returned path depends on the value of ``which``:
 
+        errata
+            /repositories/<id>/errata
         sync
             /repositories/<id>/sync
         upload_content
@@ -3782,7 +3909,7 @@ class Repository(
         ``super`` is called otherwise.
 
         """
-        if which in ('sync', 'upload_content'):
+        if which in ('errata', 'sync', 'upload_content'):
             return '{0}/{1}'.format(
                 super(Repository, self).path(which='self'),
                 which
@@ -3799,6 +3926,23 @@ class Repository(
         if getattr(self, 'content_type', '') == 'docker':
             self._fields['docker_upstream_name'].required = True
         super(Repository, self).create_missing()
+
+    def errata(self, synchronous=True, **kwargs):
+        """List errata inside repository.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('errata'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
     def sync(self, synchronous=True, **kwargs):
         """Helper for syncing an existing repository.
