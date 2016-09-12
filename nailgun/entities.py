@@ -2036,18 +2036,6 @@ class HostCollection(
             payload['system_uuids'] = payload.pop('system_ids')
         return payload
 
-    def read(self, entity=None, attrs=None, ignore=None):
-        """Ignore 'host' field as it is not returned by the server.
-
-        For more information, see `Bugzilla #1325989
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1325989>`_.
-
-        """
-        if ignore is None:
-            ignore = set()
-        ignore.add('host')
-        return super(HostCollection, self).read(entity, attrs, ignore)
-
     def update_payload(self, fields=None):
         """Rename ``system_ids`` to ``system_uuids``."""
         payload = super(HostCollection, self).update_payload(fields)
