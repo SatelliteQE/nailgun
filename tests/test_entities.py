@@ -969,6 +969,7 @@ class ReadTestCase(TestCase):
 
         """
         for entity, ignored_attrs in (
+                (entities.SmartVariable, {'variable_type'}),
                 (entities.Subnet, {'discovery'}),
                 (entities.User, {'password'}),
         ):
@@ -1304,10 +1305,13 @@ class GenericTestCase(TestCase):
                 'get'
             ),
             (entities.Host(**generic).list_scparams, 'get'),
+            (entities.Host(**generic).list_smart_variables, 'get'),
             (entities.HostGroup(**generic).add_puppetclass, 'post'),
             (entities.HostGroup(**generic).list_scparams, 'get'),
+            (entities.HostGroup(**generic).list_smart_variables, 'get'),
             (entities.Product(**generic).sync, 'post'),
             (entities.PuppetClass(**generic).list_scparams, 'get'),
+            (entities.PuppetClass(**generic).list_smart_variables, 'get'),
             (entities.RHCIDeployment(**generic).deploy, 'put'),
             (entities.Repository(**generic).sync, 'post'),
             (entities.RepositorySet(**repo_set).available_repositories, 'get'),
