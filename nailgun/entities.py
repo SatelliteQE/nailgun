@@ -2214,6 +2214,8 @@ class HostGroup(
             /api/hostgroups/:hostgroup_id/puppetclass_ids
         smart_class_parameters
             /api/hostgroups/:hostgroup_id/smart_class_parameters
+        smart_class_variables
+            /api/hostgroups/:hostgroup_id/smart_variables
 
         Otherwise, call ``super``.
 
@@ -2324,6 +2326,23 @@ class HostGroup(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_class_parameters'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def list_smart_variables(self, synchronous=True, **kwargs):
+        """List all smart variables
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('smart_variables'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
@@ -2661,12 +2680,15 @@ class Host(  # pylint:disable=too-many-instance-attributes
             /api/hosts/:host_id/puppetclass_ids
         smart_class_parameters
             /api/hosts/:host_id/smart_class_parameters
+        smart_variables
+            /api/hosts/:host_id/smart_class_variables
 
         Otherwise, call ``super``.
         """
         if which in (
                 'puppetclass_ids',
                 'smart_class_parameters',
+                'smart_variables'
         ):
             return '{0}/{1}'.format(
                 super(Host, self).path(which='self'),
@@ -2736,6 +2758,23 @@ class Host(  # pylint:disable=too-many-instance-attributes
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_class_parameters'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def list_smart_variables(self, synchronous=True, **kwargs):
+        """List all smart variables
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('smart_variables'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
@@ -3698,11 +3737,13 @@ class PuppetClass(
 
         smart_class_parameters
             /api/puppetclasses/:puppetclass_id/smart_class_parameters
+        smart_variables
+            /api/puppetclasses/:puppetclass_id/smart_class_parameters
 
         Otherwise, call ``super``.
 
         """
-        if which in ('smart_class_parameters',):
+        if which in ('smart_class_parameters', 'smart_variables'):
             return '{0}/{1}'.format(
                 super(PuppetClass, self).path(which='self'),
                 which
@@ -3724,6 +3765,23 @@ class PuppetClass(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_class_parameters'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def list_smart_variables(self, synchronous=True, **kwargs):
+        """List all smart variables
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('smart_variables'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
@@ -4539,12 +4597,30 @@ class SmartVariable(
             'validator_type': entity_fields.StringField(),
             'variable': entity_fields.StringField(required=True),
             'variable_type': entity_fields.StringField(),
+            'hidden_value': entity_fields.BooleanField(),
+            'hidden_value?': entity_fields.BooleanField(),
+            'merge_overrides': entity_fields.BooleanField(),
+            'merge_default': entity_fields.BooleanField(),
+            'avoid_duplicates': entity_fields.BooleanField(),
+            'override_values': entity_fields.DictField(),
         }
         self._meta = {
             'api_path': 'api/v2/smart_variables',
             'server_modes': ('sat'),
         }
         super(SmartVariable, self).__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None):
+        """Fetch as many attributes as possible for this entity.
+
+        Do not read the ``variable_type`` attribute. For more information, see
+        `Bugzilla #1375881
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1375881>`_.
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('variable_type')
+        return super(SmartVariable, self).read(entity, attrs, ignore)
 
 
 class Status(Entity):
