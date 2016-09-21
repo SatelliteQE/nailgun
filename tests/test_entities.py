@@ -231,6 +231,7 @@ class PathTestCase(TestCase):
                 (entities.DiscoveredHost, '/discovered_hosts'),
                 (entities.DiscoveryRule, '/discovery_rules'),
                 (entities.Environment, '/environments'),
+                (entities.Errata, '/errata'),
                 (entities.Organization, '/organizations'),
                 (entities.Host, '/hosts'),
                 (entities.HostGroup, '/hostgroups'),
@@ -278,6 +279,8 @@ class PathTestCase(TestCase):
                 (entities.ContentView, 'publish'),
                 (entities.ContentViewVersion, 'promote'),
                 (entities.Environment, 'smart_class_parameters'),
+                (entities.Host, 'errata'),
+                (entities.Host, 'errata/apply'),
                 (entities.Host, 'smart_class_parameters'),
                 (entities.HostGroup, 'puppetclass_ids'),
                 (entities.HostGroup, 'smart_class_parameters'),
@@ -290,6 +293,7 @@ class PathTestCase(TestCase):
                 (entities.Organization, 'sync_plans'),
                 (entities.Product, 'sync'),
                 (entities.PuppetClass, 'smart_class_parameters'),
+                (entities.Repository, 'errata'),
                 (entities.Repository, 'sync'),
                 (entities.Repository, 'upload_content'),
                 (entities.RHCIDeployment, 'deploy'),
@@ -306,9 +310,11 @@ class PathTestCase(TestCase):
                 (entities.ConfigTemplate, 'revision'),
                 (entities.ContentViewVersion, 'incremental_update'),
                 (entities.DiscoveredHost, 'facts'),
+                (entities.Errata, 'compare'),
                 (entities.ForemanTask, 'bulk_resume'),
                 (entities.ForemanTask, 'bulk_search'),
                 (entities.ForemanTask, 'summary'),
+                (entities.Host, 'bulk/install_content'),
         ):
             with self.subTest((entity, which)):
                 path = entity(self.cfg).path(which)
@@ -969,6 +975,8 @@ class ReadTestCase(TestCase):
 
         """
         for entity, ignored_attrs in (
+                (entities.Errata,
+                 {'content_view_version', 'environment', 'repository'}),
                 (entities.SmartVariable, {'variable_type'}),
                 (entities.Subnet, {'discovery'}),
                 (entities.User, {'password'}),
@@ -1299,11 +1307,15 @@ class GenericTestCase(TestCase):
             (entities.ContentViewVersion(**generic).promote, 'post'),
             (entities.DiscoveredHost(cfg).facts, 'post'),
             (entities.Environment(**generic).list_scparams, 'get'),
+            (entities.Errata(**generic).compare, 'get'),
             (entities.ForemanTask(cfg).summary, 'get'),
             (
                 entities.Organization(**generic).download_debug_certificate,
                 'get'
             ),
+            (entities.Host(**generic).errata, 'get'),
+            (entities.Host(**generic).errata_apply, 'put'),
+            (entities.Host(**generic).install_content, 'put'),
             (entities.Host(**generic).list_scparams, 'get'),
             (entities.Host(**generic).list_smart_variables, 'get'),
             (entities.HostGroup(**generic).add_puppetclass, 'post'),
@@ -1313,6 +1325,7 @@ class GenericTestCase(TestCase):
             (entities.PuppetClass(**generic).list_scparams, 'get'),
             (entities.PuppetClass(**generic).list_smart_variables, 'get'),
             (entities.RHCIDeployment(**generic).deploy, 'put'),
+            (entities.Repository(**generic).errata, 'get'),
             (entities.Repository(**generic).sync, 'post'),
             (entities.RepositorySet(**repo_set).available_repositories, 'get'),
             (entities.RepositorySet(**repo_set).disable, 'put'),
