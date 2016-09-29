@@ -2153,6 +2153,41 @@ class HostGroup(
         """Wrap submitted data within an extra dict."""
         return {u'hostgroup': super(HostGroup, self).update_payload(fields)}
 
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        clone
+            /api/hostgroups/:hostgroup_id/clone
+
+        Otherwise, call ``super``.
+
+        """
+        if which in (
+                'clone',
+        ):
+            return '{0}/{1}'.format(
+                super(HostGroup, self).path(which='self'),
+                which
+            )
+        return super(HostGroup, self).path(which)
+
+    def clone(self, synchronous=True, **kwargs):
+        """Helper to clone an existing host group
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('clone'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
 
 class HostPackage(Entity):
     """A representation of a Host Package entity."""
