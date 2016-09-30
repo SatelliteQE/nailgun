@@ -284,6 +284,7 @@ class PathTestCase(TestCase):
                 (entities.Host, 'puppetclass_ids'),
                 (entities.Host, 'smart_class_parameters'),
                 (entities.Host, 'smart_variables'),
+                (entities.HostGroup, 'clone'),
                 (entities.HostGroup, 'puppetclass_ids'),
                 (entities.HostGroup, 'smart_class_parameters'),
                 (entities.HostGroup, 'smart_variables'),
@@ -1323,6 +1324,7 @@ class GenericTestCase(TestCase):
             (entities.Host(**generic).list_scparams, 'get'),
             (entities.Host(**generic).list_smart_variables, 'get'),
             (entities.HostGroup(**generic).add_puppetclass, 'post'),
+            (entities.HostGroup(**generic).clone, 'post'),
             (entities.HostGroup(**generic).list_scparams, 'get'),
             (entities.HostGroup(**generic).list_smart_variables, 'get'),
             (entities.Product(**generic).sync, 'post'),
@@ -1548,6 +1550,7 @@ class HostGroupTestCase(TestCase):
             * Method calls `entities._handle_response` once.
             * The result of `_handle_response(…)` is the return value.
 
+
         """
         entity = self.entity
         entity.id = 1
@@ -1568,6 +1571,29 @@ class HostGroupTestCase(TestCase):
         self.assertEqual(client_request.call_args[1], kwargs)
         self.assertEqual(handlr.call_count, 1)
         self.assertEqual(handlr.return_value, response)
+
+    def test_clone_hostgroup(self):
+        """"Test for :meth:`nailgun.entities.HostGroup.clone`
+        Assert that the method is called one with correct argumets
+        """
+        entity = self.entity
+        entity.id = 1
+        self.assertEqual(
+            inspect.getargspec(entity.clone),
+            (['self', 'synchronous'], None, 'kwargs', (True,))
+        )
+        kwargs = {
+            'kwarg': gen_integer(),
+            'data': {'name': gen_string('utf8', 5)}
+        }
+        with mock.patch.object(entities, '_handle_response') as handler:
+            with mock.patch.object(client, 'post') as post:
+                response = entity.clone(**kwargs)
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(len(post.call_args[0]), 1)
+        self.assertEqual(post.call_args[1], kwargs)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
 
 
 class HostTestCase(TestCase):
