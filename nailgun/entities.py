@@ -3811,6 +3811,29 @@ class PuppetClass(
         return _handle_response(response, self._server_config, synchronous)
 
 
+class Package(Entity, EntityReadMixin, EntitySearchMixin):
+    """A representation of a Package entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'arch': entity_fields.StringField(),
+            'checksum': entity_fields.StringField(),
+            'description': entity_fields.StringField(),
+            'epoch': entity_fields.StringField(),
+            'filename': entity_fields.StringField(),
+            'name': entity_fields.StringField(),
+            'nvrea': entity_fields.StringField(),
+            'nvra': entity_fields.StringField(),
+            'release': entity_fields.StringField(),
+            'repository': entity_fields.OneToOneField(Repository),
+            'sourcerpm': entity_fields.StringField(),
+            'summary': entity_fields.StringField(),
+            'version': entity_fields.StringField(),
+        }
+        self._meta = {'api_path': 'katello/api/v2/packages'}
+        super(Package, self).__init__(server_config, **kwargs)
+
+
 class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of a Puppet Module entity."""
 
