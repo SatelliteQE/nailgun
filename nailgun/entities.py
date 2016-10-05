@@ -4541,6 +4541,7 @@ class SmartClassParameters(
                 choices=('regexp', 'list')
             ),
             'validator_rule': entity_fields.StringField(),
+            'parameter': entity_fields.StringField(),
             'parameter_type': entity_fields.StringField(
                 choices=('string', 'boolean', 'integer', 'real',
                          'array', 'hash', 'yaml', 'json')
