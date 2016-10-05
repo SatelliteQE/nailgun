@@ -128,6 +128,7 @@ class InitTestCase(TestCase):
                 entities.PartitionTable,
                 entities.Permission,
                 entities.Ping,
+                entities.Package,
                 entities.Product,
                 entities.PuppetClass,
                 entities.PuppetModule,
