@@ -1205,7 +1205,11 @@ class ContentUpload(Entity):
         super(ContentUpload, self).__init__(server_config, **kwargs)
 
 
-class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
+class ContentViewVersion(
+        Entity,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
     """A representation of a Content View Version non-entity."""
 
     def __init__(self, server_config=None, **kwargs):
