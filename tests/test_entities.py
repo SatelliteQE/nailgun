@@ -480,6 +480,7 @@ class CreateTestCase(TestCase):
         entities_ = (
             entities.AbstractDockerContainer(self.cfg),
             entities.ConfigGroup(self.cfg),
+            entities.DiscoveryRule(self.cfg),
             entities.DockerComputeResource(self.cfg),
             entities.Domain(self.cfg),
             entities.HostGroup(self.cfg),
@@ -1129,6 +1130,7 @@ class UpdateTestCase(TestCase):
             entities.ComputeProfile(self.cfg),
             entities.ConfigGroup(self.cfg),
             entities.ConfigTemplate(self.cfg),
+            entities.DiscoveryRule(self.cfg),
             entities.Domain(self.cfg),
             entities.Environment(self.cfg),
             entities.GPGKey(self.cfg),

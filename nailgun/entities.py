@@ -726,12 +726,14 @@ class DiscoveryRule(
             'enabled': entity_fields.BooleanField(),
             'hostgroup': entity_fields.OneToOneField(HostGroup, required=True),
             'hostname': entity_fields.StringField(),
+            'location': entity_fields.OneToManyField(Location),
             'max_count': entity_fields.IntegerField(),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
             ),
+            'organization': entity_fields.OneToManyField(Organization),
             'priority': entity_fields.IntegerField(),
             'search_': entity_fields.StringField(required=True),
         }
@@ -754,6 +756,18 @@ class DiscoveryRule(
         if 'search_' in payload:
             payload['search'] = payload.pop('search_')
         return {u'discovery_rule': payload}
+
+    def create(self, create_missing=None):
+        """Do extra work to fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1381129
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1381129>`_.
+
+        """
+        return type(self)(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
 
     def read(self, entity=None, attrs=None, ignore=None):
         """Work around a bug. Rename ``search`` to ``search_``.
@@ -778,6 +792,16 @@ class DiscoveryRule(
                 id=attrs['id'],
             ).update_json([])[attr]
         return super(DiscoveryRule, self).read(entity, attrs, ignore)
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1381129
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1381129>`_.
+
+        """
+        self.update_json(fields)
+        return self.read()
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
