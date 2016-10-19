@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
 """Defines a set of mixins that provide tools for interacting with entities."""
+import json as std_json
 from collections import Iterable
 from fauxfactory import gen_choice
 from inflection import pluralize
@@ -509,6 +510,44 @@ class Entity(object):
                 in self.get_values().items()
             )
         )
+
+    def to_json(self):
+        r"""Create a JSON encoded string with Entity properties. Ex:
+        >>> from nailgun import entities, config
+        >>> kwargs = {
+        ...         'id': 1,
+        ...         'name': 'Nailgun Org',
+        ...     }
+        >>> org = entities.Organization(config.ServerConfig('foo'), \*\*kwargs)
+        >>> org.to_json()
+        '{"id": 1, "name": "Nailgun Org"}')
+
+        :return: str
+        """
+        return std_json.dumps(self.to_json_dict())
+
+    def to_json_dict(self):
+        """Create a dct with Entity properties for json encoding.
+        It can be overridden by subclasses for each standard serialization
+        doesn't work. By default it call _to_json_dict on OneToOne fields
+        and build a list calling the same method on each object on OneToMany
+        fields.
+
+        :return: dct
+        """
+        fields, values = self.get_fields(), self.get_values()
+        json_dct = {}
+        for field_name, field in fields.items():
+            if field_name in values:
+                if isinstance(field, OneToOneField):
+                    json_dct[field_name] = values[field_name].to_json_dict()
+                elif isinstance(field, OneToManyField):
+                    json_dct[field_name] = [
+                        entity.to_json_dict() for entity in values[field_name]
+                    ]
+                else:
+                    json_dct[field_name] = values[field_name]
+        return json_dct
 
 
 class EntityDeleteMixin(object):

@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
 """Tests for :mod:`nailgun.entities`."""
+import json
 from datetime import datetime
 from fauxfactory import gen_integer, gen_string
 from nailgun import client, config, entities
@@ -1957,6 +1958,48 @@ class GetOrgTestCase(TestCase):
                     # pylint:disable=protected-access
                     entities._get_org(*self.args)
             self.assertEqual(search.call_count, 1)
+
+    def test_to_json(self):
+        """json serialization"""
+        kwargs = {
+            'id': 1,
+            'description': 'some description',
+            'label': 'some label',
+            'name': 'Nailgun Org',
+            'title': 'some title',
+        }
+        org = entities.Organization(config.ServerConfig('foo'), **kwargs)
+        self.assertEqual(kwargs, json.loads(org.to_json()))
+
+
+class PackageTestCase(TestCase):
+    """Class with entity Package tests"""
+    def test_to_json(self):
+        """Check json serialisation on nested entities"""
+        package_kwargs = {
+            'nvrea': u'sclo-git25-1.0-2.el7.x86_64',
+            'checksum': (
+                u'751e639a0b8add0adc0c5cf0bf77693b3197b17533037ce2e7b9daa6188'
+                u'98b99'
+            ),
+            'summary': u'Package that installs sclo-git25',
+            'filename': u'sclo-git25-1.0-2.el7.x86_64.rpm',
+            'epoch': u'0', 'version': u'1.0',
+            'nvra': u'sclo-git25-1.0-2.el7.x86_64',
+            'release': u'2.el7',
+            'sourcerpm': u'sclo-git25-1.0-2.el7.src.rpm',
+            'arch': u'x86_64',
+            'id': 64529,
+            'name': u'sclo-git25'
+        }
+        cfg = config.ServerConfig(
+            url='https://sat-r220-02.lab.eng.rdu2.redhat.com/', verify=False,
+            auth=('admin', 'changeme'))
+        repo_kwargs = {'id': 3, 'content_type': 'file'}
+        repo = entities.Repository(cfg, **repo_kwargs)
+        package = entities.Package(cfg, repository=repo, **package_kwargs)
+        package_kwargs['repository'] = repo_kwargs
+        self.assertDictEqual(package_kwargs, json.loads(package.to_json()))
 
 
 class HandleResponseTestCase(TestCase):
