@@ -2,6 +2,8 @@
 """Defines a set of mixins that provide tools for interacting with entities."""
 import json as std_json
 from collections import Iterable
+from datetime import date, datetime
+
 from fauxfactory import gen_choice
 from inflection import pluralize
 from nailgun import client, config, signals
@@ -513,6 +515,7 @@ class Entity(object):
 
     def to_json(self):
         r"""Create a JSON encoded string with Entity properties. Ex:
+
         >>> from nailgun import entities, config
         >>> kwargs = {
         ...         'id': 1,
@@ -520,7 +523,7 @@ class Entity(object):
         ...     }
         >>> org = entities.Organization(config.ServerConfig('foo'), \*\*kwargs)
         >>> org.to_json()
-        '{"id": 1, "name": "Nailgun Org"}')
+        '{"id": 1, "name": "Nailgun Org"}'
 
         :return: str
         """
@@ -534,6 +537,7 @@ class Entity(object):
         fields.
 
         :return: dct
+
         """
         fields, values = self.get_fields(), self.get_values()
         json_dct = {}
@@ -546,7 +550,8 @@ class Entity(object):
                         entity.to_json_dict() for entity in values[field_name]
                     ]
                 else:
-                    json_dct[field_name] = values[field_name]
+                    json_dct[field_name] = to_json_serializable(
+                        values[field_name])
         return json_dct
 
 
@@ -1343,3 +1348,26 @@ class EntitySearchMixin(object):
                 if getattr(entity, field_name) == field_value
             ]
         return filtered
+
+
+def to_json_serializable(obj):
+    """ Transforms obj into a json serializable object.
+
+    :param obj: entity or any json serializable object
+
+    :return: serializable object
+
+    """
+    if isinstance(obj, Entity):
+        return obj.to_json_dict()
+
+    if isinstance(obj, dict):
+        return {k: to_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [to_json_serializable(v) for v in obj]
+    elif isinstance(obj, datetime):
+        return obj.strftime('%Y-%m-%d %H:%M:%S')
+    elif isinstance(obj, date):
+        return obj.strftime('%Y-%m-%d')
+
+    return obj

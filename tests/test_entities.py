@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 """Tests for :mod:`nailgun.entities`."""
 import json
-from datetime import datetime
+from datetime import datetime, date
 from fauxfactory import gen_integer, gen_string
 from nailgun import client, config, entities
 from nailgun.entity_mixins import (
@@ -28,6 +28,14 @@ else:
 # pylint:disable=too-many-lines
 # The size of this file is a direct reflection of the size of module
 # `nailgun.entities` and the Satellite API.
+
+
+def make_entity(cls, **kwargs):
+    """Helper function to create entity with dummy ServerConfig"""
+    cfg = config.ServerConfig(
+        url='https://foo.bar', verify=False,
+        auth=('foo', 'bar'))
+    return cls(cfg, **kwargs)
 
 
 def _get_required_field_names(entity):
@@ -1993,8 +2001,8 @@ class PackageTestCase(TestCase):
             'name': u'sclo-git25'
         }
         cfg = config.ServerConfig(
-            url='https://sat-r220-02.lab.eng.rdu2.redhat.com/', verify=False,
-            auth=('admin', 'changeme'))
+            url='https://foo.bar', verify=False,
+            auth=('foo', 'bar'))
         repo_kwargs = {'id': 3, 'content_type': 'file'}
         repo = entities.Repository(cfg, **repo_kwargs)
         package = entities.Package(cfg, repository=repo, **package_kwargs)
@@ -2265,3 +2273,113 @@ class VersionTestCase(TestCase):
         """
         with self.assertRaises(DeprecationWarning):
             entities.SystemPackage(self.cfg_620)
+
+
+class JsonSerializableTestCase(TestCase):
+    """Test regarding Json serializable on different object"""
+
+    def test_regular_objects(self):
+        """Checking regular objects transformation"""
+        lst = [[1, 0.3], {'name': 'foo'}]
+        self.assertEqual(lst, entities.to_json_serializable(lst))
+
+    def test_entities(self):
+        """Testing nested entities serialization"""
+        package_kwargs = {
+            'nvrea': u'sclo-git25-1.0-2.el7.x86_64',
+            'checksum': (
+                u'751e639a0b8add0adc0c5cf0bf77693b3197b17533037ce2e7b9daa6188'
+                u'98b99'
+            ),
+            'summary': u'Package that installs sclo-git25',
+            'filename': u'sclo-git25-1.0-2.el7.x86_64.rpm',
+            'epoch': u'0', 'version': u'1.0',
+            'nvra': u'sclo-git25-1.0-2.el7.x86_64',
+            'release': u'2.el7',
+            'sourcerpm': u'sclo-git25-1.0-2.el7.src.rpm',
+            'arch': u'x86_64',
+            'id': 64529,
+            'name': u'sclo-git25'
+        }
+
+        repo_kwargs = {'id': 3, 'content_type': 'file'}
+        repo = make_entity(entities.Repository, **repo_kwargs)
+        package = make_entity(entities.Package,
+                              repository=repo,
+                              **package_kwargs)
+        package_kwargs['repository'] = repo_kwargs
+
+        org_kwargs = {
+            'id': 1,
+            'description': 'some description',
+            'label': 'some label',
+            'name': 'Nailgun Org',
+            'title': 'some title',
+        }
+        org = make_entity(entities.Organization, **org_kwargs)
+
+        to_be_transformed = [{'packages': [package]}, {'org': org}]
+        expected = [{'packages': [package_kwargs]}, {'org': org_kwargs}]
+        self.assertListEqual(
+            expected,
+            entities.to_json_serializable(to_be_transformed)
+        )
+
+    def test_nested_entities(self):
+        """Check nested entities serialization"""
+        env_kwargs = {'id': 1, 'name': 'env'}
+        env = make_entity(entities.Environment, **env_kwargs)
+
+        location_kwargs = {'name': 'loc'}
+        locations = [make_entity(entities.Location, **location_kwargs)]
+
+        hostgroup_kwargs = {'id': 2, 'name': 'hgroup'}
+        hostgroup = make_entity(
+            entities.HostGroup,
+            location=locations,
+            **hostgroup_kwargs)
+
+        hostgroup_kwargs['location'] = [location_kwargs]
+
+        combinations = [
+            {'environment_id': 3, 'hostgroup_id': 4},
+            make_entity(entities.TemplateCombination,
+                        hostgroup=hostgroup,
+                        environment=env)
+        ]
+
+        expected_combinations = [
+            {'environment_id': 3, 'hostgroup_id': 4},
+            {'environment': env_kwargs, 'hostgroup': hostgroup_kwargs}
+        ]
+
+        cfg_kwargs = {'id': 5, 'snippet': False, 'template': 'cat'}
+        cfg_template = make_entity(
+            entities.ConfigTemplate,
+            template_combinations=combinations,
+            **cfg_kwargs)
+
+        cfg_kwargs['template_combinations'] = expected_combinations
+        self.assertDictEqual(cfg_kwargs,
+                             entities.to_json_serializable(cfg_template))
+
+    def test_date_field(self):
+        """Check date field serialization"""
+
+        errata = make_entity(entities.Errata, issued=date(2016, 9, 20))
+        self.assertDictEqual(
+            {'issued': '2016-09-20'},
+            entities.to_json_serializable(errata)
+        )
+
+    def test_boolean_datetime_float(self):
+        """Check serialization for boolean, datetime and float fields"""
+        kwargs = {
+            'pending': True,
+            'progress': 0.25,
+            'started_at': datetime(2016, 11, 20, 1, 2, 3)
+        }
+        task = make_entity(
+            entities.ForemanTask, **kwargs)
+        kwargs['started_at'] = '2016-11-20 01:02:03'
+        self.assertDictEqual(kwargs, entities.to_json_serializable(task))
