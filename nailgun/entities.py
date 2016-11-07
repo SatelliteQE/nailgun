@@ -964,9 +964,33 @@ class ConfigTemplate(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
+        payload = super(ConfigTemplate, self).create_payload()
         return {
-            u'config_template': super(ConfigTemplate, self).create_payload()
+            u'config_template': self._fix_payload(payload)
         }
+
+    # pylint: disable=no-self-use
+    def _fix_payload(self, payload):
+        """Fix the payload, parses TemplateCombination and
+        changes dict key name from template_combinations to
+        template_combinations_attributes
+        """
+        if 'template_combinations' in payload:
+            def to_dict(combination):
+                """return dict or parsed TemplateCombination"""
+                if isinstance(combination, dict):
+                    return combination
+                return {
+                    'hostgroup_id': combination.hostgroup.id,
+                    'environment_id': combination.environment.id
+                }
+
+            combinations = payload.pop('template_combinations')
+            payload['template_combinations_attributes'] = [
+                to_dict(comb) for comb in combinations
+            ]
+
+        return payload
 
     @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
@@ -981,11 +1005,9 @@ class ConfigTemplate(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
+        payload = super(ConfigTemplate, self).update_payload()
         return {
-            u'config_template': super(
-                ConfigTemplate,
-                self
-            ).update_payload(fields)
+            u'config_template': self._fix_payload(payload)
         }
 
     def path(self, which=None):

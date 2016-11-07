@@ -1461,6 +1461,53 @@ class ForemanTaskTestCase(TestCase):
                 )
 
 
+class ConfigTemplateTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.ConfigTemplate`."""
+
+    def test_creation_and_update(self):
+        """Check template combinations as json or entity is set on correct
+        attribute template_combinations_attributes ( check #333)
+        """
+        cfg = config.ServerConfig(url='foo')
+        env = entities.Environment(cfg, id=2, name='env')
+        hostgroup = entities.HostGroup(cfg, id=2, name='hgroup')
+        combination = entities.TemplateCombination(
+            cfg,
+            hostgroup=hostgroup,
+            environment=env)
+        template_combinations = [
+            {'hostgroup_id': 1, 'environment_id': 1},
+            combination]
+        cfg_template = entities.ConfigTemplate(
+            cfg, name='cfg',
+            snippet=False,
+            template='cat',
+            template_kind=8,
+            template_combinations=template_combinations)
+        expected_dct = {
+            u'config_template': {
+                'name': 'cfg', 'snippet': False, 'template': 'cat',
+                'template_kind_id': 8, 'template_combinations_attributes': [
+                    {'environment_id': 1, 'hostgroup_id': 1},
+                    {'environment_id': 2, 'hostgroup_id': 2}]
+            }
+        }
+        self.assertEqual(expected_dct, cfg_template.create_payload())
+        # Testing update
+        env3 = entities.Environment(cfg, id=3, name='env3')
+        combination3 = entities.TemplateCombination(
+            cfg,
+            hostgroup=hostgroup,
+            environment=env3)
+        # pylint: disable=no-member
+        cfg_template.template_combinations.append(combination3)
+        attrs = expected_dct[u'config_template']
+        attrs['template_combinations_attributes'].append(
+            {'environment_id': 3, 'hostgroup_id': 2}
+        )
+        self.assertEqual(expected_dct, cfg_template.update_payload())
+
+
 class HostGroupTestCase(TestCase):
     """Tests for :class:`nailgun.entities.HostGroup`."""
     def setUp(self):
