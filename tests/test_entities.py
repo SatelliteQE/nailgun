@@ -270,6 +270,7 @@ class PathTestCase(TestCase):
                 (entities.ContentView, 'copy'),
                 (entities.ContentView, 'publish'),
                 (entities.ContentViewVersion, 'promote'),
+                (entities.HostGroup, 'clone'),
                 (entities.Organization, 'download_debug_certificate'),
                 (entities.Organization, 'subscriptions'),
                 (entities.Organization, 'subscriptions/delete_manifest'),
@@ -1288,6 +1289,7 @@ class GenericTestCase(TestCase):
                 entities.Organization(**generic).download_debug_certificate,
                 'get'
             ),
+            (entities.HostGroup(**generic).clone, 'post'),
             (entities.Product(**generic).sync, 'post'),
             (entities.RHCIDeployment(**generic).deploy, 'put'),
             (entities.Repository(**generic).sync, 'post'),
@@ -1494,6 +1496,29 @@ class HostGroupTestCase(TestCase):
             self.read_json_pacther.stop()
             self.read_pacther.stop()
             self.update_json_patcher.stop()
+
+    def test_clone_hostgroup(self):
+        """"Test for :meth:`nailgun.entities.HostGroup.clone`
+        Assert that the method is called one with correct argumets
+        """
+        entity = self.entity
+        entity.id = 1
+        self.assertEqual(
+            inspect.getargspec(entity.clone),
+            (['self', 'synchronous'], None, 'kwargs', (True,))
+        )
+        kwargs = {
+            'kwarg': gen_integer(),
+            'data': {'name': gen_string('utf8', 5)}
+        }
+        with mock.patch.object(entities, '_handle_response') as handler:
+            with mock.patch.object(client, 'post') as post:
+                response = entity.clone(**kwargs)
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(len(post.call_args[0]), 1)
+        self.assertEqual(post.call_args[1], kwargs)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
 
 
 class HostTestCase(TestCase):
