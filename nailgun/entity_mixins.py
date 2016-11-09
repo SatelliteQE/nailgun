@@ -4,7 +4,8 @@ from collections import Iterable
 from fauxfactory import gen_choice
 from inflection import pluralize
 from nailgun import client, config, signals
-from nailgun.entity_fields import IntegerField, OneToManyField, OneToOneField
+from nailgun.entity_fields import (
+    IntegerField, OneToManyField, OneToOneField, ListField)
 import threading
 import time
 
@@ -191,6 +192,15 @@ def _payload(fields, values):
                 values[field_name + '_ids'] = [
                     entity.id for entity in values.pop(field_name)
                 ]
+            elif isinstance(field, ListField):
+                def parse(obj):
+                    """parse obj payload if it is an Entity"""
+                    if isinstance(obj, Entity):
+                        return _payload(obj.get_fields(), obj.get_values())
+                    return obj
+
+                values[field_name] = [
+                    parse(obj) for obj in values[field_name]]
     return values
 
 
@@ -485,9 +495,9 @@ class Entity(object):
     def get_values(self):
         """Return a copy of field values on the current object.
 
-        This method is almost identical to ``vars(self).copy()``. However, only
-        instance attributes that correspond to a field are included in the
-        returned dict.
+        This method is almost identical to ``vars(self).copy()``. However,
+        only instance attributes that correspond to a field are included in
+        the returned dict.
 
         :return: A dict mapping field names to user-provided values.
 
