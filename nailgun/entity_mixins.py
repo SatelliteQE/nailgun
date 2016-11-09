@@ -493,7 +493,6 @@ class Entity(object):
         returned dict.
 
         :return: A dict mapping field names to user-provided values.
-
         """
         attrs = vars(self).copy()
         attrs.pop('_server_config')
@@ -537,7 +536,6 @@ class Entity(object):
         fields.
 
         :return: dct
-
         """
         fields, values = self.get_fields(), self.get_values()
         json_dct = {}
