@@ -327,6 +327,51 @@ examples of how to search, see
 search queries are generated, see
 :meth:`nailgun.entity_mixins.EntitySearchMixin.search_payload`.
 
+
+Helper Functions
+----------------
+
+Nailgun has also some helper functions for common operations.
+
+``to_json_serializable``
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+This function parses nested nailgun entities, date, datetime, numbers, dict
+and list so the result can be parsed by json module:
+
+    >>> from nailgun import entities
+    >>> from nailgun.config import ServerConfig
+    >>> from datetime import date, datetime
+    >>> cfg=ServerConfig('https://foo.bar')
+    >>> dct = {'dict': {'objs':
+    [
+        1, 'str', 2.5, date(2016, 12 , 13),
+        datetime(2016, 12, 14, 1, 2, 3)
+    ]}}
+    >>> entities.to_json(dct)
+    {'dict':
+        {'objs': [1, 'str', 2.5, '2016-12-13', '2016-12-14 01:02:03']}
+    }
+    >>> env = entities.Environment(cfg, id=1, name='env')
+    >>> entities.to_json(env)
+    {'id': 1, 'name': 'env'}
+    >>> location =  entities.Location(cfg, name='loc')
+    >>> hostgroup = entities.HostGroup(
+            cfg, name='hgroup', id=2, location=[location])
+    >>> entities.to_json_serializable(hostgroup)
+    {'location': [{'name': 'loc'}], 'name': 'hgroup', 'id': 2}
+    >>> mixed = [regular_object, env, hostgroup]
+    >>> entities.to_json_serializable(mixed)
+    [
+        {'dict': {'objs': [1, 'str', 2.5, '2016-12-13', '2016-12-13']}},
+        {'id': 1, 'name': 'env'},
+        {'location': [{'name': 'loc'}], 'name': 'hgroup', 'id': 2}
+    ]
+    >>> import json
+    >>> json.dumps(entities.to_json_serializable(mixed))
+    '[{"dict": {"objs": [1, "str", 2.5, "2016-12-13", "2016-12-13"]}}, {"id": 1, "name": "env"}, {"location": [{"name": "loc"}], "name": "hgroup", "id": 2}]'
+
+
 Using Lower Layers
 ------------------
 
