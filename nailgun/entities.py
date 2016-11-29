@@ -2198,6 +2198,7 @@ class HostGroup(
             'environment': entity_fields.OneToOneField(Environment),
             'location': entity_fields.OneToManyField(Location),
             'medium': entity_fields.OneToOneField(Media),
+            'root_pass': entity_fields.StringField(),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
@@ -2252,6 +2253,10 @@ class HostGroup(
           <https://bugzilla.redhat.com/show_bug.cgi?id=1235379>`_
 
         """
+        if ignore is None:
+            ignore = set()
+        ignore.add('root_pass')
+
         if attrs is None:
             attrs = self.read_json()
         attrs['parent_id'] = attrs.pop('ancestry')  # either an ID or None
