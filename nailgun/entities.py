@@ -3522,6 +3522,12 @@ class Repository(
 
         The format of the returned path depends on the value of ``which``:
 
+        packages
+            /repositories/<id>/packages
+        puppet_modules
+            /repositories/<id>/puppet_modules
+        remove_content
+            /repositories/<id>/remove_content
         sync
             /repositories/<id>/sync
         upload_content
@@ -3530,7 +3536,12 @@ class Repository(
         ``super`` is called otherwise.
 
         """
-        if which in ('sync', 'upload_content'):
+        if which in (
+                'packages',
+                'puppet_modules',
+                'remove_content',
+                'sync',
+                'upload_content'):
             return '{0}/{1}'.format(
                 super(Repository, self).path(which='self'),
                 which
@@ -3606,6 +3617,62 @@ class Repository(
                 .format(kwargs.get('files'), self.id, json)
             )
         return json
+
+    def remove_content(self, synchronous=True, **kwargs):
+        """Remove content from a repository
+
+        It expects packages/puppet modules/docker manifests ids sent as data.
+        Here is an example of how to use this method::
+
+            repository.remove_content(data={'ids': [package.id]})
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('remove_content'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def puppet_modules(self, synchronous=True, **kwargs):
+        """"List puppet modules associated with repository
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('puppet_modules'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def packages(self, synchronous=True, **kwargs):
+        """List packages associated with repository
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('packages'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class RepositorySet(
