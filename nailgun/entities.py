@@ -1329,7 +1329,8 @@ class ContentViewFilterRule(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
-        EntitySearchMixin):
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Content View Filter Rule entity."""
 
     def __init__(self, server_config=None, **kwargs):
