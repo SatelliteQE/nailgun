@@ -1537,6 +1537,7 @@ class ContentView(
         self._fields = {
             'component': entity_fields.OneToManyField(ContentViewVersion),
             'composite': entity_fields.BooleanField(),
+            'content_host_count': entity_fields.IntegerField(),
             'description': entity_fields.StringField(),
             'label': entity_fields.StringField(),
             'last_published': entity_fields.StringField(),
