@@ -1085,6 +1085,18 @@ class ReadTestCase(TestCase):
                 # pylint:disable=no-member
                 self.assertEqual(product.sync_plan.id, sync_plan.id)
 
+    def test_hostgroup_ignore_root_pass(self):
+        """Call :meth:`nailgun.entities.HostGroup.read`.
+
+        Assert that the entity ignores the ``root_pass`` field.
+
+        """
+        with mock.patch.object(EntityReadMixin, 'read') as read:
+            with mock.patch.object(EntityReadMixin, 'read_json'):
+                entities.HostGroup(self.cfg).read()
+        # `call_args` is a two-tuple of (positional, keyword) args.
+        self.assertIn('root_pass', read.call_args[0][2])
+
 
 class SearchRawTestCase(TestCase):
     """Tests for :meth:`nailgun.entity_mixins.EntitySearchMixin.search_raw`."""
