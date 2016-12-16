@@ -5100,7 +5100,7 @@ class System(
         return super(System, self).read(entity, attrs, ignore)
 
 
-class TemplateCombination(Entity):
+class TemplateCombination(Entity, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Template Combination entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -5113,11 +5113,8 @@ class TemplateCombination(Entity):
             'hostgroup': entity_fields.OneToOneField(HostGroup),
         }
         self._meta = {
-            'api_path': (
-                'api/v2/config_templates/:config_template_id/'
-                'template_combinations'
-            ),
-            'server_modes': ('sat'),
+            'api_path': 'api/v2/template_combinations',
+            'server_modes': 'sat',
         }
         super(TemplateCombination, self).__init__(server_config, **kwargs)
 
