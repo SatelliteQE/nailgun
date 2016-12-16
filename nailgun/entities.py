@@ -4557,6 +4557,8 @@ class Setting(Entity, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin):
 
 class SmartProxy(
         Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
         EntityReadMixin,
         EntitySearchMixin,
         EntityUpdateMixin):
