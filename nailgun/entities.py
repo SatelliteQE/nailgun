@@ -5300,8 +5300,11 @@ class System(
         return super(System, self).read(entity, attrs, ignore)
 
 
-class TemplateCombination(Entity, EntityReadMixin, EntityDeleteMixin,
-                          EntityUpdateMixin):
+class TemplateCombination(
+        Entity,
+        EntityReadMixin,
+        EntityDeleteMixin,
+        EntityUpdateMixin):
     """A representation of a Template Combination entity."""
 
     def __init__(self, server_config=None, **kwargs):
