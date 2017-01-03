@@ -7,6 +7,7 @@ from fauxfactory import gen_integer
 from nailgun import client, config, entity_mixins
 from nailgun.entity_fields import (
     IntegerField,
+    ListField,
     OneToManyField,
     OneToOneField,
     StringField,
@@ -58,6 +59,25 @@ class SampleEntityTwo(entity_mixins.Entity):
     def __init__(self, server_config=None, **kwargs):
         self._fields = {'one_to_many': OneToManyField(SampleEntity)}
         super(SampleEntityTwo, self).__init__(server_config, **kwargs)
+
+
+class SampleEntityThree(entity_mixins.Entity):
+    """An entity with foreign key fields as One to One and ListField.
+
+    This class has a :class:`nailgun.entity_fields.OneToOneField` called
+    "one_to_one" pointing to :class:`tests.test_entity_mixins.SampleEntityTwo`.
+
+    This class has a :class:`nailgun.entity_fields.ListField` called "list"
+    containing instances of :class:`tests.test_entity_mixins.SampleEntity`.
+
+    """
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'one_to_one': OneToOneField(SampleEntityTwo),
+            'list': ListField()
+        }
+        super(SampleEntityThree, self).__init__(server_config, **kwargs)
 
 
 class EntityWithCreate(entity_mixins.Entity, entity_mixins.EntityCreateMixin):
@@ -344,6 +364,59 @@ class EntityTestCase(TestCase):
         with self.assertRaises(entity_mixins.BadValueError):
             SampleEntityTwo(self.cfg, one_to_many=1)
 
+    def test_eq(self):
+        """Test method ``nailgun.entity_mixins.Entity.__eq__``.
+
+        Assert that ``__eq__`` works comparing all attributes, even from
+        nested structures.
+        """
+        # Testing simple properties
+        alice = SampleEntity(self.cfg, id=1, name='Alice')
+        alice_clone = SampleEntity(self.cfg, id=1, name='Alice')
+        self.assertEquals(alice, alice_clone)
+
+        alice_id_2 = SampleEntity(self.cfg, id=2, name='Alice')
+        self.assertNotEquals(alice, alice_id_2)
+
+        # Testing OneToMany nested objects
+
+        john = SampleEntityTwo(self.cfg, one_to_many=[alice, alice_id_2])
+        john_clone = SampleEntityTwo(self.cfg, one_to_many=[alice, alice_id_2])
+        self.assertEquals(john, john_clone)
+
+        john_different_order = SampleEntityTwo(self.cfg, one_to_many=[
+            alice_id_2, alice,
+        ])
+        self.assertNotEquals(john, john_different_order)
+
+        john_missing_alice = SampleEntityTwo(self.cfg, one_to_many=[alice])
+        self.assertNotEquals(john, john_missing_alice)
+
+        john_without_alice = SampleEntityTwo(self.cfg)
+        self.assertNotEquals(john, john_without_alice)
+
+        # Testing OneToOne nested objects
+
+        mary = SampleEntityThree(self.cfg, one_to_one=john)
+        mary_clone = SampleEntityThree(
+            self.cfg, one_to_one=john_clone)
+        self.assertEquals(mary, mary_clone)
+
+        mary_different = SampleEntityThree(
+            self.cfg, one_to_one=john_different_order)
+        self.assertNotEquals(mary, mary_different)
+
+        mary_without_john = SampleEntityThree(self.cfg)
+        self.assertNotEquals(mary, mary_without_john)
+
+        # Testing List nested objects
+        # noqa pylint:disable=attribute-defined-outside-init
+        mary.list = [alice]
+        self.assertNotEquals(mary, mary_clone)
+        # noqa pylint:disable=attribute-defined-outside-init
+        mary_clone.list = [alice_clone]
+        self.assertEquals(mary, mary_clone)
+
     def test_repr_v1(self):
         """Test method ``nailgun.entity_mixins.Entity.__repr__``.
 
@@ -546,6 +619,7 @@ class EntityReadMixinTestCase(TestCase):
         ``test_entity`` is a class having one to one and one to many fields.
 
         """
+
         class TestEntity(entity_mixins.Entity, entity_mixins.EntityReadMixin):
             """An entity with several different types of fields."""
 
