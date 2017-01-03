@@ -2901,7 +2901,12 @@ class Host(  # pylint:disable=too-many-instance-attributes
         return _handle_response(response, self._server_config, synchronous)
 
 
-class Image(Entity):
+class Image(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Image entity."""
 
     def __init__(self, server_config=None, **kwargs):
