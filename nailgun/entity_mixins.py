@@ -555,7 +555,7 @@ class Entity(object):
                 value = values[field_name]
                 if value is None:
                     json_dct[field_name] = None
-                if isinstance(field, OneToOneField):
+                elif isinstance(field, OneToOneField):
                     json_dct[field_name] = value.to_json_dict()
                 elif isinstance(field, OneToManyField):
                     json_dct[field_name] = [

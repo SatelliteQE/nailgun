@@ -364,11 +364,21 @@ class EntityTestCase(TestCase):
         with self.assertRaises(entity_mixins.BadValueError):
             SampleEntityTwo(self.cfg, one_to_many=1)
 
+    def test_eq_none(self):
+        """Test method ``nailgun.entity_mixins.Entity.__eq__`` against None
+
+        Assert that ``__eq__`` returns False when compared to None.
+
+        """
+        alice = SampleEntity(self.cfg, id=1, name='Alice')
+        self.assertNotEquals(alice, None)
+
     def test_eq(self):
         """Test method ``nailgun.entity_mixins.Entity.__eq__``.
 
         Assert that ``__eq__`` works comparing all attributes, even from
         nested structures.
+
         """
         # Testing simple properties
         alice = SampleEntity(self.cfg, id=1, name='Alice')
@@ -406,8 +416,9 @@ class EntityTestCase(TestCase):
             self.cfg, one_to_one=john_different_order)
         self.assertNotEquals(mary, mary_different)
 
-        mary_without_john = SampleEntityThree(self.cfg)
-        self.assertNotEquals(mary, mary_without_john)
+        mary_none_john = SampleEntityThree(self.cfg, one_to_one=None)
+        mary_none_john.to_json_dict()
+        self.assertNotEquals(mary, mary_none_john)
 
         # Testing List nested objects
         # noqa pylint:disable=attribute-defined-outside-init
