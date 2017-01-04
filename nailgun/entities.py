@@ -1784,6 +1784,40 @@ class Environment(
             ).update_payload(fields)
         }
 
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        smart_class_parameters
+            /api/environments/:environment_id/smart_class_parameters
+
+        Otherwise, call ``super``.
+
+        """
+        if which in ('smart_class_parameters',):
+            return '{0}/{1}'.format(
+                super(Environment, self).path(which='self'),
+                which
+            )
+        return super(Environment, self).path(which)
+
+    def list_scparams(self, synchronous=True, **kwargs):
+        """List all smart class parameters
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('smart_class_parameters'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
 
 class Errata(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of an Errata entity."""
@@ -2159,13 +2193,15 @@ class HostGroup(
 
         clone
             /api/hostgroups/:hostgroup_id/clone
+        puppetclass_ids
+            /api/hostgroups/:hostgroup_id/puppetclass_ids
+        smart_class_parameters
+            /api/hostgroups/:hostgroup_id/smart_class_parameters
 
         Otherwise, call ``super``.
 
         """
-        if which in (
-                'clone',
-        ):
+        if which in ('clone', 'puppetclass_ids', 'smart_class_parameters'):
             return '{0}/{1}'.format(
                 super(HostGroup, self).path(which='self'),
                 which
@@ -2186,6 +2222,30 @@ class HostGroup(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('clone'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def add_puppetclass(self, synchronous=True, **kwargs):
+        """Add a Puppet class to host"""
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('puppetclass_ids'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def list_scparams(self, synchronous=True, **kwargs):
+        """List all smart class parameters
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('smart_class_parameters'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
@@ -2495,6 +2555,40 @@ class Host(  # pylint:disable=too-many-instance-attributes
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {u'host': super(Host, self).update_payload(fields)}
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        smart_class_parameters
+            /api/hosts/:host_id/smart_class_parameters
+
+        Otherwise, call ``super``.
+
+        """
+        if which in ('smart_class_parameters',):
+            return '{0}/{1}'.format(
+                super(Host, self).path(which='self'),
+                which
+            )
+        return super(Host, self).path(which)
+
+    def list_scparams(self, synchronous=True, **kwargs):
+        """List all smart class parameters
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('smart_class_parameters'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class Image(Entity):
@@ -3127,26 +3221,79 @@ class OSDefaultTemplate(Entity):
         super(OSDefaultTemplate, self).__init__(server_config, **kwargs)
 
 
-class OverrideValue(Entity):
+class OverrideValue(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Override Value entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'match': entity_fields.StringField(),
+            'match': entity_fields.StringField(required=True),
+            'value': entity_fields.StringField(required=True),
+            'smart_class_parameter': entity_fields.OneToOneField(
+                SmartClassParameters),
             'smart_variable': entity_fields.OneToOneField(SmartVariable),
-            'value': entity_fields.StringField(),
-        }
-        self._meta = {
-            'api_path': (
-                # Create an override value for a specific smart_variable
-                '/api/v2/smart_variables/:smart_variable_id/override_values',
-                # Create an override value for a specific smart class parameter
-                '/api/v2/smart_class_parameters/:smart_class_parameter_id/'
-                'override_values',
-            ),
-            'server_modes': ('sat'),
+            'use_puppet_default': entity_fields.BooleanField(),
         }
         super(OverrideValue, self).__init__(server_config, **kwargs)
+        # Create an override value for a specific smart class parameter
+        if hasattr(self, 'smart_class_parameter'):
+            # pylint:disable=no-member
+            partial_path = self.smart_class_parameter.path('self')
+        # Create an override value for a specific smart_variable
+        elif hasattr(self, 'smart_variable'):
+            # pylint:disable=no-member
+            partial_path = self.smart_variable.path('self')
+        else:
+            raise TypeError(
+                'A value must be provided for one of the following fields: '
+                '"smart_class_parameter", "smart_variable"'
+            )
+        self._meta = {
+            'api_path': '{0}/override_values'.format(partial_path),
+            'server_modes': ('sat'),
+        }
+
+    def read(self, entity=None, attrs=None, ignore=None):
+        """Provide a default value for ``entity``.
+
+        By default, ``nailgun.entity_mixins.EntityReadMixin.read provides a
+        default value for ``entity`` like so::
+
+            entity = type(self)()
+
+        However, :class:`OverrideValue` requires that an
+        ``smart_class_parameter`` or ``smart_varaiable`` be provided, so this
+        technique will not work. Do this instead::
+
+            entity = type(self)(
+                smart_class_parameter=self.smart_class_parameter)
+            entity = type(self)(smart_variable=self.smart_variable)
+
+        """
+        # read() should not change the state of the object it's called on, but
+        # super() alters the attributes of any entity passed in. Creating a new
+        # object and passing it to super() lets this one avoid changing state.
+        if entity is None:
+            if hasattr(self, 'smart_class_parameter'):
+                entity = type(self)(
+                    self._server_config,
+                    # pylint:disable=no-member
+                    smart_class_parameter=self.smart_class_parameter,
+                )
+            elif hasattr(self, 'smart_variable'):
+                entity = type(self)(
+                    self._server_config,
+                    # pylint:disable=no-member
+                    smart_variable=self.smart_variable,
+                )
+        if ignore is None:
+            ignore = set()
+        ignore.update(['smart_class_parameter', 'smart_variable'])
+        return super(OverrideValue, self).read(entity, attrs, ignore)
 
 
 class Permission(Entity, EntityReadMixin, EntitySearchMixin):
@@ -3317,7 +3464,11 @@ class PartitionTable(
 
 
 class PuppetClass(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
     """A representation of a Puppet Class entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -3333,6 +3484,54 @@ class PuppetClass(
             'server_modes': ('sat'),
         }
         super(PuppetClass, self).__init__(server_config, **kwargs)
+
+    def search_normalize(self, results):
+        """Flattens results.
+        :meth:`nailgun.entity_mixins.EntitySearchMixin.search_normalize`
+        expects structure like
+        list(dict_1(name: class_1), dict_2(name: class_2)),
+        while Puppet Class entity returns dictionary with lists of subclasses
+        split by main puppet class.
+        """
+        flattened_results = []
+        for key in results.keys():
+            for item in results[key]:
+                flattened_results.append(item)
+        return super(PuppetClass, self).search_normalize(flattened_results)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        smart_class_parameters
+            /api/puppetclasses/:puppetclass_id/smart_class_parameters
+
+        Otherwise, call ``super``.
+
+        """
+        if which in ('smart_class_parameters',):
+            return '{0}/{1}'.format(
+                super(PuppetClass, self).path(which='self'),
+                which
+            )
+        return super(PuppetClass, self).path(which)
+
+    def list_scparams(self, synchronous=True, **kwargs):
+        """List of smart class parameters for a specific Puppet class
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('smart_class_parameters'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
@@ -3987,6 +4186,8 @@ class Setting(Entity, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin):
 
 class SmartProxy(
         Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
         EntityReadMixin,
         EntitySearchMixin,
         EntityUpdateMixin):
@@ -4011,11 +4212,12 @@ class SmartProxy(
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
-
         The format of the returned path depends on the value of ``which``:
 
         refresh
-            /katello/api/v2/smart_proxies/:id/refresh
+            /api/smart_proxies/:id/refresh
+
+        Otherwise, call ``super``.
 
         """
         if which in ('refresh',):
@@ -4042,6 +4244,34 @@ class SmartProxy(
         response = client.put(self.path('refresh'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
+    def import_puppetclasses(self, synchronous=True, **kwargs):
+        """Import puppet classes from puppet Capsule.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        # Check if environment_id was sent and substitute it to the path
+        # but do not pass it to requests
+        if 'environment' in kwargs:
+            if isinstance(kwargs['environment'], Environment):
+                environment_id = kwargs.pop('environment').id
+            else:
+                environment_id = kwargs.pop('environment')
+            path = '{0}/environments/{1}/import_puppetclasses'.format(
+                self.path(), environment_id)
+        else:
+            path = '{0}/import_puppetclasses'.format(self.path())
+        return _handle_response(
+            client.post(path, **kwargs), self._server_config, synchronous)
+
     @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -4058,6 +4288,43 @@ class SmartProxy(
         return {
             u'smart_proxy': super(SmartProxy, self).update_payload(fields)
         }
+
+
+class SmartClassParameters(
+        Entity,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
+    """A representation of a Smart Class Parameters."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'puppetclass': entity_fields.OneToOneField(PuppetClass),
+            'override': entity_fields.BooleanField(),
+            'description': entity_fields.StringField(),
+            'default_value': entity_fields.StringField(),
+            'hidden_value': entity_fields.BooleanField(),
+            'hidden_value?': entity_fields.BooleanField(),
+            'use_puppet_default': entity_fields.BooleanField(),
+            'validator_type': entity_fields.StringField(
+                choices=('regexp', 'list')
+            ),
+            'validator_rule': entity_fields.StringField(),
+            'parameter_type': entity_fields.StringField(
+                choices=('string', 'boolean', 'integer', 'real',
+                         'array', 'hash', 'yaml', 'json')
+            ),
+            'required': entity_fields.BooleanField(),
+            'merge_overrides': entity_fields.BooleanField(),
+            'merge_default': entity_fields.BooleanField(),
+            'avoid_duplicates': entity_fields.BooleanField(),
+            'override_values': entity_fields.DictField()
+        }
+        self._meta = {
+            'api_path': 'api/v2/smart_class_parameters',
+            'server_modes': ('sat'),
+        }
+        super(SmartClassParameters, self).__init__(server_config, **kwargs)
 
 
 class SmartVariable(Entity):
