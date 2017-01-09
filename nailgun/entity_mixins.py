@@ -555,6 +555,10 @@ class Entity(object):
                 value = values[field_name]
                 if value is None:
                     json_dct[field_name] = None
+                    # This conditions is needed because some times you get
+                    # None on an OneToOneField what lead to an error
+                    # on bellow condition, e.g., calling value.to_json_dict()
+                    # when value is None
                 elif isinstance(field, OneToOneField):
                     json_dct[field_name] = value.to_json_dict()
                 elif isinstance(field, OneToManyField):

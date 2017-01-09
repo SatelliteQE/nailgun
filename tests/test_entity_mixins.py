@@ -371,7 +371,7 @@ class EntityTestCase(TestCase):
 
         """
         alice = SampleEntity(self.cfg, id=1, name='Alice')
-        self.assertNotEquals(alice, None)
+        self.assertFalse(alice.__eq__(None))
 
     def test_eq(self):
         """Test method ``nailgun.entity_mixins.Entity.__eq__``.
@@ -383,50 +383,50 @@ class EntityTestCase(TestCase):
         # Testing simple properties
         alice = SampleEntity(self.cfg, id=1, name='Alice')
         alice_clone = SampleEntity(self.cfg, id=1, name='Alice')
-        self.assertEquals(alice, alice_clone)
+        self.assertEqual(alice, alice_clone)
 
         alice_id_2 = SampleEntity(self.cfg, id=2, name='Alice')
-        self.assertNotEquals(alice, alice_id_2)
+        self.assertNotEqual(alice, alice_id_2)
 
         # Testing OneToMany nested objects
 
         john = SampleEntityTwo(self.cfg, one_to_many=[alice, alice_id_2])
         john_clone = SampleEntityTwo(self.cfg, one_to_many=[alice, alice_id_2])
-        self.assertEquals(john, john_clone)
+        self.assertEqual(john, john_clone)
 
         john_different_order = SampleEntityTwo(self.cfg, one_to_many=[
             alice_id_2, alice,
         ])
-        self.assertNotEquals(john, john_different_order)
+        self.assertNotEqual(john, john_different_order)
 
         john_missing_alice = SampleEntityTwo(self.cfg, one_to_many=[alice])
-        self.assertNotEquals(john, john_missing_alice)
+        self.assertNotEqual(john, john_missing_alice)
 
         john_without_alice = SampleEntityTwo(self.cfg)
-        self.assertNotEquals(john, john_without_alice)
+        self.assertNotEqual(john, john_without_alice)
 
         # Testing OneToOne nested objects
 
         mary = SampleEntityThree(self.cfg, one_to_one=john)
         mary_clone = SampleEntityThree(
             self.cfg, one_to_one=john_clone)
-        self.assertEquals(mary, mary_clone)
+        self.assertEqual(mary, mary_clone)
 
         mary_different = SampleEntityThree(
             self.cfg, one_to_one=john_different_order)
-        self.assertNotEquals(mary, mary_different)
+        self.assertNotEqual(mary, mary_different)
 
         mary_none_john = SampleEntityThree(self.cfg, one_to_one=None)
         mary_none_john.to_json_dict()
-        self.assertNotEquals(mary, mary_none_john)
+        self.assertNotEqual(mary, mary_none_john)
 
         # Testing List nested objects
         # noqa pylint:disable=attribute-defined-outside-init
         mary.list = [alice]
-        self.assertNotEquals(mary, mary_clone)
+        self.assertNotEqual(mary, mary_clone)
         # noqa pylint:disable=attribute-defined-outside-init
         mary_clone.list = [alice_clone]
-        self.assertEquals(mary, mary_clone)
+        self.assertEqual(mary, mary_clone)
 
     def test_repr_v1(self):
         """Test method ``nailgun.entity_mixins.Entity.__repr__``.
