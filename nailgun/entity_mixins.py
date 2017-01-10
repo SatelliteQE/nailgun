@@ -83,6 +83,7 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
     def raise_task_timeout():  # pragma: no cover
         """Raise a KeyboardInterrupt exception in the main thread."""
         thread.interrupt_main()
+
     timer = threading.Timer(timeout, raise_task_timeout)
 
     # Poll until the task finishes. The timeout prevents an infinite loop.
@@ -551,16 +552,33 @@ class Entity(object):
         json_dct = {}
         for field_name, field in fields.items():
             if field_name in values:
-                if isinstance(field, OneToOneField):
-                    json_dct[field_name] = values[field_name].to_json_dict()
+                value = values[field_name]
+                if value is None:
+                    json_dct[field_name] = None
+                    # This conditions is needed because some times you get
+                    # None on an OneToOneField what lead to an error
+                    # on bellow condition, e.g., calling value.to_json_dict()
+                    # when value is None
+                elif isinstance(field, OneToOneField):
+                    json_dct[field_name] = value.to_json_dict()
                 elif isinstance(field, OneToManyField):
                     json_dct[field_name] = [
-                        entity.to_json_dict() for entity in values[field_name]
+                        entity.to_json_dict() for entity in value
                     ]
                 else:
-                    json_dct[field_name] = to_json_serializable(
-                        values[field_name])
+                    json_dct[field_name] = to_json_serializable(value)
         return json_dct
+
+    def __eq__(self, other):
+        """Compare two entities based on their properties. Even nested
+        objects are considered for equality
+
+        :param other: entity to compare self to
+        :return: boolean indicating if entities are equal or not
+        """
+        if other is None:
+            return False
+        return self.to_json_dict() == other.to_json_dict()
 
 
 class EntityDeleteMixin(object):
