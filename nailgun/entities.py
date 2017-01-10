@@ -21,8 +21,13 @@ makes use of a work-around notes so in its docstring.
 workings of entity classes.
 
 """
+import random
 from datetime import datetime
+from sys import version_info
+
 from fauxfactory import gen_alphanumeric
+from packaging.version import Version
+
 from nailgun import client, entity_fields
 from nailgun.entity_mixins import (
     Entity,
@@ -33,11 +38,9 @@ from nailgun.entity_mixins import (
     EntityUpdateMixin,
     MissingValueError,
     _poll_task,
+    to_json_serializable as to_json
 )
-from packaging.version import Version
-import random
 
-from sys import version_info
 if version_info.major == 2:  # pragma: no cover
     from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
 else:  # pragma: no cover
@@ -88,7 +91,7 @@ class APIResponseError(Exception):
     """Indicates an error if response returns unexpected result."""
 
 
-def _handle_response(response, server_config, synchronous=False):
+def _handle_response(response, server_config, synchronous=False, timeout=None):
     """Handle a server's response in a typical fashion.
 
     Do the following:
@@ -105,11 +108,14 @@ def _handle_response(response, server_config, synchronous=False):
         :mod:`nailgun.client` or the requests library.
     :param server_config: A `nailgun.config.ServerConfig` object.
     :param synchronous: Should this function poll the server?
+    :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
 
     """
     response.raise_for_status()
     if synchronous is True and response.status_code == ACCEPTED:
-        return ForemanTask(server_config, id=response.json()['id']).poll()
+        return ForemanTask(
+            server_config, id=response.json()['id']).poll(timeout=timeout)
     if response.status_code == NO_CONTENT:
         return
     if 'application/json' in response.headers.get('content-type', '').lower():
@@ -190,6 +196,18 @@ def _get_version(server_config):
     return getattr(server_config, 'version', Version('1!0'))
 
 
+def to_json_serializable(obj):
+    """Just an alias to entity_mixins.to_json_seriazable so this module can
+    be used as a facade
+
+    :param obj: entity or any json serializable object
+
+    :return: serializable object
+
+    """
+    return to_json(obj)
+
+
 class ActivationKey(
         Entity,
         EntityCreateMixin,
@@ -206,13 +224,17 @@ class ActivationKey(
             'description': entity_fields.StringField(),
             'environment': entity_fields.OneToOneField(LifecycleEnvironment),
             'host_collection': entity_fields.OneToManyField(HostCollection),
-            'max_content_hosts': entity_fields.IntegerField(),
-            'name': entity_fields.StringField(required=True),
+            'max_hosts': entity_fields.IntegerField(),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
             ),
-            'unlimited_content_hosts': entity_fields.BooleanField(),
+            'unlimited_hosts': entity_fields.BooleanField(),
         }
         self._meta = {
             'api_path': 'katello/api/v2/activation_keys',
