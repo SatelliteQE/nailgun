@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 """Tests for :mod:`nailgun.entities`."""
-from datetime import datetime
+import json
+from datetime import datetime, date
 from fauxfactory import gen_integer, gen_string
 from nailgun import client, config, entities
 from nailgun.entity_mixins import (
@@ -27,6 +28,14 @@ else:
 # pylint:disable=too-many-lines
 # The size of this file is a direct reflection of the size of module
 # `nailgun.entities` and the Satellite API.
+
+
+def make_entity(cls, **kwargs):
+    """Helper function to create entity with dummy ServerConfig"""
+    cfg = config.ServerConfig(
+        url='https://foo.bar', verify=False,
+        auth=('foo', 'bar'))
+    return cls(cfg, **kwargs)
 
 
 def _get_required_field_names(entity):
@@ -2025,3 +2034,70 @@ class VersionTestCase(TestCase):
         """
         with self.assertRaises(DeprecationWarning):
             entities.SystemPackage(self.cfg_620)
+
+
+class JsonSerializableTestCase(TestCase):
+    """Test regarding Json serializable on different object"""
+
+    def test_regular_objects(self):
+        """Checking regular objects transformation"""
+        lst = [[1, 0.3], {'name': 'foo'}]
+        self.assertEqual(lst, entities.to_json_serializable(lst))
+
+    def test_nested_entities(self):
+        """Check nested entities serialization"""
+        env_kwargs = {'id': 1, 'name': 'env'}
+        env = make_entity(entities.Environment, **env_kwargs)
+
+        location_kwargs = {'name': 'loc'}
+        locations = [make_entity(entities.Location, **location_kwargs)]
+
+        hostgroup_kwargs = {'id': 2, 'name': 'hgroup'}
+        hostgroup = make_entity(
+            entities.HostGroup,
+            location=locations,
+            **hostgroup_kwargs)
+
+        hostgroup_kwargs['location'] = [location_kwargs]
+
+        combinations = [
+            {'environment_id': 3, 'hostgroup_id': 4},
+            make_entity(entities.TemplateCombination,
+                        hostgroup=hostgroup,
+                        environment=env)
+        ]
+
+        expected_combinations = [
+            {'environment_id': 3, 'hostgroup_id': 4},
+            {'environment': env_kwargs, 'hostgroup': hostgroup_kwargs}
+        ]
+
+        cfg_kwargs = {'id': 5, 'snippet': False, 'template': 'cat'}
+        cfg_template = make_entity(
+            entities.ConfigTemplate,
+            template_combinations=combinations,
+            **cfg_kwargs)
+
+        cfg_kwargs['template_combinations'] = expected_combinations
+        self.assertDictEqual(cfg_kwargs,
+                             entities.to_json_serializable(cfg_template))
+
+    def test_date_field(self):
+        """Check date field serialization"""
+
+        self.assertEqual(
+            '2016-09-20',
+            entities.to_json_serializable(date(2016, 9, 20))
+        )
+
+    def test_boolean_datetime_float(self):
+        """Check serialization for boolean, datetime and float fields"""
+        kwargs = {
+            'pending': True,
+            'progress': 0.25,
+            'started_at': datetime(2016, 11, 20, 1, 2, 3)
+        }
+        task = make_entity(
+            entities.ForemanTask, **kwargs)
+        kwargs['started_at'] = '2016-11-20 01:02:03'
+        self.assertDictEqual(kwargs, entities.to_json_serializable(task))
