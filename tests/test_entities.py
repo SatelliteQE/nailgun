@@ -950,11 +950,8 @@ class ReadTestCase(TestCase):
             ),
             (
                 entities.Host(self.cfg),
-                {'parameters': None, 'puppetclasses': None},
-                {
-                    'host_parameters_attributes': None,
-                    'puppet_class': None,
-                },
+                {'parameters': None},
+                {'host_parameters_attributes': None},
             ),
             (
                 entities.System(self.cfg_610),
