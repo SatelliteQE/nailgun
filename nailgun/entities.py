@@ -2359,7 +2359,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
             'provision_method': entity_fields.StringField(),
             'ptable': entity_fields.OneToOneField(PartitionTable),
             'puppet_ca_proxy': entity_fields.OneToOneField(SmartProxy),
-            'puppet_class': entity_fields.OneToManyField(PuppetClass),
+            'puppetclass': entity_fields.OneToManyField(PuppetClass),
             'puppet_proxy': entity_fields.OneToOneField(SmartProxy),
             'realm': entity_fields.OneToOneField(Realm),
             'root_pass': entity_fields.StringField(length=(8, 30)),
@@ -2550,7 +2550,6 @@ class Host(  # pylint:disable=too-many-instance-attributes
             ignore.add('content_facet_attributes')
         ignore.add('root_pass')
         attrs['host_parameters_attributes'] = attrs.pop('parameters')
-        attrs['puppet_class'] = attrs.pop('puppetclasses')
         return super(Host, self).read(entity, attrs, ignore)
 
     @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
