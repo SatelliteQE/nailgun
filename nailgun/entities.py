@@ -2275,7 +2275,7 @@ class HostGroup(
             for attr in ('content_source_id',
                          'content_view_id',
                          'lifecycle_environment_id'):
-                attrs[attr] = attrs2[attr]
+                attrs[attr] = attrs2.get(attr)
         return super(HostGroup, self).read(entity, attrs, ignore)
 
     @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
