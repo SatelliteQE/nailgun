@@ -2541,16 +2541,36 @@ class Host(  # pylint:disable=too-many-instance-attributes
 
         `content_facet_attributes` are returned only in case any of facet
         attributes were actually set.
+
+        Also add image to the responce if needed, as
+        :meth:`nailgun.entity_mixins.EntityReadMixin.read` can't initialize
+        image.
         """
         if attrs is None:
             attrs = self.read_json()
         if ignore is None:
             ignore = set()
+        attrs['host_parameters_attributes'] = attrs.pop('parameters')
         if 'content_facet_attributes' not in attrs:
             ignore.add('content_facet_attributes')
         ignore.add('root_pass')
-        attrs['host_parameters_attributes'] = attrs.pop('parameters')
-        return super(Host, self).read(entity, attrs, ignore)
+        # Image entity requires compute_resource_id to initialize as it is
+        # part of its path. The thing is that entity_mixins.read() initializes
+        # entities by id only.
+        # Workaround is to add image to ignore, call entity_mixins.read()
+        # and then add 'manually' initialized image to the result.
+        # If image_id is None set image to None as it is done by default.
+        ignore.add('image')
+        result = super(Host, self).read(entity, attrs, ignore)
+        if attrs.get('image_id'):
+            result.image = Image(
+                server_config=self._server_config,
+                id=attrs.get('image_id'),
+                compute_resource=attrs.get('compute_resource_id'),
+            )
+        else:
+            result.image = None
+        return result
 
     @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
@@ -2639,7 +2659,8 @@ class Image(
         super(Image, self).__init__(server_config, **kwargs)
         self._meta = {
             'api_path': '{0}/images'.format(
-                self.compute_resource.path('self')), # pylint:disable=no-member
+                # pylint:disable=no-member
+                self.compute_resource.path('self')),
             'server_modes': ('sat'),
         }
 
@@ -2677,11 +2698,7 @@ class Image(
         if ignore is None:
             ignore = set()
         ignore.add('compute_resource')
-        return super(Image, self).read(
-            entity,
-            attrs,
-            ignore
-        )
+        return super(Image, self).read(entity, attrs, ignore)
 
 
 class Interface(Entity):

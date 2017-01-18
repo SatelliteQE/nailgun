@@ -868,6 +868,7 @@ class ReadTestCase(TestCase):
                     content_view_filter=2,
                 ),
                 entities.ContentViewPuppetModule(self.cfg, content_view=2),
+                entities.Image(self.cfg, compute_resource=1),
                 entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
                 entities.OverrideValue(self.cfg, smart_class_parameter=2),
                 entities.OverrideValue(self.cfg, smart_variable=2),
@@ -1078,6 +1079,37 @@ class ReadTestCase(TestCase):
                 self.assertTrue(hasattr(product, 'sync_plan'))
                 # pylint:disable=no-member
                 self.assertEqual(product.sync_plan.id, sync_plan.id)
+
+    def test_host_with_image(self):
+        """Call :meth:`nailgun.entities.Host.read` for a host with image
+        assigned.
+
+        Ensure that the image entity was correctly fetched.
+        """
+        image = entities.Image(self.cfg, id=1, compute_resource=1)
+        host = entities.Host(self.cfg, id=1)
+        with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
+            with mock.patch.object(EntityReadMixin, 'read') as read:
+                # Image was set
+                read_json.return_value = {
+                    'image_id': 1,
+                    'compute_resource_id': 1,
+                    'parameters': {},
+                }
+                read.return_value = host
+                host = host.read()
+                self.assertTrue(hasattr(host, 'image'))
+                # pylint:disable=no-member
+                self.assertEqual(host.image.id, image.id)
+                # Image wasn't set
+                read_json.return_value = {
+                    'parameters': {},
+                }
+                read.return_value = host
+                host = host.read()
+                self.assertTrue(hasattr(host, 'image'))
+                # pylint:disable=no-member
+                self.assertIsNone(host.image)
 
 
 class SearchRawTestCase(TestCase):
