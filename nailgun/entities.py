@@ -4568,7 +4568,12 @@ class Subscription(
             self._org_path('delete_manifest', kwargs['data']),
             **kwargs
         )
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(
+            response,
+            self._server_config,
+            synchronous,
+            timeout=900,
+        )
 
     def manifest_history(self, synchronous=True, **kwargs):
         """Obtain manifest history for subscriptions.
@@ -4608,7 +4613,12 @@ class Subscription(
             self._org_path('refresh_manifest', kwargs['data']),
             **kwargs
         )
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(
+            response,
+            self._server_config,
+            synchronous,
+            timeout=900,
+        )
 
     def upload(self, synchronous=True, **kwargs):
         """Upload a subscription manifest.
