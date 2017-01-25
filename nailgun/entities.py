@@ -4735,18 +4735,6 @@ class SmartVariable(
         }
         super(SmartVariable, self).__init__(server_config, **kwargs)
 
-    def read(self, entity=None, attrs=None, ignore=None):
-        """Fetch as many attributes as possible for this entity.
-
-        Do not read the ``variable_type`` attribute. For more information, see
-        `Bugzilla #1375881
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1375881>`_.
-        """
-        if ignore is None:
-            ignore = set()
-        ignore.add('variable_type')
-        return super(SmartVariable, self).read(entity, attrs, ignore)
-
     def create_payload(self):
         """Wrap submitted data within an extra dict."""
         return {u'smart_variable': super(SmartVariable, self).create_payload()}

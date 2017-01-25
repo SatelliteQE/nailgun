@@ -994,7 +994,6 @@ class ReadTestCase(TestCase):
         for entity, ignored_attrs in (
                 (entities.Errata,
                  {'content_view_version', 'environment', 'repository'}),
-                (entities.SmartVariable, {'variable_type'}),
                 (entities.Subnet, {'discovery'}),
                 (entities.User, {'password'}),
         ):
