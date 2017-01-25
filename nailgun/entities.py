@@ -5346,13 +5346,16 @@ class TemplateCombination(Entity, EntityDeleteMixin, EntityReadMixin):
         super(TemplateCombination, self).__init__(server_config, **kwargs)
 
 
-class TemplateKind(Entity, EntityReadMixin):
+class TemplateKind(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of a Template Kind entity.
 
     Unusually, the ``/api/v2/template_kinds/:id`` path is totally unsupported.
 
     """
     def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(),
+        }
         self._meta = {
             'api_path': 'api/v2/template_kinds',
             'num_created_by_default': 8,
