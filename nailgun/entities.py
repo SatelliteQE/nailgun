@@ -2043,6 +2043,7 @@ class HostCollection(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Host Collection entity."""
 
