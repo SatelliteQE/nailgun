@@ -21,7 +21,6 @@ makes use of a work-around notes so in its docstring.
 workings of entity classes.
 
 """
-import random
 from datetime import datetime
 from sys import version_info
 
@@ -964,13 +963,7 @@ class ConfigTemplate(
         super(ConfigTemplate, self).create_missing()
         if (getattr(self, 'snippet', None) is False and
                 not hasattr(self, 'template_kind')):
-            # A server is pre-populated with "num_created_by_default" template
-            # kinds. We use one of those instead of creating a new one.
-            self.template_kind = TemplateKind(self._server_config)
-            self.template_kind.id = random.randint(  # pylint:disable=C0103
-                # pylint:disable=protected-access
-                1, self.template_kind._meta['num_created_by_default']
-            )
+            self.template_kind = TemplateKind(self._server_config, id=1)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -984,17 +977,6 @@ class ConfigTemplate(
             payload['template_combinations_attributes'] = payload.pop(
                 'template_combinations')
         return {u'config_template': payload}
-
-    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
-    def update(self, fields=None):
-        """Fetch a complete set of attributes for this entity.
-
-        For more information, see `Bugzilla #1234973
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1234973>`_.
-
-        """
-        self.update_json(fields)
-        return self.read()
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
@@ -1104,13 +1086,7 @@ class ProvisioningTemplate(
         super(ProvisioningTemplate, self).create_missing()
         if (getattr(self, 'snippet', None) is False and
                 not hasattr(self, 'template_kind')):
-            # A server is pre-populated with "num_created_by_default" template
-            # kinds. We use one of those instead of creating a new one.
-            self.template_kind = TemplateKind(self._server_config)
-            self.template_kind.id = random.randint(  # pylint:disable=C0103
-                # pylint:disable=protected-access
-                1, self.template_kind._meta['num_created_by_default']
-            )
+            self.template_kind = TemplateKind(self._server_config, id=1)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -1124,17 +1100,6 @@ class ProvisioningTemplate(
             payload['template_combinations_attributes'] = payload.pop(
                 'template_combinations')
         return {u'provisioning_template': payload}
-
-    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
-    def update(self, fields=None):
-        """Fetch a complete set of attributes for this entity.
-
-        For more information, see `Bugzilla #1234973
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1234973>`_.
-
-        """
-        self.update_json(fields)
-        return self.read()
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
@@ -5500,7 +5465,7 @@ class TemplateCombination(Entity, EntityDeleteMixin, EntityReadMixin):
         super(TemplateCombination, self).__init__(server_config, **kwargs)
 
 
-class TemplateKind(Entity, EntityReadMixin):
+class TemplateKind(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of a Template Kind entity.
 
     Unusually, the ``/api/v2/template_kinds/:id`` path is totally unsupported.

@@ -1198,8 +1198,6 @@ class UpdateTestCase(TestCase):
             entities.Architecture(self.cfg),
             entities.ComputeProfile(self.cfg),
             entities.ConfigGroup(self.cfg),
-            entities.ConfigTemplate(self.cfg),
-            entities.ProvisioningTemplate(self.cfg),
             entities.DiscoveryRule(self.cfg),
             entities.Domain(self.cfg),
             entities.Environment(self.cfg),
