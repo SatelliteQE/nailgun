@@ -525,7 +525,8 @@ class AbstractComputeResource(
             'location': entity_fields.OneToManyField(Location),
             'name': entity_fields.StringField(
                 required=True,
-                str_type=('alphanumeric', 'cjk'),  # cannot contain whitespace
+                str_type='alphanumeric',  # cannot contain whitespace
+                length=(6, 12),
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'provider': entity_fields.StringField(
