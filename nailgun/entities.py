@@ -2311,23 +2311,6 @@ class HostGroup(
         response = client.get(self.path('smart_class_parameters'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
-    def list_scparams(self, synchronous=True, **kwargs):
-        """List all smart class parameters
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('smart_class_parameters'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
-
     def list_smart_variables(self, synchronous=True, **kwargs):
         """List all smart variables
 
@@ -4597,6 +4580,7 @@ class SmartVariable(
             'validator_type': entity_fields.StringField(),
             'variable': entity_fields.StringField(required=True),
             'variable_type': entity_fields.StringField(),
+            'parameter_type': entity_fields.StringField(),
             'hidden_value': entity_fields.BooleanField(),
             'hidden_value?': entity_fields.BooleanField(),
             'merge_overrides': entity_fields.BooleanField(),
