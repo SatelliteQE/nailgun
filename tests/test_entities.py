@@ -1372,11 +1372,11 @@ class GenericTestCase(TestCase):
             (entities.ActivationKey(**generic).add_subscriptions, 'put'),
             (entities.ActivationKey(**generic).content_override, 'put'),
             (entities.ActivationKey(**generic).remove_host_collection, 'put'),
-            (entities.ConfigTemplate(**generic).build_pxe_default, 'get'),
+            (entities.ConfigTemplate(**generic).build_pxe_default, 'post'),
             (entities.ConfigTemplate(**generic).clone, 'post'),
             (
                 entities.ProvisioningTemplate(**generic).build_pxe_default,
-                'get'
+                'post'
             ),
             (entities.ProvisioningTemplate(**generic).clone, 'post'),
             (entities.ContentView(**generic).available_puppet_modules, 'get'),

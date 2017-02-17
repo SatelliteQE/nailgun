@@ -1022,7 +1022,7 @@ class ConfigTemplate(
         """
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('build_pxe_default'), **kwargs)
+        response = client.post(self.path('build_pxe_default'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
     def clone(self, synchronous=True, **kwargs):
@@ -1145,7 +1145,7 @@ class ProvisioningTemplate(
         """
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('build_pxe_default'), **kwargs)
+        response = client.post(self.path('build_pxe_default'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
     def clone(self, synchronous=True, **kwargs):
