@@ -21,7 +21,6 @@ makes use of a work-around notes so in its docstring.
 workings of entity classes.
 
 """
-import random
 from datetime import datetime
 from sys import version_info
 
@@ -941,13 +940,7 @@ class ConfigTemplate(
         super(ConfigTemplate, self).create_missing()
         if (getattr(self, 'snippet', None) is False and
                 not hasattr(self, 'template_kind')):
-            # A server is pre-populated with "num_created_by_default" template
-            # kinds. We use one of those instead of creating a new one.
-            self.template_kind = TemplateKind(self._server_config)
-            self.template_kind.id = random.randint(  # pylint:disable=C0103
-                # pylint:disable=protected-access
-                1, self.template_kind._meta['num_created_by_default']
-            )
+            self.template_kind = TemplateKind(self._server_config, id=1)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -961,17 +954,6 @@ class ConfigTemplate(
             payload['template_combinations_attributes'] = payload.pop(
                 'template_combinations')
         return {u'config_template': payload}
-
-    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
-    def update(self, fields=None):
-        """Fetch a complete set of attributes for this entity.
-
-        For more information, see `Bugzilla #1234973
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1234973>`_.
-
-        """
-        self.update_json(fields)
-        return self.read()
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
@@ -1017,7 +999,130 @@ class ConfigTemplate(
         """
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('build_pxe_default'), **kwargs)
+        response = client.post(self.path('build_pxe_default'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def clone(self, synchronous=True, **kwargs):
+        """Helper to clone an existing provision template
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('clone'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+
+class ProvisioningTemplate(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
+    """A representation of a Provisioning Template entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'audit_comment': entity_fields.StringField(),
+            'locked': entity_fields.BooleanField(),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
+            'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
+            'organization': entity_fields.OneToManyField(Organization),
+            'location': entity_fields.OneToManyField(Location),
+            'snippet': entity_fields.BooleanField(required=True),
+            'template': entity_fields.StringField(required=True),
+            'template_combinations': entity_fields.ListField(),
+            'template_kind': entity_fields.OneToOneField(TemplateKind),
+        }
+        self._meta = {
+            'api_path': 'api/v2/provisioning_templates',
+            'server_modes': ('sat'),
+        }
+        super(ProvisioningTemplate, self).__init__(server_config, **kwargs)
+
+    def create_missing(self):
+        """Customize the process of auto-generating instance attributes.
+
+        Populate ``template_kind`` if:
+
+        * this template is not a snippet, and
+        * the ``template_kind`` instance attribute is unset.
+
+        """
+        super(ProvisioningTemplate, self).create_missing()
+        if (getattr(self, 'snippet', None) is False and
+                not hasattr(self, 'template_kind')):
+            self.template_kind = TemplateKind(self._server_config, id=1)
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict.
+
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
+
+        """
+        payload = super(ProvisioningTemplate, self).create_payload()
+        if 'template_combinations' in payload:
+            payload['template_combinations_attributes'] = payload.pop(
+                'template_combinations')
+        return {u'provisioning_template': payload}
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        payload = super(ProvisioningTemplate, self).update_payload()
+        if 'template_combinations' in payload:
+            payload['template_combinations_attributes'] = payload.pop(
+                'template_combinations')
+        return {u'provisioning_template': payload}
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        build_pxe_default
+            /provisioning_templates/build_pxe_default
+        clone
+            /provisioning_templates/clone
+        revision
+            /provisioning_templates/revision
+
+        ``super`` is called otherwise.
+
+        """
+        if which in ('build_pxe_default', 'clone', 'revision'):
+            prefix = 'self' if which == 'clone' else 'base'
+            return '{0}/{1}'.format(
+                super(ProvisioningTemplate, self).path(prefix),
+                which
+            )
+        return super(ProvisioningTemplate, self).path(which)
+
+    def build_pxe_default(self, synchronous=True, **kwargs):
+        """Helper to build pxe default template.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('build_pxe_default'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
     def clone(self, synchronous=True, **kwargs):
@@ -2924,7 +3029,8 @@ class Location(
         self._fields = {
             'compute_resource': entity_fields.OneToManyField(
                 AbstractComputeResource),
-            'config_template': entity_fields.OneToManyField(ConfigTemplate),
+            'config_template': entity_fields.OneToManyField(
+                ProvisioningTemplate),
             'description': entity_fields.StringField(),
             'domain': entity_fields.OneToManyField(Domain),
             'environment': entity_fields.OneToManyField(Environment),
@@ -2936,6 +3042,8 @@ class Location(
                 length=(6, 12),
             ),
             'organization': entity_fields.OneToManyField(Organization),
+            'provisioning_template': entity_fields.OneToManyField(
+                ProvisioningTemplate),
             'realm': entity_fields.OneToManyField(Realm),
             'smart_proxy': entity_fields.OneToManyField(SmartProxy),
             'subnet': entity_fields.OneToManyField(Subnet),
@@ -3138,7 +3246,10 @@ class OperatingSystem(
                 length=(6, 12),
             ),
             'ptable': entity_fields.OneToManyField(PartitionTable),
-            'config_template': entity_fields.OneToManyField(ConfigTemplate),
+            'config_template': entity_fields.OneToManyField(
+                ProvisioningTemplate),
+            'provisioning_template': entity_fields.OneToManyField(
+                ProvisioningTemplate),
             'release_name': entity_fields.StringField(),
             'password_hash': entity_fields.StringField(
                 choices=('MD5', 'SHA256', 'SHA512'),
@@ -3252,7 +3363,8 @@ class Organization(
             'compute_resource': entity_fields.OneToManyField(
                 AbstractComputeResource
             ),
-            'config_template': entity_fields.OneToManyField(ConfigTemplate),
+            'config_template': entity_fields.OneToManyField(
+                ProvisioningTemplate),
             'description': entity_fields.StringField(),
             'domain': entity_fields.OneToManyField(Domain),
             'environment': entity_fields.OneToManyField(Environment),
@@ -3264,6 +3376,8 @@ class Organization(
                 str_type='alpha',
                 length=(6, 12),
             ),
+            'provisioning_template': entity_fields.OneToManyField(
+                ProvisioningTemplate),
             'realm': entity_fields.OneToManyField(Realm),
             'smart_proxy': entity_fields.OneToManyField(SmartProxy),
             'subnet': entity_fields.OneToManyField(Subnet),
@@ -3389,10 +3503,13 @@ class OSDefaultTemplate(Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'config_template': entity_fields.OneToOneField(ConfigTemplate),
+            'config_template': entity_fields.OneToOneField(
+                ProvisioningTemplate),
             'operatingsystem': entity_fields.OneToOneField(
                 OperatingSystem
             ),
+            'provisioning_template': entity_fields.OneToOneField(
+                ProvisioningTemplate),
             'template_kind': entity_fields.OneToOneField(TemplateKind),
         }
         self._meta = {
@@ -5106,11 +5223,13 @@ class TemplateCombination(Entity, EntityDeleteMixin, EntityReadMixin):
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'config_template': entity_fields.OneToOneField(
-                ConfigTemplate,
-                required=True,
-            ),
+                ProvisioningTemplate),
             'environment': entity_fields.OneToOneField(Environment),
             'hostgroup': entity_fields.OneToOneField(HostGroup),
+            'provisioning_template': entity_fields.OneToOneField(
+                ProvisioningTemplate,
+                required=True,
+            ),
         }
         self._meta = {
             'api_path': 'api/v2/template_combinations',
