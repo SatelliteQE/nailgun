@@ -103,6 +103,7 @@ class InitTestCase(TestCase):
                 entities.ComputeProfile,
                 entities.ConfigGroup,
                 entities.ConfigTemplate,
+                entities.ProvisioningTemplate,
                 entities.ContentUpload,
                 entities.ContentView,
                 entities.ContentViewVersion,
@@ -236,6 +237,7 @@ class PathTestCase(TestCase):
                 (entities.AbstractDockerContainer, '/containers'),
                 (entities.ActivationKey, '/activation_keys'),
                 (entities.ConfigTemplate, '/config_templates'),
+                (entities.ProvisioningTemplate, '/provisioning_templates'),
                 (entities.ContentView, '/content_views'),
                 (entities.ContentViewVersion, '/content_view_versions'),
                 (entities.DiscoveredHost, '/discovered_hosts'),
@@ -282,6 +284,7 @@ class PathTestCase(TestCase):
                 (entities.ActivationKey, 'remove_subscriptions'),
                 (entities.ActivationKey, 'subscriptions'),
                 (entities.ConfigTemplate, 'clone'),
+                (entities.ProvisioningTemplate, 'clone'),
                 (entities.ContentView, 'available_puppet_module_names'),
                 (entities.ContentView, 'content_view_puppet_modules'),
                 (entities.ContentView, 'content_view_versions'),
@@ -325,6 +328,8 @@ class PathTestCase(TestCase):
         for entity, which in (
                 (entities.ConfigTemplate, 'build_pxe_default'),
                 (entities.ConfigTemplate, 'revision'),
+                (entities.ProvisioningTemplate, 'build_pxe_default'),
+                (entities.ProvisioningTemplate, 'revision'),
                 (entities.ContentViewVersion, 'incremental_update'),
                 (entities.DiscoveredHost, 'facts'),
                 (entities.Errata, 'compare'),
@@ -544,6 +549,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.Architecture,
                 entities.ConfigGroup,
                 entities.ConfigTemplate,
+                entities.ProvisioningTemplate,
                 entities.DiscoveredHost,
                 entities.DiscoveryRule,
                 entities.Domain,
@@ -683,6 +689,46 @@ class CreateMissingTestCase(TestCase):
         """Test ``ConfigTemplate(snippet=False, template_kind=…)``."""
         tk_id = gen_integer()
         entity = entities.ConfigTemplate(
+            self.cfg,
+            snippet=False,
+            template_kind=tk_id,
+        )
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(
+            _get_required_field_names(entity).union(['template_kind']),
+            set(entity.get_values().keys()),
+        )
+        # pylint:disable=no-member
+        self.assertEqual(entity.template_kind.id, tk_id)
+
+    def test_provisioning_template_v1(self):
+        """Test ``ProvisioningTemplate(snippet=True)``."""
+        entity = entities.ProvisioningTemplate(self.cfg, snippet=True)
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(
+            _get_required_field_names(entity),
+            set(entity.get_values().keys()),
+        )
+
+    def test_provisioning_template_v2(self):
+        """Test ``ProvisioningTemplate(snippet=False)``."""
+        entity = entities.ProvisioningTemplate(self.cfg, snippet=False)
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(
+            _get_required_field_names(entity).union(['template_kind']),
+            set(entity.get_values().keys()),
+        )
+
+    def test_provisioning_template_v3(self):
+        """Test ``ProvisioningTemplate(snippet=False, template_kind=…)``."""
+        tk_id = gen_integer()
+        entity = entities.ProvisioningTemplate(
             self.cfg,
             snippet=False,
             template_kind=tk_id,
@@ -1242,7 +1288,6 @@ class UpdateTestCase(TestCase):
             entities.Architecture(self.cfg),
             entities.ComputeProfile(self.cfg),
             entities.ConfigGroup(self.cfg),
-            entities.ConfigTemplate(self.cfg),
             entities.DiscoveryRule(self.cfg),
             entities.Domain(self.cfg),
             entities.Environment(self.cfg),
@@ -1299,6 +1344,7 @@ class UpdatePayloadTestCase(TestCase):
         entities_payloads = [
             (entities.AbstractComputeResource, {'compute_resource': {}}),
             (entities.ConfigTemplate, {'config_template': {}}),
+            (entities.ProvisioningTemplate, {'provisioning_template': {}}),
             (entities.DiscoveredHost, {'discovered_host': {}}),
             (entities.DiscoveryRule, {'discovery_rule': {}}),
             (entities.Domain, {'domain': {}}),
@@ -1416,8 +1462,13 @@ class GenericTestCase(TestCase):
             (entities.ActivationKey(**generic).add_subscriptions, 'put'),
             (entities.ActivationKey(**generic).content_override, 'put'),
             (entities.ActivationKey(**generic).remove_host_collection, 'put'),
-            (entities.ConfigTemplate(**generic).build_pxe_default, 'get'),
+            (entities.ConfigTemplate(**generic).build_pxe_default, 'post'),
             (entities.ConfigTemplate(**generic).clone, 'post'),
+            (
+                entities.ProvisioningTemplate(**generic).build_pxe_default,
+                'post'
+            ),
+            (entities.ProvisioningTemplate(**generic).clone, 'post'),
             (entities.ContentView(**generic).available_puppet_modules, 'get'),
             (entities.ContentView(**generic).copy, 'post'),
             (entities.ContentView(**generic).publish, 'post'),
@@ -1613,6 +1664,53 @@ class ConfigTemplateTestCase(TestCase):
         # pylint: disable=no-member
         cfg_template.template_combinations.append(combination3)
         attrs = expected_dct[u'config_template']
+        attrs['template_combinations_attributes'].append(
+            {'environment_id': 3, 'hostgroup_id': 2}
+        )
+        self.assertEqual(expected_dct, cfg_template.update_payload())
+
+
+class ProvisioningTemplateTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.ProvisioningTemplate`."""
+
+    def test_creation_and_update(self):
+        """Check template combinations as json or entity is set on correct
+        attribute template_combinations_attributes ( check #333)
+        """
+        cfg = config.ServerConfig(url='foo')
+        env = entities.Environment(cfg, id=2, name='env')
+        hostgroup = entities.HostGroup(cfg, id=2, name='hgroup')
+        combination = entities.TemplateCombination(
+            cfg,
+            hostgroup=hostgroup,
+            environment=env)
+        template_combinations = [
+            {'hostgroup_id': 1, 'environment_id': 1},
+            combination]
+        cfg_template = entities.ProvisioningTemplate(
+            cfg, name='cfg',
+            snippet=False,
+            template='cat',
+            template_kind=8,
+            template_combinations=template_combinations)
+        expected_dct = {
+            u'provisioning_template': {
+                'name': 'cfg', 'snippet': False, 'template': 'cat',
+                'template_kind_id': 8, 'template_combinations_attributes': [
+                    {'environment_id': 1, 'hostgroup_id': 1},
+                    {'environment_id': 2, 'hostgroup_id': 2}]
+            }
+        }
+        self.assertEqual(expected_dct, cfg_template.create_payload())
+        # Testing update
+        env3 = entities.Environment(cfg, id=3, name='env3')
+        combination3 = entities.TemplateCombination(
+            cfg,
+            hostgroup=hostgroup,
+            environment=env3)
+        # pylint: disable=no-member
+        cfg_template.template_combinations.append(combination3)
+        attrs = expected_dct[u'provisioning_template']
         attrs['template_combinations_attributes'].append(
             {'environment_id': 3, 'hostgroup_id': 2}
         )
@@ -2510,7 +2608,7 @@ class JsonSerializableTestCase(TestCase):
 
         cfg_kwargs = {'id': 5, 'snippet': False, 'template': 'cat'}
         cfg_template = make_entity(
-            entities.ConfigTemplate,
+            entities.ProvisioningTemplate,
             template_combinations=combinations,
             **cfg_kwargs)
 
