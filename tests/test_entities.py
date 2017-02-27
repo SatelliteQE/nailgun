@@ -123,7 +123,6 @@ class InitTestCase(TestCase):
                 entities.HostCollectionErrata,
                 entities.HostCollectionPackage,
                 entities.HostGroup,
-                entities.Interface,
                 entities.LibvirtComputeResource,
                 entities.LifecycleEnvironment,
                 entities.Location,
@@ -175,6 +174,7 @@ class InitTestCase(TestCase):
             (entities.HostPackage, {'host': 1}),
             (entities.HostSubscription, {'host': 1}),
             (entities.Image, {'compute_resource': 1}),
+            (entities.Interface, {'host': 1}),
             (entities.OperatingSystemParameter, {'operatingsystem': 1}),
             (entities.OverrideValue, {'smart_class_parameter': 1}),
             (entities.OverrideValue, {'smart_variable': 1}),
@@ -869,6 +869,7 @@ class ReadTestCase(TestCase):
                 ),
                 entities.ContentViewPuppetModule(self.cfg, content_view=2),
                 entities.Image(self.cfg, compute_resource=1),
+                entities.Interface(self.cfg, host=2),
                 entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
                 entities.OverrideValue(self.cfg, smart_class_parameter=2),
                 entities.OverrideValue(self.cfg, smart_variable=2),
@@ -1043,6 +1044,66 @@ class ReadTestCase(TestCase):
                 # `call_args` is a two-tuple of (positional, keyword) args.
                 self.assertEqual(actual_ignore, read.call_args[0][2])
 
+    def test_interface_ignore_arg(self):
+        """Call :meth:`nailgun.entities.Interface.read`.
+
+        Assert that entity`s predefined values of ``ignore`` are always
+        correctly passed on.
+        """
+        for input_type, actual_ignore in (
+                ('interface', {'host', 'username', 'password', 'provider',
+                               'mode', 'bond_options', 'attached_to', 'tag',
+                               'attached_devices'}),
+                ('bmc', {'host', 'mode', 'bond_options', 'attached_to', 'tag',
+                         'attached_devices'}),
+                ('bond', {'host', 'username', 'password', 'provider',
+                          'attached_to', 'tag'}),
+                ('bridge', {'host', 'username', 'password', 'provider', 'mode',
+                            'bond_options', 'attached_to', 'tag'}),
+                ('virtual', {'host', 'username', 'password', 'provider',
+                             'mode', 'bond_options', 'attached_devices'}),
+        ):
+            with self.subTest(input_type):
+                with mock.patch.object(EntityReadMixin, 'read') as read:
+                    with mock.patch.object(
+                        EntityReadMixin,
+                        'read_json',
+                        return_value={'type': input_type},
+                    ):
+                        entities.Interface(
+                            self.cfg, id=2, host=2, type=input_type).read()
+                # `call_args` is a two-tuple of (positional, keyword) args.
+                self.assertEqual(actual_ignore, read.call_args[0][2])
+
+    def test_host_with_interface(self):
+        """Call :meth:`nailgun.entities.Host.read`.
+
+        Assert that host will have interfaces initialized and assigned
+        correctly.
+        """
+        with mock.patch.object(
+            EntityReadMixin,
+            'read',
+            return_value=entities.Host(self.cfg, id=2),
+        ):
+            with mock.patch.object(
+                EntityReadMixin,
+                'read_json',
+                return_value={
+                    'interfaces': [{'id': 2}, {'id': 3}],
+                    'parameters': None,
+                },
+            ):
+                host = entities.Host(self.cfg, id=2).read()
+        self.assertTrue(hasattr(host, 'interface'))
+        self.assertTrue(isinstance(host.interface, list))
+        for interface in host.interface:
+            self.assertTrue(isinstance(interface, entities.Interface))
+        self.assertEqual(
+            {interface.id for interface in host.interface},
+            {2, 3}
+        )
+
     def test_discovery_rule(self):
         """Call :meth:`nailgun.entities.DiscoveryRule.read`.
 
@@ -1110,6 +1171,36 @@ class ReadTestCase(TestCase):
                 self.assertTrue(hasattr(host, 'image'))
                 # pylint:disable=no-member
                 self.assertIsNone(host.image)
+
+
+class SearchNormalizeTestCase(TestCase):
+    """Tests for
+    :meth:`nailgun.entity_mixins.EntitySearchMixin.search_normalize`.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Set a server configuration at ``cls.cfg``."""
+        cls.cfg = config.ServerConfig('http://example.com')
+
+    def test_interface(self):
+        """Test :meth:`nailgun.entities.Interface.search_normalize`.
+
+        Assert that ``host_id`` was added with correct host's id to search
+        results.
+        """
+        results = [
+            {'id': 1, 'name': 'foo'},
+            {'id': 2, 'name': 'bar'},
+        ]
+        with mock.patch.object(
+            EntitySearchMixin,
+            'search_normalize',
+        ) as search_normalize:
+            entities.Interface(self.cfg, host=3).search_normalize(results)
+            for args in search_normalize.call_args[0][0]:
+                self.assertIn('host_id', args)
+                self.assertEqual(args['host_id'], 3)
 
 
 class SearchRawTestCase(TestCase):

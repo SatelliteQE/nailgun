@@ -2338,6 +2338,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
             'hostgroup': entity_fields.OneToOneField(HostGroup),
             'host_parameters_attributes': entity_fields.ListField(),
             'image': entity_fields.OneToOneField(Image),
+            'interface': entity_fields.OneToManyField(Interface),
             'ip': entity_fields.StringField(),
             'location': entity_fields.OneToOneField(Location, required=True),
             'mac': entity_fields.MACAddressField(),
@@ -2563,6 +2564,8 @@ class Host(  # pylint:disable=too-many-instance-attributes
         # and then add 'manually' initialized image to the result.
         # If image_id is None set image to None as it is done by default.
         ignore.add('image')
+        # host id is required for interface initialization
+        ignore.add('interface')
         result = super(Host, self).read(entity, attrs, ignore)
         if attrs.get('image_id'):
             result.image = Image(
@@ -2572,6 +2575,15 @@ class Host(  # pylint:disable=too-many-instance-attributes
             )
         else:
             result.image = None
+        if 'interfaces' in attrs and attrs['interfaces']:
+            result.interface = [
+                Interface(
+                    self._server_config,
+                    host=result.id,
+                    id=interface['id'],
+                )
+                for interface in attrs['interfaces']
+            ]
         return result
 
     @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
@@ -2703,31 +2715,117 @@ class Image(
         return super(Image, self).read(entity, attrs, ignore)
 
 
-class Interface(Entity):
-    """A representation of a Interface entity."""
+class Interface(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
+    """A representation of a Interface entity.
+
+    ``host`` must be passed in when this entity is instantiated.
+
+    :raises: ``TypeError`` if ``host`` is not passed in.
+    """
 
     def __init__(self, server_config=None, **kwargs):
+        _check_for_value('host', kwargs)
         self._fields = {
+            'attached_devices': entity_fields.DictField(),  # for 'bond' or ...
+            # ... 'bridge' type
+            'attached_to': entity_fields.StringField(),  # for 'virtual' type
+            'bond_options': entity_fields.StringField(),  # for 'bond' type
             'domain': entity_fields.OneToOneField(Domain),
             'host': entity_fields.OneToOneField(Host, required=True),
-            'type': entity_fields.StringField(required=True),
+            'identifier': entity_fields.StringField(),
             'ip': entity_fields.IPAddressField(required=True),
             'mac': entity_fields.MACAddressField(required=True),
+            'managed': entity_fields.BooleanField(),
+            'mode': entity_fields.StringField(  # for 'bond' type
+                choices=('802.3ad', 'active-backup', 'balance-alb',
+                         'balance-rr', 'balance-tlb', 'balance-xor',
+                         'broadcast')
+            ),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
             ),
-            'password': entity_fields.StringField(),
-            'provider': entity_fields.StringField(),
+            'password': entity_fields.StringField(),  # for 'bmc' type
+            'primary': entity_fields.BooleanField(),
+            'provider': entity_fields.StringField(),  # for 'bmc' type
+            'provision': entity_fields.BooleanField(),
             'subnet': entity_fields.OneToOneField(Subnet),
-            'username': entity_fields.StringField(),
-        }
-        self._meta = {
-            'api_path': 'api/v2/hosts/:host_id/interfaces',
-            'server_modes': ('sat'),
+            'tag': entity_fields.StringField(),  # for 'virtual' type
+            'type': entity_fields.StringField(
+                choices=('interface', 'bmc', 'bond', 'bridge'),
+                default='interface',
+                required=True),
+
+            'virtual': entity_fields.BooleanField(),
+            'username': entity_fields.StringField(),  # for 'bmc' type
         }
         super(Interface, self).__init__(server_config, **kwargs)
+        self._meta = {
+            # pylint:disable=no-member
+            'api_path': '{}/interfaces'.format(self.host.path()),
+            'server_modes': ('sat'),
+        }
+
+    def read(self, entity=None, attrs=None, ignore=None):
+        """Provide a default value for ``entity``.
+
+        By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
+        default value for ``entity`` like so::
+
+            entity = type(self)()
+
+        However, :class:`Interface` requires that a ``host`` must be provided,
+        so this technique will not work. Do this instead::
+
+            entity = type(self)(host=self.host)
+
+        In addition, some of interface fields are specific to its ``type`` and
+        are never returned for different ``type`` so ignoring all the redundant
+        fields.
+
+        """
+        # read() should not change the state of the object it's called on, but
+        # super() alters the attributes of any entity passed in. Creating a new
+        # object and passing it to super() lets this one avoid changing state.
+        if entity is None:
+            entity = type(self)(
+                self._server_config,
+                host=self.host,  # pylint:disable=no-member
+            )
+        if attrs is None:
+            attrs = self.read_json()
+        if ignore is None:
+            ignore = set()
+        ignore.add('host')
+        # type-specific fields
+        if attrs['type'] != 'bmc':
+            ignore.add('password')
+            ignore.add('provider')
+            ignore.add('username')
+        if attrs['type'] != 'bond':
+            ignore.add('mode')
+            ignore.add('bond_options')
+        if attrs['type'] != 'virtual':
+            ignore.add('attached_to')
+            ignore.add('tag')
+        if attrs['type'] != 'bridge' and attrs['type'] != 'bond':
+            ignore.add('attached_devices')
+        return super(Interface, self).read(entity, attrs, ignore)
+
+    def search_normalize(self, results):
+        """Append host id to search results to be able to initialize found
+        :class:`Interface` successfully
+        """
+        for interface in results:
+            interface[u'host_id'] = self.host.id  # pylint:disable=no-member
+        return super(Interface, self).search_normalize(results)
 
 
 class LifecycleEnvironment(
