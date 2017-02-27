@@ -957,7 +957,7 @@ class ConfigTemplate(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        payload = super(ConfigTemplate, self).update_payload()
+        payload = super(ConfigTemplate, self).update_payload(fields)
         if 'template_combinations' in payload:
             payload['template_combinations_attributes'] = payload.pop(
                 'template_combinations')
@@ -1080,7 +1080,7 @@ class ProvisioningTemplate(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        payload = super(ProvisioningTemplate, self).update_payload()
+        payload = super(ProvisioningTemplate, self).update_payload(fields)
         if 'template_combinations' in payload:
             payload['template_combinations_attributes'] = payload.pop(
                 'template_combinations')
