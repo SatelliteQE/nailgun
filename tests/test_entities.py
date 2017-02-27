@@ -1053,6 +1053,7 @@ class ReadTestCase(TestCase):
                 (entities.Errata,
                  {'content_view_version', 'environment', 'repository'}),
                 (entities.Subnet, {'discovery'}),
+                (entities.Subscription, {'organization'}),
                 (entities.User, {'password'}),
         ):
             with self.subTest(entity):
