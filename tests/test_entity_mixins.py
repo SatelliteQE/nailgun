@@ -436,10 +436,13 @@ class EntityTestCase(TestCase):
 
         """
         entity = SampleEntityTwo(self.cfg)
-        target = 'tests.test_entity_mixins.SampleEntityTwo({0})'.format(
-            repr(self.cfg)
-        )
+        target = 'tests.test_entity_mixins.SampleEntityTwo()'
         self.assertEqual(repr(entity), target)
+        # create default config if it does not exist
+        try:
+            config.ServerConfig.get()
+        except (KeyError, config.ConfigFileError):
+            self.cfg.save()
         import nailgun  # noqa pylint:disable=unused-variable
         import tests  # noqa pylint:disable=unused-variable
         # pylint:disable=eval-used
@@ -454,10 +457,15 @@ class EntityTestCase(TestCase):
         """
         entity = SampleEntityTwo(self.cfg, id=gen_integer())
         target = (
-            'tests.test_entity_mixins.SampleEntityTwo({0}, id={1})'
-            .format(repr(self.cfg), entity.id)  # pylint:disable=no-member
+            'tests.test_entity_mixins.SampleEntityTwo(id={0})'
+            .format(entity.id)  # pylint:disable=no-member
         )
         self.assertEqual(repr(entity), target)
+        # create default config if it does not exist
+        try:
+            config.ServerConfig.get()
+        except (KeyError, config.ConfigFileError):
+            self.cfg.save()
         import nailgun  # noqa pylint:disable=unused-variable
         import tests  # noqa pylint:disable=unused-variable
         # pylint:disable=eval-used
@@ -473,16 +481,20 @@ class EntityTestCase(TestCase):
         entity_id = gen_integer()
         target = (
             'tests.test_entity_mixins.SampleEntityTwo('
-            '{0}, '
-            'one_to_many=[tests.test_entity_mixins.SampleEntity({0}, id={1})]'
+            'one_to_many=[tests.test_entity_mixins.SampleEntity(id={0})]'
             ')'
-            .format(self.cfg, entity_id)
+            .format(entity_id)
         )
         entity = SampleEntityTwo(
             self.cfg,
             one_to_many=[SampleEntity(self.cfg, id=entity_id)]
         )
         self.assertEqual(repr(entity), target)
+        # create default config if it does not exist
+        try:
+            config.ServerConfig.get()
+        except (KeyError, config.ConfigFileError):
+            self.cfg.save()
         import nailgun  # noqa pylint:disable=unused-variable
         import tests  # noqa pylint:disable=unused-variable
         # pylint:disable=eval-used
