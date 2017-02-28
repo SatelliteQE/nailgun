@@ -512,12 +512,12 @@ class Entity(object):
         return attrs
 
     def __repr__(self):
-        return '{0}.{1}({2}{3})'.format(
+        # pylint: disable=duplicate-code
+        return u'{0}.{1}({2})'.format(
             self.__module__,
             type(self).__name__,
-            repr(self._server_config),
-            ''.join(
-                ', {0}={1}'.format(key, repr(value))
+            u', '.join(
+                u'{0}={1}'.format(key, repr(value))
                 for key, value
                 in self.get_values().items()
             )
