@@ -124,7 +124,6 @@ class InitTestCase(TestCase):
                 entities.HostCollectionErrata,
                 entities.HostCollectionPackage,
                 entities.HostGroup,
-                entities.Image,
                 entities.LibvirtComputeResource,
                 entities.LifecycleEnvironment,
                 entities.Location,
@@ -177,6 +176,7 @@ class InitTestCase(TestCase):
             (entities.HostPackage, {'host': 1}),
             (entities.HostSubscription, {'host': 1}),
             (entities.Interface, {'host': 1}),
+            (entities.Image, {'compute_resource': 1}),
             (entities.OperatingSystemParameter, {'operatingsystem': 1}),
             (entities.OverrideValue, {'smart_class_parameter': 1}),
             (entities.OverrideValue, {'smart_variable': 1}),
@@ -210,6 +210,7 @@ class InitTestCase(TestCase):
                 entities.ContentViewPuppetModule,
                 entities.HostPackage,
                 entities.HostSubscription,
+                entities.Image,
                 entities.OverrideValue,
                 entities.OperatingSystemParameter,
                 entities.RepositorySet,
@@ -570,6 +571,7 @@ class CreatePayloadTestCase(TestCase):
             )
         ]
         entities_.extend([
+            (entities.Image, {'compute_resource': 1}),
             (entities.SyncPlan, {'organization': 1})
         ])
         for entity, params in entities_:
@@ -598,6 +600,14 @@ class CreatePayloadTestCase(TestCase):
         ).create_payload()
         self.assertNotIn('system_ids', payload)
         self.assertIn('system_uuids', payload)
+
+    def test_image(self):
+        """Create a :class:`nailgun.entities.Image`."""
+        payload = entities.Image(
+            self.cfg,
+            compute_resource=1,
+        ).create_payload()
+        self.assertEqual({'image': {'compute_resource_id': 1}}, payload)
 
     def test_media(self):
         """Create a :class:`nailgun.entities.Media`."""
@@ -917,6 +927,7 @@ class ReadTestCase(TestCase):
                 ),
                 entities.ContentViewPuppetModule(self.cfg, content_view=2),
                 entities.Interface(self.cfg, host=2),
+                entities.Image(self.cfg, compute_resource=1),
                 entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
                 entities.OverrideValue(self.cfg, smart_class_parameter=2),
                 entities.OverrideValue(self.cfg, smart_variable=2),
@@ -1232,6 +1243,37 @@ class SearchNormalizeTestCase(TestCase):
                 self.assertIn('host_id', args)
                 self.assertEqual(args['host_id'], 3)
 
+    def test_host_with_image(self):
+        """Call :meth:`nailgun.entities.Host.read` for a host with image
+        assigned.
+
+        Ensure that the image entity was correctly fetched.
+        """
+        image = entities.Image(self.cfg, id=1, compute_resource=1)
+        host = entities.Host(self.cfg, id=1)
+        with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
+            with mock.patch.object(EntityReadMixin, 'read') as read:
+                # Image was set
+                read_json.return_value = {
+                    'image_id': 1,
+                    'compute_resource_id': 1,
+                    'parameters': {},
+                }
+                read.return_value = host
+                host = host.read()
+                self.assertTrue(hasattr(host, 'image'))
+                # pylint:disable=no-member
+                self.assertEqual(host.image.id, image.id)
+                # Image wasn't set
+                read_json.return_value = {
+                    'parameters': {},
+                }
+                read.return_value = host
+                host = host.read()
+                self.assertTrue(hasattr(host, 'image'))
+                # pylint:disable=no-member
+                self.assertIsNone(host.image)
+
 
 class SearchRawTestCase(TestCase):
     """Tests for :meth:`nailgun.entity_mixins.EntitySearchMixin.search_raw`."""
@@ -1405,6 +1447,19 @@ class UpdatePayloadTestCase(TestCase):
         ).update_payload()
         self.assertNotIn('search_', payload['discovery_rule'])
         self.assertIn('search', payload['discovery_rule'])
+
+    def test_image(self):
+        """Check whether ``Image`` updates its ``path_`` field.
+
+        The field should be renamed from ``path_`` to ``path`` when
+        ``update_payload`` is called.
+
+        """
+        payload = entities.Image(
+            self.cfg,
+            compute_resource=1,
+        ).update_payload()
+        self.assertEqual({'image': {'compute_resource_id': 1}}, payload)
 
     def test_media_path(self):
         """Check whether ``Media`` updates its ``path_`` field.
