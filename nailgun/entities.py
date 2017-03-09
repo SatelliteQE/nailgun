@@ -228,6 +228,7 @@ class ActivationKey(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -357,6 +358,7 @@ class Architecture(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
         }
@@ -410,6 +412,7 @@ class AuthSourceLDAP(
                 required=True,
                 str_type='alpha',
                 length=(1, 60),
+                unique=True
             ),
             'onthefly_register': entity_fields.BooleanField(),
             'port': entity_fields.IntegerField(),
@@ -485,6 +488,7 @@ class Bookmark(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'public': entity_fields.BooleanField(),
             'query': entity_fields.StringField(required=True),
@@ -498,7 +502,7 @@ class CommonParameter(Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(required=True, unique=True),
             'value': entity_fields.StringField(required=True),
         }
         self._meta = {
@@ -543,6 +547,7 @@ class ComputeProfile(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
         }
         self._meta = {
@@ -582,6 +587,7 @@ class AbstractComputeResource(
                 required=True,
                 str_type='alphanumeric',  # cannot contain whitespace
                 length=(6, 12),
+                unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'provider': entity_fields.StringField(
@@ -656,6 +662,7 @@ class DiscoveredHost(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'ip': entity_fields.IPAddressField(required=True),
             'mac': entity_fields.MACAddressField(required=True),
@@ -747,6 +754,7 @@ class DiscoveryRule(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'priority': entity_fields.IntegerField(),
@@ -911,6 +919,7 @@ class ConfigGroup(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
         }
         self._meta = {
@@ -937,6 +946,7 @@ class ConfigTemplate(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
             'organization': entity_fields.OneToManyField(Organization),
@@ -1060,6 +1070,7 @@ class ProvisioningTemplate(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
             'organization': entity_fields.OneToManyField(Organization),
@@ -1203,6 +1214,7 @@ class AbstractDockerContainer(
                 length=(2, 30),
                 required=True,
                 str_type='alphanumeric',
+                unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'tty': entity_fields.BooleanField(),
@@ -1454,7 +1466,8 @@ class ContentViewFilterRule(
             'min_version': entity_fields.StringField(),
             'name': entity_fields.StringField(
                 str_type='alpha',
-                length=(6, 12)
+                length=(6, 12),
+                unique=True
             ),
             'start_date': entity_fields.DateField(),
             'types': entity_fields.ListField(),
@@ -1528,6 +1541,7 @@ class AbstractContentViewFilter(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'repository': entity_fields.OneToManyField(Repository),
         }
@@ -1592,9 +1606,11 @@ class ContentViewPuppetModule(
             ),
             'name': entity_fields.StringField(
                 str_type='alpha',
-                length=(6, 12)
+                length=(6, 12),
+                unique=True
+
             ),
-            'uuid': entity_fields.StringField(),
+            'uuid': entity_fields.StringField(unique=True),
         }
         super(ContentViewPuppetModule, self).__init__(server_config, **kwargs)
         self._meta = {
@@ -1648,12 +1664,13 @@ class ContentView(
             'composite': entity_fields.BooleanField(),
             'content_host_count': entity_fields.IntegerField(),
             'description': entity_fields.StringField(),
-            'label': entity_fields.StringField(),
+            'label': entity_fields.StringField(unique=True),
             'last_published': entity_fields.StringField(),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'next_version': entity_fields.IntegerField(),
             'organization': entity_fields.OneToOneField(
@@ -1814,6 +1831,7 @@ class Domain(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
         }
@@ -1898,6 +1916,7 @@ class Environment(
                 required=True,
                 str_type='alphanumeric',  # cannot contain whitespace
                 length=(6, 12),
+                unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
         }
@@ -2185,6 +2204,7 @@ class GPGKey(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -2251,6 +2271,7 @@ class HostCollection(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -2313,6 +2334,7 @@ class HostGroup(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'operatingsystem': entity_fields.OneToOneField(OperatingSystem),
             'organization': entity_fields.OneToManyField(Organization),
@@ -2612,6 +2634,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'operatingsystem': entity_fields.OneToOneField(OperatingSystem),
             'organization': entity_fields.OneToOneField(
@@ -3061,6 +3084,7 @@ class Image(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'operatingsystem': entity_fields.OneToOneField(
                 OperatingSystem,
@@ -3244,6 +3268,7 @@ class LifecycleEnvironment(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -3328,6 +3353,7 @@ class Location(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'provisioning_template': entity_fields.OneToManyField(
@@ -3414,6 +3440,7 @@ class Media(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
             'organization': entity_fields.OneToManyField(Organization),
@@ -3487,6 +3514,7 @@ class Model(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'vendor_class': entity_fields.StringField(),
         }
@@ -3532,6 +3560,7 @@ class OperatingSystem(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'ptable': entity_fields.OneToManyField(PartitionTable),
             'config_template': entity_fields.OneToManyField(
@@ -3589,6 +3618,7 @@ class OperatingSystemParameter(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'operatingsystem': entity_fields.OneToOneField(
                 OperatingSystem,
@@ -3663,6 +3693,7 @@ class Organization(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'provisioning_template': entity_fields.OneToManyField(
                 ProvisioningTemplate),
@@ -3894,6 +3925,7 @@ class Permission(Entity, EntityReadMixin, EntitySearchMixin):
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'resource_type': entity_fields.StringField(required=True),
         }
@@ -3933,6 +3965,7 @@ class Product(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -4038,6 +4071,7 @@ class PartitionTable(
                 required=True,
                 str_type='alpha',
                 length=(4, 30),
+                unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'os_family': entity_fields.StringField(choices=_OPERATING_SYSTEMS),
@@ -4066,6 +4100,7 @@ class PuppetClass(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'hostgroup': entity_fields.OneToManyField(HostGroup),
         }
@@ -4151,7 +4186,7 @@ class Package(Entity, EntityReadMixin, EntitySearchMixin):
             'description': entity_fields.StringField(),
             'epoch': entity_fields.StringField(),
             'filename': entity_fields.StringField(),
-            'name': entity_fields.StringField(),
+            'name': entity_fields.StringField(unique=True),
             'nvrea': entity_fields.StringField(),
             'nvra': entity_fields.StringField(),
             'release': entity_fields.StringField(),
@@ -4176,7 +4211,8 @@ class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
             'license': entity_fields.StringField(),
             'name': entity_fields.StringField(
                 str_type='alpha',
-                length=(6, 12)
+                length=(6, 12),
+                unique=True
             ),
             'project_page': entity_fields.URLField(),
             'repository': entity_fields.OneToManyField(Repository),
@@ -4203,6 +4239,7 @@ class Realm(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'realm_proxy': entity_fields.OneToOneField(
@@ -4247,6 +4284,7 @@ class Registry(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'password': entity_fields.StringField(),
             'url': entity_fields.URLField(required=True),
@@ -4323,6 +4361,7 @@ class Repository(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'product': entity_fields.OneToOneField(Product, required=True),
             'unprotected': entity_fields.BooleanField(),
@@ -4539,6 +4578,7 @@ class RepositorySet(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'product': entity_fields.OneToOneField(Product, required=True),
             'repositories': entity_fields.OneToManyField(Repository),
@@ -4689,7 +4729,7 @@ class RHCIDeployment(
                 LifecycleEnvironment,
                 required=True
             ),
-            'name': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(required=True, unique=True),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
@@ -4777,6 +4817,7 @@ class RoleLDAPGroups(Entity):
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
         }
         self._meta = {
@@ -4801,6 +4842,7 @@ class Role(
                 required=True,
                 str_type='alphanumeric',
                 length=(2, 30),  # min length is 2 and max length is arbitrary
+                unique=True
             )
         }
         self._meta = {
@@ -4818,7 +4860,7 @@ class Setting(Entity, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin):
             'created_at': entity_fields.DateTimeField(),
             'default': entity_fields.StringField(),
             'description': entity_fields.StringField(),
-            'name': entity_fields.StringField(),
+            'name': entity_fields.StringField(unique=True),
             'settings_type': entity_fields.StringField(),
             'updated_at': entity_fields.DateTimeField(),
             'value': entity_fields.StringField(),
@@ -4849,6 +4891,7 @@ class SmartProxy(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'url': entity_fields.URLField(required=True),
             'location': entity_fields.OneToManyField(Location),
@@ -5054,6 +5097,7 @@ class Subnet(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'network': entity_fields.IPAddressField(required=True),
             'to': entity_fields.IPAddressField(),
@@ -5341,6 +5385,7 @@ class SyncPlan(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -5514,6 +5559,7 @@ class System(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -5619,7 +5665,7 @@ class TemplateKind(Entity, EntityReadMixin, EntitySearchMixin):
     """
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'name': entity_fields.StringField(),
+            'name': entity_fields.StringField(unique=True),
         }
         self._meta = {
             'api_path': 'api/v2/template_kinds',
@@ -5644,6 +5690,7 @@ class UserGroup(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
+                unique=True
             ),
             'role': entity_fields.OneToManyField(Role),
             'user': entity_fields.OneToManyField(User),
