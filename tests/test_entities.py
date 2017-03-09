@@ -289,9 +289,13 @@ class PathTestCase(TestCase):
                 (entities.ContentViewVersion, 'promote'),
                 (entities.Environment, 'smart_class_parameters'),
                 (entities.Host, 'smart_class_parameters'),
+                (entities.Host, 'puppetclass_ids'),
+                (entities.Host, 'smart_class_parameters'),
+                (entities.Host, 'smart_variables'),
                 (entities.HostGroup, 'clone'),
                 (entities.HostGroup, 'puppetclass_ids'),
                 (entities.HostGroup, 'smart_class_parameters'),
+                (entities.HostGroup, 'smart_variables'),
                 (entities.Organization, 'download_debug_certificate'),
                 (entities.Organization, 'subscriptions'),
                 (entities.Organization, 'subscriptions/delete_manifest'),
@@ -992,6 +996,7 @@ class ReadTestCase(TestCase):
 
         """
         for entity, ignored_attrs in (
+                (entities.SmartVariable, {'variable_type'}),
                 (entities.Subnet, {'discovery'}),
                 (entities.User, {'password'}),
         ):
@@ -1472,12 +1477,16 @@ class GenericTestCase(TestCase):
                 entities.Organization(**generic).download_debug_certificate,
                 'get'
             ),
-            (entities.HostGroup(**generic).clone, 'post'),
+            (entities.Host(**generic).add_puppetclass, 'post'),
             (entities.Host(**generic).list_scparams, 'get'),
+            (entities.Host(**generic).list_smart_variables, 'get'),
+            (entities.HostGroup(**generic).clone, 'post'),
             (entities.HostGroup(**generic).add_puppetclass, 'post'),
             (entities.HostGroup(**generic).list_scparams, 'get'),
+            (entities.HostGroup(**generic).list_smart_variables, 'get'),
             (entities.Product(**generic).sync, 'post'),
             (entities.PuppetClass(**generic).list_scparams, 'get'),
+            (entities.PuppetClass(**generic).list_smart_variables, 'get'),
             (entities.RHCIDeployment(**generic).deploy, 'put'),
             (entities.Repository(**generic).packages, 'get'),
             (entities.Repository(**generic).puppet_modules, 'get'),
@@ -1688,6 +1697,39 @@ class HostGroupTestCase(TestCase):
             self.read_pacther.stop()
             self.update_json_patcher.stop()
 
+    def test_delete_puppetclass(self):
+        """Check that helper method is sane.
+
+            Assert that:
+
+            * Method has a correct signature.
+            * Method calls `client.*` once.
+            * Method passes the right arguments to `client.*` and special
+                argument 'puppetclass_id' removed from data dict.
+            * Method calls `entities._handle_response` once.
+            * The result of `_handle_response(…)` is the return value.
+
+        """
+        entity = self.entity
+        entity.id = 1
+        self.assertEqual(
+            inspect.getargspec(entity.delete_puppetclass),
+            (['self', 'synchronous'], None, 'kwargs', (True,))
+        )
+        kwargs = {
+            'kwarg': gen_integer(),
+            'data': {'puppetclass_id': gen_integer()}
+        }
+        with mock.patch.object(entities, '_handle_response') as handlr:
+            with mock.patch.object(client, 'delete') as client_request:
+                response = entity.delete_puppetclass(**kwargs)
+        self.assertEqual(client_request.call_count, 1)
+        self.assertEqual(len(client_request.call_args[0]), 1)
+        self.assertNotIn('puppetclass_id', client_request.call_args[1]['data'])
+        self.assertEqual(client_request.call_args[1], kwargs)
+        self.assertEqual(handlr.call_count, 1)
+        self.assertEqual(handlr.return_value, response)
+
     def test_clone_hostgroup(self):
         """"Test for :meth:`nailgun.entities.HostGroup.clone`
         Assert that the method is called one with correct argumets
@@ -1800,6 +1842,38 @@ class HostTestCase(TestCase):
             })
             self.assertNotIn('content_facet_attributes', read.call_args[0][1])
             self.assertIn('content_facet_attributes', read.call_args[0][2])
+
+    def test_delete_puppetclass(self):
+        """Check that helper method is sane.
+
+            Assert that:
+
+            * Method has a correct signature.
+            * Method calls `client.*` once.
+            * Method passes the right arguments to `client.*` and special
+                argument 'puppetclass_id' removed from data dict.
+            * Method calls `entities._handle_response` once.
+            * The result of `_handle_response(…)` is the return value.
+
+        """
+        entity = entities.Host(self.cfg, id=1)
+        self.assertEqual(
+            inspect.getargspec(entity.delete_puppetclass),
+            (['self', 'synchronous'], None, 'kwargs', (True,))
+        )
+        kwargs = {
+            'kwarg': gen_integer(),
+            'data': {'puppetclass_id': gen_integer()}
+        }
+        with mock.patch.object(entities, '_handle_response') as handlr:
+            with mock.patch.object(client, 'delete') as client_request:
+                response = entity.delete_puppetclass(**kwargs)
+        self.assertEqual(client_request.call_count, 1)
+        self.assertEqual(len(client_request.call_args[0]), 1)
+        self.assertNotIn('puppetclass_id', client_request.call_args[1]['data'])
+        self.assertEqual(client_request.call_args[1], kwargs)
+        self.assertEqual(handlr.call_count, 1)
+        self.assertEqual(handlr.return_value, response)
 
 
 class PuppetClassTestCase(TestCase):
