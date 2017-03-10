@@ -35,7 +35,6 @@ from nailgun.entity_mixins import (
     EntityReadMixin,
     EntitySearchMixin,
     EntityUpdateMixin,
-    MissingValueError,
     _poll_task,
     to_json_serializable as to_json
 )

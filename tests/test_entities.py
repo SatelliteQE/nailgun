@@ -9,7 +9,6 @@ from nailgun.entity_mixins import (
     EntityReadMixin,
     EntitySearchMixin,
     EntityUpdateMixin,
-    MissingValueError,
     NoSuchPathError,
 )
 import inspect
@@ -1276,46 +1275,6 @@ class SearchNormalizeTestCase(TestCase):
                 self.assertIsNone(host.image)
 
 
-class SearchRawTestCase(TestCase):
-    """Tests for :meth:`nailgun.entity_mixins.EntitySearchMixin.search_raw`."""
-
-    @classmethod
-    def setUpClass(cls):
-        """Set a server configuration at ``cls.cfg``."""
-        cls.cfg_610 = config.ServerConfig(
-            'http://example.com', version='6.1.0')
-
-    def test_subscription_v1(self):
-        """Test :meth:`nailgun.entities.Subscription.search_raw`.
-
-        Successfully call the ``search_raw`` method.
-
-        """
-        kwargs_iter = (
-            {'activation_key': entities.ActivationKey(self.cfg_610, id=1)},
-            {'organization': entities.Organization(self.cfg_610, id=1)},
-            {'system': entities.System(self.cfg_610, uuid=1)},
-        )
-        for kwargs in kwargs_iter:
-            sub = entities.Subscription(self.cfg_610, **kwargs)
-            with self.subTest(sub):
-                with mock.patch.object(client, 'get') as get:
-                    with mock.patch.object(sub, 'search_payload'):
-                        sub.search_raw()
-                self.assertEqual(get.call_count, 1)
-                self.assertIn('subscriptions', get.call_args[0][0])
-
-    def test_subscription_v2(self):
-        """Test :meth:`nailgun.entities.Subscription.search_raw`.
-
-        Raise a :class:`nailgun.entity_mixins.MissingValueError` by failing to
-        provide necessary values.
-
-        """
-        with self.assertRaises(MissingValueError):
-            entities.Subscription(self.cfg_610).search_raw()
-
-
 class UpdateTestCase(TestCase):
     """Tests for :meth:`nailgun.entity_mixins.EntityUpdateMixin.update`."""
 
@@ -2555,15 +2514,6 @@ class VersionTestCase(TestCase):
         """
         with self.assertRaises(NotImplementedError):
             entities.HostSubscription(self.cfg_610, host=1)
-
-    def test_subscription_search(self):
-        """Verify :meth:`nailgun.entities.Subscription.search_raw` calls
-        :meth:`nailgun.entity_mixins.EntitySearchMixin.search_raw` for
-        Satellite 6.2.
-        """
-        with mock.patch.object(EntitySearchMixin, 'search_raw') as search_raw:
-            entities.Subscription(self.cfg_620).search_raw()
-        self.assertEqual(search_raw.call_count, 1)
 
     def test_system(self):
         """Attempt to create a :class:`nailgun.entities.System` for the
