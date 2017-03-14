@@ -36,7 +36,6 @@ from nailgun.entity_mixins import (
     EntityReadMixin,
     EntitySearchMixin,
     EntityUpdateMixin,
-    MissingValueError,
     _poll_task,
     to_json_serializable as to_json
 )
@@ -251,6 +250,8 @@ class ActivationKey(
             /activation_keys/<id>/add_subscriptions
         content_override
             /activation_keys/<id>/content_override
+        product_content
+            /activation_keys/<id>/product_content
         releases
             /activation_keys/<id>/releases
         remove_subscriptions
@@ -265,6 +266,7 @@ class ActivationKey(
                 'add_subscriptions',
                 'content_override',
                 'host_collections',
+                'product_content',
                 'releases',
                 'remove_subscriptions',
                 'subscriptions'):
@@ -323,6 +325,23 @@ class ActivationKey(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('content_override'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def product_content(self, synchronous=True, **kwargs):
+        """Helper for showing content available for activation key.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('product_content'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
     def remove_host_collection(self, synchronous=True, **kwargs):
@@ -4805,16 +4824,14 @@ class Subscription(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'activation_key': entity_fields.OneToOneField(ActivationKey),
-            'host': entity_fields.OneToOneField(Host),
+            'activation_key': entity_fields.OneToManyField(ActivationKey),
+            'name': entity_fields.StringField(),
             'organization': entity_fields.OneToOneField(Organization),
+            'provided_product': entity_fields.OneToManyField(Product),
             'quantity': entity_fields.IntegerField(),
-            'subscriptions': entity_fields.OneToManyField(Subscription),
+            'subscription': entity_fields.OneToOneField(Subscription),
+            'system': entity_fields.OneToManyField(Host),
         }
-        # Before Satellite 6.2 System entity was used instead of Host
-        if _get_version(server_config) < Version('6.2'):
-            self._fields['system'] = entity_fields.OneToOneField(System)
-            self._fields.pop('host')
         self._meta = {
             'api_path': 'katello/api/v2/subscriptions',
             'server_modes': ('sat', 'sam'),
@@ -4845,44 +4862,6 @@ class Subscription(
             # pylint:disable=no-member
             return self.organization.path('subscriptions/{0}'.format(which))
         return super(Subscription, self).path(which)
-
-    def search_raw(self, fields=None, query=None):
-        """Completely override the inherited ``search_raw`` method for older
-        Satellite versions.
-
-        The ``GET /katello/api/v2/subscriptions`` API call is not available.
-        Instead, one of the following must be used:
-
-        * ``GET /katello/api/v2/activation_keys/<id>/subscriptions``
-        * ``GET /katello/api/v2/organizations/<id>/subscriptions``
-        * ``GET /katello/api/v2/systems/<id>/subscriptions``
-
-        Use the activation key path if ``self.activation_key`` is set, use the
-        organization path if ``self.organization`` is set, use the system path
-        if ``self.system`` is set, or raise an exception otherwise.
-
-        """
-        if _get_version(self._server_config) >= Version('6.2'):
-            return super(Subscription, self).search_raw(fields, query)
-        path = None
-        attrs = ('activation_key', 'organization', 'system')
-        for attr in attrs:
-            if hasattr(self, attr):
-                path = getattr(self, attr).path('subscriptions')
-                break
-        if path is None:
-            raise MissingValueError(
-                'A value must be provided for one of the following fields: '
-                '{0}. This is because the "GET /katello/api/v2/subscriptions" '
-                'API call is not available. See the documentation for method '
-                '`nailgun.entities.Subscription.search_raw` for details.'
-                .format(attrs)
-            )
-        return client.get(
-            path,
-            data=self.search_payload(fields, query),
-            **self._server_config.get_client_kwargs()
-        )
 
     def _org_path(self, which, payload):
         """A helper method for generating paths with organization IDs in them.
@@ -4942,6 +4921,16 @@ class Subscription(
             **kwargs
         )
         return _handle_response(response, self._server_config, synchronous)
+
+    def read(self, entity=None, attrs=None, ignore=None):
+        """Ignore ``organization`` field as it's never returned by the server
+        and is only added to entity to be able to use organization path
+        dependent helpers.
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('organization')
+        return super(Subscription, self).read(entity, attrs, ignore)
 
     def refresh_manifest(self, synchronous=True, **kwargs):
         """Refresh previously imported manifest for Red Hat provider.
