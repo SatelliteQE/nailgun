@@ -588,15 +588,35 @@ class Entity(object):
         :param other: entity to compare self to
         :return: boolean indicating if entities are equal or not
         """
-        if other is None:
+        if not isinstance(other, type(self)):
             return False
+        return self.to_json_dict() == other.to_json_dict()
 
-        def filter_unique_fields(_, field):
-            """Filter functio for unique fields"""
-            return not field.unique
+    def compare(self, other, filter_fcn=None):
+        """Returns True if properties can be compared in terms of eq.
+        Entity's Fields can be filtered accordingly to 'filter_fcn'.
+        This callable receives field's name as first parameter and field itself
+        as second parameter.
+        It must return True if field's value should be included on
+        comparison and False otherwise. If not provided field's marked as
+        unique will not be compared by default. 'id' and 'name' are examples of
+        unique fields commonly ignored. Check Entities fields for fields marked
+        with 'unique=True'
 
-        return (self.to_json_dict(filter_unique_fields) ==
-                other.to_json_dict(filter_unique_fields))
+
+        :param other: entity to compare
+        :param filter_fcn: callable
+        :return: boolean
+        """
+        if not isinstance(other, type(self)):
+            return False
+        if filter_fcn is None:
+            def filter_unique(_, field):
+                """Filter function for unique fields"""
+                return not field.unique
+            filter_fcn = filter_unique
+
+        return self.to_json_dict(filter_fcn) == other.to_json_dict(filter_fcn)
 
 
 class EntityDeleteMixin(object):
