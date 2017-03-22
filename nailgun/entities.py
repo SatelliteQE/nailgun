@@ -2856,6 +2856,9 @@ class Host(  # pylint:disable=too-many-instance-attributes
                  |-> domain
                  '-> environment
 
+        If nested entities were passed by `id` (i.e. entity was only
+        initialized and not read, and therefore contains only `id` field)
+        perform additional read request.
         """
         # pylint:disable=no-member,too-many-branches,too-many-statements
         super(Host, self).create_missing()
@@ -2874,6 +2877,8 @@ class Host(  # pylint:disable=too-many-instance-attributes
                 organization=[self.organization],
             ).create(True)
         else:
+            if not hasattr(self.domain, 'organization'):
+                self.domain = self.domain.read()
             if self.location.id not in [
                     loc.id for loc in self.domain.location]:
                 self.domain.location.append(self.location)
@@ -2889,6 +2894,8 @@ class Host(  # pylint:disable=too-many-instance-attributes
                 organization=[self.organization],
             ).create(True)
         else:
+            if not hasattr(self.environment, 'organization'):
+                self.environment = self.environment.read()
             if self.location.id not in [
                     loc.id for loc in self.environment.location]:
                 self.environment.location.append(self.location)
@@ -2915,6 +2922,8 @@ class Host(  # pylint:disable=too-many-instance-attributes
                 ptable=[self.ptable],
             ).create(True)
         else:
+            if not hasattr(self.operatingsystem, 'architecture'):
+                self.operatingsystem = self.operatingsystem.read()
             if self.architecture.id not in [
                     arch.id for arch in self.operatingsystem.architecture]:
                 self.operatingsystem.architecture.append(self.architecture)
@@ -2931,6 +2940,8 @@ class Host(  # pylint:disable=too-many-instance-attributes
                 organization=[self.organization],
             ).create(True)
         else:
+            if not hasattr(self.medium, 'organization'):
+                self.medium = self.medium.read()
             if self.operatingsystem.id not in [
                     os.id for os in self.medium.operatingsystem]:
                 self.medium.operatingsystem.append(self.operatingsystem)
