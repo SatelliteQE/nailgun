@@ -3361,8 +3361,7 @@ class Location(
         self._fields = {
             'compute_resource': entity_fields.OneToManyField(
                 AbstractComputeResource),
-            'config_template': entity_fields.OneToManyField(
-                ProvisioningTemplate),
+            'config_template': entity_fields.OneToManyField(ConfigTemplate),
             'description': entity_fields.StringField(),
             'domain': entity_fields.OneToManyField(Domain),
             'environment': entity_fields.OneToManyField(Environment),
@@ -3582,8 +3581,7 @@ class OperatingSystem(
                 unique=True
             ),
             'ptable': entity_fields.OneToManyField(PartitionTable),
-            'config_template': entity_fields.OneToManyField(
-                ProvisioningTemplate),
+            'config_template': entity_fields.OneToManyField(ConfigTemplate),
             'provisioning_template': entity_fields.OneToManyField(
                 ProvisioningTemplate),
             'release_name': entity_fields.StringField(),
@@ -3700,8 +3698,7 @@ class Organization(
             'compute_resource': entity_fields.OneToManyField(
                 AbstractComputeResource
             ),
-            'config_template': entity_fields.OneToManyField(
-                ProvisioningTemplate),
+            'config_template': entity_fields.OneToManyField(ConfigTemplate),
             'description': entity_fields.StringField(),
             'domain': entity_fields.OneToManyField(Domain),
             'environment': entity_fields.OneToManyField(Environment),
@@ -3841,8 +3838,7 @@ class OSDefaultTemplate(Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'config_template': entity_fields.OneToOneField(
-                ProvisioningTemplate),
+            'config_template': entity_fields.OneToOneField(ConfigTemplate),
             'operatingsystem': entity_fields.OneToOneField(
                 OperatingSystem
             ),
@@ -5630,8 +5626,7 @@ class TemplateCombination(Entity, EntityDeleteMixin, EntityReadMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'config_template': entity_fields.OneToOneField(
-                ProvisioningTemplate),
+            'config_template': entity_fields.OneToOneField(ConfigTemplate),
             'environment': entity_fields.OneToOneField(Environment),
             'hostgroup': entity_fields.OneToOneField(HostGroup),
             'provisioning_template': entity_fields.OneToOneField(
