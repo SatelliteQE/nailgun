@@ -97,6 +97,7 @@ class InitTestCase(TestCase):
                 entities.Architecture,
                 entities.AuthSourceLDAP,
                 entities.Bookmark,
+                entities.Capsule,
                 entities.CommonParameter,
                 entities.ComputeAttribute,
                 entities.ComputeProfile,
@@ -235,6 +236,7 @@ class PathTestCase(TestCase):
         for entity, path in (
                 (entities.AbstractDockerContainer, '/containers'),
                 (entities.ActivationKey, '/activation_keys'),
+                (entities.Capsule, '/capsules'),
                 (entities.ConfigTemplate, '/config_templates'),
                 (entities.ProvisioningTemplate, '/provisioning_templates'),
                 (entities.ContentView, '/content_views'),
@@ -476,6 +478,30 @@ class PathTestCase(TestCase):
                     path
                 )
                 self.assertRegex(path, '{}$'.format(which))
+
+    def test_capsule(self):
+        """Test :meth:`nailgun.entities.Capsule.path`.
+
+        Assert that the following return appropriate paths:
+
+        * ``Capsule().path('content_lifecycle_environments')``
+        * ``Capsule().path('content_sync')``
+
+        """
+        capsule = entities.Capsule(self.cfg, id=gen_integer(1, 100))
+        for which in (
+                'content_lifecycle_environments',
+                'content_sync'):
+            with self.subTest(which):
+                path = capsule.path(which)
+                self.assertIn(
+                    'capsules/{}/content/{}'.format(
+                        capsule.id,  # pylint:disable=no-member
+                        which.split('_', 1)[1],
+                    ),
+                    path
+                )
+                self.assertRegex(path, '{}/{}$'.format(*which.split('_', 1)))
 
 
 class CreateTestCase(TestCase):
@@ -1468,6 +1494,16 @@ class GenericTestCase(TestCase):
             (entities.ActivationKey(**generic).content_override, 'put'),
             (entities.ActivationKey(**generic).product_content, 'get'),
             (entities.ActivationKey(**generic).remove_host_collection, 'put'),
+            (
+                entities.Capsule(**generic).content_add_lifecycle_environment,
+                'post'
+            ),
+            (entities.Capsule(**generic).content_get_sync, 'get'),
+            (
+                entities.Capsule(**generic).content_lifecycle_environments,
+                'get'
+            ),
+            (entities.Capsule(**generic).content_sync, 'post'),
             (entities.ConfigTemplate(**generic).build_pxe_default, 'post'),
             (entities.ConfigTemplate(**generic).clone, 'post'),
             (
