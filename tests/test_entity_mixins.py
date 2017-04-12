@@ -435,14 +435,54 @@ class EntityTestCase(TestCase):
         mary_clone.list = [alice_clone]
         self.assertEqual(mary, mary_clone)
 
-    def test_eq_on_unique_fields(self):
-        """Assert __eq__ take only not unique fields into account"""
+    def test_compare_to_null(self):
+        """Assert entity comparison to None"""
+        alice = SampleEntity(self.cfg, id=1, name='Alice', unique='a')
+        self.assertFalse(alice.compare(None))
+
+    def test_compare(self):
+        """Assert compare take only not unique fields into account"""
         alice = SampleEntity(self.cfg, id=1, name='Alice', unique='a')
         alice_2 = SampleEntity(self.cfg, id=2, name='Alice', unique='b')
-        self.assertEqual(
-            alice, alice_2,
+        self.assertTrue(
+            alice.compare(alice_2),
             'Both "id" and "unique" are unique fields, thus must be ignored '
-            'on eq comparison'
+            'compare by default'
+        )
+        self.assertFalse(
+            alice.compare(
+                SampleEntity(self.cfg, id=1, name='Not Alice', unique='a')),
+            'Name is not unique, so it compare should return False'
+        )
+
+    def test_compare_with_filter(self):
+        """Assert compare can filter fields based on callable"""
+        alice = SampleEntity(self.cfg, id=1, name='Alice', unique='a')
+        alice_2 = SampleEntity(self.cfg, id=2, name='Alice', unique='a')
+
+        def filter_example(fields_name, _):
+            """Filter function to avoid comparison only on id"""
+            return fields_name != 'id'
+        self.assertTrue(
+            alice.compare(alice_2, filter_example),
+            'Only id is ignored, so it should return True because other '
+            'properties are equal'
+        )
+        self.assertFalse(
+            alice.compare(
+                SampleEntity(self.cfg, id=1, name='Not Alice', unique='a'),
+                filter_example
+            ),
+            'Only id is ignored, so it should return False because "name" is '
+            'different'
+        )
+        self.assertFalse(
+            alice.compare(
+                SampleEntity(self.cfg, id=1, name='Alice', unique='b'),
+                filter_example
+            ),
+            'Only id is ignored, so it should return False because "unique" '
+            'is different'
         )
 
     def test_repr_v1(self):
