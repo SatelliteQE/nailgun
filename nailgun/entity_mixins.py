@@ -1,18 +1,19 @@
 # -*- encoding: utf-8 -*-
 """Defines a set of mixins that provide tools for interacting with entities."""
 import json as std_json
+import threading
+import time
 from collections import Iterable
 from datetime import date, datetime
+from sys import version_info
 
 from fauxfactory import gen_choice
 from inflection import pluralize
+
 from nailgun import client, config, signals
 from nailgun.entity_fields import (
     IntegerField, OneToManyField, OneToOneField, ListField)
-import threading
-import time
 
-from sys import version_info
 if version_info.major == 2:  # pragma: no cover
     # pylint:disable=import-error
     from urlparse import urljoin
@@ -387,7 +388,7 @@ class Entity(object):
         # `super`, but that's not always the case.
         if not hasattr(self, '_fields'):
             self._fields = {}
-        self._fields.setdefault('id', IntegerField())
+        self._fields.setdefault('id', IntegerField(unique=True))
         if not hasattr(self, '_meta'):
             self._meta = {}
 
@@ -539,18 +540,29 @@ class Entity(object):
         """
         return std_json.dumps(self.to_json_dict())
 
-    def to_json_dict(self):
-        """Create a dct with Entity properties for json encoding.
+    def to_json_dict(self, filter_fcn=None):
+        """Create a dict with Entity properties for json encoding.
         It can be overridden by subclasses for each standard serialization
         doesn't work. By default it call _to_json_dict on OneToOne fields
-        and build a list calling the same method on each object on OneToMany
+        and build a list calling the same method on each OneToMany object's
         fields.
 
+        Fields can be filtered accordingly to 'filter_fcn'. This callable
+        receives field's name as first parameter and fields itself as second
+        parameter. It must return True if field's value should be included on
+        dict and False otherwise. If not provided field will not be filtered.
+
+        :type filter_fcn: callable
         :return: dct
         """
         fields, values = self.get_fields(), self.get_values()
+        filtered_fields = fields.items()
+        if filter_fcn is not None:
+            filtered_fields = (
+                tpl for tpl in filtered_fields if filter_fcn(tpl[0], tpl[1])
+            )
         json_dct = {}
-        for field_name, field in fields.items():
+        for field_name, field in filtered_fields:
             if field_name in values:
                 value = values[field_name]
                 if value is None:
@@ -576,9 +588,35 @@ class Entity(object):
         :param other: entity to compare self to
         :return: boolean indicating if entities are equal or not
         """
-        if other is None:
+        if not isinstance(other, type(self)):
             return False
         return self.to_json_dict() == other.to_json_dict()
+
+    def compare(self, other, filter_fcn=None):
+        """Returns True if properties can be compared in terms of eq.
+        Entity's Fields can be filtered accordingly to 'filter_fcn'.
+        This callable receives field's name as first parameter and field itself
+        as second parameter.
+        It must return True if field's value should be included on
+        comparison and False otherwise. If not provided field's marked as
+        unique will not be compared by default. 'id' and 'name' are examples of
+        unique fields commonly ignored. Check Entities fields for fields marked
+        with 'unique=True'
+
+
+        :param other: entity to compare
+        :param filter_fcn: callable
+        :return: boolean
+        """
+        if not isinstance(other, type(self)):
+            return False
+        if filter_fcn is None:
+            def filter_unique(_, field):
+                """Filter function for unique fields"""
+                return not field.unique
+            filter_fcn = filter_unique
+
+        return self.to_json_dict(filter_fcn) == other.to_json_dict(filter_fcn)
 
 
 class EntityDeleteMixin(object):

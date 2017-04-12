@@ -62,7 +62,9 @@ class Field(object):
 
     """
 
-    def __init__(self, required=False, choices=None, default=_SENTINEL):
+    def __init__(self, required=False, choices=None, default=_SENTINEL,
+                 unique=False):
+        self.unique = unique
         self.required = required
         if choices is not None:
             self.choices = choices
