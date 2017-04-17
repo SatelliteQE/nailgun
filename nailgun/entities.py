@@ -2670,7 +2670,10 @@ class Host(  # pylint:disable=too-many-instance-attributes
             'puppetclass': entity_fields.OneToManyField(PuppetClass),
             'puppet_proxy': entity_fields.OneToOneField(SmartProxy),
             'realm': entity_fields.OneToOneField(Realm),
-            'root_pass': entity_fields.StringField(length=(8, 30)),
+            'root_pass': entity_fields.StringField(
+                str_type='alpha',
+                length=(8, 30),
+            ),
             'subnet': entity_fields.OneToOneField(Subnet),
         }
         self._owner_type = None  # actual ``owner_type`` value
