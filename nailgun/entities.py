@@ -512,6 +512,117 @@ class Bookmark(
         super(Bookmark, self).__init__(server_config, **kwargs)
 
 
+class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
+    """A representation of a Capsule entity."""
+    # pylint:disable=invalid-name
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'features': entity_fields.ListField(),
+            'location': entity_fields.OneToManyField(Location),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
+            'organization': entity_fields.OneToManyField(Organization),
+            'url': entity_fields.StringField(required=True),
+        }
+        self._meta = {
+            'api_path': 'katello/api/capsules',
+            'server_modes': ('sat'),
+        }
+        super(Capsule, self).__init__(server_config, **kwargs)
+
+    def content_add_lifecycle_environment(self, synchronous=True, **kwargs):
+        """Helper to associate lifecycle environment with capsule
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(
+            self.path('content_lifecycle_environments'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def content_lifecycle_environments(self, synchronous=True, **kwargs):
+        """Helper to get all the lifecycle environments, associated with
+        capsule
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(
+            self.path('content_lifecycle_environments'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def content_sync(self, synchronous=True, **kwargs):
+        """Helper to sync content on a capsule
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('content_sync'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def content_get_sync(self, synchronous=True, **kwargs):
+        """Helper to get content sync status on capsule
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('content_sync'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        content_lifecycle_environments
+            /capsules/<id>/content/lifecycle_environments
+        content_sync
+            /capsules/<id>/content/sync
+
+
+        ``super`` is called otherwise.
+
+        """
+        if which and which.startswith('content_'):
+            return '{0}/content/{1}'.format(
+                super(Capsule, self).path(which='self'),
+                which.split('content_')[1]
+            )
+        return super(Capsule, self).path(which)
+
+
 class CommonParameter(Entity):
     """A representation of a Common Parameter entity."""
 
@@ -1355,6 +1466,7 @@ class ContentViewVersion(Entity, EntityReadMixin, EntityDeleteMixin):
             'environment': entity_fields.OneToManyField(Environment),
             'major': entity_fields.IntegerField(),
             'minor': entity_fields.IntegerField(),
+            'package_count': entity_fields.IntegerField(),
             'puppet_module': entity_fields.OneToManyField(PuppetModule),
             'version': entity_fields.StringField(),
         }
@@ -3105,6 +3217,7 @@ class LifecycleEnvironment(
         # NOTE: The "prior" field is unusual. See `create_missing`'s docstring.
         self._fields = {
             'description': entity_fields.StringField(),
+            'label': entity_fields.StringField(),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
