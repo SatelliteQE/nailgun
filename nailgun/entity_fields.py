@@ -224,7 +224,7 @@ class MACAddressField(StringField):
 
     def gen_value(self):
         """Return a value suitable for a :class:`MACAddressField`."""
-        return gen_mac()
+        return gen_mac(multicast=False)
 
 
 class OneToOneField(Field):
