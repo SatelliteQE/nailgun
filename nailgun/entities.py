@@ -3270,6 +3270,68 @@ class Interface(
         return super(Interface, self).search_normalize(results)
 
 
+class JobInvocation(
+        Entity,
+        EntityCreateMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
+    """A representation of a Job invocation entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'description': entity_fields.StringField(),
+            'dynflow_task': entity_fields.OneToOneField(ForemanTask),
+            'failed': entity_fields.IntegerField(),
+            'job_category': entity_fields.StringField(),
+            'pending': entity_fields.IntegerField(),
+            'start_at': entity_fields.DateTimeField(),
+            'status': entity_fields.IntegerField(),
+            'status_label': entity_fields.StringField(),
+            'succeeded': entity_fields.IntegerField(),
+            'task': entity_fields.OneToOneField(ForemanTask),
+            'targeting': entity_fields.DictField(),
+            'targeting_id': entity_fields.IntegerField(),
+            'template_invocations': entity_fields.ListField(),
+            'total': entity_fields.IntegerField(),
+        }
+        self._meta = {
+            'api_path': 'api/v2/job_invocations',
+            'server_modes': ('sat')}
+        super(JobInvocation, self).__init__(server_config, **kwargs)
+
+
+class JobTemplate(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
+    """A representation of a Job invocation entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'audit_comment': entity_fields.StringField(),
+            'created_at': entity_fields.DateTimeField(),
+            'description_format': entity_fields.StringField(),
+            'effective_user': entity_fields.DictField(),
+            'job_category': entity_fields.StringField(),
+            'location': entity_fields.OneToManyField(Location),
+            'locked': entity_fields.BooleanField(),
+            'name': entity_fields.StringField(),
+            'organization': entity_fields.OneToManyField(Organization),
+            'provider_type': entity_fields.StringField(),
+            'snippet': entity_fields.BooleanField(),
+            'template': entity_fields.StringField(),
+            'template_inputs': entity_fields.ListField(),
+            'updated_at': entity_fields.DateTimeField(),
+        }
+        self._meta = {
+            'api_path': 'api/v2/job_templates',
+            'server_modes': ('sat')}
+        super(JobTemplate, self).__init__(server_config, **kwargs)
+
+
 class LifecycleEnvironment(
         Entity,
         EntityCreateMixin,

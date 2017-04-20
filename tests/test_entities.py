@@ -123,6 +123,8 @@ class InitTestCase(TestCase):
                 entities.HostCollectionErrata,
                 entities.HostCollectionPackage,
                 entities.HostGroup,
+                entities.JobInvocation,
+                entities.JobTemplate,
                 entities.LibvirtComputeResource,
                 entities.LifecycleEnvironment,
                 entities.Location,
