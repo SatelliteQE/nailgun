@@ -43,7 +43,11 @@ class SampleEntity(entity_mixins.Entity):
     """Sample entity to be used in the tests"""
 
     def __init__(self, server_config=None, **kwargs):
-        self._fields = {'name': StringField(), 'number': IntegerField()}
+        self._fields = {
+            'name': StringField(),
+            'number': IntegerField(),
+            'unique': StringField(unique=True)
+        }
         self._meta = {'api_path': 'foo'}
         super(SampleEntity, self).__init__(server_config, **kwargs)
 
@@ -307,8 +311,11 @@ class EntityTestCase(TestCase):
     def test_entity_get_fields(self):
         """Test :meth:`nailgun.entity_mixins.Entity.get_fields`."""
         fields = SampleEntity(self.cfg).get_fields()
-        self.assertEqual(len(fields), 3)
-        self.assertEqual(set(fields.keys()), {'id', 'name', 'number'})
+        self.assertEqual(len(fields), 4)
+        self.assertEqual(
+            set(fields.keys()),
+            {'id', 'name', 'number', 'unique'}
+        )
         self.assertIsInstance(fields['name'], StringField)
         self.assertIsInstance(fields['number'], IntegerField)
 
@@ -385,17 +392,17 @@ class EntityTestCase(TestCase):
         alice_clone = SampleEntity(self.cfg, id=1, name='Alice')
         self.assertEqual(alice, alice_clone)
 
-        alice_id_2 = SampleEntity(self.cfg, id=2, name='Alice')
-        self.assertNotEqual(alice, alice_id_2)
+        alice_2 = SampleEntity(self.cfg, id=2, name='Alice2')
+        self.assertNotEqual(alice, alice_2)
 
         # Testing OneToMany nested objects
 
-        john = SampleEntityTwo(self.cfg, one_to_many=[alice, alice_id_2])
-        john_clone = SampleEntityTwo(self.cfg, one_to_many=[alice, alice_id_2])
+        john = SampleEntityTwo(self.cfg, one_to_many=[alice, alice_2])
+        john_clone = SampleEntityTwo(self.cfg, one_to_many=[alice, alice_2])
         self.assertEqual(john, john_clone)
 
         john_different_order = SampleEntityTwo(self.cfg, one_to_many=[
-            alice_id_2, alice,
+            alice_2, alice,
         ])
         self.assertNotEqual(john, john_different_order)
 
@@ -427,6 +434,56 @@ class EntityTestCase(TestCase):
         # noqa pylint:disable=attribute-defined-outside-init
         mary_clone.list = [alice_clone]
         self.assertEqual(mary, mary_clone)
+
+    def test_compare_to_null(self):
+        """Assert entity comparison to None"""
+        alice = SampleEntity(self.cfg, id=1, name='Alice', unique='a')
+        self.assertFalse(alice.compare(None))
+
+    def test_compare(self):
+        """Assert compare take only not unique fields into account"""
+        alice = SampleEntity(self.cfg, id=1, name='Alice', unique='a')
+        alice_2 = SampleEntity(self.cfg, id=2, name='Alice', unique='b')
+        self.assertTrue(
+            alice.compare(alice_2),
+            'Both "id" and "unique" are unique fields, thus must be ignored '
+            'compare by default'
+        )
+        self.assertFalse(
+            alice.compare(
+                SampleEntity(self.cfg, id=1, name='Not Alice', unique='a')),
+            'Name is not unique, so it compare should return False'
+        )
+
+    def test_compare_with_filter(self):
+        """Assert compare can filter fields based on callable"""
+        alice = SampleEntity(self.cfg, id=1, name='Alice', unique='a')
+        alice_2 = SampleEntity(self.cfg, id=2, name='Alice', unique='a')
+
+        def filter_example(fields_name, _):
+            """Filter function to avoid comparison only on id"""
+            return fields_name != 'id'
+        self.assertTrue(
+            alice.compare(alice_2, filter_example),
+            'Only id is ignored, so it should return True because other '
+            'properties are equal'
+        )
+        self.assertFalse(
+            alice.compare(
+                SampleEntity(self.cfg, id=1, name='Not Alice', unique='a'),
+                filter_example
+            ),
+            'Only id is ignored, so it should return False because "name" is '
+            'different'
+        )
+        self.assertFalse(
+            alice.compare(
+                SampleEntity(self.cfg, id=1, name='Alice', unique='b'),
+                filter_example
+            ),
+            'Only id is ignored, so it should return False because "unique" '
+            'is different'
+        )
 
     def test_repr_v1(self):
         """Test method ``nailgun.entity_mixins.Entity.__repr__``.
