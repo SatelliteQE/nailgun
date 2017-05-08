@@ -2953,6 +2953,18 @@ class Host(  # pylint:disable=too-many-instance-attributes
         """
         return {u'host': super(Host, self).create_payload()}
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
+    def create(self, create_missing=None):
+        """Manually fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1449749
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1449749>`_.
+        """
+        return Host(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
+
     def errata(self, synchronous=True, **kwargs):
         """List errata available for the host
 
@@ -3008,7 +3020,9 @@ class Host(  # pylint:disable=too-many-instance-attributes
         """Deal with oddly named and structured data returned by the server.
 
         For more information, see `Bugzilla #1235019
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1235019>`_.
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1235019>`_
+        and `Bugzilla #1449749
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1449749>`_.
 
         `content_facet_attributes` are returned only in case any of facet
         attributes were actually set.
@@ -3021,7 +3035,10 @@ class Host(  # pylint:disable=too-many-instance-attributes
             attrs = self.read_json()
         if ignore is None:
             ignore = set()
-        attrs['host_parameters_attributes'] = attrs.pop('parameters')
+        if 'parameters' in attrs:
+            attrs['host_parameters_attributes'] = attrs.pop('parameters')
+        else:
+            ignore.add('host_parameters_attributes')
         if 'content_facet_attributes' not in attrs:
             ignore.add('content_facet_attributes')
         ignore.add('root_pass')
