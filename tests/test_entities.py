@@ -875,6 +875,33 @@ class CreateMissingTestCase(TestCase):
         self.assertIn(ptable.id, [ptable_.id for ptable_ in oper_sys.ptable])
         self.assertIn(oper_sys.id, [os_.id for os_ in media.operatingsystem])
 
+    def test_host_v3(self):
+        """Test ``Host()`` providing optional entities with id only.
+        Check that additional read was called for that entities.
+        """
+        # pylint:disable=no-member,too-many-locals
+        optional = {
+            'domain': entities.Domain(self.cfg, id=1),
+            'env': entities.Environment(self.cfg, id=1),
+            'arch': entities.Architecture(self.cfg, id=1),
+            'oper_sys': entities.OperatingSystem(self.cfg, id=1),
+            'media': entities.Media(self.cfg, id=1),
+        }
+        entity = entities.Host(
+            self.cfg,
+            architecture=optional['arch'],
+            domain=optional['domain'],
+            environment=optional['env'],
+            medium=optional['media'],
+            operatingsystem=optional['oper_sys'],
+        )
+        with mock.patch.object(EntityCreateMixin, 'create_json'):
+            with mock.patch.object(EntityReadMixin, 'read_json'):
+                with mock.patch.object(EntityUpdateMixin, 'update_json'):
+                    with mock.patch.object(EntityReadMixin, 'read') as read:
+                        entity.create_missing()
+        self.assertGreaterEqual(read.call_count, len(optional))
+
     def test_lifecycle_environment_v1(self):
         """Test ``LifecycleEnvironment(name='Library')``."""
         entity = entities.LifecycleEnvironment(self.cfg, name='Library')
