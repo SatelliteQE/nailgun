@@ -1795,6 +1795,7 @@ class ContentView(
             'composite': entity_fields.BooleanField(),
             'content_host_count': entity_fields.IntegerField(),
             'description': entity_fields.StringField(),
+            'environment': entity_fields.OneToManyField(LifecycleEnvironment),
             'label': entity_fields.StringField(unique=True),
             'last_published': entity_fields.StringField(),
             'name': entity_fields.StringField(
@@ -2458,6 +2459,9 @@ class HostGroup(
             'puppet_ca_proxy': entity_fields.OneToOneField(SmartProxy),
             'content_source': entity_fields.OneToOneField(SmartProxy),
             'environment': entity_fields.OneToOneField(Environment),
+            'kickstart_repository': entity_fields.OneToOneField(Repository),
+            'lifecycle_environment': entity_fields.OneToOneField(
+                LifecycleEnvironment),
             'location': entity_fields.OneToManyField(Location),
             'medium': entity_fields.OneToOneField(Media),
             'root_pass': entity_fields.StringField(),
@@ -2514,11 +2518,14 @@ class HostGroup(
           <https://bugzilla.redhat.com/show_bug.cgi?id=1235377>`_
         * `Bugzilla #1235379
           <https://bugzilla.redhat.com/show_bug.cgi?id=1235379>`_
+        * `Bugzilla #1450379
+          <https://bugzilla.redhat.com/show_bug.cgi?id=1450379>`_
 
         """
         if ignore is None:
             ignore = set()
         ignore.add('root_pass')
+        ignore.add('kickstart_repository')
 
         if attrs is None:
             attrs = self.read_json()

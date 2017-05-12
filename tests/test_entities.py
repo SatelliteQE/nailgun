@@ -1077,6 +1077,7 @@ class ReadTestCase(TestCase):
         for entity, ignored_attrs in (
                 (entities.Errata,
                  {'content_view_version', 'environment', 'repository'}),
+                (entities.HostGroup, {'kickstart_repository'})
                 (entities.Subnet, {'discovery'}),
                 (entities.Subscription, {'organization'}),
                 (entities.User, {'password'}),
