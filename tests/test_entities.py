@@ -526,6 +526,7 @@ class CreateTestCase(TestCase):
             entities.DiscoveryRule(self.cfg),
             entities.DockerComputeResource(self.cfg),
             entities.Domain(self.cfg),
+            entities.Host(self.cfg),
             entities.HostGroup(self.cfg),
             entities.Location(self.cfg),
             entities.Media(self.cfg),
