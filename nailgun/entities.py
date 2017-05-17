@@ -4431,6 +4431,59 @@ class Realm(
         ).read()
 
 
+class RecurringLogic(Entity, EntityReadMixin):
+    """A representation of a Recurring logic entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'cron_line': entity_fields.StringField(),
+            'end_time': entity_fields.DateTimeField(),
+            'iteration': entity_fields.IntegerField(),
+            'state': entity_fields.StringField(),
+            'task': entity_fields.OneToManyField(ForemanTask),
+            'task_group_id': entity_fields.IntegerField(),
+
+        }
+        self._meta = {
+            'api_path': 'foreman_tasks/api/recurring_logics',
+            'server_modes': ('sat')}
+        super(RecurringLogic, self).__init__(server_config, **kwargs)
+
+    def cancel(self, synchronous=True, **kwargs):
+        """Helper for canceling a recurring logic
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('cancel'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.RecurringLogic.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        cancel
+            /foreman_tasks/api/recurring_logics/:id/cancel
+
+        Otherwise, call ``super``.
+
+        """
+        if which in ('cancel',):
+            return '{0}/{1}'.format(
+                super(RecurringLogic, self).path(which='self'),
+                which
+            )
+        return super(RecurringLogic, self).path(which)
+
+
 class Registry(
         Entity,
         EntityCreateMixin,
