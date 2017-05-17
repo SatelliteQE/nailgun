@@ -4573,6 +4573,7 @@ class Repository(
             ),
             'gpg_key': entity_fields.OneToOneField(GPGKey),
             'label': entity_fields.StringField(),
+            'mirror_on_sync': entity_fields.BooleanField(),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
