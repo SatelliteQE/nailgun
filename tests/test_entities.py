@@ -1106,6 +1106,8 @@ class ReadTestCase(TestCase):
         for entity, ignored_attrs in (
                 (entities.Errata,
                  {'content_view_version', 'environment', 'repository'}),
+                (entities.SmartClassParameters, {'hidden_value'}),
+                (entities.SmartVariable, {'hidden_value'}),
                 (entities.Subnet, {'discovery'}),
                 (entities.Subscription, {'organization'}),
                 (entities.User, {'password'}),

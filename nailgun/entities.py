@@ -4020,6 +4020,7 @@ class OverrideValue(
                 SmartClassParameters),
             'smart_variable': entity_fields.OneToOneField(SmartVariable),
             'use_puppet_default': entity_fields.BooleanField(),
+            'omit': entity_fields.BooleanField(),
         }
         super(OverrideValue, self).__init__(server_config, **kwargs)
         # Create an override value for a specific smart class parameter
@@ -5229,6 +5230,7 @@ class SmartClassParameters(
             'merge_overrides': entity_fields.BooleanField(),
             'merge_default': entity_fields.BooleanField(),
             'avoid_duplicates': entity_fields.BooleanField(),
+            'override_value_order': entity_fields.StringField(),
             'override_values': entity_fields.DictField()
         }
         self._meta = {
@@ -5236,6 +5238,13 @@ class SmartClassParameters(
             'server_modes': ('sat'),
         }
         super(SmartClassParameters, self).__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None):
+        """Do not read the ``hidden_value`` attribute."""
+        if ignore is None:
+            ignore = set()
+        ignore.add('hidden_value')
+        return super(SmartClassParameters, self).read(entity, attrs, ignore)
 
 
 class SmartVariable(
@@ -5251,7 +5260,6 @@ class SmartVariable(
         self._fields = {
             'default_value': entity_fields.StringField(),
             'description': entity_fields.StringField(),
-            'override_value_order': entity_fields.StringField(),
             'puppetclass': entity_fields.OneToOneField(PuppetClass),
             'validator_rule': entity_fields.StringField(),
             'validator_type': entity_fields.StringField(),
@@ -5262,6 +5270,7 @@ class SmartVariable(
             'merge_overrides': entity_fields.BooleanField(),
             'merge_default': entity_fields.BooleanField(),
             'avoid_duplicates': entity_fields.BooleanField(),
+            'override_value_order': entity_fields.StringField(),
             'override_values': entity_fields.DictField(),
         }
         self._meta = {
@@ -5269,6 +5278,13 @@ class SmartVariable(
             'server_modes': ('sat'),
         }
         super(SmartVariable, self).__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None):
+        """Do not read the ``hidden_value`` attribute."""
+        if ignore is None:
+            ignore = set()
+        ignore.add('hidden_value')
+        return super(SmartVariable, self).read(entity, attrs, ignore)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict."""
