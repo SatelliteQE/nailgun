@@ -627,7 +627,13 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
         return super(Capsule, self).path(which)
 
 
-class CommonParameter(Entity):
+class CommonParameter(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Common Parameter entity."""
 
     def __init__(self, server_config=None, **kwargs):
