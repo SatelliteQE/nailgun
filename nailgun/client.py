@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
 # out the warnings produced by that library, due to the process-wide nature of
 # Python's warnings and filter system. The `warnings.catch_warnings` context
 # manager is not a good solution to this problem, as it is thread-unsafe.
+# pylint:disable=no-member
 simplefilter(
     'ignore',
     requests.packages.urllib3.exceptions.InsecureRequestWarning,
