@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
 # pylint:disable=no-member
 simplefilter(
     'ignore',
-    requests.packages.urllib3.exceptions.InsecureRequestWarning,
+    requests.urllib3.exceptions.InsecureRequestWarning,
 )
 
 
