@@ -1597,6 +1597,9 @@ class ContentViewFilterRule(
                 AbstractContentViewFilter,
                 required=True
             ),
+            'date_type': entity_fields.StringField(
+                choices=('issued', 'updated'),
+            ),
             'end_date': entity_fields.DateField(),
             'errata': entity_fields.OneToOneField(Errata),
             'max_version': entity_fields.StringField(),
@@ -5994,9 +5997,9 @@ class User(
             'lastname': entity_fields.StringField(length=(1, 50)),
             'location': entity_fields.OneToManyField(Location),
             'login': entity_fields.StringField(
-                length=(1, 100),
+                length=(6, 12),
                 required=True,
-                str_type=('alpha', 'alphanumeric', 'cjk', 'latin1'),
+                str_type='alpha',
             ),
             'mail': entity_fields.EmailField(required=True),
             'organization': entity_fields.OneToManyField(Organization),
