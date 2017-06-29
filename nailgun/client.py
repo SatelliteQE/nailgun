@@ -84,7 +84,7 @@ def _set_content_type(kwargs):
     kwargs['headers'] = headers
 
 
-def _log_request(method, url, kwargs, data=None):
+def _log_request(method, url, kwargs, data=None, params=None):
     """Log out information about the arguments given.
 
     The arguments provided to this function correspond to the arguments that
@@ -94,10 +94,11 @@ def _log_request(method, url, kwargs, data=None):
 
     """
     logger.debug(
-        'Making HTTP %s request to %s with %s and %s.',
+        'Making HTTP %s request to %s with %s, %s and %s.',
         method,
         url,
         'options {0}'.format(kwargs) if len(kwargs) > 0 else 'no options',
+        'params {0}'.format(params) if params else 'no params',
         'data {0}'.format(data) if data is not None else 'no data',
     )
 
@@ -149,7 +150,7 @@ def get(url, params=None, **kwargs):
     _set_content_type(kwargs)
     if _content_type_is_json(kwargs) and kwargs.get('data') is not None:
         kwargs['data'] = dumps(kwargs['data'])
-    _log_request('GET', url, kwargs)
+    _log_request('GET', url, kwargs, params=params)
     response = requests.get(url, params, **kwargs)
     _log_response(response)
     return response

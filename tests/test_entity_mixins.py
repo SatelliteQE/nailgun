@@ -730,7 +730,7 @@ class EntityReadMixinTestCase(TestCase):
         self.assertEqual(
             get.call_args[1],
             # pylint:disable=protected-access
-            self.entity._server_config.get_client_kwargs(),
+            dict(params=None, **self.entity._server_config.get_client_kwargs())
         )
 
     def test_read_json(self):
