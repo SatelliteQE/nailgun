@@ -709,7 +709,7 @@ class EntityReadMixin(object):
 
     """
 
-    def read_raw(self):
+    def read_raw(self, params=None):
         """Get information about the current entity.
 
         Make an HTTP PUT call to ``self.path('self')``. Return the response.
@@ -719,10 +719,11 @@ class EntityReadMixin(object):
         """
         return client.get(
             self.path('self'),
+            params=params,
             **self._server_config.get_client_kwargs()
         )
 
-    def read_json(self):
+    def read_json(self, params=None):
         """Get information about the current entity.
 
         Call :meth:`read_raw`. Check the response status code, decode JSON and
@@ -734,11 +735,11 @@ class EntityReadMixin(object):
         :raises: ``ValueError`` If the response JSON can not be decoded.
 
         """
-        response = self.read_raw()
+        response = self.read_raw(params=params)
         response.raise_for_status()
         return response.json()
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Get information about the current entity.
 
         1. Create a new entity of type ``type(self)``.
@@ -784,7 +785,7 @@ class EntityReadMixin(object):
         if entity is None:
             entity = type(self)(self._server_config)
         if attrs is None:
-            attrs = self.read_json()
+            attrs = self.read_json(params=params)
         if ignore is None:
             ignore = set()
 

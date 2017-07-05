@@ -510,7 +510,7 @@ class AuthSourceLDAP(
                 if not hasattr(self, field):
                     setattr(self, field, self._fields[field].gen_value())
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Do not read the ``account_password`` attribute. Work around a bug.
 
         For more information, see `Bugzilla #1243036
@@ -522,7 +522,7 @@ class AuthSourceLDAP(
         if ignore is None:
             ignore = set()
         ignore.add('account_password')
-        return super(AuthSourceLDAP, self).read(entity, attrs, ignore)
+        return super(AuthSourceLDAP, self).read(entity, attrs, ignore, params)
 
 
 class Bookmark(
@@ -962,7 +962,7 @@ class DiscoveryRule(
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Work around a bug. Rename ``search`` to ``search_``.
 
         For more information on the bug, see `Bugzilla #1257255
@@ -984,7 +984,7 @@ class DiscoveryRule(
                 self._server_config,
                 id=attrs['id'],
             ).update_json([])[attr]
-        return super(DiscoveryRule, self).read(entity, attrs, ignore)
+        return super(DiscoveryRule, self).read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -1032,7 +1032,7 @@ class DockerComputeResource(AbstractComputeResource):  # pylint:disable=R0901
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Do extra work to fetch a complete set of attributes for this entity.
 
         For more information, see `Bugzilla #1223540
@@ -1055,7 +1055,8 @@ class DockerComputeResource(AbstractComputeResource):  # pylint:disable=R0901
             )
             response.raise_for_status()
             attrs['email'] = response.json().get('email')
-        return super(DockerComputeResource, self).read(entity, attrs, ignore)
+        return super(DockerComputeResource, self).read(
+            entity, attrs, ignore, params)
 
 
 class LibvirtComputeResource(AbstractComputeResource):  # pylint:disable=R0901
@@ -1656,7 +1657,7 @@ class ContentViewFilterRule(
             )
         }
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Do not read certain fields.
 
         Do not expect the server to return the ``content_view_filter``
@@ -1687,7 +1688,8 @@ class ContentViewFilterRule(
         ])
         if 'errata_id' in attrs:
             ignore.discard('errata')  # pylint:disable=no-member
-        return super(ContentViewFilterRule, self).read(entity, attrs, ignore)
+        return super(ContentViewFilterRule, self).read(
+            entity, attrs, ignore, params)
 
 
 class AbstractContentViewFilter(
@@ -1794,7 +1796,7 @@ class ContentViewPuppetModule(
             )
         }
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
 
         By default, ``nailgun.entity_mixins.EntityReadMixin.read provides a
@@ -1820,7 +1822,8 @@ class ContentViewPuppetModule(
         if ignore is None:
             ignore = set()
         ignore.add('content_view')
-        return super(ContentViewPuppetModule, self).read(entity, attrs, ignore)
+        return super(ContentViewPuppetModule, self).read(
+            entity, attrs, ignore, params)
 
 
 class ContentView(
@@ -1862,7 +1865,7 @@ class ContentView(
         }
         super(ContentView, self).__init__(server_config, **kwargs)
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Fetch an attribute missing from the server's response.
 
         For more information, see `Bugzilla #1237257
@@ -1874,7 +1877,7 @@ class ContentView(
                 attrs = self.read_json()
             org = _get_org(self._server_config, attrs['organization']['label'])
             attrs['organization'] = org.get_values()
-        return super(ContentView, self).read(entity, attrs, ignore)
+        return super(ContentView, self).read(entity, attrs, ignore, params)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -2047,7 +2050,7 @@ class Domain(
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Deal with weirdly named data returned from the server.
 
         For more information, see `Bugzilla #1233245
@@ -2057,7 +2060,7 @@ class Domain(
         if attrs is None:
             attrs = self.read_json()
         attrs['domain_parameters_attributes'] = attrs.pop('parameters')
-        return super(Domain, self).read(entity, attrs, ignore)
+        return super(Domain, self).read(entity, attrs, ignore, params)
 
     @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
@@ -2229,7 +2232,7 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
             return '{0}/{1}'.format(super(Errata, self).path('base'), which)
         return super(Errata, self).path(which)
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Following fields are only accessible for filtering search results
         and are never returned by the server: ``content_view_version_id``,
         ``environment_id``, ``repository_id``.
@@ -2239,7 +2242,7 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
         ignore.add('content_view_version')
         ignore.add('environment')
         ignore.add('repository')
-        return super(Errata, self).read(entity, attrs, ignore)
+        return super(Errata, self).read(entity, attrs, ignore, params)
 
 
 class Filter(
@@ -2552,7 +2555,7 @@ class HostGroup(
         """
         return {u'hostgroup': super(HostGroup, self).create_payload()}
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Deal with several bugs.
 
         For more information, see:
@@ -2585,7 +2588,7 @@ class HostGroup(
                          'content_view_id',
                          'lifecycle_environment_id'):
                 attrs[attr] = attrs2.get(attr)
-        return super(HostGroup, self).read(entity, attrs, ignore)
+        return super(HostGroup, self).read(entity, attrs, ignore, params)
 
     @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
@@ -3077,7 +3080,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
         response = client.put(self.path('bulk/install_content'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Deal with oddly named and structured data returned by the server.
 
         For more information, see `Bugzilla #1235019
@@ -3112,7 +3115,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
         ignore.add('image')
         # host id is required for interface initialization
         ignore.add('interface')
-        result = super(Host, self).read(entity, attrs, ignore)
+        result = super(Host, self).read(entity, attrs, ignore, params)
         if attrs.get('image_id'):
             result.image = Image(
                 server_config=self._server_config,
@@ -3318,7 +3321,7 @@ class Image(
         """Wrap submitted data within an extra dict."""
         return {u'image': super(Image, self).update_payload(fields)}
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
 
         By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
@@ -3344,7 +3347,7 @@ class Image(
         if ignore is None:
             ignore = set()
         ignore.add('compute_resource')
-        return super(Image, self).read(entity, attrs, ignore)
+        return super(Image, self).read(entity, attrs, ignore, params)
 
 
 class Interface(
@@ -3405,7 +3408,7 @@ class Interface(
             'server_modes': ('sat'),
         }
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
 
         By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
@@ -3449,7 +3452,7 @@ class Interface(
             ignore.add('tag')
         if attrs['type'] != 'bridge' and attrs['type'] != 'bond':
             ignore.add('attached_devices')
-        return super(Interface, self).read(entity, attrs, ignore)
+        return super(Interface, self).read(entity, attrs, ignore, params)
 
     def search_normalize(self, results):
         """Append host id to search results to be able to initialize found
@@ -3597,7 +3600,7 @@ class Location(
         attrs = self.create_json(create_missing)
         return Location(self._server_config, id=attrs['id']).read()
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Work around a bug in the server's response.
 
         Do not read the ``realm`` attribute. See `Bugzilla #1216234
@@ -3607,7 +3610,7 @@ class Location(
         if ignore is None:
             ignore = set()
         ignore.add('realm')
-        return super(Location, self).read(entity, attrs, ignore)
+        return super(Location, self).read(entity, attrs, ignore, params)
 
     @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
@@ -3684,12 +3687,12 @@ class Media(
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Rename ``path`` to ``path_``."""
         if attrs is None:
             attrs = self.read_json()
         attrs['path_'] = attrs.pop('path')
-        return super(Media, self).read(entity, attrs, ignore)
+        return super(Media, self).read(entity, attrs, ignore, params)
 
     @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
@@ -3842,7 +3845,7 @@ class OperatingSystemParameter(
             'server_modes': ('sat'),
         }
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
 
         By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
@@ -3871,7 +3874,8 @@ class OperatingSystemParameter(
         return super(OperatingSystemParameter, self).read(
             entity,
             attrs,
-            ignore
+            ignore,
+            params
         )
 
 
@@ -3972,7 +3976,7 @@ class Organization(
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Fetch as many attributes as possible for this entity.
 
         Do not read the ``realm`` attribute. For more information, see
@@ -3983,7 +3987,7 @@ class Organization(
         if ignore is None:
             ignore = set()
         ignore.add('realm')
-        return super(Organization, self).read(entity, attrs, ignore)
+        return super(Organization, self).read(entity, attrs, ignore, params)
 
     @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
@@ -4084,7 +4088,7 @@ class OverrideValue(
             'server_modes': ('sat'),
         }
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
 
         By default, ``nailgun.entity_mixins.EntityReadMixin.read provides a
@@ -4120,7 +4124,7 @@ class OverrideValue(
         if ignore is None:
             ignore = set()
         ignore.update(['smart_class_parameter', 'smart_variable'])
-        return super(OverrideValue, self).read(entity, attrs, ignore)
+        return super(OverrideValue, self).read(entity, attrs, ignore, params)
 
 
 class Permission(Entity, EntityReadMixin, EntitySearchMixin):
@@ -4205,7 +4209,7 @@ class Product(
             )
         return super(Product, self).path(which)
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Fetch an attribute missing from the server's response.
 
         Also add sync plan to the responce if needed, as
@@ -4225,7 +4229,7 @@ class Product(
         if ignore is None:
             ignore = set()
         ignore.add('sync_plan')
-        result = super(Product, self).read(entity, attrs, ignore)
+        result = super(Product, self).read(entity, attrs, ignore, params)
         if 'sync_plan' in attrs:
             result.sync_plan = SyncPlan(
                 server_config=self._server_config,
@@ -4935,7 +4939,7 @@ class RepositorySet(
             )
         return super(RepositorySet, self).path(which)
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
 
         By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
@@ -4960,7 +4964,7 @@ class RepositorySet(
         if ignore is None:
             ignore = set()
         ignore.add('product')
-        return super(RepositorySet, self).read(entity, attrs, ignore)
+        return super(RepositorySet, self).read(entity, attrs, ignore, params)
 
     def search_normalize(self, results):
         """Provide a value for `product` field.
@@ -5008,7 +5012,7 @@ class RHCIDeployment(
         }
         super(RHCIDeployment, self).__init__(server_config, **kwargs)
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Normalize the data returned by the server.
 
         The server's JSON response is in this form::
@@ -5031,7 +5035,7 @@ class RHCIDeployment(
         if ignore is None:
             ignore = set()
         ignore.add('rhev_engine_host')
-        return super(RHCIDeployment, self).read(entity, attrs, ignore)
+        return super(RHCIDeployment, self).read(entity, attrs, ignore, params)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -5282,12 +5286,13 @@ class SmartClassParameters(
         }
         super(SmartClassParameters, self).__init__(server_config, **kwargs)
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Do not read the ``hidden_value`` attribute."""
         if ignore is None:
             ignore = set()
         ignore.add('hidden_value')
-        return super(SmartClassParameters, self).read(entity, attrs, ignore)
+        return super(SmartClassParameters, self).read(
+            entity, attrs, ignore, params)
 
 
 class SmartVariable(
@@ -5322,12 +5327,12 @@ class SmartVariable(
         }
         super(SmartVariable, self).__init__(server_config, **kwargs)
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Do not read the ``hidden_value`` attribute."""
         if ignore is None:
             ignore = set()
         ignore.add('hidden_value')
-        return super(SmartVariable, self).read(entity, attrs, ignore)
+        return super(SmartVariable, self).read(entity, attrs, ignore, params)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict."""
@@ -5410,7 +5415,7 @@ class Subnet(
         """
         return {u'subnet': super(Subnet, self).create_payload()}
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Fetch as many attributes as possible for this entity.
 
         Do not read the ``discovery`` attribute. For more information, see
@@ -5422,7 +5427,7 @@ class Subnet(
         if ignore is None:
             ignore = set()
         ignore.add('discovery')
-        return super(Subnet, self).read(entity, attrs, ignore)
+        return super(Subnet, self).read(entity, attrs, ignore, params)
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
@@ -5535,7 +5540,7 @@ class Subscription(
         )
         return _handle_response(response, self._server_config, synchronous)
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Ignore ``organization`` field as it's never returned by the server
         and is only added to entity to be able to use organization path
         dependent helpers.
@@ -5543,7 +5548,7 @@ class Subscription(
         if ignore is None:
             ignore = set()
         ignore.add('organization')
-        return super(Subscription, self).read(entity, attrs, ignore)
+        return super(Subscription, self).read(entity, attrs, ignore, params)
 
     def refresh_manifest(self, synchronous=True, **kwargs):
         """Refresh previously imported manifest for Red Hat provider.
@@ -5646,7 +5651,7 @@ class SyncPlan(
             'api_path': '{0}/sync_plans'.format(self.organization.path()),
         }
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
 
         By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
@@ -5671,7 +5676,7 @@ class SyncPlan(
         if ignore is None:
             ignore = set()
         ignore.add('organization')
-        return super(SyncPlan, self).read(entity, attrs, ignore)
+        return super(SyncPlan, self).read(entity, attrs, ignore, params)
 
     def create_payload(self):
         """Convert ``sync_date`` to a string.
@@ -5863,7 +5868,7 @@ class System(
             )
         return super(System, self).path(which)
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Fetch as many attributes as possible for this entity.
 
         Do not read the ``facts``, ``organization`` or ``type`` attributes.
@@ -5879,7 +5884,7 @@ class System(
         if ignore is None:
             ignore = set()
         ignore.update(['facts', 'organization', 'type'])
-        return super(System, self).read(entity, attrs, ignore)
+        return super(System, self).read(entity, attrs, ignore, params)
 
 
 class TemplateCombination(Entity, EntityDeleteMixin, EntityReadMixin):
@@ -5975,7 +5980,7 @@ class UserGroup(
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Work around `Redmine #9594`_.
 
         An HTTP GET request to ``path('self')`` does not return the ``admin``
@@ -5998,7 +6003,7 @@ class UserGroup(
             )
             response.raise_for_status()
             attrs['admin'] = response.json()['admin']
-        return super(UserGroup, self).read(entity, attrs, ignore)
+        return super(UserGroup, self).read(entity, attrs, ignore, params)
 
 
 class User(
@@ -6055,12 +6060,12 @@ class User(
         """
         return {u'user': super(User, self).create_payload()}
 
-    def read(self, entity=None, attrs=None, ignore=None):
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Do not read the ``password`` argument."""
         if ignore is None:
             ignore = set()
         ignore.add('password')
-        return super(User, self).read(entity, attrs, ignore)
+        return super(User, self).read(entity, attrs, ignore, params)
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
