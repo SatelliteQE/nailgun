@@ -245,9 +245,9 @@ def _get_entity_id(field_name, attrs):
     if field_name in attrs:
         if attrs[field_name] is None:
             return None
-        else:
+        elif 'id' in attrs[field_name]:
             return attrs[field_name]['id']
-    elif field_name_id in attrs:
+    if field_name_id in attrs:
         return attrs[field_name_id]
     else:
         raise MissingValueError(
