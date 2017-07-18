@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
 # manager is not a good solution to this problem, as it is thread-unsafe.
 simplefilter(
     'ignore',
-    requests.packages.urllib3.exceptions.InsecureRequestWarning,
+    requests.urllib3.exceptions.InsecureRequestWarning,
 )
 
 
