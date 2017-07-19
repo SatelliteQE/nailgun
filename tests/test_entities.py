@@ -1502,6 +1502,20 @@ class UpdatePayloadTestCase(TestCase):
         self.assertNotIn('system_ids', payload)
         self.assertIn('system_uuids', payload)
 
+    def test_organization_rh_repo_url(self):
+        """Check whether ``Organization`` updates its ``redhat_repository_url`` field.
+
+        The field should be copied from
+        ``p['organization']['redhat_repository_url']`` to
+        ``p['redhat_repository_url']``
+        when ``update_payload`` is called.
+        """
+        payload = entities.Organization(
+            self.cfg,
+            redhat_repository_url=["https://cdn.redhat.com"],
+        ).update_payload()
+        self.assertIn('redhat_repository_url', payload)
+
 
 # 2. Tests for entity-specific methods. ---------------------------------- {{{1
 
