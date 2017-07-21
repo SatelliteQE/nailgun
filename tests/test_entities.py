@@ -1576,6 +1576,7 @@ class GenericTestCase(TestCase):
             (entities.Host(**generic).install_content, 'put'),
             (entities.Host(**generic).list_scparams, 'get'),
             (entities.Host(**generic).list_smart_variables, 'get'),
+            (entities.Host(**generic).power, 'put'),
             (entities.HostGroup(**generic).add_puppetclass, 'post'),
             (entities.HostGroup(**generic).clone, 'post'),
             (entities.HostGroup(**generic).list_scparams, 'get'),

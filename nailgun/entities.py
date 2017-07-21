@@ -3161,6 +3161,8 @@ class Host(  # pylint:disable=too-many-instance-attributes
             /api/hosts/:host_id/bulk/install_content
         errata
             /api/hosts/:host_id/errata
+        power
+            /api/hosts/:host_id/power
         errata/apply
             /api/hosts/:host_id/errata/apply
         puppetclass_ids
@@ -3176,6 +3178,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
         if which in (
                 'errata',
                 'errata/apply',
+                'power',
                 'puppetclass_ids',
                 'smart_class_parameters',
                 'smart_variables',
@@ -3270,6 +3273,20 @@ class Host(  # pylint:disable=too-many-instance-attributes
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_variables'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def power(self, synchronous=True, **kwargs):
+        """Power the host off or on
+
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('power'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
