@@ -6050,6 +6050,7 @@ class User(
             ),
             'default_location': entity_fields.OneToOneField(Location),
             'default_organization': entity_fields.OneToOneField(Organization),
+            'description': entity_fields.StringField(),
             'firstname': entity_fields.StringField(length=(1, 50)),
             'lastname': entity_fields.StringField(length=(1, 50)),
             'location': entity_fields.OneToManyField(Location),
