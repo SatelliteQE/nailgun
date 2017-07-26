@@ -3926,6 +3926,7 @@ class Organization(
             'provisioning_template': entity_fields.OneToManyField(
                 ProvisioningTemplate),
             'realm': entity_fields.OneToManyField(Realm),
+            'redhat_repository_url': entity_fields.URLField(),
             'smart_proxy': entity_fields.OneToManyField(SmartProxy),
             'subnet': entity_fields.OneToManyField(Subnet),
             'title': entity_fields.StringField(),
@@ -4022,9 +4023,12 @@ class Organization(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {
-            u'organization': super(Organization, self).update_payload(fields)
-        }
+        org_payload = super(Organization, self).update_payload(fields)
+        payload = {u'organization': org_payload}
+        if 'redhat_repository_url' in org_payload:
+            rh_repo_url = org_payload.pop('redhat_repository_url')
+            payload['redhat_repository_url'] = rh_repo_url
+        return payload
 
     def download_debug_certificate(self, synchronous=True, **kwargs):
         """Get debug certificate for particular organization.
