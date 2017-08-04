@@ -5539,7 +5539,7 @@ class Subscription(
             response,
             self._server_config,
             synchronous,
-            timeout=900,
+            timeout=1500,
         )
 
     def manifest_history(self, synchronous=True, **kwargs):
@@ -5594,7 +5594,7 @@ class Subscription(
             response,
             self._server_config,
             synchronous,
-            timeout=900,
+            timeout=1500,
         )
 
     def upload(self, synchronous=True, **kwargs):
@@ -5626,7 +5626,7 @@ class Subscription(
             response,
             self._server_config,
             synchronous,
-            timeout=900,
+            timeout=1500,
         )
 
 
