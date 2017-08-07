@@ -3585,7 +3585,7 @@ class Location(
                 unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
-            'parent_name': entity_fields.StringField(),
+            'parent': entity_fields.OneToOneField(Location),
             'provisioning_template': entity_fields.OneToManyField(
                 ProvisioningTemplate),
             'realm': entity_fields.OneToManyField(Realm),
