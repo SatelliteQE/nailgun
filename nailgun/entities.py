@@ -4565,12 +4565,14 @@ class Registry(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'description': entity_fields.StringField(),
+            'location': entity_fields.OneToManyField(Location),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
                 length=(6, 12),
                 unique=True
             ),
+            'organization': entity_fields.OneToManyField(Organization),
             'password': entity_fields.StringField(),
             'url': entity_fields.URLField(required=True),
             'username': entity_fields.StringField(),
@@ -4592,9 +4594,40 @@ class Registry(
             u'registry': super(Registry, self).create_payload()
         }
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
+    def create(self, create_missing=None):
+        """Manually fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1479391
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1479391>`_.
+        """
+        return Registry(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Do not read the ``password`` argument."""
+        if attrs is None:
+            attrs = self.read_json()
+        if ignore is None:
+            ignore = set()
+        ignore.add('password')
+        return super(Registry, self).read(entity, attrs, ignore, params)
+
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {u'registry': super(Registry, self).update_payload(fields)}
+
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1479391
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1479391>`_.
+        """
+        self.update_json(fields)
+        return self.read()
 
 
 class Report(Entity):
