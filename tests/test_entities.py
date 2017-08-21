@@ -533,6 +533,7 @@ class CreateTestCase(TestCase):
             entities.Media(self.cfg),
             entities.Organization(self.cfg),
             entities.Realm(self.cfg),
+            entities.Registry(self.cfg),
             entities.SmartProxy(self.cfg),
             entities.UserGroup(self.cfg),
         )
@@ -1359,6 +1360,7 @@ class UpdateTestCase(TestCase):
             entities.Media(self.cfg),
             entities.Organization(self.cfg),
             entities.SmartProxy(self.cfg),
+            entities.Registry(self.cfg),
             entities.User(self.cfg),
             entities.UserGroup(self.cfg),
         )
