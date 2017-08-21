@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 """Tests for :mod:`nailgun.entities`."""
 import json
+import os
 from datetime import datetime, date
 from fauxfactory import gen_integer, gen_string
 from nailgun import client, config, entities
@@ -21,8 +22,10 @@ else:
     from unittest import TestCase
 if version_info.major == 2:
     from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
+    _BUILTIN_OPEN = '__builtin__.open'
 else:
     from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
+    _BUILTIN_OPEN = 'builtins.open'
 
 # pylint:disable=too-many-lines
 # The size of this file is a direct reflection of the size of module
@@ -104,7 +107,7 @@ class InitTestCase(TestCase):
                 entities.ConfigGroup,
                 entities.ConfigTemplate,
                 entities.ProvisioningTemplate,
-                entities.ContentUpload,
+                # entities.ContentUpload,  # see below
                 entities.ContentView,
                 entities.ContentViewVersion,
                 entities.DiscoveredHost,
@@ -172,6 +175,7 @@ class InitTestCase(TestCase):
                 entities.DockerComputeResource,
                 {'email': 'nobody@example.com', 'url': 'http://example.com'},
             ),
+            (entities.ContentUpload, {'repository': 1}),
             (entities.ContentViewFilterRule, {'content_view_filter': 1}),
             (entities.ContentViewPuppetModule, {'content_view': 1}),
             (entities.HostPackage, {'host': 1}),
@@ -1774,6 +1778,125 @@ class ConfigTemplateTestCase(TestCase):
         self.assertEqual(expected_dct, cfg_template.update_payload())
 
 
+class ContentUploadTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.ContentUpload`."""
+
+    def setUp(self):
+        """Set ``self.repo``."""
+        server_config = config.ServerConfig('http://example.com')
+        repo = entities.Repository(
+            server_config,
+            id=gen_integer(min_value=1),
+        )
+        self.content_upload = entities.ContentUpload(
+            server_config, repository=repo)
+
+    def test_content_upload_create(self):
+        """Test ``nailgun.entities.ContentUpload.create``.
+
+        Make the (mock) server return a "success" status. Make the same
+        assertions as for
+        :meth:`tests.test_entities.GenericTestCase.test_generic`.
+
+        """
+        with mock.patch.object(client, 'post') as post:
+            self.content_upload.create()
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(len(post.call_args[0]), 2)
+
+    def test_content_upload_delete(self):
+        """Test ``nailgun.entities.ContentUpload.delete``.
+
+        Make the (mock) server return a "success" status. Make the same
+        assertions as for
+        :meth:`tests.test_entities.GenericTestCase.test_generic`.
+
+        """
+        with mock.patch.object(client, 'delete') as delete:
+            with mock.patch.object(client, 'post') as post:
+                content_upload = self.content_upload.create()
+                content_upload.delete()
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(len(post.call_args[0]), 2)
+        self.assertEqual(delete.call_count, 1)
+        self.assertEqual(len(delete.call_args[0]), 1)
+
+    def test_content_upload_update(self):
+        """Test ``nailgun.entities.ContentUpload.update``.
+
+        Make the (mock) server return a "success" status. Make the same
+        assertions as for
+        :meth:`tests.test_entities.GenericTestCase.test_generic`.
+
+        """
+        with mock.patch.object(client, 'post') as post:
+            with mock.patch.object(client, 'put') as put:
+                content_upload = self.content_upload.create()
+                content_upload.update({'content': gen_string('alpha')})
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(len(post.call_args[0]), 2)
+        self.assertEqual(put.call_count, 1)
+        self.assertEqual(len(put.call_args[0]), 2)
+        expected_args = {'headers': {'content-type': 'multipart/form-data'}}
+        self.assertEqual(put.call_args[1], expected_args)
+
+    def test_content_upload_upload(self):
+        """Test ``nailgun.entities.ContentUpload.upload``.
+
+        Make the (mock) server return a "success" status. Make the same
+        assertions as for
+        :meth:`tests.test_entities.GenericTestCase.test_generic`.
+
+        """
+        filename = gen_string('alpha')
+        filepath = os.path.join(gen_string('alpha'), filename)
+        with mock.patch.object(
+            entities.ContentUpload, 'create',
+        ) as create:
+            with mock.patch.object(
+                entities.Repository, 'import_uploads',
+                return_value={'status': 'success'},
+            ) as import_uploads:
+                mock_open = mock.mock_open(
+                    read_data=gen_string('alpha').encode('ascii'))
+                with mock.patch(
+                    _BUILTIN_OPEN, mock_open, create=True
+                ):
+                    response = self.content_upload.upload(
+                        filepath, filename)
+        self.assertEqual(import_uploads.call_count, 1)
+        self.assertEqual(create.call_count, 1)
+        self.assertEqual(import_uploads.return_value, response)
+
+    def test_content_upload_no_filename(self):
+        """Test ``nailgun.entities.ContentUpload.upload`` without a filename.
+
+        Make the (mock) server return a "success" status. Make the same
+        assertions as for
+        :meth:`tests.test_entities.GenericTestCase.test_generic`.
+
+        """
+        filename = gen_string('alpha')
+        filepath = os.path.join(gen_string('alpha'), filename)
+        with mock.patch.object(
+            entities.ContentUpload, 'create',
+        ) as create:
+            with mock.patch.object(
+                entities.Repository, 'import_uploads',
+                return_value={'status': 'success'},
+            ) as import_uploads:
+                mock_open = mock.mock_open(
+                    read_data=gen_string('alpha').encode('ascii'))
+                with mock.patch(
+                    _BUILTIN_OPEN, mock_open, create=True
+                ):
+                    response = self.content_upload.upload(
+                        filepath)
+        self.assertEqual(import_uploads.call_count, 1)
+        self.assertEqual(create.call_count, 1)
+        self.assertEqual(import_uploads.return_value, response)
+
+
 class ProvisioningTemplateTestCase(TestCase):
     """Tests for :class:`nailgun.entities.ProvisioningTemplate`."""
 
@@ -2167,6 +2290,56 @@ class RepositoryTestCase(TestCase):
         self.assertEqual(len(post.call_args[0]), 1)
         self.assertEqual(post.call_args[1], kwargs)
         self.assertEqual(handler.call_count, 1)
+
+    def test_import_uploads_uploads(self):
+        """Call :meth:`nailgun.entities.Repository.import_uploads` with
+        the `uploads` parameter.
+
+        Make the (mock) server return a "success" status. Make the same
+        assertions as for
+        :meth:`tests.test_entities.GenericTestCase.test_generic`.
+
+        """
+        kwargs = {'kwarg': gen_integer()}
+        uploads = [{'id': gen_string('numeric'), 'name': gen_string('alpha'),
+                    'size': gen_integer(), 'checksum': gen_string('numeric')}]
+        with mock.patch.object(client, 'put') as put:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'status': 'success'},
+            ) as handler:
+                response = self.repo.import_uploads(uploads=uploads, **kwargs)
+        self.assertEqual(put.call_count, 1)
+        self.assertEqual(len(put.call_args[0]), 2)
+        self.assertEqual(put.call_args[1], kwargs)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
+
+    def test_import_uploads_upload_ids(self):
+        """Call :meth:`nailgun.entities.Repository.import_uploads` with
+        the `upload_ids` parameter.
+
+        Make the (mock) server return a "success" status. Make the same
+        assertions as for
+        :meth:`tests.test_entities.GenericTestCase.test_generic`.
+
+        """
+        kwargs = {'kwarg': gen_integer()}
+        upload_ids = [gen_string('numeric')]
+        with mock.patch.object(client, 'put') as put:
+            with mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'status': 'success'},
+            ) as handler:
+                response = self.repo.import_uploads(upload_ids=upload_ids,
+                                                    **kwargs)
+        self.assertEqual(put.call_count, 1)
+        self.assertEqual(len(put.call_args[0]), 2)
+        self.assertEqual(put.call_args[1], kwargs)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
 
 
 class RepositorySetTestCase(TestCase):

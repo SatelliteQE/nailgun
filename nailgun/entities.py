@@ -23,6 +23,8 @@ workings of entity classes.
 """
 from datetime import datetime
 from sys import version_info
+import hashlib
+import os.path
 
 from fauxfactory import gen_alphanumeric
 from packaging.version import Version
@@ -41,8 +43,10 @@ from nailgun.entity_mixins import (
 
 if version_info.major == 2:  # pragma: no cover
     from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
+    from urlparse import urljoin  # pylint:disable=import-error
 else:  # pragma: no cover
     from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
+    from urllib.parse import urljoin  # pylint:disable=F0401,E0611
 
 # pylint:disable=too-many-lines
 # The size of this file is a direct reflection of the size of Satellite's API.
@@ -1515,23 +1519,147 @@ class DockerRegistryContainer(AbstractDockerContainer):
         super(DockerRegistryContainer, self).__init__(server_config, **kwargs)
 
 
-class ContentUpload(Entity):
+class ContentUpload(
+        Entity,
+        EntityCreateMixin,
+        EntityReadMixin,
+        EntityUpdateMixin,
+        EntityDeleteMixin):
     """A representation of a Content Upload entity."""
 
     def __init__(self, server_config=None, **kwargs):
+        _check_for_value('repository', kwargs)
         self._fields = {
+            'upload_id': entity_fields.StringField(length=36, unique=True),
             'repository': entity_fields.OneToOneField(
                 Repository,
                 required=True,
             )
         }
+        super(ContentUpload, self).__init__(server_config, **kwargs)
+        # a ContentUpload does not have an id field, only an upload_id
+        self._fields.pop('id')
         self._meta = {
-            'api_path': (
-                'katello/api/v2/repositories/:repository_id/content_uploads'
-            ),
+            # pylint:disable=no-member
+            'api_path': '{0}/content_uploads'.format(self.repository.path()),
             'server_modes': ('sat'),
         }
-        super(ContentUpload, self).__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Provide a default value for ``entity``.
+
+        By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
+        default value for ``entity`` like so::
+
+            entity = type(self)()
+
+        However, :class:`ContentUpload` requires that a ``repository`` be
+        provided, so this technique will not work. Do this instead::
+
+            entity = type(self)(repository=self.repository.id)
+
+        """
+        # read() should not change the state of the object it's called on, but
+        # super() alters the attributes of any entity passed in. Creating a new
+        # object and passing it to super() lets this one avoid changing state.
+        if entity is None:
+            entity = type(self)(
+                self._server_config,
+                repository=self.repository,  # pylint:disable=no-member
+            )
+        if ignore is None:
+            ignore = set()
+        ignore.add('repository')
+        return super(ContentUpload, self).read(entity, attrs, ignore, params)
+
+    def update(self, fields=None, **kwargs):
+        """Update the current entity.
+
+        Make an HTTP PUT call to ``self.path('base')``. Return the response.
+
+        :param fields: An iterable of field names. Only the fields named in
+            this iterable will be updated. No fields are updated if an empty
+            iterable is passed in. All fields are updated if ``None`` is passed
+            in.
+        :return: A ``requests.response`` object.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        # a content upload is always multipart
+        headers = kwargs.pop('headers', {})
+        headers['content-type'] = 'multipart/form-data'
+        kwargs['headers'] = headers
+        return client.put(
+            self.path('self'),
+            fields,
+            **kwargs
+        )
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        """
+        base = urljoin(
+            self._server_config.url + '/',
+            self._meta['api_path']  # pylint:disable=no-member
+        )
+        if (which == 'self' or which is None) and hasattr(self, 'upload_id'):
+            # pylint:disable=E1101
+            return urljoin(base + '/', str(self.upload_id))
+        return super(ContentUpload, self).path(which)
+
+    def upload(self, filepath, filename=None):
+        """Upload content.
+
+        :param filepath: path to the file that should be chunked and uploaded
+        :param filename: name of the file on the server, defaults to the
+            last part of the ``filepath`` if not set
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        :raises nailgun.entities.APIResponseError: If the response has a status
+            other than "success".
+
+        .. _POST a Multipart-Encoded File:
+            http://docs.python-requests.org/en/latest/user/quickstart/#post-a-multipart-encoded-file
+        .. _POST Multiple Multipart-Encoded Files:
+            http://docs.python-requests.org/en/latest/user/advanced/#post-multiple-multipart-encoded-files
+
+        """
+        if not filename:
+            filename = os.path.basename(filepath)
+
+        content_upload = self.create()
+
+        try:
+            offset = 0
+            content_chunk_size = 4 * 1024 * 1024
+
+            with open(filepath, 'rb') as contentfile:
+                chunk = contentfile.read(content_chunk_size)
+                while len(chunk) > 0:
+                    data = {'offset': offset,
+                            'content': chunk}
+                    content_upload.update(data)
+
+                    offset += len(chunk)
+                    chunk = contentfile.read(content_chunk_size)
+
+            size = 0
+            checksum = hashlib.sha256()
+            with open(filepath, 'rb') as contentfile:
+                contents = contentfile.read()
+                size = len(contents)
+                checksum.update(contents)
+
+            uploads = [{'id': content_upload.upload_id, 'name': filename,
+                        'size': size, 'checksum': checksum.hexdigest()}]
+            # pylint:disable=no-member
+            json = self.repository.import_uploads(uploads)
+        finally:
+            content_upload.delete()
+
+        return json
 
 
 class ContentViewVersion(
@@ -2996,7 +3124,8 @@ class Host(  # pylint:disable=too-many-instance-attributes
             if not hasattr(self.medium, 'organization'):
                 self.medium = self.medium.read()
             if self.operatingsystem.id not in [
-                    os.id for os in self.medium.operatingsystem]:
+                    operatingsystem.id for operatingsystem in
+                    self.medium.operatingsystem]:
                 self.medium.operatingsystem.append(self.operatingsystem)
                 self.medium.update(['operatingsystem'])
             if self.location.id not in [
@@ -4724,6 +4853,8 @@ class Repository(
             /repositories/<id>/sync
         upload_content
             /repositories/<id>/upload_content
+        import_uploads
+            /repositories/<id>/import_uploads
 
         ``super`` is called otherwise.
 
@@ -4734,6 +4865,7 @@ class Repository(
                 'puppet_modules',
                 'remove_content',
                 'sync',
+                'import_uploads',
                 'upload_content'):
             return '{0}/{1}'.format(
                 super(Repository, self).path(which='self'),
@@ -4826,6 +4958,33 @@ class Repository(
                 'Received error when uploading file {0} to repository {1}: {2}'
                 .format(kwargs.get('files'), self.id, json)
             )
+        return json
+
+    def import_uploads(self, uploads=None, upload_ids=None, synchronous=True,
+                       **kwargs):
+        """Import uploads into a repository
+
+        It expects either a list of uploads or upload_ids (but not both).
+
+        :param uploads: Array of uploads to be imported
+        :param upload_ids: Array of upload ids to be imported
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        if uploads:
+            data = {'uploads': uploads}
+        elif upload_ids:
+            data = {'upload_ids': upload_ids}
+        response = client.put(self.path('import_uploads'), data, **kwargs)
+        json = _handle_response(response, self._server_config, synchronous)
         return json
 
     def remove_content(self, synchronous=True, **kwargs):
