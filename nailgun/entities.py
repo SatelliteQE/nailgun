@@ -5208,6 +5208,10 @@ class SmartProxy(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'download_policy': entity_fields.StringField(
+                choices=('background', 'immediate', 'on_demand'),
+                default='on_demand',
+            ),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
@@ -5285,6 +5289,18 @@ class SmartProxy(
             path = '{0}/import_puppetclasses'.format(self.path())
         return _handle_response(
             client.post(path, **kwargs), self._server_config, synchronous)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Ignore ``download_policy`` field as it's never returned by the
+        server.
+
+        For more information, see `Bugzilla #1486609
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1486609>`_.
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('download_policy')
+        return super(SmartProxy, self).read(entity, attrs, ignore, params)
 
     @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):

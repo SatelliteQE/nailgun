@@ -1107,6 +1107,7 @@ class ReadTestCase(TestCase):
         for entity, ignored_attrs in (
                 (entities.Errata,
                  {'content_view_version', 'environment', 'repository'}),
+                (entities.SmartProxy, {'download_policy'}),
                 (entities.SmartClassParameters, {'hidden_value'}),
                 (entities.SmartVariable, {'hidden_value'}),
                 (entities.Subnet, {'discovery'}),
