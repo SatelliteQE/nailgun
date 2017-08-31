@@ -4655,6 +4655,7 @@ class Repository(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'backend_identifier': entity_fields.StringField(),
             'checksum_type': entity_fields.StringField(
                 choices=('sha1', 'sha256'),
             ),
