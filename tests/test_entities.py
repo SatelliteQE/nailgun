@@ -136,6 +136,7 @@ class InitTestCase(TestCase):
                 entities.OSDefaultTemplate,
                 entities.OperatingSystem,
                 entities.Organization,
+                entities.OVirtComputeResource,
                 entities.PackageGroupContentViewFilter,
                 entities.PartitionTable,
                 entities.Permission,
@@ -165,6 +166,7 @@ class InitTestCase(TestCase):
                 entities.TemplateKind,
                 entities.User,
                 entities.UserGroup,
+                entities.VMWareComputeResource,
             )
         ]
         entities_.extend([
@@ -1112,12 +1114,14 @@ class ReadTestCase(TestCase):
         for entity, ignored_attrs in (
                 (entities.Errata,
                  {'content_view_version', 'environment', 'repository'}),
+                (entities.OVirtComputeResource, {'password'}),
                 (entities.SmartProxy, {'download_policy'}),
                 (entities.SmartClassParameters, {'hidden_value'}),
                 (entities.SmartVariable, {'hidden_value'}),
                 (entities.Subnet, {'discovery'}),
                 (entities.Subscription, {'organization'}),
                 (entities.User, {'password'}),
+                (entities.VMWareComputeResource, {'password'}),
         ):
             with self.subTest(entity):
                 with mock.patch.object(EntityReadMixin, 'read') as read:
