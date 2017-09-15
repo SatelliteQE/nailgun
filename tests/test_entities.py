@@ -98,6 +98,7 @@ class InitTestCase(TestCase):
                 entities.AbstractDockerContainer,
                 entities.ActivationKey,
                 entities.Architecture,
+                entities.Audit,
                 entities.AuthSourceLDAP,
                 entities.Bookmark,
                 entities.Capsule,

@@ -446,6 +446,30 @@ class Architecture(
         return self.read()
 
 
+class Audit(Entity, EntityReadMixin, EntitySearchMixin):
+    """A representation of Audit entity."""
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'action': entity_fields.StringField(),
+            'associated_type': entity_fields.StringField(),
+            'associated_name': entity_fields.StringField(),
+            'associated_id': entity_fields.IntegerField(),
+            'audited_changes': entity_fields.DictField(),
+            'auditable_type': entity_fields.StringField(),
+            'auditable_name': entity_fields.StringField(),
+            'auditable_id': entity_fields.IntegerField(),
+            'comment': entity_fields.StringField(),
+            'remote_address': entity_fields.IPAddressField(),
+            'version': entity_fields.StringField(),
+            'user': entity_fields.OneToOneField(User),
+        }
+        self._meta = {
+            'api_path': 'api/v2/audits',
+            'server_modes': ('sat'),
+        }
+        super(Audit, self).__init__(server_config, **kwargs)
+
+
 class AuthSourceLDAP(
         Entity,
         EntityCreateMixin,
