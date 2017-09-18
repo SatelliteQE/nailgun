@@ -5624,6 +5624,7 @@ class Subnet(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'cidr': entity_fields.IntegerField(),
             'dns_primary': entity_fields.IPAddressField(),
             'dns_secondary': entity_fields.IPAddressField(),
             'domain': entity_fields.OneToManyField(Domain),
