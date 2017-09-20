@@ -681,7 +681,7 @@ class EntityDeleteMixin(object):
         elif (response.status_code == http_client.NO_CONTENT or
               (response.status_code == http_client.OK and
                hasattr(response, 'content') and
-               not response.content)):
+               not response.content.strip())):
             # "The server successfully processed the request, but is not
             # returning any content. Usually used as a response to a successful
             # delete request."
