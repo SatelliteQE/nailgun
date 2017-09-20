@@ -1060,6 +1060,39 @@ class EntityDeleteMixinTestCase(TestCase):
         ):
             self.assertEqual(self.entity.delete(), response.json.return_value)
 
+    def test_delete_v5(self):
+        """
+        What happens if the server returns an HTTP OK status and empty content?
+        """
+        response = mock.Mock()
+        response.status_code = http_client.OK
+        response.content = ''
+        with mock.patch.object(
+            entity_mixins.EntityDeleteMixin,
+            'delete_raw',
+            return_value=response,
+        ):
+            with mock.patch.object(entity_mixins, '_poll_task') as poll_task:
+                self.assertEqual(self.entity.delete(), None)
+        self.assertEqual(poll_task.call_count, 0)
+
+    def test_delete_v6(self):
+        """
+        What happens if the server returns an HTTP OK status and blank only
+        content?
+        """
+        response = mock.Mock()
+        response.status_code = http_client.OK
+        response.content = ' '
+        with mock.patch.object(
+            entity_mixins.EntityDeleteMixin,
+            'delete_raw',
+            return_value=response,
+        ):
+            with mock.patch.object(entity_mixins, '_poll_task') as poll_task:
+                self.assertEqual(self.entity.delete(), None)
+        self.assertEqual(poll_task.call_count, 0)
+
 
 class EntitySearchMixinTestCase(TestCase):
     """Tests for :class:`nailgun.entity_mixins.EntitySearchMixin`."""
