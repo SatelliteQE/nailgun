@@ -237,6 +237,7 @@ class ActivationKey(
                 Organization,
                 required=True,
             ),
+            'service_level': entity_fields.StringField(),
             'unlimited_hosts': entity_fields.BooleanField(),
         }
         self._meta = {
