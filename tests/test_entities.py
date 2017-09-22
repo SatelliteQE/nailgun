@@ -186,6 +186,13 @@ class InitTestCase(TestCase):
             (entities.OperatingSystemParameter, {'operatingsystem': 1}),
             (entities.OverrideValue, {'smart_class_parameter': 1}),
             (entities.OverrideValue, {'smart_variable': 1}),
+            (entities.Parameter, {'domain': 1}),
+            (entities.Parameter, {'host': 1}),
+            (entities.Parameter, {'hostgroup': 1}),
+            (entities.Parameter, {'location': 1}),
+            (entities.Parameter, {'operatingsystem': 1}),
+            (entities.Parameter, {'organization': 1}),
+            (entities.Parameter, {'subnet': 1}),
             (entities.RepositorySet, {'product': 1}),
             (entities.SyncPlan, {'organization': 1}),
         ])
@@ -219,6 +226,7 @@ class InitTestCase(TestCase):
                 entities.Image,
                 entities.OverrideValue,
                 entities.OperatingSystemParameter,
+                entities.Parameter,
                 entities.RepositorySet,
                 entities.SyncPlan,
         ):
@@ -991,6 +999,13 @@ class ReadTestCase(TestCase):
                 entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
                 entities.OverrideValue(self.cfg, smart_class_parameter=2),
                 entities.OverrideValue(self.cfg, smart_variable=2),
+                entities.Parameter(self.cfg, domain=2),
+                entities.Parameter(self.cfg, host=2),
+                entities.Parameter(self.cfg, hostgroup=2),
+                entities.Parameter(self.cfg, location=2),
+                entities.Parameter(self.cfg, operatingsystem=2),
+                entities.Parameter(self.cfg, organization=2),
+                entities.Parameter(self.cfg, subnet=2),
                 entities.RepositorySet(self.cfg, product=2),
                 entities.SyncPlan(self.cfg, organization=2),
         ):
@@ -1198,6 +1213,29 @@ class ReadTestCase(TestCase):
                             self.cfg, id=2, host=2, type=input_type).read()
                 # `call_args` is a two-tuple of (positional, keyword) args.
                 self.assertEqual(actual_ignore, read.call_args[0][2])
+
+    def test_parameter_ignore_arg(self):
+        """Call :meth:`nailgun.entities.Parameter.read`.
+
+        Assert that entity`s predefined values of ``ignore`` are always
+        correctly passed on.
+        """
+        parents = {
+            'domain', 'host', 'hostgroup', 'location', 'operatingsystem',
+            'organization', 'subnet'
+        }
+        for parent in parents:
+            with self.subTest(parent):
+                with mock.patch.object(EntityReadMixin, 'read') as read:
+                    with mock.patch.object(
+                        EntityReadMixin,
+                        'read_json',
+                        return_value={parent: 3},
+                    ):
+                        entities.Parameter(
+                            self.cfg, id=2, **{parent: 3}).read()
+                # `call_args` is a two-tuple of (positional, keyword) args.
+                self.assertEqual(parents, read.call_args[0][2])
 
     def test_host_with_interface(self):
         """Call :meth:`nailgun.entities.Host.read`.
