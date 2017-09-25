@@ -133,7 +133,7 @@ class InitTestCase(TestCase):
                 entities.Location,
                 entities.Media,
                 entities.Model,
-                entities.OSDefaultTemplate,
+                # entities.OSDefaultTemplate,  # see below
                 entities.OperatingSystem,
                 entities.Organization,
                 entities.PackageGroupContentViewFilter,
@@ -184,6 +184,7 @@ class InitTestCase(TestCase):
             (entities.Interface, {'host': 1}),
             (entities.Image, {'compute_resource': 1}),
             (entities.OperatingSystemParameter, {'operatingsystem': 1}),
+            (entities.OSDefaultTemplate, {'operatingsystem': 1}),
             (entities.OverrideValue, {'smart_class_parameter': 1}),
             (entities.OverrideValue, {'smart_variable': 1}),
             (entities.Parameter, {'domain': 1}),
@@ -226,6 +227,7 @@ class InitTestCase(TestCase):
                 entities.Image,
                 entities.OverrideValue,
                 entities.OperatingSystemParameter,
+                entities.OSDefaultTemplate,
                 entities.Parameter,
                 entities.RepositorySet,
                 entities.SyncPlan,
@@ -397,6 +399,19 @@ class PathTestCase(TestCase):
             with self.subTest((entity, which)):
                 with self.assertRaises(NoSuchPathError):
                     entity(self.cfg_610).path(which=which)
+
+    def test_os_default_template(self):
+        """ Test ``nailgun.entities.OSDefaultTemplate.path``
+
+        Assert that the following return appropriate paths:
+
+        * ``OSDefaultTemplate(id=…).path()``
+        """
+        self.assertIn(
+            'operatingsystems/1/os_default_templates/2',
+            entities.OSDefaultTemplate(
+                self.cfg, id=2, operatingsystem=1).path()
+        )
 
     def test_repository_set(self):
         """Test :meth:`nailgun.entities.RepositorySet.path`.

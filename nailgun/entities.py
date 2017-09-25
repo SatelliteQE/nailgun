@@ -4209,23 +4209,24 @@ class OSDefaultTemplate(Entity):
     """A representation of a OS Default Template entity."""
 
     def __init__(self, server_config=None, **kwargs):
+        _check_for_value('operatingsystem', kwargs)
         self._fields = {
             'config_template': entity_fields.OneToOneField(ConfigTemplate),
             'operatingsystem': entity_fields.OneToOneField(
-                OperatingSystem
+                OperatingSystem,
+                required=True,
             ),
             'provisioning_template': entity_fields.OneToOneField(
                 ProvisioningTemplate),
             'template_kind': entity_fields.OneToOneField(TemplateKind),
         }
+        super(OSDefaultTemplate, self).__init__(server_config, **kwargs)
         self._meta = {
-            'api_path': (
-                'api/v2/operatingsystems/:operatingsystem_id/'
-                'os_default_templates'
+            'api_path': '{0}/os_default_templates'.format(
+                self.operatingsystem.path('self')  # pylint:disable=no-member
             ),
             'server_modes': ('sat'),
         }
-        super(OSDefaultTemplate, self).__init__(server_config, **kwargs)
 
 
 class OverrideValue(
