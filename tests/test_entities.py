@@ -1012,6 +1012,7 @@ class ReadTestCase(TestCase):
                 entities.Interface(self.cfg, host=2),
                 entities.Image(self.cfg, compute_resource=1),
                 entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
+                entities.OSDefaultTemplate(self.cfg, operatingsystem=2),
                 entities.OverrideValue(self.cfg, smart_class_parameter=2),
                 entities.OverrideValue(self.cfg, smart_variable=2),
                 entities.Parameter(self.cfg, domain=2),

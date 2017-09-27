@@ -4205,7 +4205,9 @@ class Organization(
         return _handle_response(response, self._server_config, synchronous)
 
 
-class OSDefaultTemplate(Entity):
+class OSDefaultTemplate(
+        Entity,
+        EntityReadMixin):
     """A representation of a OS Default Template entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -4227,6 +4229,24 @@ class OSDefaultTemplate(Entity):
             ),
             'server_modes': ('sat'),
         }
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Fetch as many attributes as possible for this entity.
+        Since operatingsystem is needed to instanciate, prepare the entity
+        accordingly.
+        """
+        if entity is None:
+            entity = type(self)(
+                self._server_config,
+                # pylint:disable=no-member
+                operatingsystem=self.operatingsystem,
+                # pylint:enable=no-member
+            )
+        if ignore is None:
+            ignore = set()
+        ignore.add('operatingsystem')
+        return super(OSDefaultTemplate, self).read(
+            entity, attrs, ignore, params)
 
 
 class OverrideValue(
