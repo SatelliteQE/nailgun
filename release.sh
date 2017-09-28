@@ -17,9 +17,18 @@ git checkout master
 git merge --ff-only upstream/master
 
 OLD_VERSION="$(git tag --list | sort -V | tail -n 1)"
-MAJOR_VERSION="$(echo ${OLD_VERSION} | cut -d . -f 1)"
-MINOR_VERSION="$(echo ${OLD_VERSION} | cut -d . -f 2)"
-NEW_VERSION="${MAJOR_VERSION}.$((${MINOR_VERSION} + 1)).0"
+if [[ $# -gt 0 ]]; then
+    NEW_VERSION="${1}"
+else
+    MAJOR_VERSION="$(echo "${OLD_VERSION}" | cut -d . -f 1)"
+    MINOR_VERSION="$(echo "${OLD_VERSION}" | cut -d . -f 2)"
+    NEW_VERSION="${MAJOR_VERSION}.$((MINOR_VERSION + 1)).0"
+fi
+
+if [[ $(echo -e "${OLD_VERSION}\n${NEW_VERSION}" | sort -V | tail -n 1) = "${OLD_VERSION}" ]]; then
+    echo "The version must be greater than \"${OLD_VERSION}\""
+    exit 1
+fi
 
 # Bump version number
 echo "${NEW_VERSION}" > VERSION
