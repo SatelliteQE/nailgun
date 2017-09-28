@@ -355,6 +355,7 @@ class EntityTestCase(TestCase):
                 },
         ):
             entity = SampleEntity(self.cfg, **values)
+            # pylint:disable=protected-access,attribute-defined-outside-init
             entity._path_fields = {'foo': 1}
             self.assertEqual(
                 entity.get_values(),
