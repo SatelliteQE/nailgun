@@ -4306,7 +4306,9 @@ class OverrideValue(
 class Parameter(
         Entity,
         EntityCreateMixin,
-        EntityReadMixin):
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
     """A representation of a Parameter entity."""
 
     def __init__(self, server_config=None, **kwargs):
