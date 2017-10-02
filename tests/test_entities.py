@@ -1578,6 +1578,25 @@ class UpdatePayloadTestCase(TestCase):
         ).update_payload()
         self.assertIn('redhat_repository_url', payload)
 
+    def test_os_default_template(self):
+        """Check, that ``os_default_template`` serves ``template_kind_id`` and
+        ``provisioning_template_id`` only wrapped in sub dict
+        See: `Redmine #21169`_.
+
+        .. _Redmine #21169: http://projects.theforeman.org/issues/21169
+        """
+        payload = entities.OSDefaultTemplate(
+            self.cfg,
+            operatingsystem=entities.OperatingSystem(self.cfg, id=1),
+            template_kind=entities.TemplateKind(self.cfg, id=2),
+            provisioning_template=entities.ProvisioningTemplate(self.cfg,
+                                                                id=3),
+        ).update_payload()
+        self.assertNotIn('template_kind_id', payload)
+        self.assertNotIn('provisioning_template_id', payload)
+        self.assertIn('template_kind_id', payload['os_default_template'])
+        self.assertIn('provisioning_template_id',
+                      payload['os_default_template'])
 
 # 2. Tests for entity-specific methods. ---------------------------------- {{{1
 

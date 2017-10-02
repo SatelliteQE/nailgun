@@ -4207,7 +4207,11 @@ class Organization(
 
 class OSDefaultTemplate(
         Entity,
-        EntityReadMixin):
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a OS Default Template entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -4247,6 +4251,15 @@ class OSDefaultTemplate(
         ignore.add('operatingsystem')
         return super(OSDefaultTemplate, self).read(
             entity, attrs, ignore, params)
+
+    def update_payload(self, fields=None):
+        """Wrap payload in ``os_default_template``
+        relates to `Redmine #21169`_.
+
+        .. _Redmine #21169: http://projects.theforeman.org/issues/21169
+        """
+        payload = super(OSDefaultTemplate, self).update_payload(fields)
+        return {'os_default_template': payload}
 
 
 class OverrideValue(
