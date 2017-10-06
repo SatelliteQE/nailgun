@@ -510,6 +510,8 @@ class Entity(object):
         attrs.pop('_server_config')
         attrs.pop('_fields')
         attrs.pop('_meta')
+        if '_path_fields' in attrs:
+            attrs.pop('_path_fields')
         return attrs
 
     def __repr__(self):
@@ -521,6 +523,7 @@ class Entity(object):
                 u'{0}={1}'.format(key, repr(value))
                 for key, value
                 in self.get_values().items()
+                if not key.startswith('_')
             )
         )
 

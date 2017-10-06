@@ -2946,6 +2946,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'all_parameters': entity_fields.ListField(),
             'architecture': entity_fields.OneToOneField(Architecture),
             'build': entity_fields.BooleanField(),
             'capabilities': entity_fields.StringField(),
@@ -4301,6 +4302,66 @@ class OverrideValue(
             ignore = set()
         ignore.update(['smart_class_parameter', 'smart_variable'])
         return super(OverrideValue, self).read(entity, attrs, ignore, params)
+
+
+class Parameter(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntityUpdateMixin):
+    """A representation of a Parameter entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+            ),
+            'priority': entity_fields.IntegerField(),
+            'value': entity_fields.StringField(required=True),
+        }
+        self._path_fields = {
+            'domain': entity_fields.OneToOneField(Domain),
+            'host': entity_fields.OneToOneField(Host),
+            'hostgroup': entity_fields.OneToOneField(HostGroup),
+            'location': entity_fields.OneToOneField(Location),
+            'operatingsystem': entity_fields.OneToOneField(OperatingSystem),
+            'organization': entity_fields.OneToOneField(Organization),
+            'subnet': entity_fields.OneToOneField(Subnet),
+        }
+        self._fields.update(self._path_fields)
+        super(Parameter, self).__init__(server_config, **kwargs)
+        if not any(
+                getattr(self, attr, None) for attr in self._path_fields):
+            raise TypeError(
+                'A value must be provided for any of "{0}" fields.'.format(
+                    self._path_fields.keys())
+            )
+        self._parent_type = next(
+            attr for attr in self._path_fields if getattr(self, attr, None))
+        self._parent_id = getattr(self, self._parent_type).id
+        self._meta = {
+            'api_path': 'api/v2/{}s/{}/parameters'.format(
+                self._parent_type, self._parent_id),
+            'server_modes': ('sat'),
+        }
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Ignore path related fields as they're never returned by the server
+        and are only added to entity to be able to use proper path.
+        """
+        if entity is None:
+            entity = type(self)(
+                self._server_config,
+                **{self._parent_type: self._parent_id}
+            )
+        if ignore is None:
+            ignore = set()
+        for field_name in self._path_fields:
+            ignore.add(field_name)
+        return super(Parameter, self).read(entity, attrs, ignore, params)
 
 
 class Permission(Entity, EntityReadMixin, EntitySearchMixin):

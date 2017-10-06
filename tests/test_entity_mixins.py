@@ -338,6 +338,30 @@ class EntityTestCase(TestCase):
                 values,
             )
 
+    def test_entity_get_values_v2(self):
+        """Test :meth:`nailgun.entity_mixins.Entity.get_values`, ensure
+        ``_path_fields`` are never returned.
+        """
+        for values in (
+                {},
+                {'id': gen_integer()},
+                {'name': gen_integer()},
+                {'number': gen_integer()},
+                {'name': gen_integer(), 'number': gen_integer()},
+                {
+                    'id': gen_integer(),
+                    'name': gen_integer(),
+                    'number': gen_integer(),
+                },
+        ):
+            entity = SampleEntity(self.cfg, **values)
+            # pylint:disable=protected-access,attribute-defined-outside-init
+            entity._path_fields = {'foo': 1}
+            self.assertEqual(
+                entity.get_values(),
+                values,
+            )
+
     def test_path(self):
         """Test :meth:`nailgun.entity_mixins.Entity.path`."""
         # e.g. 'https://sat.example.com/katello/api/v2'
