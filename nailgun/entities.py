@@ -4677,6 +4677,7 @@ class Realm(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Realm entity."""
 
