@@ -1132,6 +1132,7 @@ class ReadTestCase(TestCase):
                 (entities.SmartVariable, {'hidden_value'}),
                 (entities.Subnet, {'discovery'}),
                 (entities.Subscription, {'organization'}),
+                (entities.Repository, {'organization'}),
                 (entities.User, {'password'}),
         ):
             with self.subTest(entity):

@@ -4900,6 +4900,7 @@ class Repository(
                 length=(6, 12),
                 unique=True
             ),
+            'organization': entity_fields.OneToOneField(Organization),
             'product': entity_fields.OneToOneField(Product, required=True),
             'unprotected': entity_fields.BooleanField(),
             'url': entity_fields.URLField(
@@ -4958,6 +4959,16 @@ class Repository(
                 which
             )
         return super(Repository, self).path(which)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Ignore ``organization`` field as it's never returned by the server
+        and is only added to entity to be able to use organization path
+        dependent helpers.
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('organization')
+        return super(Repository, self).read(entity, attrs, ignore, params)
 
     def create_missing(self):
         """Conditionally mark ``docker_upstream_name`` as required.
