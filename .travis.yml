@@ -16,3 +16,15 @@ after_success:
     coveralls
 notifications:
     irc: "chat.freenode.net#robottelo"
+
+before_deploy: "echo 'Starting deploy to PyPI...'"
+deploy:
+  provider: pypi
+  user: katelloqa
+  password: $PYPI_PASSWORD
+  distributions: "sdist bdist_wheel"
+  on:
+    condition: $TRAVIS_PYTHON_VERSION == "2.7"
+    tags: true
+    branch: master
+after_deploy: "echo 'Deployment finished!'"
