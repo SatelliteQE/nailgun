@@ -5732,6 +5732,7 @@ class Subnet(
                 ),
                 'location': entity_fields.OneToManyField(Location),
                 'organization': entity_fields.OneToManyField(Organization),
+                'subnet_parameters_attributes': entity_fields.ListField(),
                 'tftp': entity_fields.OneToOneField(SmartProxy),
             })
         self._meta = {'api_path': 'api/v2/subnets', 'server_modes': ('sat')}
@@ -5757,6 +5758,10 @@ class Subnet(
 
         if ignore is None:
             ignore = set()
+        if attrs is not None and 'parameters' in attrs:
+            attrs['subnet_parameters_attributes'] = attrs.pop('parameters')
+        else:
+            ignore.add('subnet_parameters_attributes')
         ignore.add('discovery')
         return super(Subnet, self).read(entity, attrs, ignore, params)
 
