@@ -133,7 +133,7 @@ class InitTestCase(TestCase):
                 entities.Location,
                 entities.Media,
                 entities.Model,
-                entities.OSDefaultTemplate,
+                # entities.OSDefaultTemplate,  # see below
                 entities.OperatingSystem,
                 entities.Organization,
                 entities.PackageGroupContentViewFilter,
@@ -184,6 +184,7 @@ class InitTestCase(TestCase):
             (entities.Interface, {'host': 1}),
             (entities.Image, {'compute_resource': 1}),
             (entities.OperatingSystemParameter, {'operatingsystem': 1}),
+            (entities.OSDefaultTemplate, {'operatingsystem': 1}),
             (entities.OverrideValue, {'smart_class_parameter': 1}),
             (entities.OverrideValue, {'smart_variable': 1}),
             (entities.Parameter, {'domain': 1}),
@@ -226,6 +227,7 @@ class InitTestCase(TestCase):
                 entities.Image,
                 entities.OverrideValue,
                 entities.OperatingSystemParameter,
+                entities.OSDefaultTemplate,
                 entities.Parameter,
                 entities.RepositorySet,
                 entities.SyncPlan,
@@ -397,6 +399,19 @@ class PathTestCase(TestCase):
             with self.subTest((entity, which)):
                 with self.assertRaises(NoSuchPathError):
                     entity(self.cfg_610).path(which=which)
+
+    def test_os_default_template(self):
+        """ Test ``nailgun.entities.OSDefaultTemplate.path``
+
+        Assert that the following return appropriate paths:
+
+        * ``OSDefaultTemplate(id=…).path()``
+        """
+        self.assertIn(
+            'operatingsystems/1/os_default_templates/2',
+            entities.OSDefaultTemplate(
+                self.cfg, id=2, operatingsystem=1).path()
+        )
 
     def test_repository_set(self):
         """Test :meth:`nailgun.entities.RepositorySet.path`.
@@ -997,6 +1012,7 @@ class ReadTestCase(TestCase):
                 entities.Interface(self.cfg, host=2),
                 entities.Image(self.cfg, compute_resource=1),
                 entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
+                entities.OSDefaultTemplate(self.cfg, operatingsystem=2),
                 entities.OverrideValue(self.cfg, smart_class_parameter=2),
                 entities.OverrideValue(self.cfg, smart_variable=2),
                 entities.Parameter(self.cfg, domain=2),
@@ -1564,6 +1580,25 @@ class UpdatePayloadTestCase(TestCase):
         ).update_payload()
         self.assertIn('redhat_repository_url', payload)
 
+    def test_os_default_template(self):
+        """Check, that ``os_default_template`` serves ``template_kind_id`` and
+        ``provisioning_template_id`` only wrapped in sub dict
+        See: `Redmine #21169`_.
+
+        .. _Redmine #21169: http://projects.theforeman.org/issues/21169
+        """
+        payload = entities.OSDefaultTemplate(
+            self.cfg,
+            operatingsystem=entities.OperatingSystem(self.cfg, id=1),
+            template_kind=entities.TemplateKind(self.cfg, id=2),
+            provisioning_template=entities.ProvisioningTemplate(self.cfg,
+                                                                id=3),
+        ).update_payload()
+        self.assertNotIn('template_kind_id', payload)
+        self.assertNotIn('provisioning_template_id', payload)
+        self.assertIn('template_kind_id', payload['os_default_template'])
+        self.assertIn('provisioning_template_id',
+                      payload['os_default_template'])
 
 # 2. Tests for entity-specific methods. ---------------------------------- {{{1
 

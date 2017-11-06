@@ -4245,27 +4245,61 @@ class Organization(
         return _handle_response(response, self._server_config, synchronous)
 
 
-class OSDefaultTemplate(Entity):
+class OSDefaultTemplate(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a OS Default Template entity."""
 
     def __init__(self, server_config=None, **kwargs):
+        _check_for_value('operatingsystem', kwargs)
         self._fields = {
             'config_template': entity_fields.OneToOneField(ConfigTemplate),
             'operatingsystem': entity_fields.OneToOneField(
-                OperatingSystem
+                OperatingSystem,
+                required=True,
             ),
             'provisioning_template': entity_fields.OneToOneField(
                 ProvisioningTemplate),
             'template_kind': entity_fields.OneToOneField(TemplateKind),
         }
+        super(OSDefaultTemplate, self).__init__(server_config, **kwargs)
         self._meta = {
-            'api_path': (
-                'api/v2/operatingsystems/:operatingsystem_id/'
-                'os_default_templates'
+            'api_path': '{0}/os_default_templates'.format(
+                self.operatingsystem.path('self')  # pylint:disable=no-member
             ),
             'server_modes': ('sat'),
         }
-        super(OSDefaultTemplate, self).__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Fetch as many attributes as possible for this entity.
+        Since operatingsystem is needed to instanciate, prepare the entity
+        accordingly.
+        """
+        if entity is None:
+            entity = type(self)(
+                self._server_config,
+                # pylint:disable=no-member
+                operatingsystem=self.operatingsystem,
+                # pylint:enable=no-member
+            )
+        if ignore is None:
+            ignore = set()
+        ignore.add('operatingsystem')
+        return super(OSDefaultTemplate, self).read(
+            entity, attrs, ignore, params)
+
+    def update_payload(self, fields=None):
+        """Wrap payload in ``os_default_template``
+        relates to `Redmine #21169`_.
+
+        .. _Redmine #21169: http://projects.theforeman.org/issues/21169
+        """
+        payload = super(OSDefaultTemplate, self).update_payload(fields)
+        return {'os_default_template': payload}
 
 
 class OverrideValue(
