@@ -3235,6 +3235,40 @@ class Host(  # pylint:disable=too-many-instance-attributes
         response = client.put(self.path('bulk/install_content'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
+    def get_facts(self, synchronous=True, **kwargs):
+        """List all fact values of a given host
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('facts'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def upload_facts(self, synchronous=True, **kwargs):
+        """Upload facts for a host, creating the host if required
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('upload_facts'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Deal with oddly named and structured data returned by the server.
 
@@ -3333,6 +3367,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
         if which in (
                 'errata',
                 'errata/apply',
+                'facts',
                 'power',
                 'puppetclass_ids',
                 'smart_class_parameters',
@@ -3346,6 +3381,11 @@ class Host(  # pylint:disable=too-many-instance-attributes
             return '{0}/{1}'.format(
                 super(Host, self).path(which='base'),
                 which
+            )
+        elif which in ('upload_facts',):
+            return '{0}/{1}'.format(
+                super(Host, self).path(which='base'),
+                'facts'
             )
         return super(Host, self).path(which)
 
