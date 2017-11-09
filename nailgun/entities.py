@@ -1105,6 +1105,56 @@ class LibvirtComputeResource(AbstractComputeResource):  # pylint:disable=R0901
         self._fields['provider_friendly_name'].default = 'Libvirt'
 
 
+class OVirtComputeResource(AbstractComputeResource):
+    # pylint: disable=too-many-ancestors
+    """A representation for compute resources with Ovirt provider
+    """
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'password': entity_fields.StringField(),
+            'user': entity_fields.StringField(),
+        }
+        super(OVirtComputeResource, self).__init__(server_config, **kwargs)
+        self._fields['provider'].default = 'Ovirt'
+        self._fields['provider'].required = True
+        self._fields['provider_friendly_name'].default = 'OVirt'
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Make sure, ``password`` is in the ignore list for read
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('password')
+        return super(OVirtComputeResource, self).read(
+            entity, attrs, ignore, params)
+
+
+class VMWareComputeResource(AbstractComputeResource):
+    # pylint: disable=too-many-ancestors
+    """A representation for compute resources with Vmware provider
+    """
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'datacenter': entity_fields.StringField(),
+            'password': entity_fields.StringField(),
+            'set_console_password': entity_fields.BooleanField(),
+            'user': entity_fields.StringField(),
+        }
+        super(VMWareComputeResource, self).__init__(server_config, **kwargs)
+        self._fields['provider'].default = 'Vmware'
+        self._fields['provider'].required = True
+        self._fields['provider_friendly_name'].default = 'VMware'
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Make sure, ``password`` is in the ignore list for read
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('password')
+        return super(VMWareComputeResource, self).read(
+            entity, attrs, ignore, params)
+
+
 class ConfigGroup(
         Entity,
         EntityCreateMixin,
