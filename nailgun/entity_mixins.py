@@ -729,6 +729,22 @@ class EntityReadMixin(object):
             **self._server_config.get_client_kwargs()
         )
 
+    def read_all(self):
+        """Get the List of entities of a component
+
+        Make an HTTP GET call to ``self.path('base')``. Return the response.
+
+        :return: A ``requests.response`` object
+
+        """
+        response = client.get(
+            self.path('base'),
+            **self._server_config.get_client_kwargs()
+        )
+        response.raise_for_status()
+        response.results = response.json()['results']
+        return response
+
     def read_json(self, params=None):
         """Get information about the current entity.
 
