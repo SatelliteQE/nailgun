@@ -2841,6 +2841,38 @@ class Host(  # pylint:disable=too-many-instance-attributes
         """
         return {u'host': super(Host, self).create_payload()}
 
+    def errata_apply(self, synchronous=True, **kwargs):
+        """Schedule errata for installation
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('errata/apply'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def install_content(self, synchronous=True, **kwargs):
+        """Install content on one or more hosts
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('bulk/install_content'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
     def read(self, entity=None, attrs=None, ignore=None):
         """Deal with oddly named and structured data returned by the server.
 
@@ -2913,6 +2945,10 @@ class Host(  # pylint:disable=too-many-instance-attributes
         """Extend ``nailgun.entity_mixins.Entity.path``.
         The format of the returned path depends on the value of ``which``:
 
+        bulk/install_content
+            /api/hosts/:host_id/bulk/install_content
+        errata/apply
+            /api/hosts/:host_id/errata/apply
         puppetclass_ids
             /api/hosts/:host_id/puppetclass_ids
         smart_class_parameters
@@ -2923,12 +2959,18 @@ class Host(  # pylint:disable=too-many-instance-attributes
         Otherwise, call ``super``.
         """
         if which in (
+                'errata/apply',
                 'puppetclass_ids',
                 'smart_class_parameters',
                 'smart_variables'
         ):
             return '{0}/{1}'.format(
                 super(Host, self).path(which='self'),
+                which
+            )
+        elif which in ('bulk/install_content',):
+            return '{0}/{1}'.format(
+                super(Host, self).path(which='base'),
                 which
             )
         return super(Host, self).path(which)
