@@ -312,6 +312,7 @@ class PathTestCase(TestCase):
                 (entities.ContentView, 'publish'),
                 (entities.ContentViewVersion, 'promote'),
                 (entities.Environment, 'smart_class_parameters'),
+                (entities.Host, 'enc'),
                 (entities.Host, 'errata'),
                 (entities.Host, 'errata/apply'),
                 (entities.Host, 'puppetclass_ids'),
@@ -1672,6 +1673,7 @@ class GenericTestCase(TestCase):
                 'get'
             ),
             (entities.Host(**generic).add_puppetclass, 'post'),
+            (entities.Host(**generic).enc, 'get'),
             (entities.Host(**generic).errata, 'get'),
             (entities.Host(**generic).errata_apply, 'put'),
             (entities.Host(**generic).get_facts, 'get'),
