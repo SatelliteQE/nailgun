@@ -292,6 +292,7 @@ class PathTestCase(TestCase):
                 (entities.ContentView, 'publish'),
                 (entities.ContentViewVersion, 'promote'),
                 (entities.Environment, 'smart_class_parameters'),
+                (entities.Host, 'errata/apply'),
                 (entities.Host, 'smart_class_parameters'),
                 (entities.Host, 'puppetclass_ids'),
                 (entities.Host, 'smart_class_parameters'),
@@ -333,6 +334,7 @@ class PathTestCase(TestCase):
                 (entities.ForemanTask, 'bulk_resume'),
                 (entities.ForemanTask, 'bulk_search'),
                 (entities.ForemanTask, 'summary'),
+                (entities.Host, 'bulk/install_content'),
         ):
             with self.subTest((entity, which)):
                 path = entity(self.cfg).path(which)
@@ -1527,6 +1529,8 @@ class GenericTestCase(TestCase):
                 'get'
             ),
             (entities.Host(**generic).add_puppetclass, 'post'),
+            (entities.Host(**generic).errata_apply, 'put'),
+            (entities.Host(**generic).install_content, 'put'),
             (entities.Host(**generic).list_scparams, 'get'),
             (entities.Host(**generic).list_smart_variables, 'get'),
             (entities.HostGroup(**generic).clone, 'post'),
