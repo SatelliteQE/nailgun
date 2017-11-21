@@ -258,6 +258,7 @@ class PathTestCase(TestCase):
                 (entities.Capsule, '/capsules'),
                 (entities.ConfigTemplate, '/config_templates'),
                 (entities.ProvisioningTemplate, '/provisioning_templates'),
+                (entities.Role, '/roles'),
                 (entities.ContentView, '/content_views'),
                 (entities.ContentViewVersion, '/content_view_versions'),
                 (entities.DiscoveredHost, '/discovered_hosts'),
@@ -305,6 +306,7 @@ class PathTestCase(TestCase):
                 (entities.ActivationKey, 'subscriptions'),
                 (entities.ConfigTemplate, 'clone'),
                 (entities.ProvisioningTemplate, 'clone'),
+                (entities.Role, 'clone'),
                 (entities.ContentView, 'available_puppet_module_names'),
                 (entities.ContentView, 'content_view_puppet_modules'),
                 (entities.ContentView, 'content_view_versions'),
@@ -623,6 +625,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.Media,
                 entities.OperatingSystem,
                 entities.Registry,
+                entities.Role,
                 entities.SmartVariable,
                 entities.Subnet,
                 entities.User,
@@ -1051,6 +1054,7 @@ class ReadTestCase(TestCase):
                 # entities.Product,  # See Product.test_read
                 # entities.UserGroup,  # see test_attrs_arg_v2
                 entities.Domain,
+                entities.Filter,
                 entities.Host,
                 entities.Media,
                 entities.RHCIDeployment,
@@ -1130,6 +1134,13 @@ class ReadTestCase(TestCase):
                     'installed_products': None,
                 },
             ),
+            (
+                entities.Filter(self.cfg),
+                {'override?': None,
+                 'unlimited?': None},
+                {'override': None,
+                 'unlimited': None},
+            )
         )
         for entity, attrs_before, attrs_after in test_data:
             with self.subTest(entity):
@@ -1472,6 +1483,7 @@ class UpdatePayloadTestCase(TestCase):
         entities_payloads = [
             (entities.AbstractComputeResource, {'compute_resource': {}}),
             (entities.ConfigTemplate, {'config_template': {}}),
+            (entities.Filter, {'filter': {}}),
             (entities.ProvisioningTemplate, {'provisioning_template': {}}),
             (entities.DiscoveredHost, {'discovered_host': {}}),
             (entities.DiscoveryRule, {'discovery_rule': {}}),
@@ -1483,6 +1495,7 @@ class UpdatePayloadTestCase(TestCase):
             (entities.Media, {'medium': {}}),
             (entities.OperatingSystem, {'operatingsystem': {}}),
             (entities.Organization, {'organization': {}}),
+            (entities.Role, {'role': {}}),
             (entities.Setting, {'setting': {}}),
             (entities.SmartProxy, {'smart_proxy': {}}),
             (entities.SmartVariable, {'smart_variable': {}}),
@@ -1651,6 +1664,7 @@ class GenericTestCase(TestCase):
             (entities.Capsule(**generic).content_sync, 'post'),
             (entities.ConfigTemplate(**generic).build_pxe_default, 'post'),
             (entities.ConfigTemplate(**generic).clone, 'post'),
+            (entities.Role(**generic).clone, 'post'),
             (
                 entities.ProvisioningTemplate(**generic).build_pxe_default,
                 'post'

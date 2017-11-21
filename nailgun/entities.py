@@ -2449,7 +2449,12 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
 
 
 class Filter(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Filter entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2459,6 +2464,8 @@ class Filter(
             'permission': entity_fields.OneToManyField(Permission),
             'role': entity_fields.OneToOneField(Role, required=True),
             'search': entity_fields.StringField(),
+            'override': entity_fields.BooleanField(),
+            'unlimited': entity_fields.BooleanField(),
         }
         self._meta = {'api_path': 'api/v2/filters', 'server_modes': ('sat')}
         super(Filter, self).__init__(server_config, **kwargs)
@@ -2471,6 +2478,19 @@ class Filter(
 
         """
         return {u'filter': super(Filter, self).create_payload()}
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Deal with different named data returned from the server
+        """
+        if attrs is None:
+            attrs = self.read_json()
+        attrs['override'] = attrs.pop('override?')
+        attrs['unlimited'] = attrs.pop('unlimited?')
+        return super(Filter, self).read(entity, attrs, ignore, params)
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {u'filter': super(Filter, self).update_payload(fields)}
 
 
 class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
@@ -5563,13 +5583,61 @@ class Role(
                 str_type='alphanumeric',
                 length=(2, 30),  # min length is 2 and max length is arbitrary
                 unique=True
-            )
+            ),
+            'location': entity_fields.OneToManyField(Location),
+            'organization': entity_fields.OneToManyField(Organization),
         }
         self._meta = {
             'api_path': 'api/v2/roles',
             'server_modes': ('sat', 'sam'),
         }
         super(Role, self).__init__(server_config, **kwargs)
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict.
+
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
+
+        """
+        return {u'role': super(Role, self).create_payload()}
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {u'role': super(Role, self).update_payload(fields)}
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        clone
+            /api/roles/:role_id/clone
+
+        Otherwise, call ``super``.
+
+        """
+        if which == 'clone':
+            return '{0}/{1}'.format(
+                super(Role, self).path(which='self'),
+                which
+            )
+        return super(Role, self).path(which)
+
+    def clone(self, synchronous=True, **kwargs):
+        """Helper to clone an existing Role
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('clone'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class Setting(Entity, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin):
