@@ -5578,13 +5578,14 @@ class Role(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'filters': entity_fields.OneToManyField(Filter),
+            'location': entity_fields.OneToManyField(Location),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alphanumeric',
                 length=(2, 30),  # min length is 2 and max length is arbitrary
                 unique=True
             ),
-            'location': entity_fields.OneToManyField(Location),
             'organization': entity_fields.OneToManyField(Organization),
         }
         self._meta = {
