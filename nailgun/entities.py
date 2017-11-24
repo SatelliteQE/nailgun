@@ -6170,7 +6170,6 @@ class SyncPlan(
     """
 
     def __init__(self, server_config=None, **kwargs):
-        _check_for_value('organization', kwargs)
         self._fields = {
             'description': entity_fields.StringField(),
             'enabled': entity_fields.BooleanField(required=True),
@@ -6192,9 +6191,13 @@ class SyncPlan(
             'sync_date': entity_fields.DateTimeField(required=True),
         }
         super(SyncPlan, self).__init__(server_config, **kwargs)
-        self._meta = {
+        try:
             # pylint:disable=no-member
-            'api_path': '{0}/sync_plans'.format(self.organization.path()),
+            path_prefix = self.organization.path()
+        except AttributeError:
+            path_prefix = '/katello/api'
+        self._meta = {
+            'api_path': '{0}/sync_plans'.format(path_prefix),
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):

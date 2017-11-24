@@ -232,7 +232,6 @@ class InitTestCase(TestCase):
                 entities.OSDefaultTemplate,
                 entities.Parameter,
                 entities.RepositorySet,
-                entities.SyncPlan,
         ):
             with self.subTest():
                 with self.assertRaises(TypeError):
@@ -455,6 +454,10 @@ class PathTestCase(TestCase):
         self.assertIn(
             'organizations/1/sync_plans/2',
             entities.SyncPlan(self.cfg, id=2, organization=1).path()
+        )
+        self.assertIn(
+            'katello/api/sync_plans/2',
+            entities.SyncPlan(self.cfg, id=2).path()
         )
         for which in ('add_products', 'remove_products'):
             path = entities.SyncPlan(
