@@ -5282,7 +5282,6 @@ class SyncPlan(
     """
 
     def __init__(self, server_config=None, **kwargs):
-        _check_for_value('organization', kwargs)
         self._fields = {
             'description': entity_fields.StringField(),
             'enabled': entity_fields.BooleanField(required=True),
@@ -5304,8 +5303,7 @@ class SyncPlan(
         }
         super(SyncPlan, self).__init__(server_config, **kwargs)
         self._meta = {
-            # pylint:disable=no-member
-            'api_path': '{0}/sync_plans'.format(self.organization.path()),
+            'api_path': '/katello/api/sync_plans',
         }
 
     def read(self, entity=None, attrs=None, ignore=None):
