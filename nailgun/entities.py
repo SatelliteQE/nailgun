@@ -3005,7 +3005,7 @@ class HostSubscription(Entity):
         }
 
 
-class Host(  # pylint:disable=too-many-instance-attributes
+class Host(  # pylint:disable=too-many-instance-attributes,R0904
         Entity,
         EntityCreateMixin,
         EntityDeleteMixin,
@@ -3287,6 +3287,23 @@ class Host(  # pylint:disable=too-many-instance-attributes
         response = client.get(self.path('errata'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
+    def errata_applicability(self, synchronous=True, **kwargs):
+        """Force regenerate errata applicability
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('errata/applicability'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
     def errata_apply(self, synchronous=True, **kwargs):
         """Schedule errata for installation
 
@@ -3454,6 +3471,7 @@ class Host(  # pylint:disable=too-many-instance-attributes
                 'enc',
                 'errata',
                 'errata/apply',
+                'errata/applicability',
                 'facts',
                 'power',
                 'puppetclass_ids',
