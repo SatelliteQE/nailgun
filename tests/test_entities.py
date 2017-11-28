@@ -317,6 +317,7 @@ class PathTestCase(TestCase):
                 (entities.Host, 'enc'),
                 (entities.Host, 'errata'),
                 (entities.Host, 'errata/apply'),
+                (entities.Host, 'errata/applicability'),
                 (entities.Host, 'puppetclass_ids'),
                 (entities.Host, 'smart_class_parameters'),
                 (entities.Host, 'smart_variables'),
