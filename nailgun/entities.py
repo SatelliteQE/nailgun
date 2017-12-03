@@ -5994,7 +5994,6 @@ class Subscription(
             'provided_product': entity_fields.OneToManyField(Product),
             'quantity': entity_fields.IntegerField(),
             'subscription': entity_fields.OneToOneField(Subscription),
-            'system': entity_fields.OneToManyField(Host),
         }
         self._meta = {
             'api_path': 'katello/api/v2/subscriptions',
