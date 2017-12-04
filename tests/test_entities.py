@@ -1493,6 +1493,8 @@ class GenericTestCase(TestCase):
             (entities.AbstractDockerContainer(**generic).power, 'put'),
             (entities.ActivationKey(**generic).add_host_collection, 'post'),
             (entities.ActivationKey(**generic).add_subscriptions, 'put'),
+            (entities.ActivationKey(**generic).remove_subscriptions, 'put'),
+            (entities.ActivationKey(**generic).subscriptions, 'get'),
             (entities.ActivationKey(**generic).content_override, 'put'),
             (entities.ActivationKey(**generic).product_content, 'get'),
             (entities.ActivationKey(**generic).remove_host_collection, 'put'),
