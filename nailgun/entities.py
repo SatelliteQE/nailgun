@@ -3061,6 +3061,7 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
             'realm': entity_fields.OneToOneField(Realm),
             'root_pass': entity_fields.StringField(length=(8, 30)),
             'subnet': entity_fields.OneToOneField(Subnet),
+            'uuid': entity_fields.StringField(),
         }
         self._owner_type = None  # actual ``owner_type`` value
         self._meta = {'api_path': 'api/v2/hosts', 'server_modes': ('sat')}
