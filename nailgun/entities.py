@@ -3590,6 +3590,41 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
         response = client.put(self.path('power'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entities')
+    def search(self, fields=None, query=None, filters=None):
+        """Search for entities.
+
+        :param fields: A set naming which fields should be used when generating
+            a search query. If ``None``, all values on the entity are used. If
+            an empty set, no values are used.
+        :param query: A dict containing a raw search query. This is melded in
+            to the generated search query like so:  ``{generated:
+            query}.update({manual: query})``.
+        :param filters: A dict. Used to filter search results locally.
+        :return: A list of entities, all of type ``type(self)``.
+        """
+        results = self.search_json(fields, query)['results']
+        results = self.search_normalize(results)
+        entities = []
+        for result in results:
+            image = result.get('image')
+            if image is not None:
+                del result['image']
+            entity = type(self)(self._server_config, **result)
+            if image:
+                entity.image = Image(
+                    server_config=self._server_config,
+                    id=image,
+                    compute_resource=AbstractComputeResource(
+                        server_config=self._server_config,
+                        id=result.get('compute_resource')
+                    ),
+                )
+            entities.append(entity)
+        if filters is not None:
+            entities = self.search_filter(entities, filters)
+        return entities
+
 
 class Image(
         Entity,
