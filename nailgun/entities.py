@@ -5106,6 +5106,7 @@ class Repository(
                 choices=('background', 'immediate', 'on_demand'),
                 default='immediate',
             ),
+            'full_path': entity_fields.StringField(),
             'gpg_key': entity_fields.OneToOneField(GPGKey),
             'label': entity_fields.StringField(),
             'last_sync': entity_fields.OneToOneField(ForemanTask),
