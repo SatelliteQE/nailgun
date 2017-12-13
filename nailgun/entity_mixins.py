@@ -242,19 +242,22 @@ def _get_entity_id(field_name, attrs):
 
     """
     field_name_id = field_name + '_id'
-    if field_name in attrs:
-        if attrs[field_name] is None:
-            return None
-        elif 'id' in attrs[field_name]:
-            return attrs[field_name]['id']
-    if field_name_id in attrs:
-        return attrs[field_name_id]
-    else:
-        raise MissingValueError(
-            'Cannot find a value for the "{0}" field. Searched for keys named '
-            '{1}, but available keys are {2}.'
-            .format(field_name, (field_name, field_name_id), attrs.keys())
-        )
+    error_msg = """ Cannot find a value for the "{0}" field. Searched
+                    for keys named {1}, but available keys are {2}.
+                """.format(field_name, (field_name, field_name_id),
+                           attrs.keys())
+    try:
+        if field_name in attrs:
+            if attrs[field_name] is None:
+                return None
+            elif 'id' in attrs[field_name]:
+                return attrs[field_name]['id']
+        if field_name_id in attrs:
+            return attrs[field_name_id]
+        else:
+            raise MissingValueError(error_msg)
+    except KeyError:
+        raise MissingValueError(error_msg)
 
 
 def _get_entity_ids(field_name, attrs):
