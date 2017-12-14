@@ -5244,6 +5244,13 @@ class Subscription(
         if ignore is None:
             ignore = set()
         ignore.add('organization')
+        if attrs is None:
+            # Workaround for
+            # https://github.com/SatelliteQE/nailgun/issues/475
+            attrs = self.read_json()
+            for system in attrs.get('systems', []):
+                if 'id' not in system and 'host_id' in system:
+                    system['id'] = system['host_id']
         return super(Subscription, self).read(entity, attrs, ignore)
 
     def refresh_manifest(self, synchronous=True, **kwargs):

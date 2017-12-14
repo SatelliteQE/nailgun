@@ -1068,15 +1068,17 @@ class ReadTestCase(TestCase):
         Assert that the ``ignore`` argument is correctly passed on.
 
         """
-        for entity, ignored_attrs in (
+        for entity_class, ignored_attrs in (
                 (entities.SmartVariable, {'variable_type'}),
                 (entities.Subnet, {'discovery'}),
                 (entities.Subscription, {'organization'}),
                 (entities.User, {'password'}),
         ):
-            with self.subTest(entity):
+            with self.subTest(entity_class):
                 with mock.patch.object(EntityReadMixin, 'read') as read:
-                    entity(self.cfg).read()
+                    entity_obj = entity_class(self.cfg)
+                    entity_obj.read_json = mock.Mock(return_value={})
+                    entity_obj.read()
                 # `call_args` is a two-tuple of (positional, keyword) args.
                 self.assertEqual(ignored_attrs, read.call_args[0][2])
 
