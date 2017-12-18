@@ -281,7 +281,10 @@ def _get_entity_ids(field_name, attrs):
     elif field_name in attrs:
         return [entity['id'] for entity in attrs[field_name]]
     elif plural_field_name in attrs:
-        return [entity['id'] for entity in attrs[plural_field_name]]
+        try:
+            return [entity['id'] for entity in attrs[plural_field_name]]
+        except KeyError:
+            return [entity['host_id'] for entity in attrs[plural_field_name]]
     else:
         raise MissingValueError(
             'Cannot find a value for the "{0}" field. Searched for keys named '
