@@ -1163,7 +1163,9 @@ class ReadTestCase(TestCase):
                 (entities.SmartClassParameters, {'hidden_value'}),
                 (entities.SmartVariable, {'hidden_value'}),
                 (entities.Subnet, {
-                    'discovery', 'subnet_parameters_attributes'}),
+                    'discovery',
+                    'remote_execution_proxy',
+                    'subnet_parameters_attributes'}),
                 (entities.Subscription, {'organization'}),
                 (entities.Repository, {'organization'}),
                 (entities.User, {'password'}),
