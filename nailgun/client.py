@@ -19,6 +19,7 @@ from json import dumps
 from warnings import simplefilter
 import logging
 import requests
+import urllib3
 
 
 logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
@@ -48,7 +49,7 @@ logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
 # pylint:disable=no-member
 simplefilter(
     'ignore',
-    requests.urllib3.exceptions.InsecureRequestWarning,
+    urllib3.exceptions.InsecureRequestWarning,
 )
 
 
