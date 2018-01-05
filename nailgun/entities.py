@@ -5941,6 +5941,81 @@ class SmartVariable(
         }
 
 
+class SSHKey(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
+    """A representation of a SSH Key entity.
+
+    ``user`` must be passed in when this entity is instantiated.
+
+    :raises: ``TypeError`` if ``user`` is not passed in.
+
+    """
+
+    def __init__(self, server_config=None, **kwargs):
+        _check_for_value('user', kwargs)
+        self._fields = {
+            'user': entity_fields.OneToOneField(
+                User,
+                required=True,
+            ),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+                unique=True
+            ),
+            'key': entity_fields.StringField(
+                required=True,
+                str_type='alphanumeric',
+                unique=True
+            )
+        }
+        super(SSHKey, self).__init__(server_config, **kwargs)
+        self._meta = {
+            # pylint:disable=no-member
+            'api_path': '{0}/ssh_keys'.format(self.user.path()),
+        }
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Provide a default value for ``entity``.
+
+        By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
+        default value for ``entity`` like so::
+
+            entity = type(self)()
+
+        However, :class:`SSHKey` requires that an ``user`` be
+        provided, so this technique will not work. Do this instead::
+
+            entity = type(self)(user=self.user.id)
+
+        """
+        # read() should not change the state of the object it's called on, but
+        # super() alters the attributes of any entity passed in. Creating a new
+        # object and passing it to super() lets this one avoid changing state.
+        if entity is None:
+            entity = type(self)(
+                self._server_config,
+                user=self.user,  # pylint:disable=no-member
+            )
+        if ignore is None:
+            ignore = set()
+        ignore.add('user')
+        return super(SSHKey, self).read(entity, attrs, ignore, params)
+
+    def search_normalize(self, results):
+        """Append user id to search results to be able to initialize found
+        :class:`User` successfully
+        """
+        for sshkey in results:
+            sshkey[u'user_id'] = self.user.id  # pylint:disable=no-member
+        return super(SSHKey, self).search_normalize(results)
+
+
 class Status(Entity):
     """A representation of a Status entity."""
 
