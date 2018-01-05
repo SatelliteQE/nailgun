@@ -5996,7 +5996,13 @@ class Subnet(
                     default=u'DHCP',
                 ),
                 'location': entity_fields.OneToManyField(Location),
+                'network_type': entity_fields.StringField(
+                    choices=('IPv4', 'IPv6'),
+                    default='IPv4',
+                ),
                 'organization': entity_fields.OneToManyField(Organization),
+                'remote_execution_proxy':
+                    entity_fields.OneToManyField(SmartProxy),
                 'subnet_parameters_attributes': entity_fields.ListField(),
                 'tftp': entity_fields.OneToOneField(SmartProxy),
             })
@@ -6028,6 +6034,7 @@ class Subnet(
         else:
             ignore.add('subnet_parameters_attributes')
         ignore.add('discovery')
+        ignore.add('remote_execution_proxy')
         return super(Subnet, self).read(entity, attrs, ignore, params)
 
     def update_payload(self, fields=None):
