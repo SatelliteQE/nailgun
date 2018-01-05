@@ -5096,7 +5096,14 @@ class Subnet(
                     default=u'DHCP',
                 ),
                 'location': entity_fields.OneToManyField(Location),
+                'network_type': entity_fields.StringField(
+                    choices=('IPv4', 'IPv6'),
+                    default='IPv4',
+                ),
                 'organization': entity_fields.OneToManyField(Organization),
+                'remote_execution_proxy':
+                    entity_fields.OneToManyField(SmartProxy),
+                'subnet_parameters_attributes': entity_fields.ListField(),
                 'tftp': entity_fields.OneToOneField(SmartProxy),
             })
         self._meta = {'api_path': 'api/v2/subnets', 'server_modes': ('sat')}
@@ -5123,7 +5130,8 @@ class Subnet(
         if ignore is None:
             ignore = set()
         ignore.add('discovery')
-        return super(Subnet, self).read(entity, attrs, ignore)
+        ignore.add('remote_execution_proxy')
+        return super(Subnet, self).read(entity, attrs, ignore, params)
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""

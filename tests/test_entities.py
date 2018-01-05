@@ -1071,9 +1071,17 @@ class ReadTestCase(TestCase):
         Assert that the ``ignore`` argument is correctly passed on.
 
         """
-        for entity_class, ignored_attrs in (
-                (entities.SmartVariable, {'variable_type'}),
-                (entities.Subnet, {'discovery'}),
+        for entity, ignored_attrs in (
+                (entities.Errata,
+                 {'content_view_version', 'environment', 'repository'}),
+                (entities.OVirtComputeResource, {'password'}),
+                (entities.SmartProxy, {'download_policy'}),
+                (entities.SmartClassParameters, {'hidden_value'}),
+                (entities.SmartVariable, {'hidden_value'}),
+                (entities.Subnet, {
+                    'discovery',
+                    'remote_execution_proxy',
+                    'subnet_parameters_attributes'}),
                 (entities.Subscription, {'organization'}),
                 (entities.User, {'password'}),
         ):
