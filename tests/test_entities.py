@@ -197,6 +197,7 @@ class InitTestCase(TestCase):
             (entities.Parameter, {'organization': 1}),
             (entities.Parameter, {'subnet': 1}),
             (entities.RepositorySet, {'product': 1}),
+            (entities.SSHKey, {'user': 1}),
             (entities.SyncPlan, {'organization': 1}),
         ])
         for entity, params in entities_:
@@ -1030,6 +1031,7 @@ class ReadTestCase(TestCase):
                 entities.Parameter(self.cfg, organization=2),
                 entities.Parameter(self.cfg, subnet=2),
                 entities.RepositorySet(self.cfg, product=2),
+                entities.SSHKey(self.cfg, user=2),
                 entities.SyncPlan(self.cfg, organization=2),
         ):
             # We mock read_json() because it may be called by read().
@@ -1362,6 +1364,25 @@ class SearchNormalizeTestCase(TestCase):
     def setUpClass(cls):
         """Set a server configuration at ``cls.cfg``."""
         cls.cfg = config.ServerConfig('http://example.com')
+
+    def test_sshkey(self):
+        """Test :meth:`nailgun.entities.SSHKey.search_normalize`.
+
+        Assert that ``user_id`` was added with correct user's id to search
+        results.
+        """
+        results = [
+            {'id': 1, 'login': 'foo'},
+            {'id': 2, 'login': 'bar'},
+        ]
+        with mock.patch.object(
+            EntitySearchMixin,
+            'search_normalize',
+        ) as search_normalize:
+            entities.SSHKey(self.cfg, user=4).search_normalize(results)
+            for args in search_normalize.call_args[0][0]:
+                self.assertIn('user_id', args)
+                self.assertEqual(args['user_id'], 4)
 
     def test_interface(self):
         """Test :meth:`nailgun.entities.Interface.search_normalize`.
