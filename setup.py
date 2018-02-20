@@ -37,7 +37,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],
-    packages=find_packages(),
+    packages=find_packages(exclude=['docs', 'tests']),
     install_requires=[
         'fauxfactory',
         'inflection',
