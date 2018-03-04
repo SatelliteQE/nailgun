@@ -907,7 +907,7 @@ class EntityCreateMixin(object):
         """
         if create_missing is None:
             create_missing = CREATE_MISSING
-        if create_missing:
+        if create_missing is True:
             self.create_missing()
         return client.post(
             self.path('base'),
