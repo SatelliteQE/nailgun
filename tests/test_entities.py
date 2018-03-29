@@ -24,7 +24,7 @@ if version_info.major == 2:
     from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
     _BUILTIN_OPEN = '__builtin__.open'
 else:
-    from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error,no-name-in-module,line-too-long
+    from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error,no-name-in-module,E501
     _BUILTIN_OPEN = 'builtins.open'
 
 # pylint:disable=too-many-lines
