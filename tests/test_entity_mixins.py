@@ -3,6 +3,8 @@
 # Python 3.3 and later includes module `ipaddress` in the standard library. If
 # NailGun ever moves past Python 2.x, that module should be used instead of
 # `socket`.
+import mock
+from requests.exceptions import HTTPError
 from fauxfactory import gen_integer
 from nailgun import client, config, entity_mixins
 from nailgun.entity_fields import (
@@ -12,10 +14,8 @@ from nailgun.entity_fields import (
     OneToOneField,
     StringField,
 )
-from requests.exceptions import HTTPError
-import mock
 
-from sys import version_info
+from sys import version_info # pylint:disable=wrong-import-order
 if version_info.major == 2:
     import httplib as http_client  # pylint:disable=import-error
 else:
@@ -792,9 +792,12 @@ class EntityReadMixinTestCase(TestCase):
             set(entity_1.get_fields().keys()),
             set(entity_2.get_fields().keys()),
         )
-        self.assertEqual(entity_2.id, attrs['id'])
-        self.assertEqual(entity_2.many[0].id, attrs['manies'][0]['id'])
-        self.assertEqual(entity_2.one.id, attrs['one']['id'])
+        self.assertEqual(entity_2.id, # pylint: disable=no-member
+                         attrs['id'])
+        self.assertEqual(entity_2.many[0].id, # pylint: disable=no-member
+                         attrs['manies'][0]['id'])
+        self.assertEqual(entity_2.one.id, # pylint: disable=no-member
+                         attrs['one']['id'])
 
     def test_read_v2(self):
         """Make ``read_json`` return hashes, but with different field names."""
@@ -815,7 +818,8 @@ class EntityReadMixinTestCase(TestCase):
             set(entity_1.get_fields().keys()),
             set(entity_2.get_fields().keys()),
         )
-        self.assertEqual(entity_2.many[0].id, attrs['many'][0]['id'])
+        self.assertEqual(entity_2.many[0].id, # pylint: disable=no-member
+                         attrs['many'][0]['id'])
 
     def test_read_v3(self):
         """Make ``read_json`` return IDs."""
@@ -841,9 +845,12 @@ class EntityReadMixinTestCase(TestCase):
             set(entity_1.get_fields().keys()),
             set(entity_2.get_fields().keys()),
         )
-        self.assertEqual(entity_2.id, attrs['id'])
-        self.assertEqual(entity_2.many[0].id, attrs['many_ids'][0])
-        self.assertEqual(entity_2.one.id, attrs['one_id'])
+        self.assertEqual(entity_2.id, # pylint: disable=no-member
+                         attrs['id'])
+        self.assertEqual(entity_2.many[0].id, # pylint: disable=no-member
+                         attrs['many_ids'][0])
+        self.assertEqual(entity_2.one.id, # pylint: disable=no-member
+                         attrs['one_id'])
 
     def test_read_v4(self):
         """Do not ignore any fields."""

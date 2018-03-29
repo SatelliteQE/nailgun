@@ -688,7 +688,7 @@ class EntityDeleteMixin(object):
             # "The server successfully processed the request, but is not
             # returning any content. Usually used as a response to a successful
             # delete request."
-            return
+            return None
         return response.json()
 
 
@@ -1395,7 +1395,7 @@ class EntitySearchMixin(object):
 
         """
         # Check to make sure all arguments are sane.
-        if len(entities) == 0:
+        if not entities:
             return entities
         fields = entities[0].get_fields()  # assume all entities are identical
         if not set(filters).issubset(fields):

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """Unit tests for :mod:`nailgun.entity_fields`."""
-from fauxfactory.constants import VALID_NETMASKS
-from nailgun import entity_fields
-from random import randint
 import datetime
 import socket
+from random import randint
+from fauxfactory.constants import VALID_NETMASKS
+from nailgun import entity_fields
 
-from sys import version_info
+from sys import version_info # pylint:disable=wrong-import-order
 if version_info.major == 2:
     from urlparse import urlparse  # pylint:disable=import-error
 else:

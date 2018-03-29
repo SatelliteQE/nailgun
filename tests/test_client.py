@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """Unit tests for :mod:`nailgun.client`."""
-from fauxfactory import gen_alpha
-from nailgun import client
 import inspect
+from fauxfactory import gen_alpha
 import mock
 import requests
+from nailgun import client
 
-from sys import version_info
+from sys import version_info # pylint:disable=wrong-import-order
 if version_info < (3, 4):
     from unittest2 import TestCase  # pylint:disable=import-error
 else:
@@ -147,6 +147,6 @@ class ClientTestCase(TestCase):
         """
         for meth in ('delete', 'get', 'head', 'patch', 'post', 'put'):
             self.assertEqual(
-                inspect.getargspec(getattr(client, meth)),
-                inspect.getargspec(getattr(requests, meth)),
+                inspect.getfullargspec(getattr(client, meth)),
+                inspect.getfullargspec(getattr(requests, meth)),
             )
