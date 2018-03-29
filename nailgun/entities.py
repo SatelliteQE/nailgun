@@ -45,7 +45,7 @@ if version_info.major == 2:  # pragma: no cover
     from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
     from urlparse import urljoin  # pylint:disable=import-error
 else:  # pragma: no cover
-    from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error,no-name-in-module noqa:E501
+    from http.client import ACCEPTED, NO_CONTENT  # noqa pylint:disable=import-error,no-name-in-module
     from urllib.parse import urljoin  # pylint:disable=F0401,E0611
 
 # pylint:disable=too-many-lines
@@ -120,7 +120,7 @@ def _handle_response(response, server_config, synchronous=False, timeout=None):
             server_config, id=response.json()['id']).poll(timeout=timeout)
     if response.status_code == NO_CONTENT:
         return None
-    if 'application/json' in response.headers.get('content-type', '').lower():  # pylint:disable=no-else-return noqa:E501
+    if 'application/json' in response.headers.get('content-type', '').lower():  # pylint:disable=no-else-return noqa: E501
         return response.json()
     else:
         return response.content
@@ -2403,7 +2403,7 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
         }
         super(Errata, self).__init__(server_config, **kwargs)
 
-    def compare(self, synchronous=True, **kwargs):  # pylint:disable=arguments-differ noqa:E501
+    def compare(self, synchronous=True, **kwargs):  # noqa:E501 pylint:disable=arguments-differ
         """Compare errata from different content view versions
 
         :param synchronous: What should happen if the server returns an HTTP
