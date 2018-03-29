@@ -1757,8 +1757,11 @@ class GenericTestCase(TestCase):
         """
         for method, request in self.methods_requests:
             with self.subTest((method, request)):
+                fullargspec = inspect.getfullargspec(method)
+                to_compare = (fullargspec.args, fullargspec.varargs,
+                              fullargspec.varkw, fullargspec.defaults)
                 self.assertEqual(
-                    inspect.getfullargspec(method),
+                    to_compare,
                     (['self', 'synchronous'], None, 'kwargs', (True,))
                 )
                 kwargs = {'kwarg': gen_integer()}
@@ -2168,8 +2171,11 @@ class HostGroupTestCase(TestCase):
         """
         entity = self.entity
         entity.id = 1
+        fullargspec = inspect.getfullargspec(entity.delete_puppetclass)
+        to_compare = (fullargspec.args, fullargspec.varargs,
+                      fullargspec.varkw, fullargspec.defaults)
         self.assertEqual(
-            inspect.getfullargspec(entity.delete_puppetclass),
+            to_compare,
             (['self', 'synchronous'], None, 'kwargs', (True,))
         )
         kwargs = {
@@ -2192,8 +2198,11 @@ class HostGroupTestCase(TestCase):
         """
         entity = self.entity
         entity.id = 1
+        fullargspec = inspect.getfullargspec(entity.clone)
+        to_compare = (fullargspec.args, fullargspec.varargs,
+                      fullargspec.varkw, fullargspec.defaults)
         self.assertEqual(
-            inspect.getfullargspec(entity.clone),
+            to_compare,
             (['self', 'synchronous'], None, 'kwargs', (True,))
         )
         kwargs = {
@@ -2313,8 +2322,11 @@ class HostTestCase(TestCase):
 
         """
         entity = entities.Host(self.cfg, id=1)
+        fullargspec = inspect.getfullargspec(entity.delete_puppetclass)
+        to_compare = (fullargspec.args, fullargspec.varargs,
+                      fullargspec.varkw, fullargspec.defaults)
         self.assertEqual(
-            inspect.getfullargspec(entity.delete_puppetclass),
+            to_compare,
             (['self', 'synchronous'], None, 'kwargs', (True,))
         )
         kwargs = {
@@ -2568,8 +2580,11 @@ class SubscriptionTestCase(TestCase):
         )
         for method, request in methods_requests:
             with self.subTest((method, request)):
+                fullargspec = inspect.getfullargspec(method)
+                to_compare = (fullargspec.args, fullargspec.varargs,
+                              fullargspec.varkw, fullargspec.defaults)
                 self.assertEqual(
-                    inspect.getfullargspec(method),
+                    to_compare,
                     (['self', 'synchronous'], None, 'kwargs', (True,))
                 )
                 kwargs = {'data': gen_integer()}
