@@ -13,8 +13,8 @@ like so::
 """
 from __future__ import print_function
 from pprint import pprint
-import requests
 import json
+import requests
 
 
 def main():
