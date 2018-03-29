@@ -1775,7 +1775,8 @@ class GenericTestCase(TestCase):
                 self.assertEqual(client_request.call_args[1], kwargs)
                 self.assertEqual(handlr.call_count, 1)
                 if method in self.decoded_responses:
-                    self.assertEqual(handlr.return_value.decode('utf-8'), response)
+                    self.assertEqual(handlr.return_value.decode('utf-8'),
+                                     response)
                 else:
                     self.assertEqual(handlr.return_value, response)
 
