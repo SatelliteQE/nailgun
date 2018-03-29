@@ -818,7 +818,7 @@ class EntityReadMixinTestCase(TestCase):
             set(entity_1.get_fields().keys()),
             set(entity_2.get_fields().keys()),
         )
-        self.assertEqual(entity_2.many[0].id, # pylint:disable=no-member
+        self.assertEqual(entity_2.many[0].id, # pylint:disable=no-member,line-too-long
                          attrs['many'][0]['id'])
 
     def test_read_v3(self):
