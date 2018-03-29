@@ -4383,7 +4383,8 @@ class Organization(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(
             self.path('download_debug_certificate'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return str(_handle_response(
+            response, self._server_config, synchronous))
 
 
 class OSDefaultTemplate(
