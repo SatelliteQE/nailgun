@@ -6,7 +6,7 @@ from random import randint
 from fauxfactory.constants import VALID_NETMASKS
 from nailgun import entity_fields
 
-from sys import version_info # pylint:disable=wrong-import-order
+from sys import version_info  # pylint:disable=wrong-import-order
 if version_info.major == 2:
     from urlparse import urlparse  # pylint:disable=import-error
 else:

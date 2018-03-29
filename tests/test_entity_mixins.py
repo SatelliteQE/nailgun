@@ -15,7 +15,7 @@ from nailgun.entity_fields import (
     StringField,
 )
 
-from sys import version_info # pylint:disable=wrong-import-order
+from sys import version_info  # pylint:disable=wrong-import-order
 if version_info.major == 2:
     import httplib as http_client  # pylint:disable=import-error
 else:
@@ -792,11 +792,11 @@ class EntityReadMixinTestCase(TestCase):
             set(entity_1.get_fields().keys()),
             set(entity_2.get_fields().keys()),
         )
-        self.assertEqual(entity_2.id, # pylint: disable=no-member
+        self.assertEqual(entity_2.id,  # pylint:disable=no-member
                          attrs['id'])
-        self.assertEqual(entity_2.many[0].id, # pylint: disable=no-member
+        self.assertEqual(entity_2.many[0].id,  # pylint:disable=no-member
                          attrs['manies'][0]['id'])
-        self.assertEqual(entity_2.one.id, # pylint: disable=no-member
+        self.assertEqual(entity_2.one.id,  # pylint:disable=no-member
                          attrs['one']['id'])
 
     def test_read_v2(self):
@@ -818,7 +818,7 @@ class EntityReadMixinTestCase(TestCase):
             set(entity_1.get_fields().keys()),
             set(entity_2.get_fields().keys()),
         )
-        self.assertEqual(entity_2.many[0].id, # pylint: disable=no-member
+        self.assertEqual(entity_2.many[0].id, # pylint:disable=no-member
                          attrs['many'][0]['id'])
 
     def test_read_v3(self):
@@ -845,11 +845,11 @@ class EntityReadMixinTestCase(TestCase):
             set(entity_1.get_fields().keys()),
             set(entity_2.get_fields().keys()),
         )
-        self.assertEqual(entity_2.id, # pylint: disable=no-member
+        self.assertEqual(entity_2.id,  # pylint:disable=no-member
                          attrs['id'])
-        self.assertEqual(entity_2.many[0].id, # pylint: disable=no-member
+        self.assertEqual(entity_2.many[0].id,  # pylint:disable=no-member
                          attrs['many_ids'][0])
-        self.assertEqual(entity_2.one.id, # pylint: disable=no-member
+        self.assertEqual(entity_2.one.id,  # pylint:disable=no-member
                          attrs['one_id'])
 
     def test_read_v4(self):

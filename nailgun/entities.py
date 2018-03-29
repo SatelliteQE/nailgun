@@ -120,7 +120,7 @@ def _handle_response(response, server_config, synchronous=False, timeout=None):
             server_config, id=response.json()['id']).poll(timeout=timeout)
     if response.status_code == NO_CONTENT:
         return None
-    if 'application/json' in response.headers.get('content-type', '').lower(): # pylint:disable=no-else-return
+    if 'application/json' in response.headers.get('content-type', '').lower():  # pylint:disable=no-else-return
         return response.json()
     else:
         return response.content
@@ -1647,7 +1647,7 @@ class ContentUpload(
         ignore.add('repository')
         return super(ContentUpload, self).read(entity, attrs, ignore, params)
 
-    def update(self, fields=None, **kwargs): # pylint:disable=arguments-differ
+    def update(self, fields=None, **kwargs):  # pylint:disable=arguments-differ
         """Update the current entity.
 
         Make an HTTP PUT call to ``self.path('base')``. Return the response.
@@ -2403,7 +2403,7 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
         }
         super(Errata, self).__init__(server_config, **kwargs)
 
-    def compare(self, synchronous=True, **kwargs): # pylint:disable=arguments-differ
+    def compare(self, synchronous=True, **kwargs):  # pylint:disable=arguments-differ
         """Compare errata from different content view versions
 
         :param synchronous: What should happen if the server returns an HTTP

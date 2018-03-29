@@ -15,7 +15,7 @@ from nailgun.entity_mixins import (
     NoSuchPathError,
 )
 
-from sys import version_info # pylint:disable=wrong-import-order
+from sys import version_info  # pylint:disable=wrong-import-order
 if version_info < (3, 4):
     from unittest2 import TestCase  # pylint:disable=import-error
 else:

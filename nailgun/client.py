@@ -61,7 +61,7 @@ def _content_type_is_json(kwargs):
     :returns: ``True`` or ``False``
 
     """
-    if 'headers' in kwargs and 'content-type' in kwargs['headers']: # pylint:disable=no-else-return
+    if 'headers' in kwargs and 'content-type' in kwargs['headers']:  # pylint:disable=no-else-return
         return kwargs['headers']['content-type'].lower() == 'application/json'
     else:
         return False

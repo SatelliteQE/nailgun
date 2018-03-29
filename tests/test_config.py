@@ -6,7 +6,7 @@ from nailgun.config import (
     BaseServerConfig, ServerConfig, _get_config_file_path, ConfigFileError
 )
 
-from sys import version_info # pylint:disable=wrong-import-order
+from sys import version_info  # pylint:disable=wrong-import-order
 if version_info.major == 2:
     # The `__builtins__` module (note the "s") also provides the `open`
     # function. However, that module is an implementation detail for CPython 2,
