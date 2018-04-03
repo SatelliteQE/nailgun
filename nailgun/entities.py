@@ -122,6 +122,8 @@ def _handle_response(response, server_config, synchronous=False, timeout=None):
         return
     if 'application/json' in response.headers.get('content-type', '').lower():
         return response.json()
+    elif isinstance(response.content, bytes):
+        return response.content.decode('utf-8')
     else:
         return response.content
 
@@ -4383,8 +4385,7 @@ class Organization(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(
             self.path('download_debug_certificate'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous) \
-            .decode('utf-8')
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class OSDefaultTemplate(

@@ -1661,8 +1661,6 @@ class GenericTestCase(TestCase):
                 entity_obj3.method2, 'put',
             )
 
-        ``decoded_responses`` is a tuple of methods whose result was decoded
-        into string.
         """
         cfg = config.ServerConfig('http://example.com')
         generic = {'server_config': cfg, 'id': 1}
@@ -1744,9 +1742,6 @@ class GenericTestCase(TestCase):
             (entities.SyncPlan(**sync_plan).add_products, 'put'),
             (entities.SyncPlan(**sync_plan).remove_products, 'put'),
         )
-        cls.decoded_responses = (
-            entities.Organization(**generic).download_debug_certificate,
-        )
 
     def test_generic(self):
         """Check that a variety of helper methods are sane.
@@ -1774,11 +1769,7 @@ class GenericTestCase(TestCase):
                 self.assertEqual(len(client_request.call_args[0]), 1)
                 self.assertEqual(client_request.call_args[1], kwargs)
                 self.assertEqual(handlr.call_count, 1)
-                if method in self.decoded_responses:
-                    self.assertEqual(handlr.return_value.decode('utf-8'),
-                                     response)
-                else:
-                    self.assertEqual(handlr.return_value, response)
+                self.assertEqual(handlr.return_value, response)
 
 
 class AbstractDockerContainerTestCase(TestCase):
