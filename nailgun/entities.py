@@ -122,6 +122,8 @@ def _handle_response(response, server_config, synchronous=False, timeout=None):
         return
     if 'application/json' in response.headers.get('content-type', '').lower():
         return response.json()
+    elif isinstance(response.content, bytes):
+        return response.content.decode('utf-8')
     else:
         return response.content
 
