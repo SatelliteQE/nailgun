@@ -5126,10 +5126,14 @@ class Repository(
                 default=_FAKE_YUM_REPO,
                 required=True,
             ),
+            'upstream_username': entity_fields.StringField(),
+            'upstream_password': entity_fields.StringField(),
         }
         if _get_version(server_config) < Version('6.1'):
             # Adjust for Satellite 6.0
             del self._fields['docker_upstream_name']
+            del self._fields['upstream_username']
+            del self._fields['upstream_password']
             self._fields['content_type'].choices = (tuple(
                 set(self._fields['content_type'].choices) - set(['docker'])
             ))
@@ -5182,11 +5186,13 @@ class Repository(
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Ignore ``organization`` field as it's never returned by the server
         and is only added to entity to be able to use organization path
-        dependent helpers.
+        dependent helpers and also upstream_password as it is not returned
+        for security reasons.
         """
         if ignore is None:
             ignore = set()
         ignore.add('organization')
+        ignore.add('upstream_password')
         return super(Repository, self).read(entity, attrs, ignore, params)
 
     def create_missing(self):

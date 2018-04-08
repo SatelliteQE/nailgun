@@ -1169,7 +1169,7 @@ class ReadTestCase(TestCase):
                     'remote_execution_proxy',
                     'subnet_parameters_attributes'}),
                 (entities.Subscription, {'organization'}),
-                (entities.Repository, {'organization'}),
+                (entities.Repository, {'organization', 'upstream_password'}),
                 (entities.User, {'password'}),
                 (entities.VMWareComputeResource, {'password'}),
         ):
