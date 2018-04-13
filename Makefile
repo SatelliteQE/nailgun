@@ -21,9 +21,12 @@ docs-clean:
 
 lint:
 	flake8 --ignore=E731 .
-	pylint -j $(CPU_COUNT) --reports=n --disable=I --ignore-imports=y \
+	pylint -j $(CPU_COUNT) --reports=n -E \
+		--disable=no-member,no-name-in-module --ignore-imports=y \
 		nailgun tests setup.py docs/conf.py
-	pylint -j $(CPU_COUNT) --reports=n --disable=I --ignore-imports=y --disable=similarities \
+	pylint -j $(CPU_COUNT) --reports=n -E \
+		--disable=no-member,no-name-in-module --ignore-imports=y \
+		--disable=similarities \
 		docs/create_organization_nailgun.py \
 		docs/create_organization_nailgun_v2.py \
 		docs/create_organization_plain.py \

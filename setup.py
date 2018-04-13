@@ -7,6 +7,7 @@ For more information, see:
 * https://docs.python.org/distutils/sourcedist.html
 
 """
+import sys
 from setuptools import find_packages, setup  # prefer setuptools over distutils
 
 
@@ -16,6 +17,22 @@ with open('README.rst') as handle:
 
 with open('VERSION') as handle:
     VERSION = handle.read().strip()
+
+
+REQUIREMENTS = [
+    'inflection',
+    'packaging',
+    'pyxdg',
+    'requests>=2.7',
+    'blinker_herald'
+]
+
+
+if sys.version_info >= (3, 0):
+    REQUIREMENTS.append('fauxfactory')
+else:
+    # Fauxfactory 3.0+ dropped support for Python 2.x
+    REQUIREMENTS.append('fauxfactory<3.0')
 
 
 setup(
@@ -38,12 +55,5 @@ setup(
         'Programming Language :: Python :: 3.4',
     ],
     packages=find_packages(exclude=['docs', 'tests']),
-    install_requires=[
-        'fauxfactory',
-        'inflection',
-        'packaging',
-        'pyxdg',
-        'requests>=2.7',
-        'blinker_herald'
-    ],
+    install_requires=REQUIREMENTS,
 )
