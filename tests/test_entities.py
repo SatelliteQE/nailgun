@@ -2,7 +2,9 @@
 """Tests for :mod:`nailgun.entities`."""
 import json
 import os
+import inspect
 from datetime import datetime, date
+import mock
 from fauxfactory import gen_integer, gen_string
 from nailgun import client, config, entities
 from nailgun.entity_mixins import (
@@ -12,10 +14,8 @@ from nailgun.entity_mixins import (
     EntityUpdateMixin,
     NoSuchPathError,
 )
-import inspect
-import mock
 
-from sys import version_info
+from sys import version_info  # pylint:disable=wrong-import-order
 if version_info < (3, 4):
     from unittest2 import TestCase  # pylint:disable=import-error
 else:
@@ -24,7 +24,7 @@ if version_info.major == 2:
     from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
     _BUILTIN_OPEN = '__builtin__.open'
 else:
-    from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
+    from http.client import ACCEPTED, NO_CONTENT  # noqa:E501 pylint:disable=import-error,no-name-in-module
     _BUILTIN_OPEN = 'builtins.open'
 
 # pylint:disable=too-many-lines
@@ -1757,8 +1757,11 @@ class GenericTestCase(TestCase):
         """
         for method, request in self.methods_requests:
             with self.subTest((method, request)):
+                fullargspec = inspect.getfullargspec(method)
+                to_compare = (fullargspec.args, fullargspec.varargs,
+                              fullargspec.varkw, fullargspec.defaults)
                 self.assertEqual(
-                    inspect.getargspec(method),
+                    to_compare,
                     (['self', 'synchronous'], None, 'kwargs', (True,))
                 )
                 kwargs = {'kwarg': gen_integer()}
@@ -2168,8 +2171,11 @@ class HostGroupTestCase(TestCase):
         """
         entity = self.entity
         entity.id = 1
+        fullargspec = inspect.getfullargspec(entity.delete_puppetclass)
+        to_compare = (fullargspec.args, fullargspec.varargs,
+                      fullargspec.varkw, fullargspec.defaults)
         self.assertEqual(
-            inspect.getargspec(entity.delete_puppetclass),
+            to_compare,
             (['self', 'synchronous'], None, 'kwargs', (True,))
         )
         kwargs = {
@@ -2192,8 +2198,11 @@ class HostGroupTestCase(TestCase):
         """
         entity = self.entity
         entity.id = 1
+        fullargspec = inspect.getfullargspec(entity.clone)
+        to_compare = (fullargspec.args, fullargspec.varargs,
+                      fullargspec.varkw, fullargspec.defaults)
         self.assertEqual(
-            inspect.getargspec(entity.clone),
+            to_compare,
             (['self', 'synchronous'], None, 'kwargs', (True,))
         )
         kwargs = {
@@ -2313,8 +2322,11 @@ class HostTestCase(TestCase):
 
         """
         entity = entities.Host(self.cfg, id=1)
+        fullargspec = inspect.getfullargspec(entity.delete_puppetclass)
+        to_compare = (fullargspec.args, fullargspec.varargs,
+                      fullargspec.varkw, fullargspec.defaults)
         self.assertEqual(
-            inspect.getargspec(entity.delete_puppetclass),
+            to_compare,
             (['self', 'synchronous'], None, 'kwargs', (True,))
         )
         kwargs = {
@@ -2568,8 +2580,11 @@ class SubscriptionTestCase(TestCase):
         )
         for method, request in methods_requests:
             with self.subTest((method, request)):
+                fullargspec = inspect.getfullargspec(method)
+                to_compare = (fullargspec.args, fullargspec.varargs,
+                              fullargspec.varkw, fullargspec.defaults)
                 self.assertEqual(
-                    inspect.getargspec(method),
+                    to_compare,
                     (['self', 'synchronous'], None, 'kwargs', (True,))
                 )
                 kwargs = {'data': gen_integer()}

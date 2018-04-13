@@ -18,6 +18,7 @@ still legal, so they will often return nonsense UTF-8 values, which is
 unpleasant to work with manually.
 
 """
+import random
 from fauxfactory import (
     gen_alpha,
     gen_boolean,
@@ -32,7 +33,6 @@ from fauxfactory import (
     gen_string,
     gen_url,
 )
-import random
 # pylint:disable=too-few-public-methods
 # The classes in this module serve a declarative role. It is OK that they don't
 # do much.
@@ -105,10 +105,10 @@ class FloatField(Field):
 class IntegerField(Field):
     """Field that represents an integer."""
 
-    def __init__(self, min_val=None, max_val=None, *args, **kwargs):
+    def __init__(self, min_val=None, max_val=None, **kwargs):
         self.min_val = min_val
         self.max_val = max_val
-        super(IntegerField, self).__init__(*args, **kwargs)
+        super(IntegerField, self).__init__(**kwargs)
 
     def gen_value(self):
         """Return a value suitable for a :class:`IntegerField`."""
@@ -138,7 +138,7 @@ class StringField(Field):
 
     """
 
-    def __init__(self, length=(1, 30), str_type=('utf8',), *args, **kwargs):
+    def __init__(self, length=(1, 30), str_type=('utf8',), **kwargs):
         # length may be a two-tuple or an integer. Set {min,max}_len carefully.
         if isinstance(length, tuple):
             self.min_len, self.max_len = length
@@ -151,7 +151,7 @@ class StringField(Field):
         else:
             self.str_type = (str_type,)
 
-        super(StringField, self).__init__(*args, **kwargs)
+        super(StringField, self).__init__(**kwargs)
 
     def gen_value(self):
         """Return a value suitable for a :class:`StringField`."""
@@ -164,11 +164,11 @@ class StringField(Field):
 class DateField(Field):
     """Field that represents a date"""
 
-    def __init__(self, min_date=None, max_date=None, *args, **kwargs):
+    def __init__(self, min_date=None, max_date=None, **kwargs):
         # If ``None`` is passed then ``FauxFactory`` will deal with it.
         self.min_date = min_date
         self.max_date = max_date
-        super(DateField, self).__init__(*args, **kwargs)
+        super(DateField, self).__init__(**kwargs)
 
     def gen_value(self):
         """Return a value suitable for a :class:`DateField`."""
@@ -178,11 +178,11 @@ class DateField(Field):
 class DateTimeField(Field):
     """Field that represents a datetime"""
 
-    def __init__(self, min_date=None, max_date=None, *args, **kwargs):
+    def __init__(self, min_date=None, max_date=None, **kwargs):
         # If ``None`` is passed then ``FauxFactory`` will deal with it.
         self.min_date = min_date
         self.max_date = max_date
-        super(DateTimeField, self).__init__(*args, **kwargs)
+        super(DateTimeField, self).__init__(**kwargs)
 
     def gen_value(self):
         """Return a value suitable for a :class:`DateTimeField`."""

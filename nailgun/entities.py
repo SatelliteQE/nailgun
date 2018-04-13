@@ -45,7 +45,7 @@ if version_info.major == 2:  # pragma: no cover
     from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
     from urlparse import urljoin  # pylint:disable=import-error
 else:  # pragma: no cover
-    from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
+    from http.client import ACCEPTED, NO_CONTENT  # noqa:E501 pylint:disable=import-error,no-name-in-module
     from urllib.parse import urljoin  # pylint:disable=F0401,E0611
 
 # pylint:disable=too-many-lines
@@ -119,8 +119,8 @@ def _handle_response(response, server_config, synchronous=False, timeout=None):
         return ForemanTask(
             server_config, id=response.json()['id']).poll(timeout=timeout)
     if response.status_code == NO_CONTENT:
-        return
-    if 'application/json' in response.headers.get('content-type', '').lower():
+        return None
+    if 'application/json' in response.headers.get('content-type', '').lower():  # noqa:E501 pylint:disable=no-else-return
         return response.json()
     elif isinstance(response.content, bytes):
         return response.content.decode('utf-8')
@@ -1649,7 +1649,7 @@ class ContentUpload(
         ignore.add('repository')
         return super(ContentUpload, self).read(entity, attrs, ignore, params)
 
-    def update(self, fields=None, **kwargs):
+    def update(self, fields=None, **kwargs):  # pylint:disable=arguments-differ
         """Update the current entity.
 
         Make an HTTP PUT call to ``self.path('base')``. Return the response.
@@ -1714,7 +1714,7 @@ class ContentUpload(
 
             with open(filepath, 'rb') as contentfile:
                 chunk = contentfile.read(content_chunk_size)
-                while len(chunk) > 0:
+                while chunk:
                     data = {'offset': offset,
                             'content': chunk}
                     content_upload.update(data)
@@ -2405,7 +2405,7 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
         }
         super(Errata, self).__init__(server_config, **kwargs)
 
-    def compare(self, synchronous=True, **kwargs):
+    def compare(self, synchronous=True, **kwargs):  # noqa:E501 pylint:disable=arguments-differ
         """Compare errata from different content view versions
 
         :param synchronous: What should happen if the server returns an HTTP
