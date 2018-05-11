@@ -5128,6 +5128,7 @@ class Repository(
             ),
             'upstream_username': entity_fields.StringField(),
             'upstream_password': entity_fields.StringField(),
+            'verify_ssl_on_sync': entity_fields.BooleanField(),
         }
         if _get_version(server_config) < Version('6.1'):
             # Adjust for Satellite 6.0
