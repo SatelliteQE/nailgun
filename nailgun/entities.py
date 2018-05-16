@@ -1115,6 +1115,7 @@ class OVirtComputeResource(AbstractComputeResource):
         self._fields = {
             'password': entity_fields.StringField(),
             'user': entity_fields.StringField(),
+            'use_v4': entity_fields.BooleanField(),
         }
         super(OVirtComputeResource, self).__init__(server_config, **kwargs)
         self._fields['provider'].default = 'Ovirt'
