@@ -4302,6 +4302,8 @@ class Organization(
             /organizations/<id>/subscriptions/refresh_manifest
         sync_plans
             /organizations/<id>/sync_plans
+        upstream_subscriptions
+            /organizations/<id>/upstream_subscriptions
 
         Otherwise, call ``super``.
 
@@ -4314,6 +4316,7 @@ class Organization(
                 'subscriptions/refresh_manifest',
                 'subscriptions/upload',
                 'sync_plans',
+                'upstream_subscriptions'
         ):
             return '{0}/{1}'.format(
                 super(Organization, self).path(which='self'),
@@ -6125,6 +6128,106 @@ class Subnet(
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {u'subnet': super(Subnet, self).update_payload(fields)}
+
+
+class UpstreamSubscription(
+        Entity,
+        EntityReadMixin,
+        EntityCreateMixin,
+        EntitySearchMixin,
+        EntityDeleteMixin,
+        EntityUpdateMixin):
+    """A representation of a UpstreamSubscription entity.
+
+    ``organization`` must be passed in when this entity is instantiated.
+
+    :raises: ``TypeError`` if ``organization`` is not passed in.
+
+    """
+
+    def __init__(self, server_config=None, **kwargs):
+        _check_for_value('organization', kwargs)
+        self._fields = {
+            'organization': entity_fields.OneToOneField(
+                Organization,
+                required=True
+            ),
+            'quantity': entity_fields.IntegerField(),
+            'subscription': entity_fields.OneToOneField(Subscription),
+        }
+        super(UpstreamSubscription, self).__init__(server_config, **kwargs)
+        self._meta = {
+            # pylint:disable=no-member
+            'api_path': '{0}/upstream_subscriptions'.format(
+                self.organization.path()
+            ),
+        }
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """As upstream_subscriptions returns only data comming from
+        candlepin, we need to re-map some values"""
+
+        params = params or {}
+        params['organization_id'] = self.organization.id
+        if getattr(self, 'subscription', None):
+            params['pool_ids[]'] = self.subscription.id
+        result = self.read_json(params=params)
+        data = result['results'][0]
+
+        attrs = {'id': data['id']}  # candlepin id
+        attrs['organization_id'] = self.organization.id
+        attrs['quantity'] = data['consumed']
+
+        # BZ 1585425 : currently this field is returning candlepin id
+        attrs['subscription_id'] = data['pool_id']
+
+        return super(UpstreamSubscription, self).read(
+            entity=self, params=params, attrs=attrs
+        )
+
+    def path(self, which=None):
+        """Extend ``nailgun,entity_mixins.Entity.path```
+        Returns always the base path independent of `which`
+        """
+        return urljoin(
+            self._server_config.url + '/',
+            self._meta['api_path']  # pylint:disable=no-member
+        )
+
+    def create_payload(self):
+        """Prepare data for create"""
+        data = {'organization_id': self.organization.id}
+        data['pools'] = [
+            {
+                'id': self.id,  # candlepin id
+                'quantity': self.quantity  # consumed quantity
+            }
+        ]
+        return data
+
+    def update_payload(self, fields=None):
+        """Prepare data for update."""
+        _check_for_value('subscription', self.get_values())
+        data = {'organization_id': self.organization.id}
+        data['pools'] = [
+            {
+                'id': self.subscription.id,  # subscription (katello local) id
+                'quantity': self.quantity  # consumed quantity
+            }
+        ]
+        return data
+
+    def delete_raw(self):
+        """Prepare data for delete"""
+        data = {
+            'organization_id': self.organization.id,
+            'pool_ids': [self.subscription.id]
+        }
+        return client.delete(
+            self.path(),
+            data=data,
+            **self._server_config.get_client_kwargs()
+        )
 
 
 class Subscription(
