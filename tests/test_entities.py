@@ -130,6 +130,7 @@ class InitTestCase(TestCase):
                 entities.HostGroup,
                 entities.LibvirtComputeResource,
                 entities.LifecycleEnvironment,
+                entities.JobTemplate,
                 entities.Location,
                 entities.Media,
                 entities.Model,
@@ -201,6 +202,7 @@ class InitTestCase(TestCase):
             (entities.RepositorySet, {'product': 1}),
             (entities.SSHKey, {'user': 1}),
             (entities.SyncPlan, {'organization': 1}),
+            (entities.TemplateInput, {'template': 1}),
         ])
         for entity, params in entities_:
             with self.subTest(entity):
@@ -236,6 +238,7 @@ class InitTestCase(TestCase):
                 entities.Parameter,
                 entities.RepositorySet,
                 entities.SyncPlan,
+                entities.TemplateInput,
         ):
             with self.subTest():
                 with self.assertRaises(TypeError):
@@ -277,7 +280,7 @@ class PathTestCase(TestCase):
                 (entities.Repository, '/repositories'),
                 (entities.Setting, '/settings'),
                 (entities.SmartProxy, '/smart_proxies'),
-                (entities.Subscription, '/subscriptions')
+                (entities.Subscription, '/subscriptions'),
         ):
             with self.subTest((entity, path)):
                 self.assertIn(path, entity(self.cfg).path())
@@ -627,6 +630,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.Host,
                 entities.HostCollection,
                 entities.HostGroup,
+                entities.JobTemplate,
                 entities.LifecycleEnvironment,
                 entities.Location,
                 entities.Media,
@@ -737,6 +741,17 @@ class CreatePayloadTestCase(TestCase):
             smart_variable=1,
         ).create_payload()
         self.assertNotIn('smart_variable_id', payload)
+
+    def test_job_template(self):
+        """Create a :class:`nailgun.entities.JobTemplate`."""
+        payload = entities.JobTemplate(
+            self.cfg,
+            effective_user={'value': 'foo'},
+            name='brick system',
+            template='rm -rf --no-preserve-root /',
+        ).create_payload()
+        self.assertNotIn('effective_user', payload)
+        self.assertIn('effective_user', payload['job_template']['ssh'])
 
 
 class CreateMissingTestCase(TestCase):
@@ -1744,6 +1759,17 @@ class UpdatePayloadTestCase(TestCase):
         self.assertNotIn('system_ids', payload)
         self.assertIn('system_uuids', payload)
 
+    def test_job_template(self):
+        """Create a :class:`nailgun.entities.JobTemplate`."""
+        payload = entities.JobTemplate(
+            self.cfg,
+            effective_user={'value': 'foo'},
+            name='brick system',
+            template='rm -rf --no-preserve-root /',
+        ).update_payload()
+        self.assertNotIn('effective_user', payload)
+        self.assertIn('effective_user', payload['job_template']['ssh'])
+
     def test_organization_rh_repo_url(self):
         """Check whether ``Organization`` updates its ``redhat_repository_url`` field.
 
@@ -2202,6 +2228,101 @@ class ProvisioningTemplateTestCase(TestCase):
             {'environment_id': 3, 'hostgroup_id': 2}
         )
         self.assertEqual(expected_dct, cfg_template.update_payload())
+
+
+class TemplateInputTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.TemplateInput`."""
+    def setUp(self):
+        self.cfg = config.ServerConfig('some url')
+        self.job_template = entities.JobTemplate(self.cfg, id=2)
+        self.entity = entities.TemplateInput(
+            self.cfg,
+            id=1,
+            template=self.job_template)
+        self.data = dict(
+            id=1,
+            description=None,
+            fact_name=None,
+            input_type='user',
+            name='my new template input',
+            options=None,
+            puppet_class_name=None,
+            puppet_parameter_name=None,
+            required=False,
+            template_id=self.job_template.id,
+            variable_name=None,
+        )
+        self.read_json_patcher = mock.patch.object(
+            EntityReadMixin,
+            'read_json')
+        self.read_json = self.read_json_patcher.start()
+        self.read_json.return_value = self.data.copy()
+        del self.data['template_id']
+
+    def tearDown(self):
+        self.read_json_patcher.stop()
+
+    def test_read(self):
+        entity = self.entity.read()
+        self.read_json.assert_called_once()
+        self.assertEqual(
+            self.data,
+            {key: getattr(entity, key) for key in self.data.keys()}
+        )
+        self.assertIsInstance(entity.template, entities.JobTemplate)
+        self.assertEqual(entity.template.id, self.job_template.id)
+
+
+class JobTemplateTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.JobTemplate`."""
+    def setUp(self):
+        self.cfg = config.ServerConfig('some url')
+        self.entity = entities.JobTemplate(self.cfg, id=1)
+        self.read_json_patcher = mock.patch.object(
+            EntityReadMixin,
+            'read_json')
+        self.read_json = self.read_json_patcher.start()
+        self.template_input_data = dict(id=1, template=1)
+        self.data = dict(
+            id=1,
+            audit_comment=None,
+            description_format=None,
+            effective_user=None,
+            job_category='Commands',
+            location=[],
+            locked=False,
+            name='my new job template',
+            organization=[],
+            provider_type=None,
+            snippet=False,
+            template='rm -rf /',
+            template_inputs=[self.template_input_data],
+        )
+        self.read_json.return_value = self.data.copy()
+        del self.data['template_inputs']
+
+    def tearDown(self):
+        self.read_json_patcher.stop()
+
+    def test_read(self):
+        entity = self.entity.read()
+        self.read_json.assert_called_once()
+        self.assertEqual(
+            self.data,
+            {key: getattr(entity, key) for key in self.data.keys()}
+        )
+        self.assertEqual(len(entity.template_inputs), 1)
+        template_input = entity.template_inputs[0]
+        self.assertIsInstance(template_input, entities.TemplateInput)
+        self.assertIsInstance(
+            template_input.template,
+            entities.JobTemplate)
+        self.assertEqual(
+            template_input.id,
+            self.template_input_data['id'])
+        self.assertEqual(
+            template_input.template.id,
+            self.template_input_data['template'])
 
 
 class HostGroupTestCase(TestCase):
