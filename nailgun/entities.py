@@ -4733,6 +4733,7 @@ class PartitionTable(
         self._fields = {
             'layout': entity_fields.StringField(required=True),
             'location': entity_fields.OneToManyField(Location),
+            'locked': entity_fields.BooleanField(),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
