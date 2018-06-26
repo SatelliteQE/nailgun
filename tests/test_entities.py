@@ -163,6 +163,7 @@ class InitTestCase(TestCase):
                 # entities.System,  # see below
                 # entities.SystemPackage,  # see below
                 entities.TemplateCombination,
+                entities.Template,
                 entities.TemplateKind,
                 entities.User,
                 entities.UserGroup,
@@ -275,7 +276,7 @@ class PathTestCase(TestCase):
                 (entities.Repository, '/repositories'),
                 (entities.Setting, '/settings'),
                 (entities.SmartProxy, '/smart_proxies'),
-                (entities.Subscription, '/subscriptions'),
+                (entities.Subscription, '/subscriptions')
         ):
             with self.subTest((entity, path)):
                 self.assertIn(path, entity(self.cfg).path())
@@ -362,6 +363,8 @@ class PathTestCase(TestCase):
                 (entities.ForemanTask, 'bulk_search'),
                 (entities.ForemanTask, 'summary'),
                 (entities.Host, 'bulk/install_content'),
+                (entities.Template, 'import'),
+                (entities.Template, 'export')
         ):
             with self.subTest((entity, which)):
                 path = entity(self.cfg).path(which)
@@ -1741,6 +1744,8 @@ class GenericTestCase(TestCase):
             (entities.SmartProxy(**generic).refresh, 'put'),
             (entities.SyncPlan(**sync_plan).add_products, 'put'),
             (entities.SyncPlan(**sync_plan).remove_products, 'put'),
+            (entities.Template(**generic).imports, 'post'),
+            (entities.Template(**generic).exports, 'post')
         )
 
     def test_generic(self):

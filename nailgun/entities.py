@@ -6579,6 +6579,65 @@ class System(
         return super(System, self).read(entity, attrs, ignore, params)
 
 
+class Template(Entity):
+    """A representation of a Template entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._meta = {
+            'api_path': 'api/v2/templates',
+            'server_modes': ('sat'),
+        }
+        super(Template, self).__init__(server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        import
+            /templates/import
+        export
+            /templates/export
+
+        """
+        if which:
+            return '{0}/{1}'.format(
+                super(Template, self).path(which='base'), which)
+        return super(Template, self).path(which)
+
+    def imports(self, synchronous=True, **kwargs):
+        """Helper to import templates
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('import'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def exports(self, synchronous=True, **kwargs):
+        """Helper to export templates
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('export'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+
 class TemplateCombination(Entity, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Template Combination entity."""
 
