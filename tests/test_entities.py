@@ -639,7 +639,8 @@ class CreatePayloadTestCase(TestCase):
         ]
         entities_.extend([
             (entities.Image, {'compute_resource': 1}),
-            (entities.SyncPlan, {'organization': 1})
+            (entities.SyncPlan, {'organization': 1}),
+            (entities.ContentViewFilterRule, {'content_view_filter': 1})
         ])
         for entity, params in entities_:
             with self.subTest():
@@ -667,6 +668,37 @@ class CreatePayloadTestCase(TestCase):
         ).create_payload()
         self.assertNotIn('system_ids', payload)
         self.assertIn('system_uuids', payload)
+
+    def test_content_view_filter_rule(self):
+        """Create a :class:`nailgun.entities.ContentViewFilterRule`."""
+        errata_kwargs = {
+            "id": 1,
+            "uuid": "1a321570-cd30-4622-abff-2290b47ef814",
+            "title": "Bird_Erratum",
+            "errata_id": "RHEA-2012:0003",
+            "issued": "2012-01-27",
+            "updated": "2012-01-27",
+            "severity": "",
+            "description": "Bird_Erratum",
+            "solution": "",
+            "summary": "",
+            "reboot_suggested": False,
+            "name": "Bird_Erratum",
+            "type": "security",
+            "cves": [],
+            "hosts_available_count": 0,
+            "hosts_applicable_count": 0,
+            "packages": ["stork-0.12-2.noarch"]
+        }
+
+        with mock.patch.object(entities.Errata, 'read_json') as read_json:
+            read_json.return_value = errata_kwargs
+            payload = entities.ContentViewFilterRule(
+                self.cfg,
+                content_view_filter=1,
+                errata=1,
+            ).create_payload()
+            self.assertEqual("RHEA-2012:0003", payload['errata_id'])
 
     def test_image(self):
         """Create a :class:`nailgun.entities.Image`."""
@@ -1508,6 +1540,61 @@ class UpdateTestCase(TestCase):
                 self.assertEqual(read.call_args[0], ())
 
 
+class SearchPayloadTestCase(TestCase):
+    """Tests for extensions of ``search_upload``. """
+
+    @classmethod
+    def setUpClass(cls):
+        """Set a server configuration at ``cls.cfg``."""
+        cls.cfg = config.ServerConfig('http://example.com')
+
+    def test_generic(self):
+        """Instantiate a variety of entities and call ``search_payload``."""
+        entities_ = ([
+            (entities.ContentViewFilterRule, {'content_view_filter': 1})
+        ])
+
+        for entity, params in entities_:
+            with self.subTest():
+                self.assertIsInstance(
+                    entity(self.cfg, **params).search_payload(),
+                    dict
+                )
+
+    def test_content_view_filter_rule(self):
+        """errata_id field should be Errata ID when sent to the server,
+           not DB ID.
+        """
+        errata_kwargs = {
+            "id": 1,
+            "uuid": "1a321570-cd30-4622-abff-2290b47ef814",
+            "title": "Bird_Erratum",
+            "errata_id": "RHEA-2012:0003",
+            "issued": "2012-01-27",
+            "updated": "2012-01-27",
+            "severity": "",
+            "description": "Bird_Erratum",
+            "solution": "",
+            "summary": "",
+            "reboot_suggested": False,
+            "name": "Bird_Erratum",
+            "type": "security",
+            "cves": [],
+            "hosts_available_count": 0,
+            "hosts_applicable_count": 0,
+            "packages": ["stork-0.12-2.noarch"]
+        }
+
+        with mock.patch.object(entities.Errata, 'read_json') as read_json:
+            read_json.return_value = errata_kwargs
+            payload = entities.ContentViewFilterRule(
+                self.cfg,
+                content_view_filter=1,
+                errata=1,
+            ).search_payload()
+            self.assertEqual("RHEA-2012:0003", payload['errata_id'])
+
+
 class UpdatePayloadTestCase(TestCase):
     """Tests for extensions of ``update_payload``."""
 
@@ -1572,6 +1659,37 @@ class UpdatePayloadTestCase(TestCase):
                     entities.SyncPlan(self.cfg, **kwargs).update_payload(),
                     payload,
                 )
+
+    def test_content_view_filter_rule(self):
+        """errata_id field should be 'translated' from DB ID to Errata ID."""
+        errata_kwargs = {
+            "id": 1,
+            "uuid": "1a321570-cd30-4622-abff-2290b47ef814",
+            "title": "Bird_Erratum",
+            "errata_id": "RHEA-2012:0003",
+            "issued": "2012-01-27",
+            "updated": "2012-01-27",
+            "severity": "",
+            "description": "Bird_Erratum",
+            "solution": "",
+            "summary": "",
+            "reboot_suggested": False,
+            "name": "Bird_Erratum",
+            "type": "security",
+            "cves": [],
+            "hosts_available_count": 0,
+            "hosts_applicable_count": 0,
+            "packages": ["stork-0.12-2.noarch"]
+        }
+
+        with mock.patch.object(entities.Errata, 'read_json') as read_json:
+            read_json.return_value = errata_kwargs
+            payload = entities.ContentViewFilterRule(
+                self.cfg,
+                content_view_filter=1,
+                errata=1,
+            ).update_payload()
+            self.assertEqual("RHEA-2012:0003", payload['errata_id'])
 
     def test_discovery_rule_search(self):
         """Check whether ``DiscoveryRule`` updates its ``search_`` field.
