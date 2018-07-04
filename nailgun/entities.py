@@ -1853,6 +1853,7 @@ class ContentViewFilterRule(
             'start_date': entity_fields.DateField(),
             'types': entity_fields.ListField(),
             'version': entity_fields.StringField(),
+            'uuid': entity_fields.StringField(),
         }
         super(ContentViewFilterRule, self).__init__(server_config, **kwargs)
         self._meta = {
@@ -4840,6 +4841,20 @@ class PuppetClass(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_variables'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
+
+
+class PackageGroup(Entity, EntityReadMixin, EntitySearchMixin):
+    """A representation of a Package Group entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(unique=True),
+            'description': entity_fields.StringField(),
+            'repository': entity_fields.OneToOneField(Repository),
+            'uuid': entity_fields.StringField(),
+        }
+        self._meta = {'api_path': 'katello/api/v2/package_groups'}
+        super(PackageGroup, self).__init__(server_config, **kwargs)
 
 
 class Package(Entity, EntityReadMixin, EntitySearchMixin):

@@ -142,6 +142,7 @@ class InitTestCase(TestCase):
                 entities.Permission,
                 entities.Ping,
                 entities.Package,
+                entities.PackageGroup,
                 entities.Product,
                 entities.PuppetClass,
                 entities.PuppetModule,
@@ -2665,6 +2666,24 @@ class PackageTestCase(TestCase):
         package = entities.Package(cfg, repository=repo, **package_kwargs)
         package_kwargs['repository'] = repo_kwargs
         self.assertDictEqual(package_kwargs, json.loads(package.to_json()))
+
+
+class PackageGroupTestCase(TestCase):
+    """Class with entity Package Group tests"""
+    def test_to_json(self):
+        """Check json serialisation on nested entities"""
+        pkg_group_kwargs = {
+            'description': None,
+            'id': 3,
+            'name': 'birds',
+            'uuid': 'a12c62a5-b452-4dfb-987c-86c8b287460a'
+        }
+
+        cfg = config.ServerConfig(
+            url='https://foo.bar', verify=False,
+            auth=('foo', 'bar'))
+        pkg_group = entities.PackageGroup(cfg, **pkg_group_kwargs)
+        self.assertDictEqual(pkg_group_kwargs, json.loads(pkg_group.to_json()))
 
 
 class HandleResponseTestCase(TestCase):
