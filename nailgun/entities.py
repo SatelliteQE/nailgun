@@ -3062,7 +3062,8 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
             'puppetclass': entity_fields.OneToManyField(PuppetClass),
             'puppet_proxy': entity_fields.OneToOneField(SmartProxy),
             'realm': entity_fields.OneToOneField(Realm),
-            'root_pass': entity_fields.StringField(length=(8, 30)),
+            'root_pass': entity_fields.StringField(
+                length=(8, 30), str_type='alpha'),
             'subnet': entity_fields.OneToOneField(Subnet),
             'uuid': entity_fields.StringField(),
         }
