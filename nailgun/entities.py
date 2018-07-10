@@ -4484,6 +4484,15 @@ class OverrideValue(
             'server_modes': ('sat'),
         }
 
+    def create_payload(self):
+        """Remove ``smart_class_parameter_id`` or ``smart_variable_id``"""
+        payload = super(OverrideValue, self).create_payload()
+        if hasattr(self, 'smart_class_parameter'):
+            del payload['smart_class_parameter_id']
+        if hasattr(self, 'smart_variable'):
+            del payload['smart_variable_id']
+        return payload
+
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
 
