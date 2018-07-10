@@ -691,6 +691,19 @@ class CreatePayloadTestCase(TestCase):
         self.assertNotIn('search_', payload['discovery_rule'])
         self.assertIn('search', payload['discovery_rule'])
 
+    def test_override_value(self):
+        """Create a :class:`nailgun.entities.OverrideValue`."""
+        payload = entities.OverrideValue(
+            self.cfg,
+            smart_class_parameter=1,
+        ).create_payload()
+        self.assertNotIn('smart_class_parameter_id', payload)
+        payload = entities.OverrideValue(
+            self.cfg,
+            smart_variable=1,
+        ).create_payload()
+        self.assertNotIn('smart_variable_id', payload)
+
 
 class CreateMissingTestCase(TestCase):
     """Tests for extensions of ``create_missing``."""
