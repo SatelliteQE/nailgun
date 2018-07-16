@@ -5122,9 +5122,6 @@ class Repository(
             ),
             'full_path': entity_fields.StringField(),
             'gpg_key': entity_fields.OneToOneField(GPGKey),
-            'ignorable_content': entity_fields.ListField(
-                choices=('rpm', 'drpm', 'srpm', 'distribution', 'erratum'),
-            ),
             'label': entity_fields.StringField(),
             'last_sync': entity_fields.OneToOneField(ForemanTask),
             'mirror_on_sync': entity_fields.BooleanField(),
