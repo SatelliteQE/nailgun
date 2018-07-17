@@ -718,7 +718,7 @@ class EntityReadMixin(object):
     def read_raw(self, params=None):
         """Get information about the current entity.
 
-        Make an HTTP PUT call to ``self.path('self')``. Return the response.
+        Make an HTTP GET call to ``self.path('self')``. Return the response.
 
         :return: A ``requests.response`` object.
 
