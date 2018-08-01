@@ -255,6 +255,8 @@ class ActivationKey(
 
         add_subscriptions
             /activation_keys/<id>/add_subscriptions
+        copy
+            /activation_keys/<id>/copy
         content_override
             /activation_keys/<id>/content_override
         product_content
@@ -272,6 +274,7 @@ class ActivationKey(
         if which in (
                 'add_subscriptions',
                 'content_override',
+                'copy',
                 'host_collections',
                 'product_content',
                 'releases',
@@ -315,6 +318,25 @@ class ActivationKey(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('add_subscriptions'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def copy(self, synchronous=True, **kwargs):
+        """Copy provided activation key.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        if 'data' in kwargs and 'id' not in kwargs['data']:
+            kwargs['data']['id'] = self.id  # pylint:disable=no-member
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('copy'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
     def remove_subscriptions(self, synchronous=True, **kwargs):
