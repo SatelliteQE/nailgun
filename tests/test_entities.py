@@ -303,6 +303,7 @@ class PathTestCase(TestCase):
                 (entities.AbstractDockerContainer, 'power'),
                 (entities.ActivationKey, 'add_subscriptions'),
                 (entities.ActivationKey, 'content_override'),
+                (entities.ActivationKey, 'copy'),
                 (entities.ActivationKey, 'host_collections'),
                 (entities.ActivationKey, 'releases'),
                 (entities.ActivationKey, 'remove_subscriptions'),
