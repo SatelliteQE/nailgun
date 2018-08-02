@@ -4636,7 +4636,7 @@ class Permission(Entity, EntityReadMixin, EntitySearchMixin):
         super(Permission, self).__init__(server_config, **kwargs)
 
 
-class Ping(Entity, EntitySearchMixin):
+class Ping(Entity, EntityReadMixin):
     """A representation of a Ping entity."""
 
     def __init__(self, server_config=None, **kwargs):
