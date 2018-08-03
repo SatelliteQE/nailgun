@@ -1915,10 +1915,36 @@ class ContentViewFilterRule(
             for field_name in entity.get_fields().keys()
             if field_name not in attrs
         ])
-        if 'errata_id' in attrs:
-            ignore.discard('errata')  # pylint:disable=no-member
         return super(ContentViewFilterRule, self).read(
             entity, attrs, ignore, params)
+
+    def create_payload(self):
+        """Reset ``errata_id`` from DB ID to ``errata_id``."""
+        payload = super(ContentViewFilterRule, self).create_payload()
+        if 'errata_id' in payload:
+            if not hasattr(self.errata, 'errata_id'):
+                self.errata = self.errata.read()
+            payload['errata_id'] = self.errata.errata_id
+        return payload
+
+    def update_payload(self, fields=None):
+        """Reset ``errata_id`` from DB ID to ``errata_id``."""
+        payload = super(ContentViewFilterRule, self).update_payload(fields)
+        if 'errata_id' in payload:
+            if not hasattr(self.errata, 'errata_id'):
+                self.errata = self.errata.read()
+            payload['errata_id'] = self.errata.errata_id
+        return payload
+
+    def search_payload(self, fields=None, query=None):
+        """Reset ``errata_id`` from DB ID to ``errata_id``."""
+        payload = super(ContentViewFilterRule, self).search_payload(
+            fields, query)
+        if 'errata_id' in payload:
+            if not hasattr(self.errata, 'errata_id'):
+                self.errata = self.errata.read()
+            payload['errata_id'] = self.errata.errata_id
+        return payload
 
 
 class AbstractContentViewFilter(
@@ -2407,6 +2433,7 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
             'content_view_version': entity_fields.OneToOneField(
                 ContentViewVersion
             ),
+            'errata_id': entity_fields.StringField(),
             'cves': entity_fields.DictField(),
             'description': entity_fields.StringField(),
             'environment': entity_fields.OneToOneField(LifecycleEnvironment),
