@@ -1876,6 +1876,7 @@ class ContentViewFilterRule(
             'types': entity_fields.ListField(),
             'version': entity_fields.StringField(),
             'uuid': entity_fields.StringField(),
+            'architecture': entity_fields.StringField(),
         }
         super(ContentViewFilterRule, self).__init__(server_config, **kwargs)
         self._meta = {
