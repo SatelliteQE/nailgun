@@ -20,11 +20,11 @@ notifications:
 before_deploy: "echo 'Starting deploy to PyPI...'"
 deploy:
   provider: pypi
-  user: katelloqa
+  user: satqeauto
   password: $PYPI_PASSWORD
   distributions: "sdist bdist_wheel"
   on:
-    condition: $TRAVIS_PYTHON_VERSION == "2.7"
+    condition: $TRAVIS_PYTHON_VERSION == "3.6"
     tags: true
     branch: master
 after_deploy: "echo 'Deployment finished!'"
