@@ -59,7 +59,7 @@ git commit -m "Release version ${NEW_VERSION}" \
     -m "$(git shortlog ${OLD_VERSION}.. | sed 's/^./    &/')"
 
 # Tag with the new version
-git tag "${NEW_VERSION}"
+git tag --annotate --message "Nailgun ${NEW_VERSION}" "${NEW_VERSION}"
 
 fmt <<EOF
 
