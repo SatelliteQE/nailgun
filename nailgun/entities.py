@@ -5450,7 +5450,6 @@ class RepositorySet(
         EntitySearchMixin):
     """ A representation of a Repository Set entity"""
     def __init__(self, server_config=None, **kwargs):
-        _check_for_value('product', kwargs)
         self._fields = {
             'contentUrl': entity_fields.URLField(required=True),
             'gpgUrl': entity_fields.URLField(required=True),
@@ -5460,6 +5459,10 @@ class RepositorySet(
                 str_type='alpha',
                 length=(6, 12),
                 unique=True
+            ),
+            'organization': entity_fields.OneToOneField(
+                Organization,
+                required=True,
             ),
             'product': entity_fields.OneToOneField(Product, required=True),
             'repositories': entity_fields.OneToManyField(Repository),
@@ -5472,8 +5475,7 @@ class RepositorySet(
         }
         super(RepositorySet, self).__init__(server_config, **kwargs)
         self._meta = {
-            # pylint:disable=no-member
-            'api_path': '{0}/repository_sets'.format(self.product.path()),
+            'api_path': 'katello/api/v2/repository_sets',
         }
 
     def available_repositories(self, synchronous=True, **kwargs):
@@ -5535,11 +5537,11 @@ class RepositorySet(
         The format of the returned path depends on the value of ``which``:
 
         available_repositories
-            /products/<product_id>/repository_sets/<id>/available_repositories
+            /repository_sets/<id>/available_repositories
         enable
-            /products/<product_id>/repository_sets/<id>/enable
+            /repository_sets/<id>/enable
         disable
-            /products/<product_id>/repository_sets/<id>/disable
+            /repository_sets/<id>/disable
 
         ``super`` is called otherwise.
 
@@ -5579,20 +5581,7 @@ class RepositorySet(
             )
         if ignore is None:
             ignore = set()
-        ignore.add('product')
         return super(RepositorySet, self).read(entity, attrs, ignore, params)
-
-    def search_normalize(self, results):
-        """Provide a value for `product` field.
-
-        Method ``search`` will create entities from search results. Search
-        results do not contain `product` field, which is required for
-        ``RepositorySet`` entity initialization.
-
-        """
-        for result in results:
-            result['product_id'] = self.product.id  # pylint:disable=no-member
-        return super(RepositorySet, self).search_normalize(results)
 
 
 class RHCIDeployment(
