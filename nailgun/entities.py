@@ -1113,6 +1113,22 @@ class DockerComputeResource(AbstractComputeResource):  # pylint:disable=R0901
             entity, attrs, ignore, params)
 
 
+class KatelloStatus(Entity, EntityReadMixin):
+    """A representation of a Status entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'version': entity_fields.StringField(),
+            'timeUTC': entity_fields.DateTimeField(),
+        }
+        self._meta = {
+            'api_path': 'katello/api/v2/status',
+            'server_modes': ('sat'),
+            'read_type': 'base',
+        }
+        super(KatelloStatus, self).__init__(server_config, **kwargs)
+
+
 class LibvirtComputeResource(AbstractComputeResource):  # pylint:disable=R0901
     """A representation of a Libvirt Compute Resource entity."""
 
@@ -2666,6 +2682,23 @@ class Filter(
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {u'filter': super(Filter, self).update_payload(fields)}
+
+
+class ForemanStatus(Entity, EntityReadMixin):
+    """A representation of the Foreman Status entity."""
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'result': entity_fields.StringField(),
+            'status': entity_fields.IntegerField(),
+            'version': entity_fields.StringField(),
+            'api_version': entity_fields.IntegerField(),
+        }
+        self._meta = {
+            'api_path': 'api/v2/status',
+            'server_modes': ('sat'),
+            'read_type': 'base',
+        }
+        super(ForemanStatus, self).__init__(server_config, **kwargs)
 
 
 class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
