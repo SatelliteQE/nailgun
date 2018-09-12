@@ -25,8 +25,7 @@ from datetime import datetime
 from sys import version_info
 import hashlib
 import os.path
-
-from fauxfactory import gen_alphanumeric
+from fauxfactory import gen_alphanumeric, gen_choice
 from packaging.version import Version
 
 from nailgun import client, entity_fields, signals
@@ -6397,7 +6396,8 @@ class SyncPlan(
             'description': entity_fields.StringField(),
             'enabled': entity_fields.BooleanField(required=True),
             'interval': entity_fields.StringField(
-                choices=('hourly', 'daily', 'weekly'),
+                choices=('hourly', 'daily', 'weekly', 'custom cron'),
+                default=gen_choice(('hourly', 'daily', 'weekly')),
                 required=True,
             ),
             'name': entity_fields.StringField(
@@ -6405,6 +6405,9 @@ class SyncPlan(
                 str_type='alpha',
                 length=(6, 12),
                 unique=True
+            ),
+            'cron_expression': entity_fields.StringField(
+                str_type='alpha'
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
