@@ -42,7 +42,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 exclude_patterns = ['_build']
 nitpicky = True
-autodoc_default_flags = ['members']
+autodoc_default_options = {'members': None}
 
 # Format-Specific Options -----------------------------------------------------
 
