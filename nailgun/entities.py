@@ -4969,7 +4969,7 @@ class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
         super(PuppetModule, self).__init__(server_config, **kwargs)
 
 
-class Policies(Entity, EntityReadMixin,):
+class CompliancePolicies(Entity, EntityReadMixin):
     """A representation of a Policy entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -4982,13 +4982,13 @@ class Policies(Entity, EntityReadMixin,):
                 unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
-            'period': entity_fields.StringField(
-                choices=('Weekly', 'Monthly', 'Custom'),
-                required=True,
-            )
+            'hosts': entity_fields.ListField()
         }
-        self._meta = {'api_path': 'api/v2/compliance/policies', 'server_modes': ('sat')}
-        super(Policies, self).__init__(server_config, **kwargs)
+        self._meta = {
+            'api_path': 'api/v2/compliance/policies',
+            'server_modes': ('sat')
+        }
+        super(CompliancePolicies, self).__init__(server_config, **kwargs)
 
 
 class Realm(
