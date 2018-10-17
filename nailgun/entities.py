@@ -6915,3 +6915,95 @@ class User(
         """
         self.update_json(fields)
         return self.read()
+
+
+class VirtWhoConfig(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
+    """A representation of a VirtWho Config entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'blacklist': entity_fields.StringField(),
+            'debug': entity_fields.BooleanField(),
+            'filtering_mode': entity_fields.IntegerField(
+                choices=[0, 1, 2], default=0, required=True),
+            'hypervisor_id': entity_fields.StringField(
+                choices=['hostname', 'uuid', 'hwuuid'],
+                default='hostname', required=True),
+            'hypervisor_password': entity_fields.StringField(),
+            'hypervisor_server': entity_fields.StringField(required=True),
+            'hypervisor_type': entity_fields.StringField(
+                choices=['esx', 'rhevm', 'hyperv', 'xen', 'libvirt'],
+                default='libvirt', required=True),
+            'hypervisor_username': entity_fields.StringField(required=True),
+            'interval': entity_fields.IntegerField(
+                choices=[60, 120, 240, 480, 720], default=120, required=True),
+            'name': entity_fields.StringField(required=True),
+            'no_proxy': entity_fields.StringField(),
+            'organization_id': entity_fields.IntegerField(required=True),
+            'proxy': entity_fields.StringField(),
+            'satellite_url': entity_fields.StringField(required=True),
+            'whitelist': entity_fields.StringField(),
+            'organization': entity_fields.OneToOneField(Organization)
+        }
+        self._meta = {
+            'api_path': 'foreman_virt_who_configure/api/v2/configs',
+            'server_modes': ('sat', 'sam'),
+        }
+        super(VirtWhoConfig, self).__init__(server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        deploy_script
+            /foreman_virt_who_configure/api/v2/configs/:id/deploy_script
+
+        ``super`` is called otherwise.
+
+        """
+        if which and which in ('deploy_script'):
+            return '{0}/{1}'.format(
+                super(VirtWhoConfig, self).path(which='self'), which)
+        return super(VirtWhoConfig, self).path(which)
+
+    def create_payload(self):
+        """
+        Wraps config in extra dict
+        :return:
+        """
+        return {'foreman_virt_who_configure_config':
+                super(VirtWhoConfig, self).create_payload()}
+
+    def deploy_script(self, synchronous=True, **kwargs):
+        """Helper for Config's deploy_script method.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('deploy_script'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """
+        Override :meth:`nailgun.entity_mixins.EntityReadMixin.read` to ignore
+        the ``hypervisor_password``
+        """
+        if not ignore:
+            ignore = set()
+        ignore.add('hypervisor_password')
+        return super(VirtWhoConfig, self).read(entity, attrs, ignore, params)
