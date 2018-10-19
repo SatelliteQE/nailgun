@@ -1733,7 +1733,7 @@ class ContentUpload(
 
         try:
             offset = 0
-            content_chunk_size = 4 * 1024 * 1024
+            content_chunk_size = 2 * 1024 * 1024
 
             with open(filepath, 'rb') as contentfile:
                 chunk = contentfile.read(content_chunk_size)
