@@ -4982,7 +4982,7 @@ class CompliancePolicies(Entity, EntityReadMixin):
                 unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
-            'hosts': entity_fields.ListField()
+            'hosts': entity_fields.OneToManyField(Host)
         }
         self._meta = {
             'api_path': 'api/v2/compliance/policies',
