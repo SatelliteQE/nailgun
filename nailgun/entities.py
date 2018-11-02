@@ -1775,6 +1775,7 @@ class ContentViewVersion(
             'major': entity_fields.IntegerField(),
             'minor': entity_fields.IntegerField(),
             'package_count': entity_fields.IntegerField(),
+            "module_stream_count": entity_fields.IntegerField(),
             'puppet_module': entity_fields.OneToManyField(PuppetModule),
             'version': entity_fields.StringField(),
             'repositories': entity_fields.OneToManyField(Repository),
@@ -2443,6 +2444,7 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
             'hosts_available_count': entity_fields.IntegerField(),
             'issued': entity_fields.DateField(),
             'packages': entity_fields.DictField(),
+            'module_streams': entity_fields.ListField(),
             'reboot_suggested': entity_fields.BooleanField(),
             'repository': entity_fields.OneToOneField(Repository),
             'severity': entity_fields.StringField(),
@@ -4943,6 +4945,25 @@ class Package(Entity, EntityReadMixin, EntitySearchMixin):
         super(Package, self).__init__(server_config, **kwargs)
 
 
+class ModuleStream(Entity, EntityReadMixin, EntitySearchMixin):
+    """A representation of a Module Stream entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'uuid': entity_fields.StringField(),
+            'name': entity_fields.StringField(),
+            'description': entity_fields.StringField(),
+            'context': entity_fields.StringField(),
+            'arch': entity_fields.StringField(),
+            'stream': entity_fields.StringField(),
+            'summary': entity_fields.StringField(),
+            'version': entity_fields.StringField(),
+            'module_spec': entity_fields.StringField(),
+        }
+        self._meta = {'api_path': 'katello/api/v2/module_stream'}
+        super(ModuleStream, self).__init__(server_config, **kwargs)
+
+
 class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of a Puppet Module entity."""
 
@@ -5235,6 +5256,8 @@ class Repository(
             /repositories/<id>/errata
         packages
             /repositories/<id>/packages
+        module_streams
+            /repositories/<id>/module_streams
         puppet_modules
             /repositories/<id>/puppet_modules
         remove_content
@@ -5252,6 +5275,7 @@ class Repository(
         if which in (
                 'errata',
                 'packages',
+                'module_streams',
                 'puppet_modules',
                 'remove_content',
                 'sync',
@@ -5443,6 +5467,23 @@ class Repository(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('packages'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def module_streams(self, synchronous=True, **kwargs):
+        """List module_streams associated with repository
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('module_streams'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 

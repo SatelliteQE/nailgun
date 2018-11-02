@@ -690,7 +690,21 @@ class CreatePayloadTestCase(TestCase):
             "cves": [],
             "hosts_available_count": 0,
             "hosts_applicable_count": 0,
-            "packages": ["stork-0.12-2.noarch"]
+            "packages": ["stork-0.12-2.noarch"],
+            "module_streams": [
+                {
+                    "name": "duck",
+                    "stream": "0",
+                    "version": "201809302113907",
+                    "context": "deadbeef",
+                    "arch": "noarch",
+                    "id": 1,
+                    "packages": [
+                        "duck-0.8-1.noarch"
+                    ]
+                }
+            ]
+
         }
 
         with mock.patch.object(entities.Errata, 'read_json') as read_json:
@@ -1584,7 +1598,21 @@ class SearchPayloadTestCase(TestCase):
             "cves": [],
             "hosts_available_count": 0,
             "hosts_applicable_count": 0,
-            "packages": ["stork-0.12-2.noarch"]
+            "packages": ["stork-0.12-2.noarch"],
+            "module_streams": [
+                {
+                    "name": "duck",
+                    "stream": "0",
+                    "version": "201809302113907",
+                    "context": "deadbeef",
+                    "arch": "noarch",
+                    "id": 1,
+                    "packages": [
+                        "duck-0.8-1.noarch"
+                    ]
+                }
+            ]
+
         }
 
         with mock.patch.object(entities.Errata, 'read_json') as read_json:
@@ -1681,7 +1709,21 @@ class UpdatePayloadTestCase(TestCase):
             "cves": [],
             "hosts_available_count": 0,
             "hosts_applicable_count": 0,
-            "packages": ["stork-0.12-2.noarch"]
+            "packages": ["stork-0.12-2.noarch"],
+            "module_streams": [
+                {
+                    "name": "duck",
+                    "stream": "0",
+                    "version": "201809302113907",
+                    "context": "deadbeef",
+                    "arch": "noarch",
+                    "id": 1,
+                    "packages": [
+                        "duck-0.8-1.noarch"
+                    ]
+                }
+            ]
+
         }
 
         with mock.patch.object(entities.Errata, 'read_json') as read_json:
@@ -1867,6 +1909,7 @@ class GenericTestCase(TestCase):
             (entities.RecurringLogic(**generic).cancel, 'post'),
             (entities.Repository(**generic).errata, 'get'),
             (entities.Repository(**generic).packages, 'get'),
+            (entities.Repository(**generic).module_streams, 'get'),
             (entities.Repository(**generic).puppet_modules, 'get'),
             (entities.Repository(**generic).remove_content, 'put'),
             (entities.Repository(**generic).sync, 'post'),
@@ -2816,6 +2859,31 @@ class PackageGroupTestCase(TestCase):
             auth=('foo', 'bar'))
         pkg_group = entities.PackageGroup(cfg, **pkg_group_kwargs)
         self.assertDictEqual(pkg_group_kwargs, json.loads(pkg_group.to_json()))
+
+
+class ModuleStreamTestCase(TestCase):
+    """Class with entity Module Stream tests"""
+    def test_to_json(self):
+        """Check json serialisation on nested entities"""
+        module_stream_kwargs = {
+            "id": 3,
+            "name": "walrus",
+            "uuid": "3b65bae5-8b4a-4984-a06e-b2ef9dfeb584",
+            "version": "20180707144203",
+            "context": "c0ffee42",
+            "stream": "0.71",
+            "arch": "x86_64",
+            "description": "A module for the walrus 0.71 package",
+            "summary": "Walrus 0.71 module",
+            "module_spec": "walrus:0.71:20180707144203:c0ffee42:x86_64"
+        }
+
+        cfg = config.ServerConfig(
+            url='https://foo.bar', verify=False,
+            auth=('foo', 'bar'))
+        module_stream_group = entities.ModuleStream(cfg, **module_stream_kwargs)
+        self.assertDictEqual(module_stream_kwargs,
+                             json.loads(module_stream_group.to_json()))
 
 
 class HandleResponseTestCase(TestCase):
