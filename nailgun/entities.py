@@ -1618,6 +1618,41 @@ class DockerRegistryContainer(AbstractDockerContainer):
         super(DockerRegistryContainer, self).__init__(server_config, **kwargs)
 
 
+class ContentCredential(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
+    """A representation of a Content Credential entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'content': entity_fields.StringField(required=True),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+                unique=True
+            ),
+            'organization': entity_fields.OneToOneField(
+                Organization,
+                required=True,
+            ),
+            'content_type': entity_fields.StringField(
+                choices=('cert', 'gpg_key'),
+                default='gpg_key',
+                required=True,
+            ),
+        }
+        self._meta = {
+            'api_path': 'katello/api/v2/content_credentials',
+            'server_modes': ('sat'),
+        }
+        super(ContentCredential, self).__init__(server_config, **kwargs)
+
+
 class ContentUpload(
         Entity,
         EntityCreateMixin,
@@ -2645,33 +2680,10 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
         return _handle_response(response, self._server_config, synchronous)
 
 
-class GPGKey(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+class GPGKey(ContentCredential):
     """A representation of a GPG Key entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        self._fields = {
-            'content': entity_fields.StringField(required=True),
-            'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
-            ),
-            'organization': entity_fields.OneToOneField(
-                Organization,
-                required=True,
-            ),
-        }
-        self._meta = {
-            'api_path': 'katello/api/v2/gpg_keys',
-            'server_modes': ('sat'),
-        }
         super(GPGKey, self).__init__(server_config, **kwargs)
 
 
@@ -4688,7 +4700,7 @@ class Product(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'description': entity_fields.StringField(),
-            'gpg_key': entity_fields.OneToOneField(GPGKey),
+            'gpg_key': entity_fields.OneToOneField(ContentCredential),
             'label': entity_fields.StringField(),
             'name': entity_fields.StringField(
                 required=True,
@@ -5188,7 +5200,7 @@ class Repository(
                 default='immediate',
             ),
             'full_path': entity_fields.StringField(),
-            'gpg_key': entity_fields.OneToOneField(GPGKey),
+            'gpg_key': entity_fields.OneToOneField(ContentCredential),
             'label': entity_fields.StringField(),
             'last_sync': entity_fields.OneToOneField(ForemanTask),
             'mirror_on_sync': entity_fields.BooleanField(),
