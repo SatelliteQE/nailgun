@@ -37,6 +37,7 @@ from nailgun.entity_mixins import (
     EntitySearchMixin,
     EntityUpdateMixin,
     _poll_task,
+    _get_entity_ids,
     to_json_serializable as to_json
 )
 
@@ -472,6 +473,7 @@ class Architecture(
 
 class Audit(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of Audit entity."""
+
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'action': entity_fields.StringField(),
@@ -1132,6 +1134,7 @@ class OVirtComputeResource(AbstractComputeResource):
     # pylint: disable=too-many-ancestors
     """A representation for compute resources with Ovirt provider
     """
+
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'password': entity_fields.StringField(),
@@ -1157,6 +1160,7 @@ class VMWareComputeResource(AbstractComputeResource):
     # pylint: disable=too-many-ancestors
     """A representation for compute resources with Vmware provider
     """
+
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'datacenter': entity_fields.StringField(),
@@ -1325,6 +1329,121 @@ class ConfigTemplate(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('clone'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
+
+
+class TemplateInput(
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin
+):
+    """A representation of a Template Input entity."""
+    def __init__(self, server_config=None, **kwargs):
+        _check_for_value('template', kwargs)
+        self._fields = {
+            'advanced': entity_fields.BooleanField(),
+            'description': entity_fields.StringField(),
+            'fact_name': entity_fields.StringField(),
+            'input_type': entity_fields.StringField(),
+            'name': entity_fields.StringField(),
+            'options': entity_fields.StringField(),
+            'puppet_class_name': entity_fields.StringField(),
+            'puppet_parameter_name': entity_fields.StringField(),
+            'required': entity_fields.BooleanField(),
+            # There is no Template base class yet
+            'template': entity_fields.OneToOneField(
+                JobTemplate, required=True),
+            'variable_name': entity_fields.StringField(),
+        }
+        super(TemplateInput, self).__init__(server_config, **kwargs)
+        self._meta = {
+            'api_path': '/api/v2/templates/{0}/template_inputs'
+            .format(self.template.id),
+            'server_modes': ('sat')
+        }
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Create a JobTemplate object before calling read()
+        ignore 'advanced'
+        """
+        if entity is None:
+            entity = TemplateInput(self._server_config, template=self.template)
+        if ignore is None:
+            ignore = set()
+        ignore.add('advanced')
+        return super(TemplateInput, self).read(entity=entity, attrs=attrs,
+                                               ignore=ignore, params=params)
+
+
+class JobTemplate(
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin
+):
+    """A representation of a Job Template entity."""
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'audit_comment': entity_fields.StringField(),
+            'description_format': entity_fields.StringField(),
+            'effective_user': entity_fields.DictField(),
+            'job_category': entity_fields.StringField(),
+            'location': entity_fields.OneToManyField(Location),
+            'locked': entity_fields.BooleanField(),
+            'name': entity_fields.StringField(),
+            'organization': entity_fields.OneToManyField(Organization),
+            'provider_type': entity_fields.StringField(),
+            'snippet': entity_fields.BooleanField(),
+            'template': entity_fields.StringField(),
+            'template_inputs': entity_fields.OneToManyField(TemplateInput),
+        }
+        self._meta = {
+            'api_path': 'api/v2/job_templates',
+            'server_modes': ('sat')}
+        super(JobTemplate, self).__init__(server_config, **kwargs)
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict."""
+
+        payload = super(JobTemplate, self).create_payload()
+        effective_user = payload.pop(u'effective_user', None)
+        if effective_user:
+            payload[u'ssh'] = {u'effective_user': effective_user}
+
+        return {u'job_template': payload}
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        payload = super(JobTemplate, self).update_payload(fields)
+        effective_user = payload.pop(u'effective_user', None)
+        if effective_user:
+            payload[u'ssh'] = {u'effective_user': effective_user}
+        return {u'job_template': payload}
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Ignore the template inputs when initially reading the job template.
+            Look up each TemplateInput entity separately
+            and afterwords add them to the JobTemplate entity."""
+        if attrs is None:
+            attrs = self.read_json(params=params)
+        if ignore is None:
+            ignore = set()
+        ignore.add('template_inputs')
+        entity = super(JobTemplate, self).read(entity=entity, attrs=attrs,
+                                               ignore=ignore, params=params)
+        referenced_entities = [
+            TemplateInput(entity._server_config, id=entity_id,
+                          template=JobTemplate(entity._server_config,
+                                               id=entity.id))
+            for entity_id
+            in _get_entity_ids('template_inputs', attrs)
+        ]
+        setattr(entity, 'template_inputs', referenced_entities)
+        return entity
 
 
 class ProvisioningTemplate(
@@ -4749,11 +4868,15 @@ class Product(
         ignore.add('sync_plan')
         result = super(Product, self).read(entity, attrs, ignore, params)
         if 'sync_plan' in attrs:
-            result.sync_plan = SyncPlan(
-                server_config=self._server_config,
-                id=attrs.get('sync_plan_id'),
-                organization=result.organization,
-            )
+            sync_plan_id = attrs.get('sync_plan_id')
+            if sync_plan_id is None:
+                result.sync_plan = None
+            else:
+                result.sync_plan = SyncPlan(
+                    server_config=self._server_config,
+                    id=sync_plan_id,
+                    organization=result.organization,
+                )
         return result
 
     def sync(self, synchronous=True, **kwargs):
@@ -4966,6 +5089,28 @@ class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
         }
         self._meta = {'api_path': 'katello/api/v2/puppet_modules'}
         super(PuppetModule, self).__init__(server_config, **kwargs)
+
+
+class CompliancePolicies(Entity, EntityReadMixin):
+    """A representation of a Policy entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'location': entity_fields.OneToManyField(Location),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(4, 30),
+                unique=True
+            ),
+            'organization': entity_fields.OneToManyField(Organization),
+            'hosts': entity_fields.OneToManyField(Host)
+        }
+        self._meta = {
+            'api_path': 'api/v2/compliance/policies',
+            'server_modes': ('sat')
+        }
+        super(CompliancePolicies, self).__init__(server_config, **kwargs)
 
 
 class Realm(
@@ -5451,6 +5596,7 @@ class RepositorySet(
         EntityReadMixin,
         EntitySearchMixin):
     """ A representation of a Repository Set entity"""
+
     def __init__(self, server_config=None, **kwargs):
         _check_for_value('product', kwargs)
         self._fields = {
@@ -6746,6 +6892,7 @@ class TemplateKind(Entity, EntityReadMixin, EntitySearchMixin):
     Unusually, the ``/api/v2/template_kinds/:id`` path is totally unsupported.
 
     """
+
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(unique=True),
