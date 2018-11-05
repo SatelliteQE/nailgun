@@ -1655,6 +1655,7 @@ class UpdatePayloadTestCase(TestCase):
             (entities.Registry, {'registry': {}}),
             (entities.User, {'user': {}}),
             (entities.UserGroup, {'usergroup': {}}),
+            (entities.VirtWhoConfig, {'foreman_virt_who_configure_config':{}}),
         ]
         for entity, payload in entities_payloads:
             with self.subTest((entity, payload)):
