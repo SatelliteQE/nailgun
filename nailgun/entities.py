@@ -37,6 +37,7 @@ from nailgun.entity_mixins import (
     EntitySearchMixin,
     EntityUpdateMixin,
     _poll_task,
+    _get_entity_ids,
     to_json_serializable as to_json
 )
 
@@ -1328,6 +1329,121 @@ class ConfigTemplate(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('clone'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
+
+
+class TemplateInput(
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin
+):
+    """A representation of a Template Input entity."""
+    def __init__(self, server_config=None, **kwargs):
+        _check_for_value('template', kwargs)
+        self._fields = {
+            'advanced': entity_fields.BooleanField(),
+            'description': entity_fields.StringField(),
+            'fact_name': entity_fields.StringField(),
+            'input_type': entity_fields.StringField(),
+            'name': entity_fields.StringField(),
+            'options': entity_fields.StringField(),
+            'puppet_class_name': entity_fields.StringField(),
+            'puppet_parameter_name': entity_fields.StringField(),
+            'required': entity_fields.BooleanField(),
+            # There is no Template base class yet
+            'template': entity_fields.OneToOneField(
+                JobTemplate, required=True),
+            'variable_name': entity_fields.StringField(),
+        }
+        super(TemplateInput, self).__init__(server_config, **kwargs)
+        self._meta = {
+            'api_path': '/api/v2/templates/{0}/template_inputs'
+            .format(self.template.id),
+            'server_modes': ('sat')
+        }
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Create a JobTemplate object before calling read()
+        ignore 'advanced'
+        """
+        if entity is None:
+            entity = TemplateInput(self._server_config, template=self.template)
+        if ignore is None:
+            ignore = set()
+        ignore.add('advanced')
+        return super(TemplateInput, self).read(entity=entity, attrs=attrs,
+                                               ignore=ignore, params=params)
+
+
+class JobTemplate(
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin
+):
+    """A representation of a Job Template entity."""
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'audit_comment': entity_fields.StringField(),
+            'description_format': entity_fields.StringField(),
+            'effective_user': entity_fields.DictField(),
+            'job_category': entity_fields.StringField(),
+            'location': entity_fields.OneToManyField(Location),
+            'locked': entity_fields.BooleanField(),
+            'name': entity_fields.StringField(),
+            'organization': entity_fields.OneToManyField(Organization),
+            'provider_type': entity_fields.StringField(),
+            'snippet': entity_fields.BooleanField(),
+            'template': entity_fields.StringField(),
+            'template_inputs': entity_fields.OneToManyField(TemplateInput),
+        }
+        self._meta = {
+            'api_path': 'api/v2/job_templates',
+            'server_modes': ('sat')}
+        super(JobTemplate, self).__init__(server_config, **kwargs)
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict."""
+
+        payload = super(JobTemplate, self).create_payload()
+        effective_user = payload.pop(u'effective_user', None)
+        if effective_user:
+            payload[u'ssh'] = {u'effective_user': effective_user}
+
+        return {u'job_template': payload}
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        payload = super(JobTemplate, self).update_payload(fields)
+        effective_user = payload.pop(u'effective_user', None)
+        if effective_user:
+            payload[u'ssh'] = {u'effective_user': effective_user}
+        return {u'job_template': payload}
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Ignore the template inputs when initially reading the job template.
+            Look up each TemplateInput entity separately
+            and afterwords add them to the JobTemplate entity."""
+        if attrs is None:
+            attrs = self.read_json(params=params)
+        if ignore is None:
+            ignore = set()
+        ignore.add('template_inputs')
+        entity = super(JobTemplate, self).read(entity=entity, attrs=attrs,
+                                               ignore=ignore, params=params)
+        referenced_entities = [
+            TemplateInput(entity._server_config, id=entity_id,
+                          template=JobTemplate(entity._server_config,
+                                               id=entity.id))
+            for entity_id
+            in _get_entity_ids('template_inputs', attrs)
+        ]
+        setattr(entity, 'template_inputs', referenced_entities)
+        return entity
 
 
 class ProvisioningTemplate(
