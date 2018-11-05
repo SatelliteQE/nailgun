@@ -472,6 +472,7 @@ class Architecture(
 
 class Audit(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of Audit entity."""
+
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'action': entity_fields.StringField(),
@@ -1132,6 +1133,7 @@ class OVirtComputeResource(AbstractComputeResource):
     # pylint: disable=too-many-ancestors
     """A representation for compute resources with Ovirt provider
     """
+
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'password': entity_fields.StringField(),
@@ -1157,6 +1159,7 @@ class VMWareComputeResource(AbstractComputeResource):
     # pylint: disable=too-many-ancestors
     """A representation for compute resources with Vmware provider
     """
+
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'datacenter': entity_fields.StringField(),
@@ -4972,6 +4975,28 @@ class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
         super(PuppetModule, self).__init__(server_config, **kwargs)
 
 
+class CompliancePolicies(Entity, EntityReadMixin):
+    """A representation of a Policy entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'location': entity_fields.OneToManyField(Location),
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(4, 30),
+                unique=True
+            ),
+            'organization': entity_fields.OneToManyField(Organization),
+            'hosts': entity_fields.OneToManyField(Host)
+        }
+        self._meta = {
+            'api_path': 'api/v2/compliance/policies',
+            'server_modes': ('sat')
+        }
+        super(CompliancePolicies, self).__init__(server_config, **kwargs)
+
+
 class Realm(
         Entity,
         EntityCreateMixin,
@@ -5455,6 +5480,7 @@ class RepositorySet(
         EntityReadMixin,
         EntitySearchMixin):
     """ A representation of a Repository Set entity"""
+
     def __init__(self, server_config=None, **kwargs):
         _check_for_value('product', kwargs)
         self._fields = {
@@ -6750,6 +6776,7 @@ class TemplateKind(Entity, EntityReadMixin, EntitySearchMixin):
     Unusually, the ``/api/v2/template_kinds/:id`` path is totally unsupported.
 
     """
+
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(unique=True),
