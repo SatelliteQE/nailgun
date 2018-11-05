@@ -4749,11 +4749,15 @@ class Product(
         ignore.add('sync_plan')
         result = super(Product, self).read(entity, attrs, ignore, params)
         if 'sync_plan' in attrs:
-            result.sync_plan = SyncPlan(
-                server_config=self._server_config,
-                id=attrs.get('sync_plan_id'),
-                organization=result.organization,
-            )
+            sync_plan_id = attrs.get('sync_plan_id')
+            if sync_plan_id is None:
+                result.sync_plan = None
+            else:
+                result.sync_plan = SyncPlan(
+                    server_config=self._server_config,
+                    id=sync_plan_id,
+                    organization=result.organization,
+                )
         return result
 
     def sync(self, synchronous=True, **kwargs):
