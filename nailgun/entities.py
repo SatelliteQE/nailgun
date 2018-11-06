@@ -7092,7 +7092,6 @@ class VirtWhoConfig(
                 choices=[60, 120, 240, 480, 720], default=120, required=True),
             'name': entity_fields.StringField(required=True),
             'no_proxy': entity_fields.StringField(),
-            'organization_id': entity_fields.IntegerField(required=True),
             'proxy': entity_fields.StringField(),
             'satellite_url': entity_fields.StringField(required=True),
             'whitelist': entity_fields.StringField(),
