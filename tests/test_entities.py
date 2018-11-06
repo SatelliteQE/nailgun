@@ -169,6 +169,7 @@ class InitTestCase(TestCase):
                 entities.TemplateKind,
                 entities.User,
                 entities.UserGroup,
+                entities.VirtWhoConfig,
                 entities.VMWareComputeResource,
             )
         ]
@@ -281,6 +282,8 @@ class PathTestCase(TestCase):
                 (entities.Setting, '/settings'),
                 (entities.SmartProxy, '/smart_proxies'),
                 (entities.Subscription, '/subscriptions'),
+                (entities.VirtWhoConfig,
+                 '/foreman_virt_who_configure/api/v2/configs')
         ):
             with self.subTest((entity, path)):
                 self.assertIn(path, entity(self.cfg).path())
@@ -348,6 +351,7 @@ class PathTestCase(TestCase):
                 (entities.Repository, 'sync'),
                 (entities.Repository, 'upload_content'),
                 (entities.RHCIDeployment, 'deploy'),
+                (entities.VirtWhoConfig, 'deploy_script')
         ):
             with self.subTest((entity, which)):
                 path = entity(self.cfg, id=self.id_).path(which=which)
@@ -403,6 +407,7 @@ class PathTestCase(TestCase):
                 (entities.Repository, 'upload_content'),
                 (entities.RHCIDeployment, 'deploy'),
                 (entities.SmartProxy, 'refresh'),
+                (entities.VirtWhoConfig, 'deploy_script')
         ):
             with self.subTest((entity, which)):
                 with self.assertRaises(NoSuchPathError):
@@ -579,6 +584,7 @@ class CreateTestCase(TestCase):
             entities.Registry(self.cfg),
             entities.SmartProxy(self.cfg),
             entities.UserGroup(self.cfg),
+            entities.VirtWhoConfig(self.cfg)
         )
         for entity in entities_:
             with self.subTest(entity):
@@ -641,6 +647,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.Subnet,
                 entities.User,
                 entities.UserGroup,
+                entities.VirtWhoConfig
             )
         ]
         entities_.extend([
@@ -1236,6 +1243,7 @@ class ReadTestCase(TestCase):
                 (entities.Subscription, {'organization'}),
                 (entities.Repository, {'organization', 'upstream_password'}),
                 (entities.User, {'password'}),
+                (entities.VirtWhoConfig, {'hypervisor_password'}),
                 (entities.VMWareComputeResource, {'password'}),
         ):
             with self.subTest(entity):
@@ -1647,6 +1655,7 @@ class UpdatePayloadTestCase(TestCase):
             (entities.Registry, {'registry': {}}),
             (entities.User, {'user': {}}),
             (entities.UserGroup, {'usergroup': {}}),
+            (entities.VirtWhoConfig, {'foreman_virt_who_configure_config': {}}),
         ]
         for entity, payload in entities_payloads:
             with self.subTest((entity, payload)):
@@ -1904,7 +1913,8 @@ class GenericTestCase(TestCase):
             (entities.SyncPlan(**sync_plan).add_products, 'put'),
             (entities.SyncPlan(**sync_plan).remove_products, 'put'),
             (entities.Template(**generic).imports, 'post'),
-            (entities.Template(**generic).exports, 'post')
+            (entities.Template(**generic).exports, 'post'),
+            (entities.VirtWhoConfig(**generic).deploy_script, 'get')
         )
 
     def test_generic(self):
@@ -3290,3 +3300,50 @@ class JsonSerializableTestCase(TestCase):
             entities.ForemanTask, **kwargs)
         kwargs['started_at'] = '2016-11-20 01:02:03'
         self.assertDictEqual(kwargs, entities.to_json_serializable(task))
+
+
+class VirtWhoConfigTestCase(TestCase):
+    """
+    Tests for :class:`nailgun.entities.VirtWhoConfig`
+    """
+    @classmethod
+    def setUpClass(cls):
+        cls.server = 'sat.example.com'
+        cls.cfg = config.ServerConfig('http://{}/'.format(cls.server))
+
+    def test_create_deploy(self):
+        org = entities.Organization(self.cfg, name='vhorg', id=2)
+
+        vh = entities.VirtWhoConfig(server_config=self.cfg, name='vhtest1',
+                                    organization=org,
+                                    filtering_mode=1,
+                                    whitelist='*.example.com',
+                                    proxy='proxy.example.com',
+                                    no_proxy='*.proxy-bypass.example.com',
+                                    satellite_url=self.server,
+                                    hypervisor_type='libvirt',
+                                    hypervisor_username='root',
+                                    hypervisor_server='libvirt.example.com',
+                                    hypervisor_id='hostname',
+                                    hypervisor_password='',
+                                    debug=True)
+
+        expected_dict = {
+            'foreman_virt_who_configure_config':
+                {
+                    'debug': True,
+                    'filtering_mode': 1,
+                    'hypervisor_id': 'hostname',
+                    'hypervisor_server': 'libvirt.example.com',
+                    'hypervisor_type': 'libvirt',
+                    'hypervisor_username': 'root',
+                    'hypervisor_password': '',
+                    'name': 'vhtest1',
+                    'no_proxy': '*.proxy-bypass.example.com',
+                    'organization_id': 2,
+                    'proxy': 'proxy.example.com',
+                    'satellite_url': self.server,
+                    'whitelist': '*.example.com'
+                }
+        }
+        self.assertDictEqual(expected_dict, vh.create_payload())
