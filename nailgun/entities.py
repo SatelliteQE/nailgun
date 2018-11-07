@@ -7127,13 +7127,18 @@ class VirtWhoConfig(
         return {'foreman_virt_who_configure_config':
                 super(VirtWhoConfig, self).create_payload()}
 
-    def update_payload(self):
+    def update_payload(self, fields=None):
         """
         Wraps config in extra dict
         :return:
         """
-        return {'foreman_virt_who_configure_config':
-                super(VirtWhoConfig, self).create_payload()}
+        payload = {}
+        payload_vhc = super(VirtWhoConfig, self).update_payload(fields)
+        vhc_id = payload_vhc.pop('id', None)
+        if vhc_id:
+            payload['id'] = vhc_id
+        payload['foreman_virt_who_configure_config'] = payload_vhc
+        return payload
 
     def deploy_script(self, synchronous=True, **kwargs):
         """Helper for Config's deploy_script method.
