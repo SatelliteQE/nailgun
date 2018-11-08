@@ -1890,14 +1890,12 @@ class ContentViewVersion(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'content_view': entity_fields.OneToOneField(ContentView),
-            'environments': entity_fields.OneToManyField(LifecycleEnvironment),
+            'environment': entity_fields.OneToManyField(Environment),
             'major': entity_fields.IntegerField(),
             'minor': entity_fields.IntegerField(),
             'package_count': entity_fields.IntegerField(),
             'puppet_module': entity_fields.OneToManyField(PuppetModule),
             'version': entity_fields.StringField(),
-            'repositories': entity_fields.OneToManyField(Repository),
-            'description': entity_fields.StringField(),
         }
         self._meta = {
             'api_path': 'katello/api/v2/content_view_versions',
