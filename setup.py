@@ -22,7 +22,6 @@ with open('VERSION') as handle:
 REQUIREMENTS = [
     'inflection',
     'packaging',
-    'pyxdg',
     'requests>=2.7',
     'blinker_herald'
 ]
