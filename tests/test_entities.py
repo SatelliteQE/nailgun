@@ -3363,9 +3363,8 @@ class VirtWhoConfigTestCase(TestCase):
         cls.server = 'sat.example.com'
         cls.cfg = config.ServerConfig('http://{}/'.format(cls.server))
 
-    def test_create_deploy(self):
+    def test_create(self):
         org = entities.Organization(self.cfg, name='vhorg', id=2)
-
         vh = entities.VirtWhoConfig(server_config=self.cfg, name='vhtest1',
                                     organization=org,
                                     filtering_mode=1,
@@ -3399,3 +3398,32 @@ class VirtWhoConfigTestCase(TestCase):
                 }
         }
         self.assertDictEqual(expected_dict, vh.create_payload())
+
+    def test_update(self):
+        org = entities.Organization(self.cfg, name='vhorg', id=2)
+        vh = entities.VirtWhoConfig(server_config=self.cfg, name='vhtest1',
+                                    organization=org,
+                                    filtering_mode=1,
+                                    whitelist='*.example.com',
+                                    proxy='proxy.example.com',
+                                    no_proxy='*.proxy-bypass.example.com',
+                                    satellite_url=self.server,
+                                    hypervisor_type='libvirt',
+                                    hypervisor_username='root',
+                                    hypervisor_server='libvirt.example.com',
+                                    hypervisor_id='hostname',
+                                    hypervisor_password='',
+                                    debug=True)
+
+        vh.name = 'newname'
+        vh.hypervisor_username = 'admin'
+
+        expected_dict = {
+            'foreman_virt_who_configure_config':
+                {
+                    'hypervisor_username': 'admin',
+                    'name': 'newname',
+                }
+        }
+        self.assertDictEqual(expected_dict,
+                             vh.update_payload(['name', 'hypervisor_username']))
