@@ -1942,15 +1942,6 @@ class ContentViewVersion(
 
         """
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        if 'data' not in kwargs:
-            # data is required
-            kwargs['data'] = dict()
-        if 'content_view_version_environments' not in kwargs['data'] or \
-           'content_view_version_id' not in \
-           kwargs['data']['content_view_version_environments']:
-                # You dont have to pass in content_view_version_id
-                kwargs['data']['content_view_version_environments'] = \
-                    [dict(content_view_version_id=self.id)]
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('incremental_update'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)

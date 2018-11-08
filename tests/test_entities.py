@@ -1837,137 +1837,84 @@ class GenericTestCase(TestCase):
         generic = {'server_config': cfg, 'id': 1}
         repo_set = {'server_config': cfg, 'id': 1, 'product': 2}
         sync_plan = {'server_config': cfg, 'id': 1, 'organization': 2}
-        kwargs = {'kwarg': gen_integer()}
-        cvv_iupdate_kwargs = {'data': {'add_content': {},
-                                       'content_view_version_environments':
-                                       [{'content_view_version_id': 1}]}}
         cls.methods_requests = (
-            (entities.AbstractDockerContainer(**generic).logs, 'get', kwargs),
-            (entities.AbstractDockerContainer(**generic).power, 'put', kwargs),
-            (
-                entities.ActivationKey(**generic).add_host_collection,
-                'post',
-                kwargs
-            ),
-            (
-                entities.ActivationKey(**generic).add_subscriptions,
-                'put',
-                kwargs
-            ),
-            (
-                entities.ActivationKey(**generic).remove_subscriptions,
-                'put',
-                kwargs
-            ),
-            (entities.ActivationKey(**generic).subscriptions, 'get', kwargs),
-            (
-                entities.ActivationKey(**generic).content_override,
-                'put',
-                kwargs
-            ),
-            (entities.ActivationKey(**generic).product_content, 'get', kwargs),
-            (
-                entities.ActivationKey(**generic).remove_host_collection,
-                'put',
-                kwargs
-            ),
+            (entities.AbstractDockerContainer(**generic).logs, 'get'),
+            (entities.AbstractDockerContainer(**generic).power, 'put'),
+            (entities.ActivationKey(**generic).add_host_collection, 'post'),
+            (entities.ActivationKey(**generic).add_subscriptions, 'put'),
+            (entities.ActivationKey(**generic).remove_subscriptions, 'put'),
+            (entities.ActivationKey(**generic).subscriptions, 'get'),
+            (entities.ActivationKey(**generic).content_override, 'put'),
+            (entities.ActivationKey(**generic).product_content, 'get'),
+            (entities.ActivationKey(**generic).remove_host_collection, 'put'),
             (
                 entities.Capsule(**generic).content_add_lifecycle_environment,
-                'post',
-                kwargs
+                'post'
             ),
-            (entities.Capsule(**generic).content_get_sync, 'get', kwargs),
+            (entities.Capsule(**generic).content_get_sync, 'get'),
             (
                 entities.Capsule(**generic).content_lifecycle_environments,
-                'get',
-                kwargs
+                'get'
             ),
-            (entities.Capsule(**generic).content_sync, 'post', kwargs),
-            (
-                entities.ConfigTemplate(**generic).build_pxe_default,
-                'post',
-                kwargs
-            ),
-            (entities.ConfigTemplate(**generic).clone, 'post', kwargs),
-            (entities.Role(**generic).clone, 'post', kwargs),
+            (entities.Capsule(**generic).content_sync, 'post'),
+            (entities.ConfigTemplate(**generic).build_pxe_default, 'post'),
+            (entities.ConfigTemplate(**generic).clone, 'post'),
+            (entities.Role(**generic).clone, 'post'),
             (
                 entities.ProvisioningTemplate(**generic).build_pxe_default,
-                'post',
-                kwargs
+                'post'
             ),
-            (entities.ProvisioningTemplate(**generic).clone, 'post', kwargs),
-            (
-                entities.ContentView(**generic).available_puppet_modules,
-                'get',
-                kwargs
-            ),
-            (entities.ContentView(**generic).copy, 'post', kwargs),
-            (entities.ContentView(**generic).publish, 'post', kwargs),
+            (entities.ProvisioningTemplate(**generic).clone, 'post'),
+            (entities.ContentView(**generic).available_puppet_modules, 'get'),
+            (entities.ContentView(**generic).copy, 'post'),
+            (entities.ContentView(**generic).publish, 'post'),
             (
                 entities.ContentViewVersion(**generic).incremental_update,
-                'post',
-                cvv_iupdate_kwargs
+                'post'
             ),
-            (entities.ContentViewVersion(**generic).promote, 'post', kwargs),
-            (entities.DiscoveredHost(cfg).facts, 'post', kwargs),
-            (entities.Environment(**generic).list_scparams, 'get', kwargs),
-            (entities.Errata(**generic).compare, 'get', kwargs),
-            (entities.ForemanTask(cfg).summary, 'get', kwargs),
+            (entities.ContentViewVersion(**generic).promote, 'post'),
+            (entities.DiscoveredHost(cfg).facts, 'post'),
+            (entities.Environment(**generic).list_scparams, 'get'),
+            (entities.Errata(**generic).compare, 'get'),
+            (entities.ForemanTask(cfg).summary, 'get'),
             (
                 entities.Organization(**generic).download_debug_certificate,
-                'get',
-                kwargs
+                'get'
             ),
-            (entities.Host(**generic).add_puppetclass, 'post', kwargs),
-            (entities.Host(**generic).enc, 'get', kwargs),
-            (entities.Host(**generic).errata, 'get', kwargs),
-            (entities.Host(**generic).errata_apply, 'put', kwargs),
-            (entities.Host(**generic).get_facts, 'get', kwargs),
-            (entities.Host(**generic).install_content, 'put', kwargs),
-            (entities.Host(**generic).list_scparams, 'get', kwargs),
-            (entities.Host(**generic).list_smart_variables, 'get', kwargs),
-            (entities.Host(**generic).power, 'put', kwargs),
-            (entities.Host(**generic).upload_facts, 'post', kwargs),
-            (entities.HostGroup(**generic).add_puppetclass, 'post', kwargs),
-            (entities.HostGroup(**generic).clone, 'post', kwargs),
-            (entities.HostGroup(**generic).list_scparams, 'get', kwargs),
-            (
-                entities.HostGroup(**generic).list_smart_variables,
-                'get',
-                kwargs
-            ),
-            (entities.Product(**generic).sync, 'post', kwargs),
-            (entities.PuppetClass(**generic).list_scparams, 'get', kwargs),
-            (
-                entities.PuppetClass(**generic).list_smart_variables,
-                'get',
-                kwargs
-            ),
-            (entities.RHCIDeployment(**generic).deploy, 'put', kwargs),
-            (entities.RecurringLogic(**generic).cancel, 'post', kwargs),
-            (entities.Repository(**generic).errata, 'get', kwargs),
-            (entities.Repository(**generic).packages, 'get', kwargs),
-            (entities.Repository(**generic).puppet_modules, 'get', kwargs),
-            (entities.Repository(**generic).remove_content, 'put', kwargs),
-            (entities.Repository(**generic).sync, 'post', kwargs),
-            (
-                entities.RepositorySet(**repo_set).available_repositories,
-                'get',
-                kwargs
-            ),
-            (entities.RepositorySet(**repo_set).disable, 'put', kwargs),
-            (entities.RepositorySet(**repo_set).enable, 'put', kwargs),
-            (
-                entities.SmartProxy(**generic).import_puppetclasses,
-                'post',
-                kwargs
-            ),
-            (entities.SmartProxy(**generic).refresh, 'put', kwargs),
-            (entities.SyncPlan(**sync_plan).add_products, 'put', kwargs),
-            (entities.SyncPlan(**sync_plan).remove_products, 'put', kwargs),
-            (entities.Template(**generic).imports, 'post', kwargs),
-            (entities.Template(**generic).exports, 'post', kwargs),
-            (entities.VirtWhoConfig(**generic).deploy_script, 'get', kwargs)
+            (entities.Host(**generic).add_puppetclass, 'post'),
+            (entities.Host(**generic).enc, 'get'),
+            (entities.Host(**generic).errata, 'get'),
+            (entities.Host(**generic).errata_apply, 'put'),
+            (entities.Host(**generic).get_facts, 'get'),
+            (entities.Host(**generic).install_content, 'put'),
+            (entities.Host(**generic).list_scparams, 'get'),
+            (entities.Host(**generic).list_smart_variables, 'get'),
+            (entities.Host(**generic).power, 'put'),
+            (entities.Host(**generic).upload_facts, 'post'),
+            (entities.HostGroup(**generic).add_puppetclass, 'post'),
+            (entities.HostGroup(**generic).clone, 'post'),
+            (entities.HostGroup(**generic).list_scparams, 'get'),
+            (entities.HostGroup(**generic).list_smart_variables, 'get'),
+            (entities.Product(**generic).sync, 'post'),
+            (entities.PuppetClass(**generic).list_scparams, 'get'),
+            (entities.PuppetClass(**generic).list_smart_variables, 'get'),
+            (entities.RHCIDeployment(**generic).deploy, 'put'),
+            (entities.RecurringLogic(**generic).cancel, 'post'),
+            (entities.Repository(**generic).errata, 'get'),
+            (entities.Repository(**generic).packages, 'get'),
+            (entities.Repository(**generic).puppet_modules, 'get'),
+            (entities.Repository(**generic).remove_content, 'put'),
+            (entities.Repository(**generic).sync, 'post'),
+            (entities.RepositorySet(**repo_set).available_repositories, 'get'),
+            (entities.RepositorySet(**repo_set).disable, 'put'),
+            (entities.RepositorySet(**repo_set).enable, 'put'),
+            (entities.SmartProxy(**generic).import_puppetclasses, 'post'),
+            (entities.SmartProxy(**generic).refresh, 'put'),
+            (entities.SyncPlan(**sync_plan).add_products, 'put'),
+            (entities.SyncPlan(**sync_plan).remove_products, 'put'),
+            (entities.Template(**generic).imports, 'post'),
+            (entities.Template(**generic).exports, 'post'),
+            (entities.VirtWhoConfig(**generic).deploy_script, 'get')
         )
 
     def test_generic(self):
@@ -1982,12 +1929,13 @@ class GenericTestCase(TestCase):
         * The result of `_handle_response(…)` is the return value.
 
         """
-        for method, request, kwargs in self.methods_requests:
+        for method, request in self.methods_requests:
             with self.subTest((method, request)):
                 self.assertEqual(
                     inspect.getargspec(method),
                     (['self', 'synchronous'], None, 'kwargs', (True,))
                 )
+                kwargs = {'kwarg': gen_integer()}
                 with mock.patch.object(entities, '_handle_response') as handlr:
                     with mock.patch.object(client, request) as client_request:
                         response = method(**kwargs)
