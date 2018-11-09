@@ -388,9 +388,10 @@ class Entity(object):
         # `super`, but that's not always the case.
         if not hasattr(self, '_fields'):
             self._fields = {}
-        self._fields.setdefault('id', IntegerField(unique=True))
         if not hasattr(self, '_meta'):
             self._meta = {}
+        if 'read_type' not in self._meta or self._meta['read_type'] != 'base':
+            self._fields.setdefault('id', IntegerField(unique=True))
 
         # Check that a valid set of field values has been passed in.
         if not set(kwargs.keys()).issubset(self._fields.keys()):
@@ -723,8 +724,10 @@ class EntityReadMixin(object):
         :return: A ``requests.response`` object.
 
         """
+        path_type = self._meta.get('read_type', 'self')
+
         return client.get(
-            self.path('self'),
+            self.path(path_type),
             params=params,
             **self._server_config.get_client_kwargs()
         )

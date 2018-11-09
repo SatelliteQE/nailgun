@@ -121,6 +121,7 @@ class InitTestCase(TestCase):
                 entities.Errata,
                 entities.ErratumContentViewFilter,
                 entities.Filter,
+                entities.ForemanStatus,
                 entities.ForemanTask,
                 entities.GPGKey,
                 entities.Host,
@@ -128,6 +129,7 @@ class InitTestCase(TestCase):
                 entities.HostCollectionErrata,
                 entities.HostCollectionPackage,
                 entities.HostGroup,
+                entities.KatelloStatus,
                 entities.LibvirtComputeResource,
                 entities.LifecycleEnvironment,
                 entities.JobTemplate,
@@ -1993,6 +1995,29 @@ class AbstractDockerContainerTestCase(TestCase):
         for attr in ['registry', 'repository_name', 'tag']:
             self.assertIn(attr, docker_registry)
             self.assertNotIn(attr, abstract_docker)
+
+
+class ForemanStatusTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.ForemanStatus`."""
+
+    def setUp(self):
+        """Set a server configuration at ``self.cfg``."""
+        self.cfg = config.ServerConfig('http://example.com')
+        self.entity = entities.ForemanStatus(self.cfg)
+        self.read_json_pacther = mock.patch.object(self.entity, 'read_json')
+
+    def test_read(self):
+        """Ensure ``read`` and ``read_json`` are called once."""
+        read_json = self.read_json_pacther.start()
+        read_json.return_value = {
+            'result': 'ok',
+            'status': 200,
+            'version': '1.19.0',
+            'api_version': 2,
+        }
+        self.entity.read()
+        self.assertEqual(read_json.call_count, 1)
+        self.read_json_pacther.stop()
 
 
 class ForemanTaskTestCase(TestCase):
