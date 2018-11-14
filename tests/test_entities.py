@@ -156,6 +156,7 @@ class InitTestCase(TestCase):
                 entities.Registry,
                 entities.Report,
                 entities.Repository,
+                entities.RepositorySet,
                 entities.Role,
                 entities.RoleLDAPGroups,
                 entities.Setting,
@@ -240,7 +241,6 @@ class InitTestCase(TestCase):
                 entities.OperatingSystemParameter,
                 entities.OSDefaultTemplate,
                 entities.Parameter,
-                entities.RepositorySet,
                 entities.SyncPlan,
                 entities.TemplateInput,
         ):
@@ -448,7 +448,7 @@ class PathTestCase(TestCase):
 
         """
         self.assertIn(
-            'products/1/repository_sets/2',
+            '/repository_sets/2',
             entities.RepositorySet(self.cfg, id=2, product=1).path()
         )
         for which in ('available_repositories', 'disable', 'enable'):
@@ -457,7 +457,7 @@ class PathTestCase(TestCase):
                 id=2,
                 product=1,
             ).path(which)
-            self.assertIn('products/1/repository_sets/2/' + which, path)
+            self.assertIn('/repository_sets/2/' + which, path)
             self.assertRegex(path, '{}$'.format(which))
 
     def test_sync_plan(self):
@@ -2817,15 +2817,6 @@ class RepositorySetTestCase(TestCase):
             id=gen_integer(min_value=1),
             product=self.product,
         )
-
-    def test_search_normalize(self):
-        """Call :meth:`nailgun.entities.RepositorySet.search_normalize`"""
-        with mock.patch.object(EntitySearchMixin, 'search_normalize') as s_n:
-            self.reposet.search_normalize([{}, {}])
-        self.assertEqual(s_n.call_count, 1)
-        for result in s_n.call_args[0][0]:
-            # pylint:disable=no-member
-            self.assertEqual(result['product_id'], self.product.id)
 
 
 class SmartProxyTestCase(TestCase):
