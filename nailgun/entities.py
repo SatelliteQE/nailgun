@@ -1772,7 +1772,7 @@ class ContentViewVersion(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'content_view': entity_fields.OneToOneField(ContentView),
-            'environment': entity_fields.OneToManyField(Environment),
+            'environment': entity_fields.OneToManyField(LifecycleEnvironment),
             'file_count': entity_fields.IntegerField(),
             'major': entity_fields.IntegerField(),
             'minor': entity_fields.IntegerField(),
