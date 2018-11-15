@@ -48,4 +48,10 @@ package-clean:
 publish: package
 	twine upload dist/*
 
+test-fam:
+	git clone https://github.com/theforeman/foreman-ansible-modules.git
+	pip install -r foreman-ansible-modules/requirements-dev.txt
+	$(MAKE) -C foreman-ansible-modules test/test_playbooks/server_vars.yml
+	$(MAKE) -C foreman-ansible-modules test
+
 .PHONY: help docs-html docs-clean lint test test-coverage package package-clean publish

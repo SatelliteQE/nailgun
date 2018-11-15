@@ -5,6 +5,10 @@ python:
     - 3.6
 install:
     - pip install -r requirements.txt -r requirements-dev.txt --no-cache-dir
+addons:
+  apt:
+    packages:
+    - rpm
 script:
     - make lint
     - make test-coverage
@@ -12,6 +16,7 @@ script:
     - make docs-clean
     - make package
     - make package-clean
+    - make test-fam
 after_success:
     coveralls
 notifications:
