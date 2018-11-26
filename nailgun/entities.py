@@ -6397,6 +6397,7 @@ class Subnet(
             'network': entity_fields.IPAddressField(required=True),
             'to': entity_fields.IPAddressField(),
             'vlanid': entity_fields.StringField(),
+            'mtu': entity_fields.IntegerField(min_val=68, max_val=4294967295),
         }
         if _get_version(server_config) >= Version('6.1'):
             self._fields.update({
