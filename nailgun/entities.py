@@ -2939,6 +2939,19 @@ class HostCollection(
             payload['system_uuids'] = payload.pop('system_ids')
         return payload
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
+    def create(self, create_missing=None):
+        """Manually fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1654383
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1654383>`_.
+
+        """
+        return HostCollection(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
+
     def update_payload(self, fields=None):
         """Rename ``system_ids`` to ``system_uuids``."""
         payload = super(HostCollection, self).update_payload(fields)
