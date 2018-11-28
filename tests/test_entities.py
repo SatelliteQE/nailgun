@@ -580,6 +580,7 @@ class CreateTestCase(TestCase):
             entities.DockerComputeResource(self.cfg),
             entities.Domain(self.cfg),
             entities.Host(self.cfg),
+            entities.HostCollection(self.cfg),
             entities.HostGroup(self.cfg),
             entities.Location(self.cfg),
             entities.Media(self.cfg),
