@@ -4062,6 +4062,8 @@ class LifecycleEnvironment(
                 required=True,
             ),
             'prior': entity_fields.OneToOneField(LifecycleEnvironment),
+            'registry_name_pattern': entity_fields.StringField(),
+            'registry_unauthenticated_pull': entity_fields.BooleanField(),
         }
         self._meta = {
             'api_path': 'katello/api/v2/environments',
