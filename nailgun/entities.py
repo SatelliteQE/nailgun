@@ -5763,7 +5763,7 @@ class RepositorySet(
             'api_path': 'katello/api/v2/repository_sets',
         }
 
-    def available_repositories(self, synchronous=True, **kwargs):
+    def available_repositories(self, **kwargs):
         """Lists available repositories for the repository set
 
         :param synchronous: What should happen if the server returns an HTTP
@@ -5775,10 +5775,13 @@ class RepositorySet(
             an HTTP 4XX or 5XX message.
 
         """
+        if 'data' not in kwargs:
+            kwargs['data'] = dict()
+            kwargs['data']['product_id'] = self.product.id
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('available_repositories'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config)
 
     def enable(self, synchronous=True, **kwargs):
         """Enables the RedHat Repository
@@ -5794,6 +5797,9 @@ class RepositorySet(
             an HTTP 4XX or 5XX message.
 
         """
+        if 'data' not in kwargs:
+            kwargs['data'] = dict()
+            kwargs['data']['product_id'] = self.product.id
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('enable'), **kwargs)
@@ -5811,6 +5817,9 @@ class RepositorySet(
             an HTTP 4XX or 5XX message.
 
         """
+        if 'data' not in kwargs:
+            kwargs['data'] = dict()
+            kwargs['data']['product_id'] = self.product.id
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('disable'), **kwargs)
