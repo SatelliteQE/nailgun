@@ -365,8 +365,8 @@ class PathTestCase(TestCase):
                 (entities.ForemanTask, 'bulk_search'),
                 (entities.ForemanTask, 'summary'),
                 (entities.Host, 'bulk/install_content'),
-                (entities.Template, 'import'),
-                (entities.Template, 'export')
+                (entities.Template, 'imports'),
+                (entities.Template, 'exports')
         ):
             with self.subTest((entity, which)):
                 path = entity(self.cfg).path(which)
@@ -549,6 +549,28 @@ class PathTestCase(TestCase):
                     path
                 )
                 self.assertRegex(path, '{}/{}$'.format(*which.split('_', 1)))
+
+    def test_hostsubscription(self):
+        """Test :meth:`nailgun.entities.HostSubscription.path`.
+
+        Assert that the following return appropriate paths:
+
+        * ``HostSubscription(host=…).path('add_subscriptions')``
+        * ``HostSubscription(host=…).path('remove_subscriptions')``
+
+        """
+        sub = entities.HostSubscription(self.cfg, host=gen_integer(1, 100))
+        for which in ('add_subscriptions', 'remove_subscriptions'):
+            with self.subTest(which):
+                path = sub.path(which)
+                self.assertIn(
+                    'hosts/{}/subscriptions/{}'.format(
+                        sub.host.id,  # pylint:disable=no-member
+                        which,
+                    ),
+                    path
+                )
+                self.assertRegex(path, '{}$'.format(which))
 
 
 class CreateTestCase(TestCase):
@@ -1856,6 +1878,7 @@ class GenericTestCase(TestCase):
         generic = {'server_config': cfg, 'id': 1}
         repo_set = {'server_config': cfg, 'id': 1, 'product': 2}
         sync_plan = {'server_config': cfg, 'id': 1, 'organization': 2}
+        hostsubscription = {'server_config': cfg, 'host': 1}
         cls.methods_requests = (
             (entities.AbstractDockerContainer(**generic).logs, 'get'),
             (entities.AbstractDockerContainer(**generic).power, 'put'),
@@ -1914,6 +1937,8 @@ class GenericTestCase(TestCase):
             (entities.HostGroup(**generic).clone, 'post'),
             (entities.HostGroup(**generic).list_scparams, 'get'),
             (entities.HostGroup(**generic).list_smart_variables, 'get'),
+            (entities.HostSubscription(**hostsubscription).add_subscriptions, 'put'),
+            (entities.HostSubscription(**hostsubscription).remove_subscriptions, 'put'),
             (entities.Product(**generic).sync, 'post'),
             (entities.PuppetClass(**generic).list_scparams, 'get'),
             (entities.PuppetClass(**generic).list_smart_variables, 'get'),
