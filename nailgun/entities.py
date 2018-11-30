@@ -3007,6 +3007,62 @@ class HostSubscription(Entity):
             'server_modes': ('sat'),
         }
 
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        add_subscriptions
+            /hosts/<id>/add_subscriptions
+        remove_subscriptions
+            /hosts/<id>/remove_subscriptions
+
+        ``super`` is called otherwise.
+
+        """
+        if which in (
+                'add_subscriptions',
+                'remove_subscriptions'):
+            return '{0}/{1}'.format(
+                super(HostSubscription, self).path(which='base'),
+                which
+            )
+        return super(HostSubscription, self).path(which)
+
+    def add_subscriptions(self, synchronous=True, **kwargs):
+        """Helper for adding subscriptions to host
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('add_subscriptions'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def remove_subscriptions(self, synchronous=True, **kwargs):
+        """Helper for removing subscriptions from host
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('remove_subscriptions'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
 
 class Host(  # pylint:disable=too-many-instance-attributes,R0904
         Entity,
