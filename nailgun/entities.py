@@ -6687,6 +6687,7 @@ class SyncPlan(
             ),
             'product': entity_fields.OneToManyField(Product),
             'sync_date': entity_fields.DateTimeField(required=True),
+            'foreman_tasks_recurring_logic': entity_fields.OneToOneField(RecurringLogic)
         }
         super(SyncPlan, self).__init__(server_config, **kwargs)
         self._meta = {
