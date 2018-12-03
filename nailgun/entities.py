@@ -6485,6 +6485,7 @@ class Subscription(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'activation_key': entity_fields.OneToManyField(ActivationKey),
+            'cp_id': entity_fields.StringField(unique=True),
             'name': entity_fields.StringField(),
             'organization': entity_fields.OneToOneField(Organization),
             'provided_product': entity_fields.OneToManyField(Product),
