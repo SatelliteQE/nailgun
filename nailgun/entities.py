@@ -1941,6 +1941,7 @@ class ContentViewVersion(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'content_view': entity_fields.OneToOneField(ContentView),
+            'description': entity_fields.StringField(),
             'environment': entity_fields.OneToManyField(LifecycleEnvironment),
             'file_count': entity_fields.IntegerField(),
             'major': entity_fields.IntegerField(),
@@ -1948,6 +1949,7 @@ class ContentViewVersion(
             'package_count': entity_fields.IntegerField(),
             "module_stream_count": entity_fields.IntegerField(),
             'puppet_module': entity_fields.OneToManyField(PuppetModule),
+            'repository': entity_fields.OneToManyField(Repository),
             'version': entity_fields.StringField(),
         }
         self._meta = {
