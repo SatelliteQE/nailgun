@@ -1883,7 +1883,6 @@ class GenericTestCase(TestCase):
         """
         cfg = config.ServerConfig('http://example.com')
         generic = {'server_config': cfg, 'id': 1}
-        repo_set = {'server_config': cfg, 'id': 1, 'product': 2}
         sync_plan = {'server_config': cfg, 'id': 1, 'organization': 2}
         cls.methods_requests = (
             (entities.AbstractDockerContainer(**generic).logs, 'get'),
@@ -1954,9 +1953,6 @@ class GenericTestCase(TestCase):
             (entities.Repository(**generic).puppet_modules, 'get'),
             (entities.Repository(**generic).remove_content, 'put'),
             (entities.Repository(**generic).sync, 'post'),
-            (entities.RepositorySet(**repo_set).available_repositories, 'get'),
-            (entities.RepositorySet(**repo_set).disable, 'put'),
-            (entities.RepositorySet(**repo_set).enable, 'put'),
             (entities.SmartProxy(**generic).import_puppetclasses, 'post'),
             (entities.SmartProxy(**generic).refresh, 'put'),
             (entities.SyncPlan(**sync_plan).add_products, 'put'),
@@ -1964,6 +1960,12 @@ class GenericTestCase(TestCase):
             (entities.Template(**generic).imports, 'post'),
             (entities.Template(**generic).exports, 'post'),
             (entities.VirtWhoConfig(**generic).deploy_script, 'get')
+        )
+        repo_set = {'server_config': cfg, 'id': 1, 'product': 2}
+        cls.intelligent_methods_requests = (
+            (entities.RepositorySet(**repo_set).available_repositories, 'get', {'product_id': 2}),
+            (entities.RepositorySet(**repo_set).disable, 'put', {'product_id': 2}),
+            (entities.RepositorySet(**repo_set).enable, 'put', {'product_id': 2}),
         )
 
     def test_generic(self):
@@ -1985,6 +1987,29 @@ class GenericTestCase(TestCase):
                     (['self', 'synchronous'], None, 'kwargs', (True,))
                 )
                 kwargs = {'kwarg': gen_integer()}
+                with mock.patch.object(entities, '_handle_response') as handlr:
+                    with mock.patch.object(client, request) as client_request:
+                        response = method(**kwargs)
+                self.assertEqual(client_request.call_count, 1)
+                self.assertEqual(len(client_request.call_args[0]), 1)
+                self.assertEqual(client_request.call_args[1], kwargs)
+                self.assertEqual(handlr.call_count, 1)
+                self.assertEqual(handlr.return_value, response)
+
+    def test_intelligent(self):
+        """Check that intelligent methods that send additional data are sane.
+
+        Assert that:
+
+        * Each method calls `client.*` once.
+        * Each method passes the right arguments to `client.*`.
+        * Each method calls `entities._handle_response` once.
+        * The result of `_handle_response(…)` is the return value.
+
+        """
+        for method, request, data in self.intelligent_methods_requests:
+            with self.subTest((method, request)):
+                kwargs = {'kwarg': gen_integer(), 'data': data}
                 with mock.patch.object(entities, '_handle_response') as handlr:
                     with mock.patch.object(client, request) as client_request:
                         response = method(**kwargs)
