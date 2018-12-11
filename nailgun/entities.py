@@ -2272,7 +2272,7 @@ class ContentView(
             'component': entity_fields.OneToManyField(ContentViewVersion),
             'composite': entity_fields.BooleanField(),
             'content_host_count': entity_fields.IntegerField(),
-            'content_view_components': entity_fields.OneToManyField(ContentViewComponent),
+            'content_view_component': entity_fields.OneToManyField(ContentViewComponent),
             'description': entity_fields.StringField(),
             'environment': entity_fields.OneToManyField(LifecycleEnvironment),
             'label': entity_fields.StringField(unique=True),
@@ -2304,9 +2304,9 @@ class ContentView(
         For more information, see `Bugzilla #1237257
         <https://bugzilla.redhat.com/show_bug.cgi?id=1237257>`_.
 
-        Add content_view_components to the response if needed, as
+        Add content_view_component to the response if needed, as
         :meth:`nailgun.entity_mixins.EntityReadMixin.read` can't initialize
-        content_view_components.
+        content_view_component.
         """
         if attrs is None:
             attrs = self.read_json()
@@ -2316,10 +2316,10 @@ class ContentView(
 
         if ignore is None:
             ignore = set()
-        ignore.add('content_view_components')
+        ignore.add('content_view_component')
         result = super(ContentView, self).read(entity, attrs, ignore, params)
         if 'content_view_components' in attrs and attrs['content_view_components']:
-            result.content_view_components = [
+            result.content_view_component = [
                 ContentViewComponent(
                     self._server_config,
                     composite_content_view=result.id,
@@ -2345,12 +2345,12 @@ class ContentView(
         results = self.search_normalize(results)
         entities = []
         for result in results:
-            content_view_components = result.get('content_view_components')
+            content_view_components = result.get('content_view_component')
             if content_view_components is not None:
-                del result['content_view_components']
+                del result['content_view_component']
             entity = type(self)(self._server_config, **result)
             if content_view_components:
-                entity.content_view_components = [
+                entity.content_view_component = [
                     ContentViewComponent(
                         self._server_config,
                         composite_content_view=result['id'],

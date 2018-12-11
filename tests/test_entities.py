@@ -2421,7 +2421,7 @@ class ContentViewTestCase(TestCase):
             response = self.cv.read()
         self.assertEqual(handlr.call_count, 1)
         self.assertEqual(type(response), entities.ContentView)
-        self.assertEqual(type(response.content_view_components[0]),
+        self.assertEqual(type(response.content_view_component[0]),
                          entities.ContentViewComponent)
 
     def test_search(self):
@@ -2435,7 +2435,7 @@ class ContentViewTestCase(TestCase):
             response = self.cv.search()
         self.assertEqual(handlr.call_count, 1)
         self.assertEqual(type(response[0]), entities.ContentView)
-        self.assertEqual(type(response[0].content_view_components[0]),
+        self.assertEqual(type(response[0].content_view_component[0]),
                          entities.ContentViewComponent)
 
 
