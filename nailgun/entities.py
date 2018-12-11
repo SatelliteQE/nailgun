@@ -5013,6 +5013,45 @@ class Product(
                 )
         return result
 
+    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entities')
+    def search(self, fields=None, query=None, filters=None):
+        """Search for entities with missing attribute
+
+        :param fields: A set naming which fields should be used when generating
+            a search query. If ``None``, all values on the entity are used. If
+            an empty set, no values are used.
+        :param query: A dict containing a raw search query. This is melded in
+            to the generated search query like so:  ``{generated:
+            query}.update({manual: query})``.
+        :param filters: A dict. Used to filter search results locally.
+        :return: A list of entities, all of type ``type(self)``.
+
+        For more information, see `Bugzilla #1237283
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1237283>`_ and
+        `nailgun#261 <https://github.com/SatelliteQE/nailgun/issues/261>`_.
+        """
+        results = self.search_json(fields, query)['results']
+        results = self.search_normalize(results)
+        entities = []
+        for result in results:
+            sync_plan = result.get('sync_plan')
+            if sync_plan is not None:
+                del result['sync_plan']
+            entity = type(self)(self._server_config, **result)
+            if sync_plan:
+                entity.sync_plan = SyncPlan(
+                    server_config=self._server_config,
+                    id=sync_plan,
+                    organization=Organization(
+                        server_config=self._server_config,
+                        id=result.get('organization')
+                    ),
+                )
+            entities.append(entity)
+        if filters is not None:
+            entities = self.search_filter(entities, filters)
+        return entities
+
     def sync(self, synchronous=True, **kwargs):
         """Synchronize :class:`repositories <Repository>` in this product.
 
