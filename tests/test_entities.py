@@ -120,6 +120,7 @@ class InitTestCase(TestCase):
                 entities.Environment,
                 entities.Errata,
                 entities.ErratumContentViewFilter,
+                entities.File,
                 entities.Filter,
                 entities.ForemanTask,
                 entities.GPGKey,
@@ -2038,6 +2039,30 @@ class AbstractDockerContainerTestCase(TestCase):
             self.assertNotIn(attr, abstract_docker)
 
 
+class FileTestCase(TestCase):
+    """Class with entity File tests"""
+    def test_to_json(self):
+        """Check json serialisation on nested entities"""
+        file_kwargs = {
+            'id': 1,
+            'name': u'test_file.txt',
+            'path': u'test_file.txt',
+            'uuid': u'3a013738-e5b8-43b2-81f5-3732b6e42776',
+            'checksum': (
+                u'16c946e116072838b213f622298b74baa75c52c8fee50a6230b4680e3c1'
+                u'36fb1'
+            ),
+        }
+        cfg = config.ServerConfig(
+            url='https://foo.bar', verify=False,
+            auth=('foo', 'bar'))
+        repo_kwargs = {'id': 3, 'content_type': 'file'}
+        repo = entities.Repository(cfg, **repo_kwargs)
+        file = entities.File(cfg, repository=repo, **file_kwargs)
+        file_kwargs['repository'] = repo_kwargs
+        self.assertDictEqual(file_kwargs, json.loads(file.to_json()))
+
+
 class ForemanTaskTestCase(TestCase):
     """Tests for :class:`nailgun.entities.ForemanTask`."""
 
@@ -2680,6 +2705,27 @@ class RepositoryTestCase(TestCase):
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value, response)
 
+    def test_files(self):
+        """"Test for :meth:`nailgun.entities.Repository.files`
+        Assert that the method is called one with correct arguments
+        """
+        self.assertEqual(
+            inspect.getargspec(self.repo.files),
+            (['self', 'synchronous'], None, 'kwargs', (True,))
+        )
+        kwargs = {
+            'kwarg': gen_integer(),
+            'data': {'name': gen_string('utf8', 5)}
+        }
+        with mock.patch.object(entities, '_handle_response') as handler:
+            with mock.patch.object(client, 'get') as get:
+                response = self.repo.files(**kwargs)
+        self.assertEqual(get.call_count, 1)
+        self.assertEqual(len(get.call_args[0]), 1)
+        self.assertEqual(get.call_args[1], kwargs)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
+
 
 class RepositorySetTestCase(TestCase):
     """Tests for :class:`nailgun.entities.RepositorySet`."""
@@ -2872,7 +2918,7 @@ class PackageTestCase(TestCase):
         cfg = config.ServerConfig(
             url='https://foo.bar', verify=False,
             auth=('foo', 'bar'))
-        repo_kwargs = {'id': 3, 'content_type': 'file'}
+        repo_kwargs = {'id': 3, 'content_type': 'rpm'}
         repo = entities.Repository(cfg, **repo_kwargs)
         package = entities.Package(cfg, repository=repo, **package_kwargs)
         package_kwargs['repository'] = repo_kwargs

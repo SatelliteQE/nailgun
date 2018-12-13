@@ -1773,6 +1773,7 @@ class ContentViewVersion(
         self._fields = {
             'content_view': entity_fields.OneToOneField(ContentView),
             'environment': entity_fields.OneToManyField(Environment),
+            'file_count': entity_fields.IntegerField(),
             'major': entity_fields.IntegerField(),
             'minor': entity_fields.IntegerField(),
             'package_count': entity_fields.IntegerField(),
@@ -2501,6 +2502,21 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
         ignore.add('environment')
         ignore.add('repository')
         return super(Errata, self).read(entity, attrs, ignore, params)
+
+
+class File(Entity, EntityReadMixin, EntitySearchMixin):
+    """A representation of a Package entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(unique=True),
+            'path': entity_fields.StringField(),
+            'uuid': entity_fields.StringField(),
+            'checksum': entity_fields.StringField(),
+            'repository': entity_fields.OneToOneField(Repository),
+        }
+        self._meta = {'api_path': 'katello/api/v2/files'}
+        super(File, self).__init__(server_config, **kwargs)
 
 
 class Filter(
@@ -5326,6 +5342,8 @@ class Repository(
 
         errata
             /repositories/<id>/errata
+        files
+            /repositories/<id>/files
         packages
             /repositories/<id>/packages
         puppet_modules
@@ -5344,6 +5362,7 @@ class Repository(
         """
         if which in (
                 'errata',
+                'files',
                 'packages',
                 'puppet_modules',
                 'remove_content',
@@ -5536,6 +5555,23 @@ class Repository(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('packages'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def files(self, synchronous=True, **kwargs):
+        """List files associated with repository
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('files'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
