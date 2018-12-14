@@ -1526,6 +1526,46 @@ class SearchTestCase(TestCase):
             result = entities.Product(self.cfg, organization=1).search()
             self.assertIsNone(result[0].sync_plan)
 
+    def test_host_with_image(self):
+        """Call :meth:`nailgun.entities.Host.search` for a host with image
+        assigned.
+
+        Ensure that the image entity was correctly fetched.
+
+        """
+        with mock.patch.object(EntitySearchMixin, 'search_json') as search_json:
+            # Image is set
+            search_json.return_value = {
+                'results': [
+                    {'id': 2,
+                     'name': 'host1',
+                     'organization': {
+                         'id': 1,
+                         'name': 'Default Organization'},
+                     'organization_id': 1,
+                     'image_name': 'rhel7_image',
+                     'image_file': '/usr/share/imagefile/xyz7.img',
+                     'image_id': 1}]
+            }
+            result = entities.Host(self.cfg, organization=1).search()
+            self.assertIsNotNone(result[0].image)
+            self.assertEqual(result[0].image.id, 1)
+            # image not set
+            search_json.return_value = {
+                'results': [
+                    {'id': 3,
+                     'name': 'host2',
+                     'organization': {
+                         'id': 1,
+                         'name': 'Default Organization'},
+                     'organization_id': 1,
+                     'image_name': None,
+                     'image_file': '',
+                     'image_id': None}]
+            }
+            result = entities.Host(self.cfg, organization=1).search()
+            self.assertIsNone(result[0].image)
+
 
 class SearchNormalizeTestCase(TestCase):
     """Tests for
