@@ -5679,6 +5679,7 @@ class Repository(
             'docker_upstream_name': entity_fields.StringField(
                 default='busybox'
             ),
+            'docker_tags_whitelist': entity_fields.ListField(),
             'download_policy': entity_fields.StringField(
                 choices=('background', 'immediate', 'on_demand'),
                 default='immediate',
