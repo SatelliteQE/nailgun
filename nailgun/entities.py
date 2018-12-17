@@ -534,6 +534,8 @@ class AuthSourceLDAP(
             'attr_lastname': entity_fields.StringField(),
             'attr_login': entity_fields.StringField(),
             'attr_mail': entity_fields.EmailField(),
+            'location': entity_fields.OneToManyField(Location),
+            'organization': entity_fields.OneToManyField(Organization),
         }
         self._meta = {
             'api_path': 'api/v2/auth_source_ldaps',
