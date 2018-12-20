@@ -183,6 +183,7 @@ class InitTestCase(TestCase):
                 {'email': 'nobody@example.com', 'url': 'http://example.com'},
             ),
             (entities.ContentUpload, {'repository': 1}),
+            (entities.ContentViewComponent, {'composite_content_view': 1}),
             (entities.ContentViewFilterRule, {'content_view_filter': 1}),
             (entities.ContentViewPuppetModule, {'content_view': 1}),
             (entities.HostPackage, {'host': 1}),
@@ -227,6 +228,7 @@ class InitTestCase(TestCase):
 
         """
         for entity in (
+                entities.ContentViewComponent,
                 entities.ContentViewFilterRule,
                 entities.ContentViewPuppetModule,
                 entities.HostPackage,
@@ -1090,6 +1092,7 @@ class ReadTestCase(TestCase):
                     self.cfg,
                     content_view_filter=2,
                 ),
+                entities.ContentViewComponent(self.cfg, composite_content_view=2, content_view=1),
                 entities.ContentViewPuppetModule(self.cfg, content_view=2),
                 entities.Interface(self.cfg, host=2),
                 entities.Image(self.cfg, compute_resource=1),
@@ -1130,6 +1133,7 @@ class ReadTestCase(TestCase):
                 # entities.HostGroup,  # see HostGroupTestCase.test_read
                 # entities.Product,  # See Product.test_read
                 # entities.UserGroup,  # see test_attrs_arg_v2
+                entities.ContentView,
                 entities.Domain,
                 entities.Filter,
                 entities.Host,
@@ -2261,6 +2265,215 @@ class ContentUploadTestCase(TestCase):
         self.assertEqual(import_uploads.call_count, 1)
         self.assertEqual(create.call_count, 1)
         self.assertEqual(import_uploads.return_value, response)
+
+
+class ContentViewTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.ContentView`."""
+    def setUp(self):
+        self.server_config = config.ServerConfig('http://example.com')
+        self.cv = entities.ContentView(
+            self.server_config,
+            id=gen_integer(min_value=1),
+        )
+        self.single_entity = {
+            "auto_publish": True,
+            "composite": True,
+            "components": [],
+            "content_host_count": 0,
+            "content_view_components": [{
+                "composite_content_view": {
+                    "id": 11,
+                    "label": "My_CVC",
+                    "name": "My CVC",
+                },
+                "content_view": {
+                    "id": 10,
+                    "label": "My_CV",
+                    "name": "My CV",
+                },
+                "content_view_version": {
+                    "content_view": {
+                        "id": 10,
+                        "label": "My_CV",
+                        "name": "My CV"
+                    },
+                    "content_view_id": 10,
+                    "environments": [
+                        {
+                            "id": 1,
+                        }
+                    ],
+                    "id": 21,
+                    "name": "My_CV 2.0",
+                    "version": "6.0"
+                },
+                "id": 4,
+                "latest": True,
+
+            }],
+            "description": None,
+            "environments": [{
+                "id": 1,
+                "name": "Library",
+                "label": "Library",
+            }],
+            "id": 5,
+            "label": "my_CV",
+            "last_published": '2018-11-23 11:51:30 UTC',
+            "name": "my CV",
+            "next_version": "3.0",
+            "organization_id": 1,
+            "puppet_modules": [{
+                "name": "katello-katello",
+                "id": 1,
+            }],
+            "repositories": [{
+                "name": "my_tst_repo",
+                "id": 3,
+            }],
+            "versions": [{
+                "id": 4,
+                "version": "2.0",
+                "environment_ids": [1],
+            }],
+        }
+
+    def test_read(self):
+        """Check that helper method is sane.
+        """
+        with mock.patch.object(self.cv, 'read_json', return_value=self.single_entity) as handlr:
+            response = self.cv.read()
+        self.assertEqual(handlr.call_count, 1)
+        self.assertEqual(type(response), entities.ContentView)
+        self.assertEqual(type(response.content_view_component[0]),
+                         entities.ContentViewComponent)
+
+    def test_search(self):
+        """Check that helper method is sane.
+
+        """
+        return_dict = {
+            'results': [self.single_entity],
+        }
+        with mock.patch.object(self.cv, 'search_json', return_value=return_dict) as handlr:
+            response = self.cv.search()
+        self.assertEqual(handlr.call_count, 1)
+        self.assertEqual(type(response[0]), entities.ContentView)
+        self.assertEqual(type(response[0].content_view_component[0]),
+                         entities.ContentViewComponent)
+
+
+class ContentViewComponentTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.ContentViewComponent`."""
+
+    def setUp(self):
+        """Set a server configuration at ``self.cfg``."""
+
+        self.server_config = config.ServerConfig('http://example.com')
+        self.ccv = entities.ContentView(
+            self.server_config,
+            composite=True,
+            id=gen_integer(min_value=1),
+        )
+        self.cv = entities.ContentView(
+            self.server_config,
+            id=gen_integer(min_value=1),
+        )
+        self.cvc = entities.ContentViewComponent(
+            self.server_config,
+            composite_content_view=self.ccv,
+            content_view=self.cv,
+            latest=True,
+            id=gen_integer(min_value=1),
+        )
+        self.common_return_value = {
+            'composite_content_view': {
+                'label': 'mv_ccv',
+                'id': 11,
+            },
+            'content_view': {
+                'label': 'test',
+                'id': 10,
+            },
+            'content_view_version': {
+                'content_view_id': 10,
+                'content_view': {
+                    'label': 'test',
+                    'id': 10,
+                },
+                'repositories': [{
+                    'label': 'my_repo',
+                    'id': 19,
+                }],
+                'environments': [{
+                    'label': 'Library',
+                    'id': 1,
+                }],
+                'id': 21,
+            },
+            'id': 2,
+            'latest': True
+        }
+
+        self.read_json_pacther = mock.patch.object(self.cvc, 'read_json')
+
+    def test_path(self):
+        for which in ['add', 'remove']:
+            path = self.cvc.path(which=which)
+            self.assertIn('{}/content_view_components/{}'.format(
+                self.cvc.composite_content_view.id,
+                which), path)
+            self.assertRegex(path, which + '$')
+
+    def test_add(self):
+        """Check that helper method is sane.
+
+            Assert that:
+
+            * Method has a correct signature.
+            * Method calls `client.*` once.
+            * Method calls `entities._handle_response` once.
+
+
+        """
+        self.assertEqual(
+            inspect.getargspec(self.cvc.add),
+            (['self', 'synchronous'], None, 'kwargs', (True,))
+        )
+        return_dict = {
+            'results': [self.common_return_value]
+        }
+        with mock.patch.object(entities, '_handle_response', return_value=return_dict) as handlr:
+            with mock.patch.object(client, 'put') as client_request:
+                self.cvc.add()
+        self.assertEqual(client_request.call_count, 1)
+        self.assertEqual(len(client_request.call_args[0]), 1)
+        self.assertEqual(handlr.call_count, 1)
+
+    def test_remove(self):
+        """Check that helper method is sane.
+
+            Assert that:
+
+            * Method has a correct signature.
+            * Method calls `client.*` once.
+            * Method calls `entities._handle_response` once.
+
+
+        """
+        self.assertEqual(
+            inspect.getargspec(self.cvc.remove),
+            (['self', 'synchronous'], None, 'kwargs', (True,))
+        )
+        return_dict = {
+            'results': self.common_return_value
+        }
+        with mock.patch.object(entities, '_handle_response', return_value=return_dict) as handlr:
+            with mock.patch.object(client, 'put') as client_request:
+                self.cvc.remove()
+        self.assertEqual(client_request.call_count, 1)
+        self.assertEqual(len(client_request.call_args[0]), 1)
+        self.assertEqual(handlr.call_count, 1)
 
 
 class ProvisioningTemplateTestCase(TestCase):

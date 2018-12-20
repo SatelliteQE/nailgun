@@ -38,6 +38,7 @@ from nailgun.entity_mixins import (
     EntitySearchMixin,
     EntityUpdateMixin,
     _poll_task,
+    _payload,
     to_json_serializable as to_json
 )
 
@@ -2132,9 +2133,11 @@ class ContentView(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'auto_publish': entity_fields.BooleanField(),
             'component': entity_fields.OneToManyField(ContentViewVersion),
             'composite': entity_fields.BooleanField(),
             'content_host_count': entity_fields.IntegerField(),
+            'content_view_component': entity_fields.OneToManyField(ContentViewComponent),
             'description': entity_fields.StringField(),
             'environment': entity_fields.OneToManyField(LifecycleEnvironment),
             'label': entity_fields.StringField(unique=True),
@@ -2166,13 +2169,64 @@ class ContentView(
         For more information, see `Bugzilla #1237257
         <https://bugzilla.redhat.com/show_bug.cgi?id=1237257>`_.
 
+        Add content_view_component to the response if needed, as
+        :meth:`nailgun.entity_mixins.EntityReadMixin.read` can't initialize
+        content_view_component.
         """
+        if attrs is None:
+            attrs = self.read_json()
         if _get_version(self._server_config) < Version('6.1'):
-            if attrs is None:
-                attrs = self.read_json()
             org = _get_org(self._server_config, attrs['organization']['label'])
             attrs['organization'] = org.get_values()
-        return super(ContentView, self).read(entity, attrs, ignore, params)
+
+        if ignore is None:
+            ignore = set()
+        ignore.add('content_view_component')
+        result = super(ContentView, self).read(entity, attrs, ignore, params)
+        if 'content_view_components' in attrs and attrs['content_view_components']:
+            result.content_view_component = [
+                ContentViewComponent(
+                    self._server_config,
+                    composite_content_view=result.id,
+                    id=content_view_component['id'],
+                )
+                for content_view_component in attrs['content_view_components']
+            ]
+        return result
+
+    def search(self, fields=None, query=None, filters=None):
+        """Search for entities.
+
+        :param fields: A set naming which fields should be used when generating
+            a search query. If ``None``, all values on the entity are used. If
+            an empty set, no values are used.
+        :param query: A dict containing a raw search query. This is melded in
+            to the generated search query like so:  ``{generated:
+            query}.update({manual: query})``.
+        :param filters: A dict. Used to filter search results locally.
+        :return: A list of entities, all of type ``type(self)``.
+        """
+        results = self.search_json(fields, query)['results']
+        results = self.search_normalize(results)
+        entities = []
+        for result in results:
+            content_view_components = result.get('content_view_component')
+            if content_view_components is not None:
+                del result['content_view_component']
+            entity = type(self)(self._server_config, **result)
+            if content_view_components:
+                entity.content_view_component = [
+                    ContentViewComponent(
+                        self._server_config,
+                        composite_content_view=result['id'],
+                        id=cvc_id,
+                    )
+                    for cvc_id in content_view_components
+                ]
+            entities.append(entity)
+        if filters is not None:
+            entities = self.search_filter(entities, filters)
+        return entities
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -2282,6 +2336,111 @@ class ContentView(
             '{0}/environments/{1}'.format(self.path(), environment_id),
             **self._server_config.get_client_kwargs()
         )
+        return _handle_response(response, self._server_config, synchronous)
+
+
+class ContentViewComponent(
+        Entity,
+        EntityReadMixin,
+        EntityUpdateMixin):
+    """A representation of a Content View Components entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        _check_for_value('composite_content_view', kwargs)
+        self._fields = {
+            'composite_content_view': entity_fields.OneToOneField(ContentView),
+            'content_view': entity_fields.OneToOneField(ContentView),
+            'content_view_version': entity_fields.OneToOneField(ContentViewVersion),
+            'latest': entity_fields.BooleanField(),
+        }
+        super(ContentViewComponent, self).__init__(server_config, **kwargs)
+        self._meta = {
+            'api_path': '{0}/content_view_components'.format(self.composite_content_view.path()),
+        }
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """
+        Add composite_content_view to the response if needed, as
+        :meth:`nailgun.entity_mixins.EntityReadMixin.read` can't initialize
+        composite_content_view.
+        """
+        if attrs is None:
+            attrs = self.read_json()
+        if ignore is None:
+            ignore = set()
+        if entity is None:
+            entity = type(self)(
+                self._server_config,
+                composite_content_view=self.composite_content_view,
+            )
+
+        ignore.add('composite_content_view')
+        return super(ContentViewComponent, self).read(entity, attrs, ignore, params)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        add
+            /content_view_components/add
+        remove
+            /content_view_components/remove
+
+        Otherwise, call ``super``.
+
+        """
+        if which in (
+                'add',
+                'remove'):
+            return '{0}/{1}'.format(
+                super(ContentViewComponent, self).path(which='base'),
+                which
+            )
+
+        return super(ContentViewComponent, self).path(which)
+
+    def add(self, synchronous=True, **kwargs):
+        """Add provided Content View Component.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        if 'data' not in kwargs:
+            # data is required
+            kwargs['data'] = dict()
+        if 'component_ids' not in kwargs['data']:
+            kwargs['data']['components'] = [_payload(self.get_fields(), self.get_values())]
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('add'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def remove(self, synchronous=True, **kwargs):
+        """remove provided Content View Component.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        if 'data' not in kwargs:
+            # data is required
+            kwargs['data'] = dict()
+        if 'data' in kwargs and 'component_ids' not in kwargs['data']:
+            kwargs['data']['component_ids'] = [self.id]
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('remove'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
