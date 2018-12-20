@@ -134,6 +134,7 @@ class InitTestCase(TestCase):
                 entities.KatelloStatus,
                 entities.LibvirtComputeResource,
                 entities.LifecycleEnvironment,
+                entities.JobInvocation,
                 entities.JobTemplate,
                 entities.Location,
                 entities.Media,
@@ -3865,3 +3866,50 @@ class VirtWhoConfigTestCase(TestCase):
         }
         self.assertDictEqual(expected_dict,
                              vh.update_payload(['name', 'hypervisor_username']))
+
+
+class JobInvocationTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.JobInvocation`."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.cfg = config.ServerConfig('http://example.com')
+
+    def test_required_param(self):
+        """Check required parameters"""
+        data_list = [
+            {'inputs': 'ls', 'search_query': 'foo'},
+            {'feature': 'foo', 'inputs': 'ls'},
+            {'job_template_id': 1, 'search_query': 'foo'},
+            {'feature': 'foo', 'bookmark_id': 1, 'inputs': 'ls'},
+            {'feature': 'foo', 'bookmark_id': 1, 'targeting_type': 'foo'},
+        ]
+        for data in data_list:
+            with self.assertRaises(KeyError):
+                entities.JobInvocation(self.cfg).run(data=data)
+
+    def test_non_sync_run(self):
+        """Run job asynchronously with valid parameters and check that correct
+        post request is sent
+        """
+        with mock.patch.object(client, 'post') as post:
+            entities.JobInvocation(self.cfg).run(synchronous=False, data={
+                'job_template_id': 1,
+                'search_query': 'foo',
+                'inputs': 'ls',
+                'targeting_type': 'foo'
+            })
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(len(post.call_args[0]), 1)
+
+    def test_sync_run(self):
+        """Check that sync run will result in ForemanTask poll"""
+        with mock.patch.object(entities, '_poll_task') as poll_task:
+            with mock.patch.object(client, 'post'):
+                entities.JobInvocation(self.cfg).run(synchronous=True, data={
+                    'job_template_id': 1,
+                    'search_query': 'foo',
+                    'inputs': 'ls',
+                    'targeting_type': 'foo'
+                })
+        self.assertEqual(poll_task.call_count, 1)
