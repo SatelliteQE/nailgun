@@ -3757,6 +3757,23 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
         response = client.get(self.path('errata'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
+    def module_streams(self, synchronous=True, **kwargs):
+        """List module_streams available for the host
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('module_streams'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
     def errata_applicability(self, synchronous=True, **kwargs):
         """Force regenerate errata applicability
 
@@ -3933,6 +3950,8 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
             /api/hosts/:host_id/smart_class_parameters
         smart_variables
             /api/hosts/:host_id/smart_class_variables
+        module_streams
+            /api/hosts/:host_id/module_streams
 
         Otherwise, call ``super``.
 
@@ -3947,6 +3966,7 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
                 'puppetclass_ids',
                 'smart_class_parameters',
                 'smart_variables',
+                'module_streams',
         ):
             return '{0}/{1}'.format(
                 super(Host, self).path(which='self'),
