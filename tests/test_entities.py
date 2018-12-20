@@ -109,6 +109,7 @@ class InitTestCase(TestCase):
                 entities.ConfigTemplate,
                 entities.ProvisioningTemplate,
                 # entities.ContentUpload,  # see below
+                entities.ContentCredential,
                 entities.ContentView,
                 entities.ContentViewVersion,
                 entities.DiscoveredHost,
@@ -1575,6 +1576,7 @@ class UpdateTestCase(TestCase):
         entities_ = (
             entities.AbstractComputeResource(self.cfg),
             entities.Architecture(self.cfg),
+            entities.ContentCredential(self.cfg),
             entities.ComputeProfile(self.cfg),
             entities.ConfigGroup(self.cfg),
             entities.DiscoveryRule(self.cfg),
