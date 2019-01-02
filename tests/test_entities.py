@@ -192,6 +192,7 @@ class InitTestCase(TestCase):
             (entities.ContentViewComponent, {'composite_content_view': 1}),
             (entities.ContentViewFilterRule, {'content_view_filter': 1}),
             (entities.ContentViewPuppetModule, {'content_view': 1}),
+            (entities.ExternalUserGroup, {'usergroup': 1}),
             (entities.HostPackage, {'host': 1}),
             (entities.HostSubscription, {'host': 1}),
             (entities.Interface, {'host': 1}),
@@ -238,6 +239,7 @@ class InitTestCase(TestCase):
                 entities.ContentViewComponent,
                 entities.ContentViewFilterRule,
                 entities.ContentViewPuppetModule,
+                entities.ExternalUserGroup,
                 entities.HostPackage,
                 entities.HostSubscription,
                 entities.Image,
@@ -441,6 +443,28 @@ class PathTestCase(TestCase):
             entities.OSDefaultTemplate(
                 self.cfg, id=2, operatingsystem=1).path()
         )
+
+    def test_externalusergroup(self):
+        """Test :meth:`nailgun.entities.ExternalUserGroup.path`.
+
+        Assert that the following return appropriate paths:
+
+        * ``ExternalUserGroup(id=…,usergroup=…).path()``
+        * ``ExternalUserGroup(id=…,usergroup=…).path('refresh')``
+
+        """
+        self.assertIn(
+            'usergroups/1/external_usergroups/2',
+            entities.ExternalUserGroup(self.cfg, id=2, usergroup=1).path()
+        )
+        for which in ['refresh']:
+            path = entities.ExternalUserGroup(
+                self.cfg,
+                id=2,
+                usergroup=1,
+            ).path(which)
+            self.assertIn('usergroups/1/external_usergroups/2/' + which, path)
+            self.assertRegex(path, '{}$'.format(which))
 
     def test_repository_set(self):
         """Test :meth:`nailgun.entities.RepositorySet.path`.
@@ -683,6 +707,7 @@ class CreatePayloadTestCase(TestCase):
             )
         ]
         entities_.extend([
+            (entities.ExternalUserGroup, {'usergroup': 1}),
             (entities.Image, {'compute_resource': 1}),
             (entities.SyncPlan, {'organization': 1}),
             (entities.ContentViewFilterRule, {'content_view_filter': 1})
@@ -693,6 +718,14 @@ class CreatePayloadTestCase(TestCase):
                     entity(self.cfg, **params).create_payload(),
                     dict
                 )
+
+    def test_external_usergroup_payload(self):
+        """Call ``create_payload`` on a :class:`nailgun.entities.ExternalUserGroup`."""
+        payload = entities.ExternalUserGroup(
+            self.cfg,
+            usergroup=1,
+        ).create_payload()
+        self.assertEqual({'usergroup_id': 1}, payload)
 
     def test_sync_plan(self):
         """Call ``create_payload`` on a :class:`nailgun.entities.SyncPlan`."""
@@ -951,6 +984,13 @@ class CreateMissingTestCase(TestCase):
                 entity.create_missing()
         self.assertTrue(entity.name.islower())
 
+    def test_external_usergroup(self):
+        """Test ``ExternalUserGroup()`` """
+        entity = entities.ExternalUserGroup(self.cfg, usergroup=1)
+        with mock.patch.object(EntityCreateMixin, 'create_missing'):
+            entity.create_missing()
+        self.assertTrue(entity.get_fields()['usergroup'].required)
+
     def test_host_v1(self):
         """Test ``Host()``."""
         entity = entities.Host(self.cfg)
@@ -1136,6 +1176,7 @@ class ReadTestCase(TestCase):
                 ),
                 entities.ContentViewComponent(self.cfg, composite_content_view=2, content_view=1),
                 entities.ContentViewPuppetModule(self.cfg, content_view=2),
+                entities.ExternalUserGroup(self.cfg, usergroup=1),
                 entities.Interface(self.cfg, host=2),
                 entities.Image(self.cfg, compute_resource=1),
                 entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
@@ -1474,6 +1515,20 @@ class ReadTestCase(TestCase):
                 entities.HostGroup(self.cfg).read()
         # `call_args` is a two-tuple of (positional, keyword) args.
         self.assertIn('root_pass', read.call_args[0][2])
+
+    def test_usergroup_with_external_usergroup(self):
+        """Call :meth:`nailgun.entities.ExternalUserGroup.read` for a usergroup with external
+        usergroup assigned.
+
+        Ensure that the external usergroup entity was correctly fetched.
+
+        """
+        with mock.patch.object(EntityReadMixin, 'read') as read:
+            with mock.patch.object(EntityReadMixin, 'read_json'):
+                ext_usergrp = entities.ExternalUserGroup(self.cfg, usergroup=1).read()
+        usergrp = ext_usergrp.read()
+        self.assertTrue(hasattr(usergrp, 'usergroup'))
+        self.assertIn('usergroup', read.call_args[0][2])
 
 
 class SearchTestCase(TestCase):
@@ -2006,6 +2061,7 @@ class GenericTestCase(TestCase):
         """
         cfg = config.ServerConfig('http://example.com')
         generic = {'server_config': cfg, 'id': 1}
+        external_usergroup = {'server_config': cfg, 'id': 1, 'usergroup': 2}
         sync_plan = {'server_config': cfg, 'id': 1, 'organization': 2}
         hostsubscription = {'server_config': cfg, 'host': 1}
         cls.methods_requests = (
@@ -2047,6 +2103,7 @@ class GenericTestCase(TestCase):
             (entities.DiscoveredHost(cfg).facts, 'post'),
             (entities.Environment(**generic).list_scparams, 'get'),
             (entities.Errata(**generic).compare, 'get'),
+            (entities.ExternalUserGroup(**external_usergroup).refresh, 'put'),
             (entities.ForemanTask(cfg).summary, 'get'),
             (
                 entities.Organization(**generic).download_debug_certificate,
