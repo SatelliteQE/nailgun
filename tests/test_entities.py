@@ -1355,6 +1355,60 @@ class ReadTestCase(TestCase):
         self.assertIn('root_pass', read.call_args[0][2])
 
 
+class SearchTestCase(TestCase):
+    """Tests for
+    :meth:`nailgun.entity_mixins.EntitySearchMixin.search`.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Set a server configuration at ``cls.cfg``."""
+        cls.cfg = config.ServerConfig('http://example.com')
+
+    def test_product_with_sync_plan(self):
+        """Call :meth:`nailgun.entities.Product.search` for a product with sync
+        plan assigned.
+
+        Ensure that the sync plan entity was correctly fetched.
+
+        """
+        with mock.patch.object(EntitySearchMixin, 'search_json') as search_json:
+            # Synplan set
+            search_json.return_value = {
+                'results': [
+                    {'id': 2,
+                     'name': 'test_product',
+                     'organization': {
+                         'id': 1,
+                         'label': 'Default_Organization',
+                         'name': 'Default Organization'},
+                     'organization_id': 1,
+                     'sync_plan': {
+                         'id': 1,
+                         'interval': 'hourly',
+                         'name': 'sync1'},
+                     'sync_plan_id': 1}]
+            }
+            result = entities.Product(self.cfg, organization=1).search()
+            self.assertIsNotNone(result[0].sync_plan)
+            self.assertEqual(result[0].sync_plan.id, 1)
+            # Synplan not set
+            search_json.return_value = {
+                'results': [
+                    {'id': 3,
+                     'name': 'test_product2',
+                     'organization': {
+                         'id': 1,
+                         'label': 'Default_Organization',
+                         'name': 'Default Organization'},
+                     'organization_id': 1,
+                     'sync_plan': None,
+                     'sync_plan_id': None}]
+            }
+            result = entities.Product(self.cfg, organization=1).search()
+            self.assertIsNone(result[0].sync_plan)
+
+
 class SearchNormalizeTestCase(TestCase):
     """Tests for
     :meth:`nailgun.entity_mixins.EntitySearchMixin.search_normalize`.
