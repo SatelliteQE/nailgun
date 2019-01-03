@@ -20,7 +20,7 @@ docs-clean:
 	@cd docs; $(MAKE) clean
 
 lint:
-	flake8 --ignore=E731 .
+	flake8 --ignore=W504,E731 .
 	pylint -j $(CPU_COUNT) --reports=n --disable=I --ignore-imports=y \
 		nailgun tests setup.py docs/conf.py
 	pylint -j $(CPU_COUNT) --reports=n --disable=I --ignore-imports=y --disable=similarities \
