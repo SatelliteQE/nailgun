@@ -39,7 +39,7 @@ setup(
     ],
     packages=find_packages(),
     install_requires=[
-        'fauxfactory',
+        'fauxfactory==2.0.9',
         'inflection',
         'packaging',
         'pyxdg',
