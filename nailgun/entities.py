@@ -4581,7 +4581,7 @@ class Location(
             'domain': entity_fields.OneToManyField(Domain),
             'environment': entity_fields.OneToManyField(Environment),
             'hostgroup': entity_fields.OneToManyField(HostGroup),
-            'media': entity_fields.OneToManyField(Media),
+            'medium': entity_fields.OneToManyField(Media),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
@@ -4921,7 +4921,7 @@ class Organization(
             'environment': entity_fields.OneToManyField(Environment),
             'hostgroup': entity_fields.OneToManyField(HostGroup),
             'label': entity_fields.StringField(str_type='alpha'),
-            'media': entity_fields.OneToManyField(Media),
+            'medium': entity_fields.OneToManyField(Media),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
