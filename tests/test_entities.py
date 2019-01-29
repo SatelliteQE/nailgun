@@ -3680,32 +3680,6 @@ class VersionTestCase(TestCase):
         )
         self.assertIn('docker', repo_610.get_fields()['content_type'].choices)
 
-    def test_subnet_fields(self):
-        """Check :class:`nailgun.entities.Subnet`'s fields.
-
-        Assert that ``Subnet`` has the following fields starting in version
-        6.1:
-
-        * boot_mode
-        * dhcp
-        * dns
-        * location
-        * organization
-        * tftp
-
-        """
-        subnet_608 = entities.Subnet(self.cfg_608)
-        subnet_610 = entities.Subnet(self.cfg_610)
-        for field_name in (
-                'boot_mode',
-                'dhcp',
-                'dns',
-                'location',
-                'organization',
-                'tftp'):
-            self.assertNotIn(field_name, subnet_608.get_fields())
-            self.assertIn(field_name, subnet_610.get_fields())
-
     def test_hostpackage(self):
         """Attempt to create a :class:`nailgun.entities.HostPackage` for the
         Satellite 6.1.

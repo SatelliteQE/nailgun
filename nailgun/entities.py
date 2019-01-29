@@ -6878,33 +6878,31 @@ class Subnet(
             'to': entity_fields.IPAddressField(),
             'vlanid': entity_fields.StringField(),
             'mtu': entity_fields.IntegerField(min_val=68, max_val=4294967295),
+            'boot_mode': entity_fields.StringField(
+                choices=('Static', 'DHCP',),
+                default=u'DHCP',
+            ),
+            'dhcp': entity_fields.OneToOneField(SmartProxy),
+            # When reading a subnet, no discovery information is
+            # returned by the server. See Bugzilla #1217146.
+            'discovery': entity_fields.OneToOneField(SmartProxy),
+            'dns': entity_fields.OneToOneField(SmartProxy),
+            'ipam': entity_fields.StringField(
+                choices=(u'DHCP', u'Internal DB'),
+                default=u'DHCP',
+            ),
+            'location': entity_fields.OneToManyField(Location),
+            'network_type': entity_fields.StringField(
+                choices=('IPv4', 'IPv6'),
+                default='IPv4',
+            ),
+            'organization': entity_fields.OneToManyField(Organization),
+            'remote_execution_proxy':
+                entity_fields.OneToManyField(SmartProxy),
+            'subnet_parameters_attributes': entity_fields.ListField(),
+            'template': entity_fields.OneToOneField(SmartProxy),
+            'tftp': entity_fields.OneToOneField(SmartProxy),
         }
-        if _get_version(server_config) >= Version('6.1'):
-            self._fields.update({
-                'boot_mode': entity_fields.StringField(
-                    choices=('Static', 'DHCP',),
-                    default=u'DHCP',
-                ),
-                'dhcp': entity_fields.OneToOneField(SmartProxy),
-                # When reading a subnet, no discovery information is
-                # returned by the server. See Bugzilla #1217146.
-                'discovery': entity_fields.OneToOneField(SmartProxy),
-                'dns': entity_fields.OneToOneField(SmartProxy),
-                'ipam': entity_fields.StringField(
-                    choices=(u'DHCP', u'Internal DB'),
-                    default=u'DHCP',
-                ),
-                'location': entity_fields.OneToManyField(Location),
-                'network_type': entity_fields.StringField(
-                    choices=('IPv4', 'IPv6'),
-                    default='IPv4',
-                ),
-                'organization': entity_fields.OneToManyField(Organization),
-                'remote_execution_proxy':
-                    entity_fields.OneToManyField(SmartProxy),
-                'subnet_parameters_attributes': entity_fields.ListField(),
-                'tftp': entity_fields.OneToOneField(SmartProxy),
-            })
         self._meta = {'api_path': 'api/v2/subnets', 'server_modes': ('sat')}
         super(Subnet, self).__init__(server_config, **kwargs)
 
