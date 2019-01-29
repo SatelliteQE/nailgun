@@ -192,10 +192,12 @@ def _payload(fields, values):
             if isinstance(field, OneToOneField):
                 values[field_name + '_id'] = (
                     getattr(values.pop(field_name), 'id', None)
+                    if isinstance(values[field_name], Entity) else values.pop(field_name)
                 )
             elif isinstance(field, OneToManyField):
                 values[field_name + '_ids'] = [
-                    entity.id for entity in values.pop(field_name)
+                    entity.id if isinstance(entity, Entity) else entity
+                    for entity in values.pop(field_name)
                 ]
             elif isinstance(field, ListField):
                 def parse(obj):
