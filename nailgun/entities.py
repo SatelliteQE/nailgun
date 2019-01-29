@@ -7413,6 +7413,7 @@ class UserGroup(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a User Group entity."""
 
