@@ -7027,3 +7027,74 @@ class User(
         """
         self.update_json(fields)
         return self.read()
+
+
+class JobInvocation(
+        Entity,
+        EntityReadMixin,
+        EntitySearchMixin):
+    """A representation of a Job invocation entity. """
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'description': entity_fields.StringField(),
+            'dynflow_task': entity_fields.OneToOneField(ForemanTask),
+            'failed': entity_fields.IntegerField(),
+            'job_category': entity_fields.StringField(),
+            'pending': entity_fields.IntegerField(),
+            'start_at': entity_fields.DateTimeField(),
+            'status': entity_fields.IntegerField(),
+            'status_label': entity_fields.StringField(),
+            'succeeded': entity_fields.IntegerField(),
+            'task': entity_fields.OneToOneField(ForemanTask),
+            'targeting': entity_fields.DictField(),
+            'targeting_id': entity_fields.IntegerField(),
+            'template_invocations': entity_fields.ListField(),
+            'total': entity_fields.IntegerField(),
+        }
+        self._meta = {
+            'api_path': 'api/job_invocations',
+            'server_modes': ('sat')}
+        super(JobInvocation, self).__init__(server_config, **kwargs)
+
+    def run(self, synchronous=True, **kwargs):
+        """Helper to run existing job template
+
+        :param synchronous: What should happen if the server returns an HTTP
+         202 (accepted) status code? Wait for the task to complete if
+         ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+         'data' supports next fields:
+
+             required:
+                    job_template_id/feature,
+                    targeting_type,
+                    search_query/bookmark_id,
+                    inputs
+             optional:
+                    description_format,
+                    concurrency_control
+                    scheduling,
+                    ssh,
+                    recurrence,
+                    execution_timeout_interval
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        if 'data' in kwargs:
+            if 'job_template_id' not in kwargs['data'] and 'feature' not in kwargs['data']:
+                raise KeyError('Provide either job_template_id or feature value')
+            if 'search_query' not in kwargs['data'] and 'bookmark_id' not in kwargs['data']:
+                raise KeyError('Provide either search_query or bookmark_id value')
+            for param_name in ['targeting_type', 'inputs']:
+                if param_name not in kwargs['data']:
+                    raise KeyError('Provide {} value'.format(param_name))
+            kwargs['data'] = {u'job_invocation': kwargs['data']}
+        response = client.post(self.path('base'), **kwargs)
+        response.raise_for_status()
+        if synchronous is True:
+            return ForemanTask(
+                server_config=self._server_config, id=response.json()['task']['id']).poll()
+        return response.json()
