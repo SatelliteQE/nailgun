@@ -765,6 +765,7 @@ class ComputeProfile(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Compute Profile entity."""
 
