@@ -1117,6 +1117,94 @@ class DockerComputeResource(AbstractComputeResource):  # pylint:disable=R0901
             entity, attrs, ignore, params)
 
 
+class ExternalUserGroup(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityUpdateMixin,
+        EntityReadMixin):
+    """A representation of a External Usergroup entity.
+
+   ``usergroup`` must be passed in when this entity is instantiated.
+
+   :raises: ``TypeError`` if ``usergroup`` is not passed in.
+
+    # Create external usergroup
+    ExternalUserGroup(name='foobargroup',usergroup=usergroup,auth_source=auth).create()
+    # Read external usergroup
+    ExternalUserGroup(id=<id>, usergroup=usergroup).read()
+    # Delete external usergroup
+    ExternalUserGroup(id=<id>, usergroup=usergroup).delete()
+    # Refresh external usergroup
+    ExternalUserGroup(id=<id>, usergroup=usergroup).refresh()
+    """
+    def __init__(self, server_config=None, **kwargs):
+        _check_for_value('usergroup', kwargs)
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+            'usergroup': entity_fields.OneToOneField(
+                UserGroup,
+                required=True,
+            ),
+            'auth_source': entity_fields.OneToOneField(AuthSourceLDAP, required=True)
+        }
+        super(ExternalUserGroup, self).__init__(server_config, **kwargs)
+        self._meta = {
+            # pylint:disable=no-member
+            'api_path': '{0}/external_usergroups'.format(self.usergroup.path()),
+        }
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Ignore usergroup from read and alter auth_source_ldap with auth_source
+        """
+        if entity is None:
+            entity = type(self)(
+                self._server_config,
+                usergroup=self.usergroup,  # pylint:disable=no-member
+            )
+        if ignore is None:
+            ignore = set()
+        ignore.add('usergroup')
+        if attrs is None:
+            attrs = self.read_json()
+        attrs['auth_source'] = attrs.pop('auth_source_ldap')
+        return super(ExternalUserGroup, self).read(entity, attrs, ignore, params)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        refresh
+            /api/usergroups/:usergroup_id/external_usergroups/:id/refresh
+        """
+        if which == 'refresh':
+            return '{0}/{1}'.format(
+                super(ExternalUserGroup, self).path(which='self'),
+                which
+            )
+        return super(ExternalUserGroup, self).path(which)
+
+    def refresh(self, synchronous=True, **kwargs):
+        """Refresh external usergroup.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+
+        :param kwargs: Arguments to pass to requests.
+
+        :returns: The server's response, with all JSON decoded.
+
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('refresh'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+
 class KatelloStatus(Entity, EntityReadMixin):
     """A representation of a Status entity."""
 
