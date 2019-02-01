@@ -659,7 +659,7 @@ class CreatePayloadTestCase(TestCase):
     Several classes extend the ``create_payload`` method and make it do things
     like rename attributes or wrap the submitted dict of data in a second hash.
     It is possible to mess this up in a variety of ways. For example, an
-    extended method could could try to rename an attribute that does not exist.
+    extended method could try to rename an attribute that does not exist.
     This class attempts to find such issues by creating an entity, calling
     :meth:`nailgun.entity_mixins.EntityCreateMixin.create_payload` and
     asserting that a ``dict`` is returned.
@@ -838,6 +838,15 @@ class CreatePayloadTestCase(TestCase):
         ).create_payload()
         self.assertNotIn('effective_user', payload)
         self.assertIn('effective_user', payload['job_template']['ssh'])
+
+    def test_subnet(self):
+        """Create a :class:`nailgun.entities.Subnet`."""
+        payload = entities.Subnet(
+            self.cfg,
+            from_='10.0.0.1',
+        ).create_payload()
+        self.assertNotIn('from_', payload['subnet'])
+        self.assertIn('from', payload['subnet'])
 
 
 class CreateMissingTestCase(TestCase):
@@ -1336,7 +1345,8 @@ class ReadTestCase(TestCase):
                 (entities.VMWareComputeResource, {'password'}),
         ):
             with self.subTest(entity):
-                with mock.patch.object(EntityReadMixin, 'read') as read:
+                with mock.patch.object(EntityReadMixin, 'read') as read,\
+                        mock.patch.object(EntityReadMixin, 'read_json'):
                     entity(self.cfg).read()
                 # `call_args` is a two-tuple of (positional, keyword) args.
                 self.assertEqual(ignored_attrs, read.call_args[0][2])
@@ -1529,6 +1539,20 @@ class ReadTestCase(TestCase):
         usergrp = ext_usergrp.read()
         self.assertTrue(hasattr(usergrp, 'usergroup'))
         self.assertIn('usergroup', read.call_args[0][2])
+
+    def test_subnet(self):
+        """Call :meth:`nailgun.entities.Subnet.read`.
+
+        Ensure that the ``from_`` attribute is successfully set.
+
+        """
+        with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
+            read_json.return_value = {'from': 'foo'}
+            with mock.patch.object(EntityReadMixin, 'read') as read:
+                entities.Subnet(self.cfg).read()
+        for mock_obj in (read_json, read):
+            self.assertEqual(mock_obj.call_count, 1)
+        self.assertIn('from_', read.call_args[0][1])
 
 
 class SearchTestCase(TestCase):
@@ -2038,6 +2062,20 @@ class UpdatePayloadTestCase(TestCase):
         self.assertIn('template_kind_id', payload['os_default_template'])
         self.assertIn('provisioning_template_id',
                       payload['os_default_template'])
+
+    def test_subnet_from(self):
+        """Check whether ``Subnet`` updates its ``from_`` field.
+
+        The field should be renamed from ``from_`` to ``from`` when
+        ``update_payload`` is called.
+
+        """
+        payload = entities.Subnet(
+            self.cfg,
+            from_='foo',
+        ).update_payload()
+        self.assertNotIn('from_', payload['subnet'])
+        self.assertIn('from', payload['subnet'])
 
 # 2. Tests for entity-specific methods. ---------------------------------- {{{1
 

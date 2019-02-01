@@ -6861,13 +6861,28 @@ class Subnet(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'boot_mode': entity_fields.StringField(
+                choices=('Static', 'DHCP',),
+                default=u'DHCP',
+            ),
             'cidr': entity_fields.IntegerField(),
+            'dhcp': entity_fields.OneToOneField(SmartProxy),
+            # When reading a subnet, no discovery information is
+            # returned by the server. See Bugzilla #1217146.
+            'discovery': entity_fields.OneToOneField(SmartProxy),
+            'dns': entity_fields.OneToOneField(SmartProxy),
             'dns_primary': entity_fields.IPAddressField(),
             'dns_secondary': entity_fields.IPAddressField(),
             'domain': entity_fields.OneToManyField(Domain),
-            'from': entity_fields.IPAddressField(),
+            'from_': entity_fields.IPAddressField(),
             'gateway': entity_fields.StringField(),
+            'ipam': entity_fields.StringField(
+                choices=(u'DHCP', u'Internal DB'),
+                default=u'DHCP',
+            ),
+            'location': entity_fields.OneToManyField(Location),
             'mask': entity_fields.NetmaskField(required=True),
+            'mtu': entity_fields.IntegerField(min_val=68, max_val=4294967295),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
@@ -6875,23 +6890,6 @@ class Subnet(
                 unique=True
             ),
             'network': entity_fields.IPAddressField(required=True),
-            'to': entity_fields.IPAddressField(),
-            'vlanid': entity_fields.StringField(),
-            'mtu': entity_fields.IntegerField(min_val=68, max_val=4294967295),
-            'boot_mode': entity_fields.StringField(
-                choices=('Static', 'DHCP',),
-                default=u'DHCP',
-            ),
-            'dhcp': entity_fields.OneToOneField(SmartProxy),
-            # When reading a subnet, no discovery information is
-            # returned by the server. See Bugzilla #1217146.
-            'discovery': entity_fields.OneToOneField(SmartProxy),
-            'dns': entity_fields.OneToOneField(SmartProxy),
-            'ipam': entity_fields.StringField(
-                choices=(u'DHCP', u'Internal DB'),
-                default=u'DHCP',
-            ),
-            'location': entity_fields.OneToManyField(Location),
             'network_type': entity_fields.StringField(
                 choices=('IPv4', 'IPv6'),
                 default='IPv4',
@@ -6901,7 +6899,9 @@ class Subnet(
                 entity_fields.OneToManyField(SmartProxy),
             'subnet_parameters_attributes': entity_fields.ListField(),
             'template': entity_fields.OneToOneField(SmartProxy),
+            'to': entity_fields.IPAddressField(),
             'tftp': entity_fields.OneToOneField(SmartProxy),
+            'vlanid': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'api/v2/subnets', 'server_modes': ('sat')}
         super(Subnet, self).__init__(server_config, **kwargs)
@@ -6912,8 +6912,13 @@ class Subnet(
         For more information, see `Bugzilla #1151220
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
+        In addition, rename the ``from_`` field to ``from``.
+
         """
-        return {u'subnet': super(Subnet, self).create_payload()}
+        payload = super(Subnet, self).create_payload()
+        if 'from_' in payload:
+            payload['from'] = payload.pop('from_')
+        return {u'subnet': payload}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Fetch as many attributes as possible for this entity.
@@ -6922,7 +6927,12 @@ class Subnet(
         `Bugzilla #1217146
         <https://bugzilla.redhat.com/show_bug.cgi?id=1217146>`_.
 
+        In addition, rename the ``from_`` field to ``from``.
+
         """
+        if attrs is None:
+            attrs = self.read_json()
+        attrs['from_'] = attrs.pop('from')
 
         if ignore is None:
             ignore = set()
@@ -6936,7 +6946,10 @@ class Subnet(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {u'subnet': super(Subnet, self).update_payload(fields)}
+        payload = super(Subnet, self).update_payload(fields)
+        if 'from_' in payload:
+            payload['from'] = payload.pop('from_')
+        return {u'subnet': payload}
 
 
 class Subscription(
