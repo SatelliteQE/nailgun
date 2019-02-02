@@ -739,7 +739,12 @@ class CommonParameter(
         super(CommonParameter, self).__init__(server_config, **kwargs)
 
 
-class ComputeAttribute(Entity, EntityCreateMixin, EntityReadMixin):
+class ComputeAttribute(
+        Entity,
+        EntityCreateMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Compute Attribute entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -752,6 +757,8 @@ class ComputeAttribute(Entity, EntityCreateMixin, EntityReadMixin):
                 AbstractComputeResource,
                 required=True,
             ),
+            'vm_attrs': entity_fields.DictField(),
+            'attributes': entity_fields.DictField(),
         }
         self._meta = {
             'api_path': 'api/v2/compute_attributes',
@@ -777,6 +784,7 @@ class ComputeProfile(
                 length=(6, 12),
                 unique=True
             ),
+            'compute_attribute': entity_fields.OneToManyField(ComputeAttribute),
         }
         self._meta = {
             'api_path': 'api/v2/compute_profiles',
