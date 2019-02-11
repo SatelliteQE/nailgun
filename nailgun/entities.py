@@ -1256,6 +1256,8 @@ class OVirtComputeResource(AbstractComputeResource):
             'password': entity_fields.StringField(),
             'user': entity_fields.StringField(),
             'use_v4': entity_fields.BooleanField(),
+            'datacenter': entity_fields.StringField(),
+            'ovirt_quota': entity_fields.StringField(),
         }
         super(OVirtComputeResource, self).__init__(server_config, **kwargs)
         self._fields['provider'].default = 'Ovirt'
