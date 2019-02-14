@@ -3657,8 +3657,10 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
             'all_parameters': entity_fields.ListField(),
             'architecture': entity_fields.OneToOneField(Architecture),
             'build': entity_fields.BooleanField(),
+            'build_status_label': entity_fields.StringField(),
             'capabilities': entity_fields.StringField(),
             'comment': entity_fields.StringField(),
+            'compute_attributes': entity_fields.DictField(),
             'compute_profile': entity_fields.OneToOneField(ComputeProfile),
             'compute_resource': entity_fields.OneToOneField(
                 AbstractComputeResource),
@@ -3670,6 +3672,7 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
             'host_parameters_attributes': entity_fields.ListField(),
             'image': entity_fields.OneToOneField(Image),
             'interface': entity_fields.OneToManyField(Interface),
+            'interfaces_attributes': entity_fields.ListField(),
             'ip': entity_fields.StringField(),
             'location': entity_fields.OneToOneField(Location, required=True),
             'mac': entity_fields.MACAddressField(),
@@ -4070,6 +4073,8 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
             ignore.add('host_parameters_attributes')
         if 'content_facet_attributes' not in attrs:
             ignore.add('content_facet_attributes')
+        ignore.add('compute_attributes')
+        ignore.add('interfaces_attributes')
         ignore.add('root_pass')
         # Image entity requires compute_resource_id to initialize as it is
         # part of its path. The thing is that entity_mixins.read() initializes
