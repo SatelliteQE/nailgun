@@ -13,7 +13,8 @@ script:
     - make package
     - make package-clean
 after_success:
-    coveralls
+    - "curl -X POST -d \"token=${readthedocs_token}\" \"https://readthedocs.org/api/v2/webhook/nailgun/76623/\""
+    - coveralls
 notifications:
     irc: "chat.freenode.net#robottelo"
 
