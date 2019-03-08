@@ -39,8 +39,8 @@ from nailgun.entity_mixins import (
     _poll_task,
     _get_entity_ids,
     _payload,
-    to_json_serializable,
 )
+from nailgun.entity_mixins import to_json_serializable  # noqa: F401
 
 if version_info.major == 2:  # pragma: no cover
     from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
@@ -7213,7 +7213,7 @@ class SyncPlan(
 
         """
         data = super(SyncPlan, self).create_payload()
-        if 'sync_date' in data:
+        if isinstance(data.get('sync_date'), datetime):
             data['sync_date'] = data['sync_date'].strftime('%Y-%m-%d %H:%M:%S')
         return data
 
