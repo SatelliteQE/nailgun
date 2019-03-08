@@ -39,7 +39,7 @@ from nailgun.entity_mixins import (
     _poll_task,
     _get_entity_ids,
     _payload,
-    to_json_serializable as to_json
+    to_json_serializable,
 )
 
 if version_info.major == 2:  # pragma: no cover
@@ -199,18 +199,6 @@ def _get_version(server_config):
 
     """
     return getattr(server_config, 'version', Version('1!0'))
-
-
-def to_json_serializable(obj):
-    """Just an alias to entity_mixins.to_json_seriazable so this module can
-    be used as a facade
-
-    :param obj: entity or any json serializable object
-
-    :return: serializable object
-
-    """
-    return to_json(obj)
 
 
 class ActivationKey(
