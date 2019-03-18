@@ -4085,6 +4085,7 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
         ignore.add('image')
         # host id is required for interface initialization
         ignore.add('interface')
+        ignore.add('build_status_label')
         result = super(Host, self).read(entity, attrs, ignore, params)
         if attrs.get('image_id'):
             result.image = Image(
@@ -4103,6 +4104,8 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
                 )
                 for interface in attrs['interfaces']
             ]
+        if 'build_status_label' in attrs:
+            result.build_status_label = attrs['build_status_label']
         return result
 
     @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
