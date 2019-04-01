@@ -2,7 +2,7 @@
 """Defines a set of named signals for entities operations"""
 # pylint: disable-all
 
-import blinker_herald
+from nailgun import blinker_herald
 
 emit = blinker_herald.emit
 SENDER_CLASS = blinker_herald.SENDER_CLASS
