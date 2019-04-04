@@ -98,6 +98,7 @@ class InitTestCase(TestCase):
                 entities.AbstractDockerContainer,
                 entities.ActivationKey,
                 entities.Architecture,
+                entities.ArfReport,
                 entities.Audit,
                 entities.AuthSourceLDAP,
                 entities.Bookmark,
@@ -323,6 +324,7 @@ class PathTestCase(TestCase):
                 (entities.ActivationKey, 'releases'),
                 (entities.ActivationKey, 'remove_subscriptions'),
                 (entities.ActivationKey, 'subscriptions'),
+                (entities.ArfReport, 'download_html'),
                 (entities.ConfigTemplate, 'clone'),
                 (entities.ProvisioningTemplate, 'clone'),
                 (entities.Role, 'clone'),
@@ -430,6 +432,24 @@ class PathTestCase(TestCase):
             with self.subTest((entity, which)):
                 with self.assertRaises(NoSuchPathError):
                     entity(self.cfg_610).path(which=which)
+
+    def test_arfreport(self):
+        """Test :meth:`nailgun.entities.ArfReport.path`.
+        Assert that the following return appropriate paths:
+        * ``ArfReport(id=…).path()``
+        * ``ArfReport(id=…).path('download_html')``
+        """
+        self.assertIn(
+            'compliance/arf_reports/1',
+            entities.ArfReport(self.cfg, id=1).path()
+        )
+        for which in ['download_html']:
+            path = entities.ArfReport(
+                self.cfg,
+                id=1,
+            ).path(which)
+            self.assertIn('compliance/arf_reports/1/' + which, path)
+            self.assertRegex(path, '{}$'.format(which))
 
     def test_os_default_template(self):
         """ Test ``nailgun.entities.OSDefaultTemplate.path``
@@ -2116,6 +2136,7 @@ class GenericTestCase(TestCase):
                 entities.Capsule(**generic).content_add_lifecycle_environment,
                 'post'
             ),
+            (entities.ArfReport(**generic).download_html, 'get'),
             (entities.Capsule(**generic).content_get_sync, 'get'),
             (
                 entities.Capsule(**generic).content_lifecycle_environments,
