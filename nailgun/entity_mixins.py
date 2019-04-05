@@ -10,7 +10,7 @@ from sys import version_info
 from fauxfactory import gen_choice
 from inflection import pluralize
 
-from nailgun import client, config, signals
+from nailgun import client, config
 from nailgun.entity_fields import (
     IntegerField, OneToManyField, OneToOneField, ListField)
 
@@ -653,7 +653,6 @@ class EntityDeleteMixin(object):
             **self._server_config.get_client_kwargs()
         )
 
-    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='result')
     def delete(self, synchronous=True):
         """Delete the current entity.
 
@@ -934,7 +933,6 @@ class EntityCreateMixin(object):
         response.raise_for_status()
         return response.json()
 
-    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def create(self, create_missing=None):
         """Create an entity.
 
@@ -1037,7 +1035,6 @@ class EntityUpdateMixin(object):
         response.raise_for_status()
         return response.json()
 
-    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entity')
     def update(self, fields=None):
         """Update the current entity.
 
@@ -1281,7 +1278,6 @@ class EntitySearchMixin(object):
             normalized.append(attrs)
         return normalized
 
-    @signals.emit(sender=signals.SENDER_CLASS, post_result_name='entities')
     def search(self, fields=None, query=None, filters=None):
         """Search for entities.
 
