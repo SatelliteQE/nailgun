@@ -19,6 +19,3 @@ twine
 
 # For code coverage
 coveralls
-
-# For signals
-blinker

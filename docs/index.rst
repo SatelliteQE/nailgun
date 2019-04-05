@@ -17,7 +17,6 @@ More in-depth coverage is provided in other sections.
 
     examples
     api/index
-    signals
 
 Quick Start
 -----------
