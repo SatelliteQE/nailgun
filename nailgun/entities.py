@@ -460,6 +460,69 @@ class Architecture(
         return self.read()
 
 
+class ArfReport(
+        Entity,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin):
+    """A representation of a Arf Report entity.
+
+    # Read Arf report
+    ArfReport(id=<id>).read()
+    # Delete Arf report
+    ArfReport(id=<id>).delete()
+    # Download Arf report in HTML
+    ArfReport(id=<id>).download_html()
+    """
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'location': entity_fields.OneToManyField(Location),
+            'organization': entity_fields.OneToManyField(Organization),
+            'host': entity_fields.OneToOneField(Host),
+            'openscap_proxy': entity_fields.OneToOneField(Capsule),
+            'policy': entity_fields.OneToOneField(CompliancePolicies)
+        }
+        self._meta = {
+            'api_path': 'api/compliance/arf_reports',
+        }
+        super(ArfReport, self).__init__(server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        download_html
+            /api/compliance/arf_reports/:id/download_html
+
+        Otherwise, call ``super``.
+
+        """
+        if which in ('download_html',):
+            return '{0}/{1}'.format(
+                super(ArfReport, self).path(which='self'),
+                which
+            )
+        return super(ArfReport, self).path(which)
+
+    def download_html(self, synchronous=True, **kwargs):
+        """Download ARF report in HTML
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('download_html'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+
 class Audit(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of Audit entity."""
 
