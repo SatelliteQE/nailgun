@@ -1810,6 +1810,93 @@ class ProvisioningTemplate(
         return _handle_response(response, self._server_config, synchronous)
 
 
+class ReportTemplate(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
+    """A representation of a Report Template entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+                unique=True
+            ),
+            'organization': entity_fields.OneToManyField(Organization),
+            'location': entity_fields.OneToManyField(Location),
+            'template': entity_fields.StringField(required=True),
+            'default': entity_fields.StringField(required=True),
+        }
+        self._meta = {
+            'api_path': 'api/v2/report_templates',
+            'server_modes': ('sat'),
+        }
+        super(ReportTemplate, self).__init__(server_config, **kwargs)
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict.
+
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
+
+        """
+        payload = super(ReportTemplate, self).create_payload()
+        if 'template_combinations' in payload:
+            payload['template_combinations_attributes'] = payload.pop(
+                'template_combinations')
+        return {u'report_template': payload}
+
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        payload = super(ReportTemplate, self).update_payload(fields)
+        if 'template_combinations' in payload:
+            payload['template_combinations_attributes'] = payload.pop(
+                'template_combinations')
+        return {u'report_template': payload}
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        clone
+            /report_templates/clone
+        revision
+            /report_templates/revision
+
+        ``super`` is called otherwise.
+
+        """
+        if which in ('clone', 'revision'):
+            prefix = 'self' if which == 'clone' else 'base'
+            return '{0}/{1}'.format(
+                super(ReportTemplate, self).path(prefix),
+                which
+            )
+        return super(ReportTemplate, self).path(which)
+
+    def clone(self, synchronous=True, **kwargs):
+        """Helper to clone an existing report template
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('clone'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+
 class AbstractDockerContainer(
         Entity,
         EntityCreateMixin,
