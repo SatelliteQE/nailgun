@@ -6833,6 +6833,85 @@ class SmartVariable(
         }
 
 
+class Snapshot(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
+    """A representation of a Snapshot entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        _check_for_value('host', kwargs)
+        self._fields = {
+            'name': entity_fields.StringField(required=True),
+            'description': entity_fields.StringField(required=False),
+            'host': entity_fields.OneToOneField(
+                Host,
+                required=True,
+            ),
+        }
+        super(Snapshot, self).__init__(server_config, **kwargs)
+        self._meta = {
+            'api_path': '{0}/snapshots'.format(
+                self.host.path('self')),
+            'server_modes': ('sat'),
+        }
+
+    def path(self, which=None):
+        """Extend nailgun.entity_mixins.Entity.path.
+        revert
+        /api/v2/hosts/<host-id>/snapshots/<snapshot-id>/revert
+        """
+        if which == 'revert':
+            return '{0}/{1}'.format(super(Snapshot, self).path(which='self'), which)
+        return super(Snapshot, self).path(which)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Provide a default value for ``entity``.
+
+        By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
+        default value for ``entity`` like so::
+
+            entity = type(self)()
+
+        However, :class:`Snapshot` requires that an
+        ``host`` be provided, so this technique will not work. Do
+        this instead::
+
+            entity = type(self)(host=self.host)
+
+        """
+        # read() should not change the state of the object it's called on, but
+        # super() alters the attributes of any entity passed in. Creating a new
+        # object and passing it to super() lets this one avoid changing state.
+        if entity is None:
+            entity = type(self)(
+                self._server_config,
+                host=self.host,  # pylint:disable=E1101
+            )
+        if ignore is None:
+            ignore = set()
+        ignore.add('host')
+        return super(Snapshot, self).read(entity, attrs, ignore, params)
+
+    def search_normalize(self, results):
+        for snapshot in results:
+            snapshot[u'host_id'] = self.host.id  # pylint:disable=no-member
+        return super(Snapshot, self).search_normalize(results)
+
+    def revert(self, **kwargs):
+        """ Rollbacks the Snapshot
+
+        Makes HTTP PUT call to revert the snapshot.
+        """
+
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('revert'), **kwargs)
+        return _handle_response(response, self._server_config)
+
+
 class SSHKey(
         Entity,
         EntityCreateMixin,
