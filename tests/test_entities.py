@@ -166,6 +166,7 @@ class InitTestCase(TestCase):
                 entities.SmartClassParameters,
                 entities.SmartProxy,
                 entities.SmartVariable,
+                # entities.Snapshot,  # see below
                 entities.Status,
                 entities.Subnet,
                 entities.Subscription,
@@ -210,6 +211,7 @@ class InitTestCase(TestCase):
             (entities.Parameter, {'organization': 1}),
             (entities.Parameter, {'subnet': 1}),
             (entities.RepositorySet, {'product': 1}),
+            (entities.Snapshot, {'host': 1}),
             (entities.SSHKey, {'user': 1}),
             (entities.SyncPlan, {'organization': 1}),
             (entities.TemplateInput, {'template': 1}),
@@ -509,6 +511,28 @@ class PathTestCase(TestCase):
             ).path(which)
             self.assertIn('/repository_sets/2/' + which, path)
             self.assertRegex(path, '{}$'.format(which))
+
+    def test_snapshot(self):
+        """Test :meth:`nailgun.entities.Snapshot.path`.
+
+        Assert that the following return appropriate paths:
+
+        * ``Snapshot(id=…).path()``
+        * ``Snapshot(id=…).path('revert')``
+
+        """
+        self.assertIn(
+            'hosts/1/snapshots/snapshot-2',
+            entities.Snapshot(self.cfg, id='snapshot-2', host=1).path()
+        )
+        which = 'revert'
+        path = entities.Snapshot(
+            self.cfg,
+            id='snapshot-2',
+            host=1,
+        ).path(which)
+        self.assertIn('hosts/1/snapshots/snapshot-2/' + which, path)
+        self.assertRegex(path, '{}$'.format(which))
 
     def test_sync_plan(self):
         """Test :meth:`nailgun.entities.SyncPlan.path`.
@@ -1220,6 +1244,7 @@ class ReadTestCase(TestCase):
                 entities.Parameter(self.cfg, organization=2),
                 entities.Parameter(self.cfg, subnet=2),
                 entities.RepositorySet(self.cfg, product=2),
+                entities.Snapshot(self.cfg, host=2),
                 entities.SSHKey(self.cfg, user=2),
                 entities.SyncPlan(self.cfg, organization=2),
         ):
@@ -1468,6 +1493,22 @@ class ReadTestCase(TestCase):
                 # `call_args` is a two-tuple of (positional, keyword) args.
                 self.assertEqual(parents, read.call_args[0][2])
 
+    def test_snapshot_ignore_arg(self):
+        """Call :meth:`nailgun.entities.Snapshot.read`.
+
+        Assert that entity`s predefined values of ``ignore`` are always
+        correctly passed on.
+        """
+        with mock.patch.object(EntityReadMixin, 'read') as read:
+            with mock.patch.object(
+                EntityReadMixin,
+                'read_json',
+                return_value={'host': 3},
+            ):
+                entities.Snapshot(self.cfg, id=2, host=3).read()
+        # `call_args` is a two-tuple of (positional, keyword) args.
+        self.assertEqual(set(['host']), read.call_args[0][2])
+
     def test_host_with_interface(self):
         """Call :meth:`nailgun.entities.Host.read`.
 
@@ -1678,6 +1719,25 @@ class SearchNormalizeTestCase(TestCase):
     def setUpClass(cls):
         """Set a server configuration at ``cls.cfg``."""
         cls.cfg = config.ServerConfig('http://example.com')
+
+    def test_snapshot(self):
+        """Test :meth:`nailgun.entities.Snapshot.search_normalize`.
+
+        Assert that ``host_id`` was added with correct user's id to search
+        results.
+        """
+        results = [
+            {'id': 1, 'name': 'foo'},
+            {'id': 2, 'name': 'bar', 'description': 'This is bar'},
+        ]
+        with mock.patch.object(
+            EntitySearchMixin,
+            'search_normalize',
+        ) as search_normalize:
+            entities.Snapshot(self.cfg, host=4).search_normalize(results)
+            for args in search_normalize.call_args[0][0]:
+                self.assertIn('host_id', args)
+                self.assertEqual(args['host_id'], 4)
 
     def test_sshkey(self):
         """Test :meth:`nailgun.entities.SSHKey.search_normalize`.
@@ -2206,10 +2266,12 @@ class GenericTestCase(TestCase):
             (entities.VirtWhoConfig(**generic).deploy_script, 'get')
         )
         repo_set = {'server_config': cfg, 'id': 1, 'product': 2}
+        snapshot = {'server_config': cfg, 'id': 'snapshot-1', 'host': 1}
         cls.intelligent_methods_requests = (
             (entities.RepositorySet(**repo_set).available_repositories, 'get', {'product_id': 2}),
             (entities.RepositorySet(**repo_set).disable, 'put', {'product_id': 2}),
             (entities.RepositorySet(**repo_set).enable, 'put', {'product_id': 2}),
+            (entities.Snapshot(**snapshot).revert, 'put', {}),
         )
 
     def test_generic(self):
