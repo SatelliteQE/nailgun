@@ -6840,7 +6840,22 @@ class Snapshot(
         EntityReadMixin,
         EntitySearchMixin,
         EntityUpdateMixin):
-    """A representation of a Snapshot entity."""
+    """A representation of a Snapshot entity.
+       Foreman_snapshot as mentioned in the plugin:
+       https://github.com/ATIX-AG/foreman_snapshot_management
+       # Read Snapshot
+       Snapshot(host=<host_id>, id=<snapshot_id>).read()
+       # Search Snapshots
+       Snapshot(host=<host_id>).search()
+       # Create Snapshot
+       Snapshot(host=<host_id>, name=<snapshot_name>).create()
+       # Update Snapshot
+       Snapshot(host=<host_id>, id=<snapshot_id>, description=<snapshot_description>).update()
+       # Revert Snapshot
+       Snapshot(host=<host_id>, id=<snapshot_id>).revert()
+       # Delete Snapshot
+       Snapshot(host=<host_id>, id=<snapshot_id>).delete()
+    """
 
     def __init__(self, server_config=None, **kwargs):
         _check_for_value('host', kwargs)
@@ -6897,6 +6912,10 @@ class Snapshot(
         return super(Snapshot, self).read(entity, attrs, ignore, params)
 
     def search_normalize(self, results):
+        """Append host id to search results to be able to initialize found
+        :class:`Snapshot` successfully
+        """
+
         for snapshot in results:
             snapshot[u'host_id'] = self.host.id  # pylint:disable=no-member
         return super(Snapshot, self).search_normalize(results)
