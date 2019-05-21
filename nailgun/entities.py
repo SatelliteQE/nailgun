@@ -882,6 +882,7 @@ class AbstractComputeResource(
                     'Docker',
                     'EC2',
                     'GCE',
+                    'KubeVirt'
                     'Libvirt',
                     'Openstack',
                     'Ovirt',
@@ -1350,6 +1351,24 @@ class VMWareComputeResource(AbstractComputeResource):
         ignore.add('password')
         return super(VMWareComputeResource, self).read(
             entity, attrs, ignore, params)
+
+
+class KubeVirtComputeResource(AbstractComputeResource):
+    # pylint: disable=too-many-ancestors
+    """A representation for compute resources with KubeVirt provider
+    """
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'hostname': entity_fields.StringField(),
+            'api_port': entity_fields.IntegerField(),
+            'namespace': entity_fields.StringField(),
+            'token': entity_fields.StringField(),
+        }
+        super(KubeVirtComputeResource, self).__init__(server_config, **kwargs)
+        self._fields['provider'].default = 'KubeVirt'
+        self._fields['provider'].required = True
+        self._fields['provider_friendly_name'].default = 'KubeVirt'
 
 
 class ConfigGroup(
