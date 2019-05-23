@@ -1830,7 +1830,7 @@ class ReportTemplate(
             'organization': entity_fields.OneToManyField(Organization),
             'location': entity_fields.OneToManyField(Location),
             'template': entity_fields.StringField(required=True),
-            'default': entity_fields.StringField(required=True),
+            'default': entity_fields.BooleanField(required=True),
         }
         self._meta = {
             'api_path': 'api/v2/report_templates',
@@ -1866,13 +1866,11 @@ class ReportTemplate(
 
         clone
             /report_templates/clone
-        revision
-            /report_templates/revision
 
         ``super`` is called otherwise.
 
         """
-        if which in ('clone', 'revision'):
+        if which == 'clone':
             prefix = 'self' if which == 'clone' else 'base'
             return '{0}/{1}'.format(
                 super(ReportTemplate, self).path(prefix),
