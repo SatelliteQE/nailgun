@@ -110,6 +110,7 @@ class InitTestCase(TestCase):
                 entities.ConfigTemplate,
                 entities.CompliancePolicies,
                 entities.ProvisioningTemplate,
+                entities.ReportTemplate,
                 # entities.ContentUpload,  # see below
                 entities.ContentCredential,
                 entities.ContentView,
@@ -278,6 +279,7 @@ class PathTestCase(TestCase):
                 (entities.Capsule, '/capsules'),
                 (entities.ConfigTemplate, '/config_templates'),
                 (entities.ProvisioningTemplate, '/provisioning_templates'),
+                (entities.ReportTemplate, '/report_templates'),
                 (entities.Role, '/roles'),
                 (entities.ContentView, '/content_views'),
                 (entities.ContentViewVersion, '/content_view_versions'),
@@ -332,6 +334,7 @@ class PathTestCase(TestCase):
                 (entities.ArfReport, 'download_html'),
                 (entities.ConfigTemplate, 'clone'),
                 (entities.ProvisioningTemplate, 'clone'),
+                (entities.ReportTemplate, 'clone'),
                 (entities.Role, 'clone'),
                 (entities.ContentView, 'available_puppet_module_names'),
                 (entities.ContentView, 'content_view_puppet_modules'),
@@ -716,6 +719,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.ConfigGroup,
                 entities.ConfigTemplate,
                 entities.ProvisioningTemplate,
+                entities.ReportTemplate,
                 entities.DiscoveredHost,
                 entities.DiscoveryRule,
                 entities.Domain,
@@ -969,6 +973,44 @@ class CreateMissingTestCase(TestCase):
         )
         # pylint:disable=no-member
         self.assertEqual(entity.template_kind.id, tk_id)
+
+    def test_report_template_v1(self):
+        """Test ``ReportTemplate(name='testName')``."""
+        entity = entities.ReportTemplate(self.cfg, name='testName')
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(entity.name, 'testName')
+
+    def test_report_template_v2(self):
+        """Test ``ReportTemplate()``."""
+        entity = entities.ReportTemplate(self.cfg)
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertNotEqual(entity.name, '')
+
+    def test_report_template_v3(self):
+        """Test ``ReportTemplate(default=True)``."""
+        entity = entities.ReportTemplate(self.cfg, default=True)
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(
+            _get_required_field_names(entity),
+            set(entity.get_values().keys()),
+        )
+
+    def test_report_template_v4(self):
+        """Test ``ReportTemplate(default=False)``."""
+        entity = entities.ReportTemplate(self.cfg, default=False)
+        with mock.patch.object(EntityCreateMixin, 'create_raw'):
+            with mock.patch.object(EntityReadMixin, 'read_raw'):
+                entity.create_missing()
+        self.assertEqual(
+            _get_required_field_names(entity),
+            set(entity.get_values().keys()),
+        )
 
     def test_provisioning_template_v1(self):
         """Test ``ProvisioningTemplate(snippet=True)``."""
@@ -1908,6 +1950,7 @@ class UpdatePayloadTestCase(TestCase):
             (entities.ConfigTemplate, {'config_template': {}}),
             (entities.Filter, {'filter': {}}),
             (entities.ProvisioningTemplate, {'provisioning_template': {}}),
+            (entities.ReportTemplate, {'report_template': {}}),
             (entities.DiscoveredHost, {'discovered_host': {}}),
             (entities.DiscoveryRule, {'discovery_rule': {}}),
             (entities.Domain, {'domain': {}}),
@@ -2166,6 +2209,7 @@ class GenericTestCase(TestCase):
                 'post'
             ),
             (entities.ProvisioningTemplate(**generic).clone, 'post'),
+            (entities.ReportTemplate(**generic).clone, 'post'),
             (entities.ContentView(**generic).available_puppet_modules, 'get'),
             (entities.ContentView(**generic).copy, 'post'),
             (entities.ContentView(**generic).publish, 'post'),
@@ -2781,6 +2825,30 @@ class ContentViewComponentTestCase(TestCase):
         self.assertEqual(client_request.call_count, 1)
         self.assertEqual(len(client_request.call_args[0]), 1)
         self.assertEqual(handlr.call_count, 1)
+
+
+class ReportTemplateTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.ReportTemplate`."""
+
+    def test_creation_and_update(self):
+        """Check template combinations as json or entity is set on correct
+        attribute template_combinations_attributes ( check #333)
+        """
+        cfg = config.ServerConfig(url='foo')
+        report_template = entities.ReportTemplate(
+            cfg, name='cfg',
+            default=False,
+            template='cat')
+        expected_dct = {
+            u'report_template': {
+                'name': 'cfg', 'default': False, 'template': 'cat',
+            }
+        }
+        self.assertEqual(expected_dct, report_template.create_payload())
+        # Testing update
+        report_template.template = 'dog'
+        expected_dct[u'report_template']['template'] = 'dog'
+        self.assertEqual(expected_dct, report_template.update_payload())
 
 
 class ProvisioningTemplateTestCase(TestCase):
