@@ -2697,7 +2697,7 @@ class ContentView(
             )
         return super(ContentView, self).path(which)
 
-    def publish(self, synchronous=True, **kwargs):
+    def publish(self, synchronous=True, timeout=None, **kwargs):
         """Helper for publishing an existing content view.
 
         :param synchronous: What should happen if the server returns an HTTP
@@ -2714,7 +2714,8 @@ class ContentView(
             kwargs['data']['id'] = self.id  # pylint:disable=no-member
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('publish'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous=synchronous,
+                                timeout=timeout)
 
     def available_puppet_modules(self, synchronous=True, **kwargs):
         """Get puppet modules available to be added to the content view.
