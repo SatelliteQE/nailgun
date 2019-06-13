@@ -2332,10 +2332,16 @@ class GenericTestCase(TestCase):
         """
         for method, request in self.methods_requests:
             with self.subTest((method, request)):
-                self.assertEqual(
-                    inspect.getargspec(method),
-                    (['self', 'synchronous'], None, 'kwargs', (True,))
-                )
+                if ' ContentView.publish ' in str(method):
+                    self.assertEqual(
+                        inspect.getargspec(method),
+                        (['self', 'synchronous', 'timeout'], None, 'kwargs', (True, None))
+                    )
+                else:
+                    self.assertEqual(
+                        inspect.getargspec(method),
+                        (['self', 'synchronous'], None, 'kwargs', (True,))
+                    )
                 kwargs = {'kwarg': gen_integer()}
                 with mock.patch.object(entities, '_handle_response') as handlr:
                     with mock.patch.object(client, request) as client_request:
