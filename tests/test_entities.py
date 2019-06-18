@@ -351,6 +351,7 @@ class PathTestCase(TestCase):
                 (entities.Host, 'smart_variables'),
                 (entities.HostGroup, 'clone'),
                 (entities.HostGroup, 'puppetclass_ids'),
+                (entities.HostGroup, 'rebuild_config'),
                 (entities.HostGroup, 'smart_class_parameters'),
                 (entities.HostGroup, 'smart_variables'),
                 (entities.Organization, 'download_debug_certificate'),
