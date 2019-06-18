@@ -3184,6 +3184,29 @@ class HostGroupTestCase(TestCase):
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value, response)
 
+    def test_rebuild_config(self):
+        """"Test for :meth:`nailgun.entities.HostGroup.rebuild_config`
+                Assert that the method is called one with correct argumets
+        """
+        entity = self.entity
+        entity.id = 1
+        self.assertEqual(
+            inspect.getargspec(entity.rebuild_config),
+            (['self', 'synchronous'], None, 'kwargs', (True,))
+        )
+        kwargs = {
+            'kwarg': gen_integer(),
+            'data': {'only': 'TFTP'}
+        }
+        with mock.patch.object(entities, '_handle_response') as handler:
+            with mock.patch.object(client, 'put') as put:
+                response = entity.rebuild_config(**kwargs)
+        self.assertEqual(put.call_count, 1)
+        self.assertEqual(len(put.call_args[0]), 1)
+        self.assertEqual(put.call_args[1], kwargs)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
+
 
 class HostTestCase(TestCase):
     """Tests for :class:`nailgun.entities.Host`."""
