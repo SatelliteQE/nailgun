@@ -413,6 +413,7 @@ class PathTestCase(TestCase):
                 (entities.ContentView, 'publish'),
                 (entities.ContentViewVersion, 'promote'),
                 (entities.ForemanTask, 'self'),
+                (entities.HostGroup, 'rebuild_config'),
                 (entities.Organization, 'products'),
                 (entities.Organization, 'self'),
                 (entities.Organization, 'subscriptions'),
