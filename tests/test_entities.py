@@ -3186,7 +3186,7 @@ class HostGroupTestCase(TestCase):
 
     def test_rebuild_config(self):
         """"Test for :meth:`nailgun.entities.HostGroup.rebuild_config`
-                Assert that the method is called one with correct argumets
+        Assert that the method is called one with correct arguments
         """
         entity = self.entity
         entity.id = 1
