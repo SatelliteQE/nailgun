@@ -2436,7 +2436,6 @@ class ContentViewPuppetModule(
                 unique=True
 
             ),
-            'uuid': entity_fields.StringField(unique=True),
         }
         super(ContentViewPuppetModule, self).__init__(server_config, **kwargs)
         self._meta = {
