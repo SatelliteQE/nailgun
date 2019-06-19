@@ -346,6 +346,7 @@ class PathTestCase(TestCase):
                 (entities.Host, 'smart_variables'),
                 (entities.HostGroup, 'clone'),
                 (entities.HostGroup, 'puppetclass_ids'),
+                (entities.HostGroup, 'rebuild_config'),
                 (entities.HostGroup, 'smart_class_parameters'),
                 (entities.HostGroup, 'smart_variables'),
                 (entities.Organization, 'download_debug_certificate'),
@@ -409,6 +410,7 @@ class PathTestCase(TestCase):
                 (entities.ForemanTask, 'self'),
                 (entities.Organization, 'products'),
                 (entities.Organization, 'self'),
+                (entities.HostGroup, 'rebuild_config'),
                 (entities.Organization, 'subscriptions'),
                 (entities.Organization, 'download_debug_certificate'),
                 (entities.Organization, 'subscriptions/delete_manifest'),
@@ -3049,6 +3051,29 @@ class HostGroupTestCase(TestCase):
         self.assertEqual(post.call_count, 1)
         self.assertEqual(len(post.call_args[0]), 1)
         self.assertEqual(post.call_args[1], kwargs)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
+
+    def test_rebuild_config(self):
+        """"Test for :meth:`nailgun.entities.HostGroup.rebuild_config`
+        Assert that the method is called one with correct arguments
+        """
+        entity = self.entity
+        entity.id = 1
+        self.assertEqual(
+            inspect.getargspec(entity.rebuild_config),
+            (['self', 'synchronous'], None, 'kwargs', (True,))
+        )
+        kwargs = {
+            'kwarg': gen_integer(),
+            'data': {'only': 'TFTP'}
+        }
+        with mock.patch.object(entities, '_handle_response') as handler:
+            with mock.patch.object(client, 'put') as put:
+                response = entity.rebuild_config(**kwargs)
+        self.assertEqual(put.call_count, 1)
+        self.assertEqual(len(put.call_args[0]), 1)
+        self.assertEqual(put.call_args[1], kwargs)
         self.assertEqual(handler.call_count, 1)
         self.assertEqual(handler.return_value, response)
 
