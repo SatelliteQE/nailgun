@@ -552,7 +552,8 @@ class AuthSourceLDAP(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
-        EntityUpdateMixin):
+        EntityUpdateMixin,
+        EntitySearchMixin):
     """A representation of a AuthSourceLDAP entity."""
 
     def __init__(self, server_config=None, **kwargs):
