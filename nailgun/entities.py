@@ -8021,11 +8021,10 @@ class VirtWhoConfig(
 
     def read_per_organization(self, synchronous=True, **kwargs):
         """
-        Unusually, the
-        ``/foreman_virt_who_configure/api/v2/organizations/:organization_id/configs``
-        path is totally unsupported.
+        Unusually, the ``/foreman_virt_who_configure/api/v2/organizations/
+        :organization_id/configs`` path is totally unsupported.
+        Support to List of virt-who configurations per organization.
 
-        Support to List of virt-who configurations per organization
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
