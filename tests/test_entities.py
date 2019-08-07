@@ -427,7 +427,8 @@ class PathTestCase(TestCase):
                 (entities.Repository, 'upload_content'),
                 (entities.RHCIDeployment, 'deploy'),
                 (entities.SmartProxy, 'refresh'),
-                (entities.VirtWhoConfig, 'deploy_script')
+                (entities.VirtWhoConfig, 'deploy_script'),
+                (entities.VirtWhoConfig, 'configs')
         ):
             with self.subTest((entity, which)):
                 with self.assertRaises(NoSuchPathError):

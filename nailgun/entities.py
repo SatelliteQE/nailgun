@@ -7960,7 +7960,7 @@ class VirtWhoConfig(
         deploy_script
             /foreman_virt_who_configure/api/v2/configs/:id/deploy_script
 
-        Organizations/configs
+        configs
             /foreman_virt_who_configure/api/v2/organizations/:organization_id/configs
 
         ``super`` is called otherwise.
@@ -7969,11 +7969,11 @@ class VirtWhoConfig(
         if which and which in ('deploy_script'):
             return '{0}/{1}'.format(
                 super(VirtWhoConfig, self).path(which='self'), which)
-        if which and which in ('Organizations/configs'):
+        if which and which in ('configs'):
             return '{0}/{1}/{2}/{3}'.format(
                 self._server_config.url,
                 'foreman_virt_who_configure/api/v2/organizations',
-                self.organization.id,
+                self.read().id,
                 which
             )
         return super(VirtWhoConfig, self).path(which)
@@ -8019,7 +8019,7 @@ class VirtWhoConfig(
         ignore.add('hypervisor_password')
         return super(VirtWhoConfig, self).read(entity, attrs, ignore, params)
 
-    def read_per_organization(self, synchronous=True, **kwargs):
+    def get_organization_configs(self, synchronous=True, **kwargs):
         """
         Unusually, the ``/foreman_virt_who_configure/api/v2/organizations/
         :organization_id/configs`` path is totally unsupported.
@@ -8035,5 +8035,5 @@ class VirtWhoConfig(
         """
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('Organizations/configs'), **kwargs)
+        response = client.get(self.path('configs'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
