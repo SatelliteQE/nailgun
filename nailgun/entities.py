@@ -7973,7 +7973,7 @@ class VirtWhoConfig(
             return '{0}/{1}/{2}/{3}'.format(
                 self._server_config.url,
                 'foreman_virt_who_configure/api/v2/organizations',
-                self.read().id,
+                self.read().organization.id,
                 which
             )
         return super(VirtWhoConfig, self).path(which)
