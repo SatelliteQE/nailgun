@@ -3437,6 +3437,7 @@ class HostGroup(
             'puppet_proxy': entity_fields.OneToOneField(SmartProxy),
             'puppet_ca_proxy': entity_fields.OneToOneField(SmartProxy),
             'content_source': entity_fields.OneToOneField(SmartProxy),
+            'compute_resource': entity_fields.OneToOneField(AbstractComputeResource),
             'environment': entity_fields.OneToOneField(Environment),
             'kickstart_repository': entity_fields.OneToOneField(Repository),
             'lifecycle_environment': entity_fields.OneToOneField(
@@ -3504,6 +3505,7 @@ class HostGroup(
             ignore = set()
         ignore.add('root_pass')
         ignore.add('kickstart_repository')
+        ignore.add('compute_resource')
 
         if attrs is None:
             attrs = self.read_json()
