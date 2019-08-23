@@ -7944,7 +7944,8 @@ class VirtWhoConfig(
             'proxy': entity_fields.StringField(),
             'satellite_url': entity_fields.StringField(required=True),
             'whitelist': entity_fields.StringField(),
-            'organization': entity_fields.OneToOneField(Organization)
+            'organization_id': entity_fields.IntegerField(),
+            'status': entity_fields.StringField()
         }
         self._meta = {
             'api_path': 'foreman_virt_who_configure/api/v2/configs',
@@ -7973,7 +7974,7 @@ class VirtWhoConfig(
             return '{0}/{1}/{2}/{3}'.format(
                 self._server_config.url,
                 'foreman_virt_who_configure/api/v2/organizations',
-                self.read().organization.id,
+                self.read().organization_id,
                 which
             )
         return super(VirtWhoConfig, self).path(which)

@@ -4055,7 +4055,7 @@ class VirtWhoConfigTestCase(TestCase):
     def test_create(self):
         org = entities.Organization(self.cfg, name='vhorg', id=2)
         vh = entities.VirtWhoConfig(server_config=self.cfg, name='vhtest1',
-                                    organization=org,
+                                    organization_id=org.id,
                                     filtering_mode=1,
                                     whitelist='*.example.com',
                                     proxy='proxy.example.com',
@@ -4091,7 +4091,7 @@ class VirtWhoConfigTestCase(TestCase):
     def test_update(self):
         org = entities.Organization(self.cfg, name='vhorg', id=2)
         vh = entities.VirtWhoConfig(server_config=self.cfg, name='vhtest1',
-                                    organization=org,
+                                    organization_id=org.id,
                                     filtering_mode=1,
                                     whitelist='*.example.com',
                                     proxy='proxy.example.com',
@@ -4116,7 +4116,6 @@ class VirtWhoConfigTestCase(TestCase):
         }
         self.assertDictEqual(expected_dict,
                              vh.update_payload(['name', 'hypervisor_username']))
-
 
 class JobInvocationTestCase(TestCase):
     """Tests for :class:`nailgun.entities.JobInvocation`."""
