@@ -4117,6 +4117,7 @@ class VirtWhoConfigTestCase(TestCase):
         self.assertDictEqual(expected_dict,
                              vh.update_payload(['name', 'hypervisor_username']))
 
+
 class JobInvocationTestCase(TestCase):
     """Tests for :class:`nailgun.entities.JobInvocation`."""
 
