@@ -4117,6 +4117,35 @@ class VirtWhoConfigTestCase(TestCase):
         self.assertDictEqual(expected_dict,
                              vh.update_payload(['name', 'hypervisor_username']))
 
+    def test_methods(self):
+        """Check that get_organization_configs helper method is sane.
+
+        This method is just like
+        :meth:`tests.test_entities.GenericTestCase.test_generic`, but with a
+        slightly different set of mocks. Test the following:
+
+        * :meth:`nailgun.entities.VirtWhoConfig.get_organization_configs`
+
+        """
+        cfg = config.ServerConfig('http://example.com')
+        generic = {'server_config': cfg, 'id': 1}
+        method = entities.VirtWhoConfig(**generic).get_organization_configs
+        request = 'get'
+        with self.subTest((method, request)):
+            self.assertEqual(
+                inspect.getargspec(method),
+                (['self', 'synchronous'], None, 'kwargs', (True,))
+            )
+            kwargs = {'kwarg': gen_integer()}
+            with mock.patch.object(entities, '_handle_response') as handlr:
+                with mock.patch.object(client, request) as client_request:
+                    response = method(**kwargs)
+            self.assertEqual(client_request.call_count, 2)
+            self.assertEqual(len(client_request.call_args[0]), 1)
+            self.assertEqual(client_request.call_args[1], kwargs)
+            self.assertEqual(handlr.call_count, 1)
+            self.assertEqual(handlr.return_value, response)
+
 
 class JobInvocationTestCase(TestCase):
     """Tests for :class:`nailgun.entities.JobInvocation`."""
