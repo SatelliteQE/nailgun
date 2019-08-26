@@ -7936,17 +7936,18 @@ class VirtWhoConfig(
             'hypervisor_password': entity_fields.StringField(),
             'hypervisor_server': entity_fields.StringField(required=True),
             'hypervisor_type': entity_fields.StringField(
-                choices=['esx', 'rhevm', 'hyperv', 'xen', 'libvirt'],
+                choices=['esx', 'rhevm', 'hyperv', 'xen', 'libvirt', 'kubevirt'],
                 default='libvirt', required=True),
             'hypervisor_username': entity_fields.StringField(required=True),
             'interval': entity_fields.IntegerField(
-                choices=[60, 120, 240, 480, 720], default=120, required=True),
+                choices=[60, 120, 240, 480, 720, 1440, 2880, 4320], default=120, required=True),
             'name': entity_fields.StringField(required=True),
             'no_proxy': entity_fields.StringField(),
             'proxy': entity_fields.StringField(),
             'satellite_url': entity_fields.StringField(required=True),
             'whitelist': entity_fields.StringField(),
-            'organization': entity_fields.OneToOneField(Organization)
+            'organization_id': entity_fields.IntegerField(),
+            'status': entity_fields.StringField()
         }
         self._meta = {
             'api_path': 'foreman_virt_who_configure/api/v2/configs',
@@ -7962,12 +7963,22 @@ class VirtWhoConfig(
         deploy_script
             /foreman_virt_who_configure/api/v2/configs/:id/deploy_script
 
+        configs
+            /foreman_virt_who_configure/api/v2/organizations/:organization_id/configs
+
         ``super`` is called otherwise.
 
         """
         if which and which in ('deploy_script'):
             return '{0}/{1}'.format(
                 super(VirtWhoConfig, self).path(which='self'), which)
+        if which and which in ('configs'):
+            return '{0}/{1}/{2}/{3}'.format(
+                self._server_config.url,
+                'foreman_virt_who_configure/api/v2/organizations',
+                self.read().organization_id,
+                which
+            )
         return super(VirtWhoConfig, self).path(which)
 
     def create_payload(self):
@@ -8010,3 +8021,22 @@ class VirtWhoConfig(
             ignore = set()
         ignore.add('hypervisor_password')
         return super(VirtWhoConfig, self).read(entity, attrs, ignore, params)
+
+    def get_organization_configs(self, synchronous=True, **kwargs):
+        """
+        Unusually, the ``/foreman_virt_who_configure/api/v2/organizations/
+        :organization_id/configs`` path is totally unsupported.
+        Support to List of virt-who configurations per organization.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('configs'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
