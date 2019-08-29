@@ -141,6 +141,7 @@ class InitTestCase(TestCase):
                 entities.Location,
                 entities.Media,
                 entities.Model,
+                entities.ModuleStreamContentViewFilter,
                 # entities.OSDefaultTemplate,  # see below
                 entities.OperatingSystem,
                 entities.Organization,
