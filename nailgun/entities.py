@@ -2378,6 +2378,7 @@ class ContentViewFilterRule(
             'version': entity_fields.StringField(),
             'uuid': entity_fields.StringField(),
             'architecture': entity_fields.StringField(),
+            'module_streams': entity_fields.ListField()
         }
         super(ContentViewFilterRule, self).__init__(server_config, **kwargs)
         self._meta = {
@@ -2427,7 +2428,7 @@ class ContentViewFilterRule(
             if not hasattr(self.errata, 'errata_id'):
                 self.errata = self.errata.read()
             payload['errata_id'] = self.errata.errata_id
-        return payload
+
 
     def update_payload(self, fields=None):
         """Reset ``errata_id`` from DB ID to ``errata_id``."""
@@ -2467,7 +2468,7 @@ class AbstractContentViewFilter(
             ),
             'description': entity_fields.StringField(),
             'type': entity_fields.StringField(
-                choices=('erratum', 'package_group', 'rpm'),
+                choices=('erratum', 'package_group', 'rpm', 'modulemd'),
                 required=True,
             ),
             'inclusion': entity_fields.BooleanField(),
@@ -2497,6 +2498,14 @@ class ErratumContentViewFilter(AbstractContentViewFilter):
     def __init__(self, server_config=None, **kwargs):
         super(ErratumContentViewFilter, self).__init__(server_config, **kwargs)
         self._fields['type'].default = 'erratum'
+
+
+class ModuleStreamContentViewFilter(AbstractContentViewFilter):
+    """A representation of a Content View Filter of type "modulemd"."""
+
+    def __init__(self, server_config=None, **kwargs):
+        super(ModuleStreamContentViewFilter, self).__init__(server_config, **kwargs)
+        self._fields['type'].default = 'modulemd'
 
 
 class PackageGroupContentViewFilter(AbstractContentViewFilter):
@@ -5793,7 +5802,7 @@ class ModuleStream(Entity, EntityReadMixin, EntitySearchMixin):
             'version': entity_fields.StringField(),
             'module_spec': entity_fields.StringField(),
         }
-        self._meta = {'api_path': 'katello/api/v2/module_stream'}
+        self._meta = {'api_path': 'katello/api/v2/module_streams'}
         super(ModuleStream, self).__init__(server_config, **kwargs)
 
 
