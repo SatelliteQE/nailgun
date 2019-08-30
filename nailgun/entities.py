@@ -4483,6 +4483,7 @@ class Image(
                 OperatingSystem,
                 required=True
             ),
+            'user_data': entity_fields.BooleanField(),
             'username': entity_fields.StringField(required=True),
             'uuid': entity_fields.StringField(required=True),
         }
@@ -4528,6 +4529,7 @@ class Image(
         if ignore is None:
             ignore = set()
         ignore.add('compute_resource')
+        ignore.add('user_data')
         return super(Image, self).read(entity, attrs, ignore, params)
 
 
