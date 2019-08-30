@@ -163,6 +163,7 @@ class InitTestCase(TestCase):
                 entities.RepositorySet,
                 entities.Role,
                 entities.RoleLDAPGroups,
+                entities.ScapContents,
                 entities.Setting,
                 entities.SmartClassParameters,
                 entities.SmartProxy,
@@ -296,6 +297,7 @@ class PathTestCase(TestCase):
                 (entities.Setting, '/settings'),
                 (entities.SmartProxy, '/smart_proxies'),
                 (entities.Subscription, '/subscriptions'),
+                (entities.ScapContents, '/scap_contents'),
                 (entities.VirtWhoConfig,
                  '/foreman_virt_who_configure/api/v2/configs')
         ):
@@ -370,6 +372,7 @@ class PathTestCase(TestCase):
                 (entities.Repository, 'sync'),
                 (entities.Repository, 'upload_content'),
                 (entities.RHCIDeployment, 'deploy'),
+                (entities.ScapContents, 'xml'),
                 (entities.VirtWhoConfig, 'deploy_script')
         ):
             with self.subTest((entity, which)):
@@ -425,6 +428,7 @@ class PathTestCase(TestCase):
                 (entities.Product, 'repository_sets'),
                 (entities.Repository, 'sync'),
                 (entities.Repository, 'upload_content'),
+                (entities.ScapContents, 'xml'),
                 (entities.RHCIDeployment, 'deploy'),
                 (entities.SmartProxy, 'refresh'),
                 (entities.VirtWhoConfig, 'deploy_script'),
@@ -688,6 +692,7 @@ class CreateTestCase(TestCase):
             entities.Organization(self.cfg),
             entities.Realm(self.cfg),
             entities.Registry(self.cfg),
+            entities.ScapContents(self.cfg),
             entities.SmartProxy(self.cfg),
             entities.UserGroup(self.cfg),
             entities.VirtWhoConfig(self.cfg)
@@ -750,6 +755,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.OperatingSystem,
                 entities.Registry,
                 entities.Role,
+                entities.ScapContents,
                 entities.SmartVariable,
                 entities.Subnet,
                 entities.User,
@@ -1431,6 +1437,7 @@ class ReadTestCase(TestCase):
                 (entities.Subscription, {'organization'}),
                 (entities.Repository, {'organization', 'upstream_password'}),
                 (entities.User, {'password'}),
+                (entities.ScapContents, {'scap_file'}),
                 (entities.VirtWhoConfig, {'hypervisor_password'}),
                 (entities.VMWareComputeResource, {'password'}),
         ):
@@ -2304,6 +2311,7 @@ class GenericTestCase(TestCase):
             (entities.Repository(**generic).puppet_modules, 'get'),
             (entities.Repository(**generic).remove_content, 'put'),
             (entities.Repository(**generic).sync, 'post'),
+            (entities.ScapContents(**generic).xml, 'get'),
             (entities.SmartProxy(**generic).import_puppetclasses, 'post'),
             (entities.SmartProxy(**generic).refresh, 'put'),
             (entities.SyncPlan(**sync_plan).add_products, 'put'),
