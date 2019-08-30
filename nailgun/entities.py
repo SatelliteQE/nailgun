@@ -7859,3 +7859,70 @@ class VirtWhoConfig(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('configs'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
+
+
+class ScapContents(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
+    """A representation of a ScapContents entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'title': entity_fields.StringField(required=True),
+            'scap_file': entity_fields.StringField(required=True),
+            'original_filename': entity_fields.StringField(),
+            'location': entity_fields.OneToManyField(Location),
+            'organization': entity_fields.OneToManyField(Organization),
+        }
+        self._meta = {
+            'api_path': 'api/compliance/scap_contents',
+            'server_modes': ('sat'),
+        }
+        super(ScapContents, self).__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Override :meth:`nailgun.entity_mixins.EntityReadMixin.read` to ignore
+        the ``scap_file``
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('scap_file')
+        return super(ScapContents, self).read(entity, attrs, ignore, params)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        xml
+            api/compliance/scap_contents/:id/xml
+
+        Otherwise, call ``super``.
+
+        """
+        if which in ('xml',):
+            return '{0}/{1}'.format(
+                super(ScapContents, self).path(which='self'),
+                which
+            )
+        return super(ScapContents, self).path(which)
+
+    def xml(self, synchronous=True, **kwargs):
+        """Download an SCAP content as XML
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('xml'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
