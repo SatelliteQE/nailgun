@@ -108,6 +108,7 @@ class InitTestCase(TestCase):
                 entities.ComputeProfile,
                 entities.ConfigGroup,
                 entities.ConfigTemplate,
+                entities.CompliancePolicies,
                 entities.ProvisioningTemplate,
                 # entities.ContentUpload,  # see below
                 entities.ContentCredential,
@@ -278,6 +279,7 @@ class PathTestCase(TestCase):
                 (entities.Role, '/roles'),
                 (entities.ContentView, '/content_views'),
                 (entities.ContentViewVersion, '/content_view_versions'),
+                (entities.CompliancePolicies, '/compliance/policies'),
                 (entities.DiscoveredHost, '/discovered_hosts'),
                 (entities.DiscoveryRule, '/discovery_rules'),
                 (entities.Environment, '/environments'),
@@ -647,6 +649,7 @@ class CreateTestCase(TestCase):
         entities_ = (
             entities.AbstractDockerContainer(self.cfg),
             entities.ConfigGroup(self.cfg),
+            entities.CompliancePolicies(self.cfg),
             entities.DiscoveryRule(self.cfg),
             entities.DockerComputeResource(self.cfg),
             entities.Domain(self.cfg),

@@ -5710,26 +5710,54 @@ class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
         super(PuppetModule, self).__init__(server_config, **kwargs)
 
 
-class CompliancePolicies(Entity, EntityReadMixin):
+class CompliancePolicies(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Policy entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'location': entity_fields.OneToManyField(Location),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
                 length=(4, 30),
                 unique=True
             ),
+            'description': entity_fields.StringField(),
+            'scap_content_id': entity_fields.IntegerField(required=True),
+            'scap_content_profile_id': entity_fields.IntegerField(required=True),
+            'period': entity_fields.StringField(),  # (weekly, monthly, custom)
+            'weekday': entity_fields.StringField(),  # (only if period == “weekly”)
+            'day_of_month': entity_fields.IntegerField(),  # (only if period == “monthly”)
+            'cron_line': entity_fields.StringField(),  # (only if period == “custom”)
+            'hostgroup': entity_fields.OneToManyField(HostGroup),
+            'host': entity_fields.OneToManyField(Host),
+            'tailoring_file_id': entity_fields.IntegerField(),
+            'tailoring_file_profile_id': entity_fields.IntegerField(),
+            'deploy_by': entity_fields.StringField(
+                choices=('puppet', 'ansible', 'manual')),
+            'location': entity_fields.OneToManyField(Location),
             'organization': entity_fields.OneToManyField(Organization),
-            'hosts': entity_fields.OneToManyField(Host)
         }
         self._meta = {
             'api_path': 'api/v2/compliance/policies',
             'server_modes': ('sat')
         }
         super(CompliancePolicies, self).__init__(server_config, **kwargs)
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1746934
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1746934>`_.
+
+        """
+        self.update_json(fields)
+        return self.read()
 
 
 class Realm(
