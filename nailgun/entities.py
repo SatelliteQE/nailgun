@@ -2378,7 +2378,7 @@ class ContentViewFilterRule(
             'version': entity_fields.StringField(),
             'uuid': entity_fields.StringField(),
             'architecture': entity_fields.StringField(),
-            'module_streams': entity_fields.ListField()
+            'module_stream': entity_fields.OneToManyField(ModuleStream),
         }
         super(ContentViewFilterRule, self).__init__(server_config, **kwargs)
         self._meta = {
@@ -2428,7 +2428,7 @@ class ContentViewFilterRule(
             if not hasattr(self.errata, 'errata_id'):
                 self.errata = self.errata.read()
             payload['errata_id'] = self.errata.errata_id
-
+        return payload
 
     def update_payload(self, fields=None):
         """Reset ``errata_id`` from DB ID to ``errata_id``."""
