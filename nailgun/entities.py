@@ -2249,6 +2249,7 @@ class ContentViewVersion(
             'content_view': entity_fields.OneToOneField(ContentView),
             'description': entity_fields.StringField(),
             'environment': entity_fields.OneToManyField(LifecycleEnvironment),
+            'errata_counts': entity_fields.DictField(),
             'file_count': entity_fields.IntegerField(),
             'major': entity_fields.IntegerField(),
             'minor': entity_fields.IntegerField(),
