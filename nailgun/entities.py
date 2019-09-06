@@ -2604,6 +2604,7 @@ class ContentView(
             ),
             'puppet_module': entity_fields.OneToManyField(PuppetModule),
             'repository': entity_fields.OneToManyField(Repository),
+            'solve_dependencies': entity_fields.BooleanField(),
             'version': entity_fields.OneToManyField(ContentViewVersion),
         }
         self._meta = {
