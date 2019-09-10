@@ -2688,6 +2688,7 @@ class ContentViewTestCase(TestCase):
                 "version": "2.0",
                 "environment_ids": [1],
             }],
+            "solve_dependencies": False
         }
 
     def test_read(self):
