@@ -7905,6 +7905,7 @@ class ScapContents(
             'original_filename': entity_fields.StringField(),
             'location': entity_fields.OneToManyField(Location),
             'organization': entity_fields.OneToManyField(Organization),
+            'scap_content_profiles': entity_fields.StringField(),
         }
         self._meta = {
             'api_path': 'api/compliance/scap_contents',
@@ -7937,6 +7938,12 @@ class ScapContents(
                 which
             )
         return super(ScapContents, self).path(which)
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+        """
+        self.update_json(fields)
+        return self.read()
 
     def xml(self, synchronous=True, **kwargs):
         """Download an SCAP content as XML
