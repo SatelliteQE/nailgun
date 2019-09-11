@@ -1891,6 +1891,7 @@ class UpdateTestCase(TestCase):
             entities.Location(self.cfg),
             entities.Media(self.cfg),
             entities.Organization(self.cfg),
+            entities.ScapContents(self.cfg),
             entities.SmartProxy(self.cfg),
             entities.Registry(self.cfg),
             entities.User(self.cfg),
