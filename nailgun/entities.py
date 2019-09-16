@@ -7958,6 +7958,8 @@ class VirtWhoConfig(
         self._fields = {
             'blacklist': entity_fields.StringField(),
             'debug': entity_fields.BooleanField(),
+            'exclude_host_parents': entity_fields.StringField(),
+            'filter_host_parents': entity_fields.StringField(),
             'filtering_mode': entity_fields.IntegerField(
                 choices=[0, 1, 2], default=0, required=True),
             'hypervisor_id': entity_fields.StringField(
@@ -7973,11 +7975,11 @@ class VirtWhoConfig(
                 choices=[60, 120, 240, 480, 720, 1440, 2880, 4320], default=120, required=True),
             'name': entity_fields.StringField(required=True),
             'no_proxy': entity_fields.StringField(),
+            'organization_id': entity_fields.IntegerField(),
             'proxy': entity_fields.StringField(),
             'satellite_url': entity_fields.StringField(required=True),
+            'status': entity_fields.StringField(),
             'whitelist': entity_fields.StringField(),
-            'organization_id': entity_fields.IntegerField(),
-            'status': entity_fields.StringField()
         }
         self._meta = {
             'api_path': 'foreman_virt_who_configure/api/v2/configs',
