@@ -2183,10 +2183,11 @@ class ContentUpload(
             return urljoin(base + '/', str(self.upload_id))
         return super(ContentUpload, self).path(which)
 
-    def upload(self, filepath, filename=None):
+    def upload(self, filepath, content_type=None, filename=None):
         """Upload content.
 
         :param filepath: path to the file that should be chunked and uploaded
+        :param content_type: type of content
         :param filename: name of the file on the server, defaults to the
             last part of the ``filepath`` if not set
         :returns: The server's response, with all JSON decoded.
@@ -2230,7 +2231,7 @@ class ContentUpload(
             uploads = [{'id': content_upload.upload_id, 'name': filename,
                         'size': size, 'checksum': checksum.hexdigest()}]
             # pylint:disable=no-member
-            json = self.repository.import_uploads(uploads)
+            json = self.repository.import_uploads(uploads=uploads, content_type=content_type)
         finally:
             content_upload.delete()
 
@@ -6246,12 +6247,14 @@ class Repository(
             )
         return json
 
-    def import_uploads(self, uploads=None, upload_ids=None, synchronous=True,
+    def import_uploads(self, content_type=None, uploads=None, upload_ids=None, synchronous=True,
                        **kwargs):
         """Import uploads into a repository
 
         It expects either a list of uploads or upload_ids (but not both).
 
+        :param content_type: content type (‘deb’, ‘docker_manifest’, ‘file’, ‘ostree’,
+                ‘puppet_module’, ‘rpm’, ‘srpm’)
         :param uploads: Array of uploads to be imported
         :param upload_ids: Array of upload ids to be imported
         :param synchronous: What should happen if the server returns an HTTP
@@ -6266,9 +6269,9 @@ class Repository(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         if uploads:
-            data = {'uploads': uploads}
+            data = {'uploads': uploads, 'content_type': content_type}
         elif upload_ids:
-            data = {'upload_ids': upload_ids}
+            data = {'upload_ids': upload_ids, 'content_type': content_type}
         response = client.put(self.path('import_uploads'), data, **kwargs)
         json = _handle_response(response, self._server_config, synchronous)
         return json
@@ -8144,3 +8147,22 @@ class ScapContents(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('xml'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
+
+
+class Srpms(Entity, EntityReadMixin, EntitySearchMixin):
+    """A representation of a Srpms entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'arch': entity_fields.StringField(),
+            'checksum': entity_fields.StringField(),
+            'epoch': entity_fields.StringField(),
+            'filename': entity_fields.StringField(),
+            'name': entity_fields.StringField(unique=True),
+            'nvra': entity_fields.StringField(),
+            'release': entity_fields.StringField(),
+            'summary': entity_fields.StringField(),
+            'version': entity_fields.StringField(),
+        }
+        self._meta = {'api_path': 'katello/api/v2/srpms'}
+        super(Srpms, self).__init__(server_config, **kwargs)
