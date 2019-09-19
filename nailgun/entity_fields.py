@@ -200,7 +200,7 @@ class DictField(Field):
 
 
 class IPAddressField(StringField):
-    """Field that represents an IP adrress"""
+    """Field that represents an IP address"""
 
     def gen_value(self):
         """Return a value suitable for a :class:`IPAddressField`."""
@@ -220,7 +220,7 @@ class ListField(Field):
 
 
 class MACAddressField(StringField):
-    """Field that represents a MAC adrress"""
+    """Field that represents a MAC address"""
 
     def gen_value(self):
         """Return a value suitable for a :class:`MACAddressField`."""

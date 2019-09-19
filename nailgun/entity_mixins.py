@@ -1230,7 +1230,7 @@ class EntitySearchMixin(object):
         ``payload`` argument, where ``payload`` is the query sent to the
         server.
 
-        As a precaution, the following is higly recommended:
+        As a precaution, the following is highly recommended:
 
         * :meth:`search` may alter ``fields`` and ``query`` at will.
         * :meth:`search_payload` may alter ``fields`` and ``query`` in an
