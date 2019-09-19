@@ -68,7 +68,7 @@ def _content_type_is_json(kwargs):
 
 
 def _set_content_type(kwargs):
-    """If the 'content-type' header is unset, set it to 'applcation/json'.
+    """If the 'content-type' header is unset, set it to 'application/json'.
 
     The 'content-type' will not be set if doing a file upload as requests will
     automatically set it.
