@@ -7146,6 +7146,7 @@ class Subnet(
                 default=u'DHCP',
             ),
             'cidr': entity_fields.IntegerField(),
+            'description': entity_fields.StringField(),
             'dhcp': entity_fields.OneToOneField(SmartProxy),
             # When reading a subnet, no discovery information is
             # returned by the server. See Bugzilla #1217146.
