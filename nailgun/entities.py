@@ -3372,6 +3372,7 @@ class HostGroup(
             'ptable': entity_fields.OneToOneField(PartitionTable),
             'realm': entity_fields.OneToOneField(Realm),
             'subnet': entity_fields.OneToOneField(Subnet),
+            'group_parameters_attributes': entity_fields.ListField(),
         }
         if _get_version(server_config) >= Version('6.1'):
             self._fields.update({
@@ -3425,6 +3426,7 @@ class HostGroup(
         if attrs is None:
             attrs = self.read_json()
         attrs['parent_id'] = attrs.pop('ancestry')  # either an ID or None
+        attrs['group_parameters_attributes'] = attrs.pop('parameters')
         version = _get_version(self._server_config)
         if version >= Version('6.1') and version < Version('6.2'):
             # We cannot call `self.update_json([])`, as an ID might not be

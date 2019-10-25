@@ -2937,6 +2937,7 @@ class HostGroupTestCase(TestCase):
                 read_json.return_value = {
                     'ancestry': None,
                     'id': 641212,  # random
+                    'parameters': None,
                 }
                 update_json.return_value = {
                     'content_source_id': None,
@@ -2953,6 +2954,7 @@ class HostGroupTestCase(TestCase):
                         'content_view_id': None,
                         'id': 641212,
                         'lifecycle_environment_id': None,
+                        'group_parameters_attributes': None,
                         'parent_id': None,
                     },
                 )
@@ -2976,6 +2978,7 @@ class HostGroupTestCase(TestCase):
                 'content_source_id': None,
                 'content_view_id': None,
                 'lifecycle_environment_id': None,
+                'parameters': None,
             }
             with self.subTest(version=version):
                 # pylint:disable=protected-access
@@ -2992,6 +2995,7 @@ class HostGroupTestCase(TestCase):
                         'id': 641212,
                         'lifecycle_environment_id': None,
                         'parent_id': None,
+                        'group_parameters_attributes': None,
                     },
                 )
             self.read_json_pacther.stop()
