@@ -5715,26 +5715,54 @@ class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
         super(PuppetModule, self).__init__(server_config, **kwargs)
 
 
-class CompliancePolicies(Entity, EntityReadMixin):
+class CompliancePolicies(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
     """A representation of a Policy entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'location': entity_fields.OneToManyField(Location),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
                 length=(4, 30),
                 unique=True
             ),
+            'description': entity_fields.StringField(),
+            'scap_content_id': entity_fields.IntegerField(required=True),
+            'scap_content_profile_id': entity_fields.IntegerField(required=True),
+            'period': entity_fields.StringField(),  # (weekly, monthly, custom)
+            'weekday': entity_fields.StringField(),  # (only if period == “weekly”)
+            'day_of_month': entity_fields.IntegerField(),  # (only if period == “monthly”)
+            'cron_line': entity_fields.StringField(),  # (only if period == “custom”)
+            'hostgroup': entity_fields.OneToManyField(HostGroup),
+            'host': entity_fields.OneToManyField(Host),
+            'tailoring_file_id': entity_fields.IntegerField(),
+            'tailoring_file_profile_id': entity_fields.IntegerField(),
+            'deploy_by': entity_fields.StringField(
+                choices=('puppet', 'ansible', 'manual')),
+            'location': entity_fields.OneToManyField(Location),
             'organization': entity_fields.OneToManyField(Organization),
-            'hosts': entity_fields.OneToManyField(Host)
         }
         self._meta = {
             'api_path': 'api/v2/compliance/policies',
             'server_modes': ('sat')
         }
         super(CompliancePolicies, self).__init__(server_config, **kwargs)
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1746934
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1746934>`_.
+
+        """
+        self.update_json(fields)
+        return self.read()
 
 
 class Realm(
@@ -7862,4 +7890,78 @@ class VirtWhoConfig(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('configs'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+
+class ScapContents(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
+    """A representation of a ScapContents entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'title': entity_fields.StringField(required=True),
+            'scap_file': entity_fields.StringField(required=True),
+            'original_filename': entity_fields.StringField(),
+            'location': entity_fields.OneToManyField(Location),
+            'organization': entity_fields.OneToManyField(Organization),
+            'scap_content_profiles': entity_fields.StringField(),
+        }
+        self._meta = {
+            'api_path': 'api/compliance/scap_contents',
+            'server_modes': ('sat'),
+        }
+        super(ScapContents, self).__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Override :meth:`nailgun.entity_mixins.EntityReadMixin.read` to ignore
+        the ``scap_file``
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('scap_file')
+        return super(ScapContents, self).read(entity, attrs, ignore, params)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        xml
+            api/compliance/scap_contents/:id/xml
+
+        Otherwise, call ``super``.
+
+        """
+        if which in ('xml',):
+            return '{0}/{1}'.format(
+                super(ScapContents, self).path(which='self'),
+                which
+            )
+        return super(ScapContents, self).path(which)
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+        """
+        self.update_json(fields)
+        return self.read()
+
+    def xml(self, synchronous=True, **kwargs):
+        """Download an SCAP content as XML
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('xml'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
