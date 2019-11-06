@@ -2850,6 +2850,20 @@ class ReportTemplateTestCase(TestCase):
         expected_dct[u'report_template']['template'] = 'dog'
         self.assertEqual(expected_dct, report_template.update_payload())
 
+    def test_generate(self):
+        """Generate template"""
+        cfg = config.ServerConfig(url='foo')
+        report_template = entities.ReportTemplate(cfg, id=42)
+        with mock.patch.object(client, 'post') as post:
+            report_template.generate(data={"input_values": {"hosts": "whatever"}})
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(len(post.call_args), 2)
+        self.assertEqual(len(post.call_args[0]), 1)  # post called with 1 positional argument
+        self.assertEqual(len(post.call_args[1]), 1)  # post called with 1 keyword argument
+        self.assertEqual(post.call_args[0][0],
+                         'foo/api/v2/report_templates/42/generate')
+        self.assertEqual(post.call_args[1], {'data': {'input_values': {'hosts': 'whatever'}}})
+
 
 class ProvisioningTemplateTestCase(TestCase):
     """Tests for :class:`nailgun.entities.ProvisioningTemplate`."""
