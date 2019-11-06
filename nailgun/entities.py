@@ -1829,6 +1829,7 @@ class ReportTemplate(
             'location': entity_fields.OneToManyField(Location),
             'template': entity_fields.StringField(required=True),
             'default': entity_fields.BooleanField(required=True),
+            'locked': entity_fields.BooleanField(),
         }
         self._meta = {
             'api_path': 'api/v2/report_templates',
@@ -1863,13 +1864,16 @@ class ReportTemplate(
         The format of the returned path depends on the value of ``which``:
 
         clone
-            /report_templates/clone
+            /report_templates/<id>/clone
+
+        generate
+            /report_templates/<id>/generate
 
         ``super`` is called otherwise.
 
         """
-        if which == 'clone':
-            prefix = 'self' if which == 'clone' else 'base'
+        if which in ('clone', 'generate'):
+            prefix = 'self'
             return '{0}/{1}'.format(
                 super(ReportTemplate, self).path(prefix),
                 which
@@ -1890,6 +1894,22 @@ class ReportTemplate(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('clone'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def generate(self, synchronous=True, **kwargs):
+        """Helper to generate an existing report template
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('generate'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
