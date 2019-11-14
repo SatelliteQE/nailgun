@@ -1422,6 +1422,7 @@ class ReadTestCase(TestCase):
                 (entities.ScapContents, {'scap_file'}),
                 (entities.VirtWhoConfig, {'hypervisor_password'}),
                 (entities.VMWareComputeResource, {'password'}),
+                (entities.DiscoveredHost, {'ip', 'mac', 'root_pass', 'hostgroup'}),
         ):
             with self.subTest(entity):
                 with mock.patch.object(EntityReadMixin, 'read') as read,\

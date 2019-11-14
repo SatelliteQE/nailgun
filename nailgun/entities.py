@@ -939,6 +939,7 @@ class DiscoveredHost(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Foreman Discovered Host entity."""
 
@@ -952,6 +953,8 @@ class DiscoveredHost(
             ),
             'ip': entity_fields.IPAddressField(required=True),
             'mac': entity_fields.MACAddressField(required=True),
+            'hostgroup': entity_fields.OneToOneField(HostGroup),
+            'root_pass': entity_fields.StringField()
         }
         self._meta = {
             'api_path': '/api/v2/discovered_hosts',
@@ -1013,6 +1016,16 @@ class DiscoveredHost(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('facts'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Make sure, ``ip, mac, root_pass and hostgroup`` are in the ignore list for read"""
+        if ignore is None:
+            ignore = set()
+        ignore.add('ip')
+        ignore.add('mac')
+        ignore.add('root_pass')
+        ignore.add('hostgroup')
+        return super(DiscoveredHost, self).read(entity, attrs, ignore, params)
 
 
 class DiscoveryRule(
