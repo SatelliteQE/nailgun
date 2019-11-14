@@ -171,6 +171,7 @@ class InitTestCase(TestCase):
                 entities.SmartProxy,
                 entities.SmartVariable,
                 # entities.Snapshot,  # see below
+                entities.Srpms,
                 entities.Status,
                 entities.Subnet,
                 entities.Subscription,
@@ -3702,6 +3703,33 @@ class PackageTestCase(TestCase):
         repo = entities.Repository(cfg, **repo_kwargs)
         package = entities.Package(cfg, repository=repo, **package_kwargs)
         package_kwargs['repository'] = repo_kwargs
+        self.assertDictEqual(package_kwargs, json.loads(package.to_json()))
+
+
+class SrpmsTestCase(TestCase):
+    """Class with entity Srpms tests"""
+    def test_to_json(self):
+        """Check json serialisation on nested entities"""
+        package_kwargs = {
+            "arch": "src",
+            "checksum": "bc69f30e1a33cff127e44c6caeabc7eb9c2f92ea21a2e6590edcf3e0ebfc87e3",
+            "epoch": "0",
+            "filename": "90-Second-Portraits-1.01b-3.el7.src.rpm",
+            "name": "90-Second-Portraits",
+            "nvra": "90-Second-Portraits-1.01b-3.el7.src",
+            "release": "3.el7",
+            "summary": "Frantic street painting game",
+            "version": "1.01b",
+            "id": 5
+        }
+
+        cfg = config.ServerConfig(
+            url='https://foo.bar', verify=False,
+            auth=('foo', 'bar'))
+        repo_kwargs = {'id': 1, 'content_type': 'yum'}
+        repo = entities.Repository(cfg, **repo_kwargs)
+        entities.ContentUpload(cfg, repository=repo)
+        package = entities.Srpms(cfg, **package_kwargs)
         self.assertDictEqual(package_kwargs, json.loads(package.to_json()))
 
 
