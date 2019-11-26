@@ -95,7 +95,6 @@ class InitTestCase(TestCase):
                 # entities.SyncPlan,  # see below
                 entities.AbstractComputeResource,
                 entities.AbstractContentViewFilter,
-                entities.AbstractDockerContainer,
                 entities.ActivationKey,
                 entities.Architecture,
                 entities.ArfReport,
@@ -117,9 +116,6 @@ class InitTestCase(TestCase):
                 entities.ContentViewVersion,
                 entities.DiscoveredHost,
                 entities.DiscoveryRule,
-                entities.DockerComputeResource,
-                entities.DockerHubContainer,
-                entities.DockerRegistryContainer,
                 entities.Domain,
                 entities.Environment,
                 entities.Errata,
@@ -159,7 +155,6 @@ class InitTestCase(TestCase):
                 entities.RPMContentViewFilter,
                 entities.Realm,
                 entities.RecurringLogic,
-                entities.Registry,
                 entities.Report,
                 entities.Repository,
                 entities.RepositorySet,
@@ -190,10 +185,6 @@ class InitTestCase(TestCase):
             (
                 entities.LibvirtComputeResource,
                 {'display_type': 'VNC', 'set_console_password': False},
-            ),
-            (
-                entities.DockerComputeResource,
-                {'email': 'nobody@example.com', 'url': 'http://example.com'},
             ),
             (entities.ContentUpload, {'repository': 1}),
             (entities.ContentViewComponent, {'composite_content_view': 1}),
@@ -277,7 +268,6 @@ class PathTestCase(TestCase):
     def test_nowhich(self):
         """Execute ``entity().path()`` and ``entity(id=…).path()``."""
         for entity, path in (
-                (entities.AbstractDockerContainer, '/containers'),
                 (entities.ActivationKey, '/activation_keys'),
                 (entities.Capsule, '/capsules'),
                 (entities.ConfigTemplate, '/config_templates'),
@@ -325,8 +315,6 @@ class PathTestCase(TestCase):
     def test_id_and_which(self):
         """Execute ``entity(id=…).path(which=…)``."""
         for entity, which in (
-                (entities.AbstractDockerContainer, 'logs'),
-                (entities.AbstractDockerContainer, 'power'),
                 (entities.ActivationKey, 'add_subscriptions'),
                 (entities.ActivationKey, 'content_override'),
                 (entities.ActivationKey, 'copy'),
@@ -683,11 +671,9 @@ class CreateTestCase(TestCase):
     def test_generic(self):
         """Call ``create`` on a variety of entities."""
         entities_ = (
-            entities.AbstractDockerContainer(self.cfg),
             entities.ConfigGroup(self.cfg),
             entities.CompliancePolicies(self.cfg),
             entities.DiscoveryRule(self.cfg),
-            entities.DockerComputeResource(self.cfg),
             entities.Domain(self.cfg),
             entities.Host(self.cfg),
             entities.HostCollection(self.cfg),
@@ -696,7 +682,6 @@ class CreateTestCase(TestCase):
             entities.Media(self.cfg),
             entities.Organization(self.cfg),
             entities.Realm(self.cfg),
-            entities.Registry(self.cfg),
             entities.ScapContents(self.cfg),
             entities.SmartProxy(self.cfg),
             entities.UserGroup(self.cfg),
@@ -739,7 +724,6 @@ class CreatePayloadTestCase(TestCase):
             (entity, {})
             for entity in (
                 entities.AbstractComputeResource,
-                entities.AbstractDockerContainer,
                 entities.Architecture,
                 entities.ConfigGroup,
                 entities.ConfigTemplate,
@@ -758,7 +742,6 @@ class CreatePayloadTestCase(TestCase):
                 entities.Location,
                 entities.Media,
                 entities.OperatingSystem,
-                entities.Registry,
                 entities.Role,
                 entities.ScapContents,
                 entities.SmartVariable,
@@ -1322,7 +1305,6 @@ class ReadTestCase(TestCase):
         """
         for entity in (
                 # entities.DiscoveryRule,  # see test_discovery_rule
-                # entities.DockerComputeResource,  # see test_attrs_arg_v2
                 # entities.HostGroup,  # see HostGroupTestCase.test_read
                 # entities.Product,  # See Product.test_read
                 # entities.UserGroup,  # see test_attrs_arg_v2
@@ -1361,7 +1343,6 @@ class ReadTestCase(TestCase):
         # purposes.
         test_data = (
             (entities.UserGroup(self.cfg, id=1), {'admin': 'foo'}),
-            (entities.DockerComputeResource(self.cfg, id=1), {'email': 'bar'}),
         )
         for entity, server_response in test_data:
             with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
@@ -1452,17 +1433,6 @@ class ReadTestCase(TestCase):
                     entity(self.cfg).read()
                 # `call_args` is a two-tuple of (positional, keyword) args.
                 self.assertEqual(ignored_attrs, read.call_args[0][2])
-
-    def test_ignore_arg_v2(self):
-        """Call :meth:`nailgun.entities.DockerComputeResource.read`.
-
-        Assert that the entity ignores the 'password' field.
-
-        """
-        with mock.patch.object(EntityReadMixin, 'read') as read:
-            entities.DockerComputeResource(self.cfg).read(attrs={'email': 1})
-        # `call_args` is a two-tuple of (positional, keyword) args.
-        self.assertIn('password', read.call_args[0][2])
 
     def test_ignore_arg_v3(self):
         """Call :meth:`nailgun.entities.AuthSourceLDAP.read`.
@@ -1895,7 +1865,6 @@ class UpdateTestCase(TestCase):
             entities.Organization(self.cfg),
             entities.ScapContents(self.cfg),
             entities.SmartProxy(self.cfg),
-            entities.Registry(self.cfg),
             entities.User(self.cfg),
             entities.UserGroup(self.cfg),
         )
@@ -2027,7 +1996,6 @@ class UpdatePayloadTestCase(TestCase):
             (entities.SmartProxy, {'smart_proxy': {}}),
             (entities.SmartVariable, {'smart_variable': {}}),
             (entities.Subnet, {'subnet': {}}),
-            (entities.Registry, {'registry': {}}),
             (entities.User, {'user': {}}),
             (entities.UserGroup, {'usergroup': {}}),
             (entities.VirtWhoConfig, {'foreman_virt_who_configure_config': {}}),
@@ -2242,8 +2210,6 @@ class GenericTestCase(TestCase):
         sync_plan = {'server_config': cfg, 'id': 1, 'organization': 2}
         hostsubscription = {'server_config': cfg, 'host': 1}
         cls.methods_requests = (
-            (entities.AbstractDockerContainer(**generic).logs, 'get'),
-            (entities.AbstractDockerContainer(**generic).power, 'put'),
             (entities.ActivationKey(**generic).add_host_collection, 'post'),
             (entities.ActivationKey(**generic).add_subscriptions, 'put'),
             (entities.ActivationKey(**generic).remove_subscriptions, 'put'),
@@ -2385,55 +2351,6 @@ class GenericTestCase(TestCase):
                 self.assertEqual(client_request.call_args[1], kwargs)
                 self.assertEqual(handlr.call_count, 1)
                 self.assertEqual(handlr.return_value, response)
-
-
-class AbstractDockerContainerTestCase(TestCase):
-    """Tests for :class:`nailgun.entities.AbstractDockerContainer`."""
-
-    def setUp(self):
-        """Set a server configuration at ``self.cfg``."""
-        self.cfg = config.ServerConfig('http://example.com')
-        self.abstract_dc = entities.AbstractDockerContainer(
-            self.cfg,
-            id=gen_integer(min_value=1),
-        )
-
-    def test_get_fields(self):
-        """Call ``nailgun.entity_mixins.Entity.get_fields``.
-
-        Assert that ``nailgun.entities.DockerHubContainer.get_fields`` and
-        ``nailgun.entities.DockerRegistryContainer.get_fields`` return
-        a dictionary of attributes that match what is returned by
-        ``nailgun.entities.AbstractDockerContainer.get_fields`` but also
-        returns extra attributes unique to them.
-
-        """
-        abstract_docker = entities.AbstractDockerContainer(
-            self.cfg
-        ).get_fields()
-        docker_hub = entities.DockerHubContainer(self.cfg).get_fields()
-        docker_registry = entities.DockerRegistryContainer(
-            self.cfg).get_fields()
-        # Attributes should not match
-        self.assertNotEqual(abstract_docker, docker_hub)
-        self.assertNotEqual(abstract_docker, docker_registry)
-        # All attributes from a `entities.AbstractDockerContainer`
-        # should be found in `entities.DockerHubContainer` and
-        # `entities.DockerRegistyContainer`.
-        for key in abstract_docker:
-            self.assertIn(key, docker_hub)
-            self.assertIn(key, docker_registry)
-        # These fields should be present in a `entities.DockerHubContainer`
-        # class but not in a `entities.AbstractDockerContainer` class.
-        for attr in ['repository_name', 'tag']:
-            self.assertIn(attr, docker_hub)
-            self.assertNotIn(attr, abstract_docker)
-        # These fields should be present in a
-        # `entities.DockerRegistryContainer` class but not in a
-        # `entities.AbstractDockerContainer` class.
-        for attr in ['registry', 'repository_name', 'tag']:
-            self.assertIn(attr, docker_registry)
-            self.assertNotIn(attr, abstract_docker)
 
 
 class ForemanStatusTestCase(TestCase):
