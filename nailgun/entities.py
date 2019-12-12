@@ -4778,6 +4778,45 @@ class LifecycleEnvironment(
             self.prior = results[0]
 
 
+class HTTPProxy(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
+    """A representation of a HTTP Proxy entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(6, 12),
+                unique=True
+            ),
+            'url': entity_fields.URLField(required=True),
+            'username': entity_fields.StringField(),
+            'password': entity_fields.StringField(),
+            'organization': entity_fields.OneToManyField(Organization),
+            'location': entity_fields.OneToManyField(Location),
+        }
+        self._meta = {'api_path': 'api/v2/http_proxies', 'server_modes': ('sat')}
+        super(HTTPProxy, self).__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Make sure, password, organization and location is in the ignore list for read.
+        For more information, see `Bugzilla #1779642
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1779642>`_.
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('password')
+        ignore.add('organization')
+        ignore.add('location')
+        return super(HTTPProxy, self).read(entity, attrs, ignore, params)
+
+
 class Location(
         Entity,
         EntityCreateMixin,
