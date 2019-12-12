@@ -132,6 +132,7 @@ class InitTestCase(TestCase):
                 entities.HostCollectionErrata,
                 entities.HostCollectionPackage,
                 entities.HostGroup,
+                entities.HTTPProxy,
                 entities.KatelloStatus,
                 entities.LibvirtComputeResource,
                 entities.LifecycleEnvironment,
@@ -656,6 +657,7 @@ class CreateTestCase(TestCase):
             entities.Host(self.cfg),
             entities.HostCollection(self.cfg),
             entities.HostGroup(self.cfg),
+            entities.HTTPProxy(self.cfg),
             entities.Location(self.cfg),
             entities.Media(self.cfg),
             entities.Organization(self.cfg),
@@ -1549,6 +1551,20 @@ class ReadTestCase(TestCase):
         # `call_args` is a two-tuple of (positional, keyword) args.
         self.assertIn('root_pass', read.call_args[0][2])
 
+    def test_http_proxy_ignore_arg(self):
+        """Call :meth:`nailgun.entities.HTTPProxy.read`.
+
+        Assert that the entity ignores the ``password, organization and location`` field.
+
+        """
+        with mock.patch.object(EntityReadMixin, 'read') as read:
+            with mock.patch.object(EntityReadMixin, 'read_json'):
+                entities.HTTPProxy(self.cfg).read()
+        # `call_args` is a two-tuple of (positional, keyword) args.
+        self.assertIn('password', read.call_args[0][2])
+        self.assertIn('organization', read.call_args[0][2])
+        self.assertIn('location', read.call_args[0][2])
+
     def test_usergroup_with_external_usergroup(self):
         """Call :meth:`nailgun.entities.ExternalUserGroup.read` for a usergroup with external
         usergroup assigned.
@@ -1775,6 +1791,7 @@ class UpdateTestCase(TestCase):
             entities.Host(self.cfg),
             entities.HostCollection(self.cfg),
             entities.HostGroup(self.cfg),
+            entities.HTTPProxy(self.cfg),
             entities.LifecycleEnvironment(self.cfg),
             entities.Location(self.cfg),
             entities.Media(self.cfg),
