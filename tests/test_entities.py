@@ -3298,6 +3298,19 @@ class HostTestCase(TestCase):
         self.assertEqual(handlr.call_count, 1)
         self.assertEqual(handlr.return_value, response)
 
+    def test_disassociate(self):
+        """Disassociate host"""
+        cfg = config.ServerConfig(url='foo')
+        host = entities.Host(cfg, id=42)
+        with mock.patch.object(client, 'put') as put:
+            host.disassociate()
+        self.assertEqual(put.call_count, 1)
+        self.assertEqual(len(put.call_args), 2)
+        self.assertEqual(len(put.call_args[0]), 1)  # post called with 1 positional argument
+        self.assertEqual(len(put.call_args[1]), 0)  # post called with no keyword argument
+        self.assertEqual(put.call_args[0][0],
+                         'foo/api/v2/hosts/42/disassociate')
+
 
 class PuppetClassTestCase(TestCase):
     """Tests for :class:`nailgun.entities.PuppetClass`."""

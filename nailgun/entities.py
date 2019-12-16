@@ -4117,6 +4117,8 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
             /api/hosts/:host_id/smart_class_variables
         module_streams
             /api/hosts/:host_id/module_streams
+        disassociate
+            /api/hosts/:host_id/disassociate
 
         Otherwise, call ``super``.
 
@@ -4133,6 +4135,7 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
                 'smart_class_parameters',
                 'smart_variables',
                 'module_streams',
+                'disassociate',
         ):
             return '{0}/{1}'.format(
                 super(Host, self).path(which='self'),
@@ -4278,6 +4281,20 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
         if filters is not None:
             entities = self.search_filter(entities, filters)
         return entities
+
+    def disassociate(self, synchronous=True, **kwargs):
+        """Disassociate the host
+
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('disassociate'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class Image(
