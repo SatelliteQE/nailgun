@@ -5467,6 +5467,114 @@ class Product(
         return _handle_response(response, self._server_config, synchronous)
 
 
+class ProductsBulkActions(Entity):
+    """A representation of a Products bulk actions entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._meta = {
+            'api_path': '/katello/api/products/bulk',
+            'server_modes': ('sat', 'sam'),
+        }
+        super(ProductsBulkActions, self).__init__(server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        destroy
+            /products/bulk/destroy
+        sync
+            /products/bulk/sync
+        sync_plan
+            /products/bulk/sync_plan
+        http_proxy
+            /products/bulk/http_proxy
+
+        ``super`` is called otherwise.
+
+        """
+        if which in (
+                'destroy',
+                'sync',
+                'sync_plan',
+                'http_proxy'
+        ):
+            return '{0}/{1}'.format(
+                super(ProductsBulkActions, self).path('base'),
+                which
+            )
+        return super(ProductsBulkActions, self).path(which)
+
+    def destroy(self, synchronous=True, **kwargs):
+        """Helper to destroy one or more products.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('destroy'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def sync(self, synchronous=True, **kwargs):
+        """Helper to sync one or more products.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('sync'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def http_proxy(self, synchronous=True, **kwargs):
+        """Helper to update the http proxy configuration on the repositories of one or more products.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('http_proxy'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def sync_plan(self, synchronous=True, **kwargs):
+        """Helper to sync one or more products.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('sync_plan'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+
 class PartitionTable(
         Entity,
         EntityCreateMixin,
