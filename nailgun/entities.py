@@ -5467,15 +5467,14 @@ class Product(
         return _handle_response(response, self._server_config, synchronous)
 
 
-class ProductsBulkActions(Entity):
+class ProductBulkAction(Entity):
     """A representation of a Products bulk actions entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._meta = {
             'api_path': '/katello/api/products/bulk',
-            'server_modes': ('sat', 'sam'),
         }
-        super(ProductsBulkActions, self).__init__(server_config, **kwargs)
+        super(ProductBulkAction, self).__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -5501,10 +5500,10 @@ class ProductsBulkActions(Entity):
                 'http_proxy'
         ):
             return '{0}/{1}'.format(
-                super(ProductsBulkActions, self).path('base'),
+                super(ProductBulkAction, self).path('base'),
                 which
             )
-        return super(ProductsBulkActions, self).path(which)
+        return super(ProductBulkAction, self).path(which)
 
     def destroy(self, synchronous=True, **kwargs):
         """Helper to destroy one or more products.
@@ -6002,6 +6001,13 @@ class Repository(
             'upstream_username': entity_fields.StringField(),
             'upstream_password': entity_fields.StringField(),
             'verify_ssl_on_sync': entity_fields.BooleanField(),
+            'http_proxy_policy': entity_fields.StringField(
+                choices=(
+                    'global_default_http_proxy',
+                    'none',
+                    'use_selected_http_proxy')
+            ),
+            'http_proxy_id': entity_fields.IntegerField(),
         }
         if _get_version(server_config) < Version('6.1'):
             # Adjust for Satellite 6.0
