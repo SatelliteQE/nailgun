@@ -1308,6 +1308,22 @@ class VMWareComputeResource(AbstractComputeResource):
             entity, attrs, ignore, params)
 
 
+class GCEComputeResource(AbstractComputeResource):
+    """A representation of a Google Compute Resource entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'email': entity_fields.StringField(required=True),
+            'key_path': entity_fields.StringField(required=True),
+            'project': entity_fields.StringField(required=True),
+            'zone': entity_fields.StringField()
+        }
+        super(GCEComputeResource, self).__init__(server_config, **kwargs)
+        self._fields['provider'].default = 'GCE'
+        self._fields['provider'].required = True
+        self._fields['provider_friendly_name'].default = 'GCE'
+
+
 class ConfigGroup(
         Entity,
         EntityCreateMixin,

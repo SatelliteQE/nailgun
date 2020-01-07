@@ -125,6 +125,7 @@ class InitTestCase(TestCase):
                 entities.ForemanStatus,
                 entities.ForemanTask,
                 entities.GPGKey,
+                entities.GCEComputeResource,
                 entities.Host,
                 entities.HostCollection,
                 entities.HostCollectionErrata,
