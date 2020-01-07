@@ -204,6 +204,9 @@ def _payload(fields, values):
                         return _payload(obj.get_fields(), obj.get_values())
                     return obj
 
+                if values[field_name] is None:
+                    continue
+
                 values[field_name] = [
                     parse(obj) for obj in values[field_name]]
     return values
