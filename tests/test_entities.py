@@ -326,6 +326,12 @@ class PathTestCase(TestCase):
                 (entities.ActivationKey, 'releases'),
                 (entities.ActivationKey, 'remove_subscriptions'),
                 (entities.ActivationKey, 'subscriptions'),
+                (entities.AbstractComputeResource, 'available_images'),
+                (entities.AbstractComputeResource, 'available_zones'),
+                (entities.AbstractComputeResource, 'available_flavors'),
+                (entities.AbstractComputeResource, 'available_networks'),
+                (entities.AbstractComputeResource, 'associate'),
+                (entities.AbstractComputeResource, 'images'),
                 (entities.ArfReport, 'download_html'),
                 (entities.ConfigTemplate, 'clone'),
                 (entities.ProvisioningTemplate, 'clone'),
@@ -2235,6 +2241,12 @@ class GenericTestCase(TestCase):
         sync_plan = {'server_config': cfg, 'id': 1, 'organization': 2}
         hostsubscription = {'server_config': cfg, 'host': 1}
         cls.methods_requests = (
+            (entities.AbstractComputeResource(**generic).available_flavors, 'get'),
+            (entities.AbstractComputeResource(**generic).available_images, 'get'),
+            (entities.AbstractComputeResource(**generic).available_zones, 'get'),
+            (entities.AbstractComputeResource(**generic).available_networks, 'get'),
+            (entities.AbstractComputeResource(**generic).associate, 'put'),
+            (entities.AbstractComputeResource(**generic).images, 'get'),
             (entities.ActivationKey(**generic).add_host_collection, 'post'),
             (entities.ActivationKey(**generic).add_subscriptions, 'put'),
             (entities.ActivationKey(**generic).remove_subscriptions, 'put'),
