@@ -899,6 +899,38 @@ class AbstractComputeResource(
         }
         super(AbstractComputeResource, self).__init__(server_config, **kwargs)
 
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        available_images
+            /api/compute_resources/:id/available_images
+        available_flavors
+            /api/compute_resources/:id/available_flavors
+        available_zones
+            /api/compute_resources/:id/available_zones
+        available_networks
+            /api/compute_resources/:id/available_networks
+        images
+            /api/compute_resources/:id/images
+        associate
+            /api/compute_resources/:id/associate
+
+        Otherwise, call ``super``.
+
+        """
+        if which in (
+                'available_images',
+                'available_zones',
+                'available_flavors',
+                'available_networks',
+                'images',
+                'associate'):
+            return '{0}/{1}'.format(
+                super(AbstractComputeResource, self).path(which='self'),
+                which)
+        return super(AbstractComputeResource, self).path(which)
+
     def create_payload(self):
         """Wrap submitted data within an extra dict.
 
@@ -931,6 +963,105 @@ class AbstractComputeResource(
         """
         self.update_json(fields)
         return self.read()
+
+    def available_images(self, synchronous=True, **kwargs):
+        """Get images available to be added to the compute resource
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('available_images'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def available_zones(self, synchronous=True, **kwargs):
+        """Get images available to be added to the compute resource
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('available_zones'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def available_flavors(self, synchronous=True, **kwargs):
+        """Get flavors available to be added to the compute resource
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('available_zones'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def available_networks(self, synchronous=True, **kwargs):
+        """Get networks available to be selected for host provisioning
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('available_networks'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def images(self, synchronous=True, **kwargs):
+        """Get images created in a compute resource
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('images'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def associate(self, synchronous=True, **kwargs):
+        """Associate the host
+
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('associate'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class DiscoveredHost(
@@ -4140,6 +4271,7 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
 
         """
         if which in (
+                'disassociate',
                 'enc',
                 'errata',
                 'errata/apply',
