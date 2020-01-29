@@ -879,6 +879,7 @@ class AbstractComputeResource(
             'organization': entity_fields.OneToManyField(Organization),
             'provider': entity_fields.StringField(
                 choices=(
+                    'AzureRm',
                     'EC2',
                     'GCE',
                     'Libvirt',
@@ -1322,6 +1323,35 @@ class GCEComputeResource(AbstractComputeResource):
         self._fields['provider'].default = 'GCE'
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'GCE'
+
+
+class AzureRMComputeResource(AbstractComputeResource):
+    # pylint: disable=too-many-ancestors
+    """A representation for compute resources with AzureRM provider
+    """
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'tenant': entity_fields.StringField(required=True),
+            'app_ident': entity_fields.StringField(required=True),
+            'sub_id': entity_fields.StringField(required=True),
+            'secret_key': entity_fields.StringField(required=True),
+            'region': entity_fields.StringField(required=True),
+        }
+        super(AzureRMComputeResource, self).__init__(server_config, **kwargs)
+        # Remove 'url' field as not required for AzureRM
+        del self._fields['url']
+        self._fields['provider'].default = 'AzureRm'
+        self._fields['provider'].required = True
+        self._fields['provider_friendly_name'].default = 'Azure Resource Manager'
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Make sure, ``secret_key`` is in the ignore list for read
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('secret_key')
+        return super(AzureRMComputeResource, self).read(entity, attrs, ignore, params)
 
 
 class ConfigGroup(
@@ -3661,7 +3691,7 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
             'host_parameters_attributes': entity_fields.ListField(),
             'image': entity_fields.OneToOneField(Image),
             'interface': entity_fields.OneToManyField(Interface),
-            'interfaces_attributes': entity_fields.ListField(),
+            'interfaces_attributes': entity_fields.DictField(),
             'ip': entity_fields.StringField(),
             'location': entity_fields.OneToOneField(Location, required=True),
             'mac': entity_fields.MACAddressField(),
@@ -4318,6 +4348,7 @@ class Image(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntitySearchMixin,
         EntityUpdateMixin):
     """A representation of a Image entity."""
 
