@@ -100,6 +100,7 @@ class InitTestCase(TestCase):
                 entities.ArfReport,
                 entities.Audit,
                 entities.AuthSourceLDAP,
+                entities.AzureRMComputeResource,
                 entities.Bookmark,
                 entities.Capsule,
                 entities.CommonParameter,
@@ -1425,6 +1426,7 @@ class ReadTestCase(TestCase):
 
         """
         for entity, ignored_attrs in (
+                (entities.AzureRMComputeResource, {'secret_key'}),
                 (entities.Errata,
                  {'content_view_version', 'environment', 'repository'}),
                 (entities.OVirtComputeResource, {'password'}),
