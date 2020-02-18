@@ -21,25 +21,26 @@ makes use of a work-around notes so in its docstring.
 workings of entity classes.
 
 """
-from datetime import datetime
-from sys import version_info
 import hashlib
 import os.path
-from fauxfactory import gen_alphanumeric, gen_choice
+from datetime import datetime
+from sys import version_info
+
+from fauxfactory import gen_alphanumeric
+from fauxfactory import gen_choice
 from packaging.version import Version
 
-from nailgun import client, entity_fields
-from nailgun.entity_mixins import (
-    Entity,
-    EntityCreateMixin,
-    EntityDeleteMixin,
-    EntityReadMixin,
-    EntitySearchMixin,
-    EntityUpdateMixin,
-    _poll_task,
-    _get_entity_ids,
-    _payload,
-)
+from nailgun import client
+from nailgun import entity_fields
+from nailgun.entity_mixins import _get_entity_ids
+from nailgun.entity_mixins import _payload
+from nailgun.entity_mixins import _poll_task
+from nailgun.entity_mixins import Entity
+from nailgun.entity_mixins import EntityCreateMixin
+from nailgun.entity_mixins import EntityDeleteMixin
+from nailgun.entity_mixins import EntityReadMixin
+from nailgun.entity_mixins import EntitySearchMixin
+from nailgun.entity_mixins import EntityUpdateMixin
 from nailgun.entity_mixins import to_json_serializable  # noqa: F401
 
 if version_info.major == 2:  # pragma: no cover

@@ -15,9 +15,10 @@ Each function is modified with the following behaviours:
     http://docs.python-requests.org/en/latest/api/#main-interface
 
 """
+import logging
 from json import dumps
 from warnings import simplefilter
-import logging
+
 import requests
 import urllib3
 

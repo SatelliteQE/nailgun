@@ -1,21 +1,24 @@
 # -*- encoding: utf-8 -*-
 """Tests for :mod:`nailgun.entities`."""
+import inspect
 import json
 import os
-from datetime import datetime, date
-from fauxfactory import gen_integer, gen_string
-from nailgun import client, config, entities
-from nailgun.entity_mixins import (
-    EntityCreateMixin,
-    EntityReadMixin,
-    EntitySearchMixin,
-    EntityUpdateMixin,
-    NoSuchPathError,
-)
-import inspect
-import mock
-
+from datetime import date
+from datetime import datetime
 from sys import version_info
+
+import mock
+from fauxfactory import gen_integer
+from fauxfactory import gen_string
+
+from nailgun import client
+from nailgun import config
+from nailgun import entities
+from nailgun.entity_mixins import EntityCreateMixin
+from nailgun.entity_mixins import EntityReadMixin
+from nailgun.entity_mixins import EntitySearchMixin
+from nailgun.entity_mixins import EntityUpdateMixin
+from nailgun.entity_mixins import NoSuchPathError
 if version_info < (3, 4):
     from unittest2 import TestCase
 else:

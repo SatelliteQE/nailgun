@@ -5,8 +5,9 @@
 Use Requests and standard library modules to accomplish this task.
 
 """
-from pprint import pprint
 import json
+from pprint import pprint
+
 import requests
 
 
