@@ -99,7 +99,7 @@ request on GitHub, but patches are welcome no matter how they arrive.
 You can use pip and make to quickly set up a development environment::
 
     pip install -r requirements.txt -r requirements-dev.txt
-    make lint
+    pre-commit install-hooks
     make test
     make docs-html
 
@@ -113,7 +113,8 @@ Please adhere to the following guidelines:
         * All required entity attributes have to have `required=True` parameter
         * It is preferable to use `alpha` data type for default string values for easier debug procedure
         * In case any workaround is introduced, it is necessary to provide corresponding BZ ID directly into the code docstring
-        * All linting and formatting/style checks would be enforced by Travis-CI and PR would be considered broken until checks are passed successfully.
+        * All linting (flake8) and formatting/style checks would be enforced by Travis-CI and PR would be considered broken until checks are passed successfully.
+        * Use of pre-commit configuration included with repo will ensure style compliance locally before commit, helping reduce travis failures.
 * Adhere to typical commit guidelines:
     * Commits should not cause NailGun’s unit test to fail. If it does, it will the responsibility of contributor to review those failures and fix them in the same PR's or raise another. The tracking of failures would be responsibility of contributor.
     * Commits should be small and coherent. One commit should address one issue.

@@ -17,15 +17,13 @@ import mock
 
 from sys import version_info
 if version_info.major == 2:
-    import httplib as http_client  # pylint:disable=import-error
+    import httplib as http_client
 else:
-    import http.client as http_client  # pylint:disable=import-error
+    import http.client as http_client
 if version_info < (3, 4):
-    from unittest2 import TestCase  # pylint:disable=import-error
+    from unittest2 import TestCase
 else:
     from unittest import TestCase
-
-# pylint:disable=too-many-lines
 # The size of this module is a direct reflection of the size of module
 # `nailgun.entity_mixins`. It would be good to split that module up, then split
 # this module up similarly.
@@ -140,7 +138,6 @@ class EntityWithSearch2(EntityWithSearch):
 
 class MakeEntityFromIdTestCase(TestCase):
     """Tests for :func:`nailgun.entity_mixins._make_entity_from_id`."""
-    # pylint:disable=protected-access
 
     def setUp(self):
         """Set ``self.cfg``."""
@@ -166,12 +163,11 @@ class MakeEntityFromIdTestCase(TestCase):
             self.cfg
         )
         self.assertIsInstance(entity_obj, SampleEntity)
-        self.assertEqual(entity_obj.id, entity_id)  # pylint:disable=no-member
+        self.assertEqual(entity_obj.id, entity_id)
 
 
 class MakeEntitiesFromIdsTestCase(TestCase):
     """Tests for :func:`nailgun.entity_mixins._make_entities_from_ids`."""
-    # pylint:disable=protected-access
 
     def setUp(self):
         """Set ``self.cfg``."""
@@ -254,7 +250,6 @@ class PollTaskTestCase(TestCase):
                         'result': 'not success'
                     }
                     with self.assertRaises(entity_mixins.TaskFailedError):
-                        # pylint:disable=protected-access
                         entity_mixins._poll_task(gen_integer(), self.cfg)
 
     def test__poll_task_success(self):
@@ -272,7 +267,6 @@ class PollTaskTestCase(TestCase):
                     }
                     self.assertEqual(
                         get.return_value.json.return_value,
-                        # pylint:disable=protected-access
                         entity_mixins._poll_task(gen_integer(), self.cfg),
                     )
 
@@ -291,7 +285,7 @@ class EntityTestCase(TestCase):
         """Provide no value for the ``server_config`` argument."""
         with mock.patch.object(config.ServerConfig, 'get') as sc_get:
             self.assertEqual(
-                SampleEntity()._server_config,  # pylint:disable=W0212
+                SampleEntity()._server_config,
                 sc_get.return_value,
             )
         self.assertEqual(sc_get.call_count, 1)
@@ -302,7 +296,7 @@ class EntityTestCase(TestCase):
         try:
             entity_mixins.DEFAULT_SERVER_CONFIG = config.ServerConfig('url')
             self.assertEqual(
-                SampleEntity()._server_config,  # pylint:disable=W0212
+                SampleEntity()._server_config,
                 entity_mixins.DEFAULT_SERVER_CONFIG,
             )
         finally:
@@ -355,7 +349,6 @@ class EntityTestCase(TestCase):
                 },
         ):
             entity = SampleEntity(self.cfg, **values)
-            # pylint:disable=protected-access,attribute-defined-outside-init
             entity._path_fields = {'foo': 1}
             self.assertEqual(
                 entity.get_values(),
@@ -367,7 +360,6 @@ class EntityTestCase(TestCase):
         # e.g. 'https://sat.example.com/katello/api/v2'
         path = '{0}/{1}'.format(
             self.cfg.url,
-            # pylint:disable=protected-access
             SampleEntity(self.cfg)._meta['api_path']
         )
 
@@ -452,10 +444,9 @@ class EntityTestCase(TestCase):
         self.assertNotEqual(mary, mary_none_john)
 
         # Testing List nested objects
-        # noqa pylint:disable=attribute-defined-outside-init
         mary.list = [alice]
         self.assertNotEqual(mary, mary_clone)
-        # noqa pylint:disable=attribute-defined-outside-init
+        # noqa
         mary_clone.list = [alice_clone]
         self.assertEqual(mary, mary_clone)
 
@@ -524,9 +515,8 @@ class EntityTestCase(TestCase):
             config.ServerConfig.get()
         except (KeyError, config.ConfigFileError):
             self.cfg.save()
-        import nailgun  # noqa pylint:disable=unused-variable
-        import tests  # noqa pylint:disable=unused-variable
-        # pylint:disable=eval-used
+        import nailgun  # noqa
+        import tests  # noqa
         self.assertEqual(repr(eval(repr(entity))), target)
 
     def test_repr_v2(self):
@@ -539,7 +529,7 @@ class EntityTestCase(TestCase):
         entity = SampleEntityTwo(self.cfg, id=gen_integer())
         target = (
             'tests.test_entity_mixins.SampleEntityTwo(id={0})'
-            .format(entity.id)  # pylint:disable=no-member
+            .format(entity.id)
         )
         self.assertEqual(repr(entity), target)
         # create default config if it does not exist
@@ -547,9 +537,8 @@ class EntityTestCase(TestCase):
             config.ServerConfig.get()
         except (KeyError, config.ConfigFileError):
             self.cfg.save()
-        import nailgun  # noqa pylint:disable=unused-variable
-        import tests  # noqa pylint:disable=unused-variable
-        # pylint:disable=eval-used
+        import nailgun  # noqa
+        import tests  # noqa
         self.assertEqual(repr(eval(repr(entity))), target)
 
     def test_repr_v3(self):
@@ -576,9 +565,8 @@ class EntityTestCase(TestCase):
             config.ServerConfig.get()
         except (KeyError, config.ConfigFileError):
             self.cfg.save()
-        import nailgun  # noqa pylint:disable=unused-variable
-        import tests  # noqa pylint:disable=unused-variable
-        # pylint:disable=eval-used
+        import nailgun  # noqa
+        import tests  # noqa
         self.assertEqual(repr(eval(repr(entity))), target)
 
 
@@ -631,8 +619,8 @@ class EntityCreateMixinTestCase(TestCase):
             set(entity.get_fields().keys()) - {'id'},
             set(entity.get_values().keys()),
         )
-        self.assertIn(entity.int_choices, (1, 2))  # pylint:disable=no-member
-        self.assertEqual(entity.int_default, 5)  # pylint:disable=no-member
+        self.assertIn(entity.int_choices, (1, 2))
+        self.assertEqual(entity.int_default, 5)
 
     def test_create_raw_v1(self):
         """What happens if the ``create_missing`` arg is not specified?
@@ -753,7 +741,6 @@ class EntityReadMixinTestCase(TestCase):
         self.assertEqual(get.call_args[0][0], self.entity.path())
         self.assertEqual(
             get.call_args[1],
-            # pylint:disable=protected-access
             dict(params=None, **self.entity._server_config.get_client_kwargs())
         )
 
@@ -784,7 +771,7 @@ class EntityReadMixinTestCase(TestCase):
 
         # Make assertions about the call and the returned entity.
         self.assertEqual(
-            entity_2._server_config,  # pylint:disable=protected-access
+            entity_2._server_config,
             self.cfg,
         )
         self.assertEqual(read_json.call_count, 1)
@@ -807,7 +794,7 @@ class EntityReadMixinTestCase(TestCase):
 
         # Make assertions about the call and the returned entity.
         self.assertEqual(
-            entity_2._server_config,  # pylint:disable=protected-access
+            entity_2._server_config,
             self.cfg,
         )
         self.assertEqual(read_json.call_count, 1)
@@ -833,7 +820,7 @@ class EntityReadMixinTestCase(TestCase):
 
         # Make assertions about the call and the returned entity.
         self.assertEqual(
-            entity_2._server_config,  # pylint:disable=protected-access
+            entity_2._server_config,
             self.cfg,
         )
         self.assertEqual(read_json.call_count, 1)
@@ -950,7 +937,7 @@ class EntityUpdateMixinTestCase(TestCase):
 
         cfg = config.ServerConfig('url')
         entities = [TestEntity(cfg, other=None), TestEntity(cfg)]
-        entities[1].other = None  # pylint:disable=W0201
+        entities[1].other = None
         for entity in entities:
             with self.subTest(entity):
                 self.assertEqual(entity.update_payload(), {'other_id': None})
@@ -966,7 +953,6 @@ class EntityUpdateMixinTestCase(TestCase):
         self.assertEqual(put.call_args[0][0], self.entity.path())
         self.assertEqual(
             put.call_args[1],
-            # pylint:disable=protected-access
             self.entity._server_config.get_client_kwargs(),
         )
 
@@ -1024,7 +1010,6 @@ class EntityDeleteMixinTestCase(TestCase):
         self.assertEqual(delete.call_args[0][0], self.entity.path())
         self.assertEqual(
             delete.call_args[1],
-            # pylint:disable=protected-access
             self.entity._server_config.get_client_kwargs(),
         )
 
@@ -1056,7 +1041,6 @@ class EntityDeleteMixinTestCase(TestCase):
         self.assertEqual(poll_task.call_count, 1)
         self.assertEqual(
             poll_task.call_args[0],  # a tuple of (positional, keyword) args
-            # pylint:disable=protected-access
             (response.json.return_value['id'], self.entity._server_config)
         )
 

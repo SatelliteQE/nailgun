@@ -8,18 +8,18 @@ import socket
 
 from sys import version_info
 if version_info.major == 2:
-    from urlparse import urlparse  # pylint:disable=import-error
+    from urlparse import urlparse
 else:
-    from urllib.parse import urlparse  # pylint:disable=E0611,F0401
+    from urllib.parse import urlparse
 if version_info < (3, 4):
-    from unittest2 import TestCase  # pylint:disable=import-error
+    from unittest2 import TestCase
 else:
     from unittest import TestCase
 
 
 # It is OK that this class has no public methods. It just needs to exist for
 # use by other tests, not be independently useful.
-class TestClass(object):  # pylint:disable=too-few-public-methods
+class TestClass(object):
     """A class that is used when testing the OneTo{One,Many}Field classes."""
 
 

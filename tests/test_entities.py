@@ -17,17 +17,15 @@ import mock
 
 from sys import version_info
 if version_info < (3, 4):
-    from unittest2 import TestCase  # pylint:disable=import-error
+    from unittest2 import TestCase
 else:
     from unittest import TestCase
 if version_info.major == 2:
-    from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
+    from httplib import ACCEPTED, NO_CONTENT
     _BUILTIN_OPEN = '__builtin__.open'
 else:
-    from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
+    from http.client import ACCEPTED, NO_CONTENT
     _BUILTIN_OPEN = 'builtins.open'
-
-# pylint:disable=too-many-lines
 # The size of this file is a direct reflection of the size of module
 # `nailgun.entities` and the Satellite API.
 
@@ -621,7 +619,7 @@ class PathTestCase(TestCase):
                 path = sub.path(which)
                 self.assertIn(
                     'organizations/{}/subscriptions/{}'.format(
-                        sub.organization.id,  # pylint:disable=no-member
+                        sub.organization.id,
                         which,
                     ),
                     path
@@ -645,7 +643,7 @@ class PathTestCase(TestCase):
                 path = capsule.path(which)
                 self.assertIn(
                     'capsules/{}/content/{}'.format(
-                        capsule.id,  # pylint:disable=no-member
+                        capsule.id,
                         which.split('_', 1)[1],
                     ),
                     path
@@ -667,7 +665,7 @@ class PathTestCase(TestCase):
                 path = sub.path(which)
                 self.assertIn(
                     'hosts/{}/subscriptions/{}'.format(
-                        sub.host.id,  # pylint:disable=no-member
+                        sub.host.id,
                         which,
                     ),
                     path
@@ -995,7 +993,6 @@ class CreateMissingTestCase(TestCase):
             _get_required_field_names(entity).union(['template_kind']),
             set(entity.get_values().keys()),
         )
-        # pylint:disable=no-member
         self.assertEqual(entity.template_kind.id, tk_id)
 
     def test_report_template_v1(self):
@@ -1073,7 +1070,6 @@ class CreateMissingTestCase(TestCase):
             _get_required_field_names(entity).union(['template_kind']),
             set(entity.get_values().keys()),
         )
-        # pylint:disable=no-member
         self.assertEqual(entity.template_kind.id, tk_id)
 
     def test_domain_v1(self):
@@ -1122,7 +1118,6 @@ class CreateMissingTestCase(TestCase):
 
     def test_host_v2(self):
         """Test ``Host()`` with providing all the optional entities unlinked"""
-        # pylint:disable=no-member,too-many-locals
         org = entities.Organization(self.cfg, id=1)
         loc = entities.Location(self.cfg, id=1)
         domain = entities.Domain(
@@ -1184,7 +1179,6 @@ class CreateMissingTestCase(TestCase):
         """Test ``Host()`` providing optional entities with id only.
         Check that additional read was called for that entities.
         """
-        # pylint:disable=no-member,too-many-locals
         optional = {
             'domain': entities.Domain(self.cfg, id=1),
             'env': entities.Environment(self.cfg, id=1),
@@ -1309,7 +1303,6 @@ class ReadTestCase(TestCase):
                     entity.read()
             self.assertEqual(read.call_count, 1)
             # read.call_args[0][0] is the `entity` argument to read()
-            # pylint:disable=protected-access
             self.assertEqual(read.call_args[0][0]._server_config, self.cfg)
 
     def test_attrs_arg_v1(self):
@@ -1617,7 +1610,6 @@ class ReadTestCase(TestCase):
                 read.return_value = product
                 product = product.read()
                 self.assertTrue(hasattr(product, 'sync_plan'))
-                # pylint:disable=no-member
                 self.assertEqual(product.sync_plan.id, sync_plan.id)
 
     def test_hostgroup_ignore_root_pass(self):
@@ -1855,7 +1847,6 @@ class SearchNormalizeTestCase(TestCase):
                 read.return_value = host
                 host = host.read()
                 self.assertTrue(hasattr(host, 'image'))
-                # pylint:disable=no-member
                 self.assertEqual(host.image.id, image.id)
                 # Image wasn't set
                 read_json.return_value = {
@@ -1864,7 +1855,6 @@ class SearchNormalizeTestCase(TestCase):
                 read.return_value = host
                 host = host.read()
                 self.assertTrue(hasattr(host, 'image'))
-                # pylint:disable=no-member
                 self.assertIsNone(host.image)
 
 
@@ -2513,7 +2503,6 @@ class ConfigTemplateTestCase(TestCase):
             cfg,
             hostgroup=hostgroup,
             environment=env3)
-        # pylint: disable=no-member
         cfg_template.template_combinations.append(combination3)
         attrs = expected_dct[u'config_template']
         attrs['template_combinations_attributes'].append(
@@ -2927,7 +2916,6 @@ class ProvisioningTemplateTestCase(TestCase):
             cfg,
             hostgroup=hostgroup,
             environment=env3)
-        # pylint: disable=no-member
         cfg_template.template_combinations.append(combination3)
         attrs = expected_dct[u'provisioning_template']
         attrs['template_combinations_attributes'].append(
@@ -3051,7 +3039,6 @@ class HostGroupTestCase(TestCase):
             read = self.read_pacther.start()
             update_json = self.update_json_patcher.start()
             with self.subTest(version=version):
-                # pylint:disable=protected-access
                 self.entity._server_config.version = entities.Version(version)
                 read_json.return_value = {
                     'ancestry': None,
@@ -3100,7 +3087,6 @@ class HostGroupTestCase(TestCase):
                 'parameters': None,
             }
             with self.subTest(version=version):
-                # pylint:disable=protected-access
                 self.entity._server_config.version = entities.Version(version)
                 self.entity.read()
                 for meth in (read_json, read):
@@ -3253,7 +3239,6 @@ class HostTestCase(TestCase):
             id=gen_integer(min_value=1),
             owner=gen_integer(min_value=1),
         )
-        # pylint:disable=protected-access
         self.assertEqual(host._owner_type, host.owner_type)
         result = host.get_values()
         self.assertTrue('owner_type' in result)
@@ -3276,7 +3261,6 @@ class HostTestCase(TestCase):
                 id=gen_integer(min_value=1),
             )
             self.assertTrue(isinstance(host.owner, entities.UserGroup))
-            # pylint:disable=no-member
             self.assertEqual(owner_id, host.owner.id)
 
     def test_no_facet_attributes(self):
@@ -3552,7 +3536,6 @@ class SubscriptionTestCase(TestCase):
         which = gen_integer()
         payload = {'organization_id': gen_integer()}
         with mock.patch.object(entities.Subscription, 'path') as path:
-            # pylint:disable=protected-access
             response = self.subscription._org_path(which, payload)
         self.assertEqual(path.call_count, 1)
         self.assertEqual(path.call_args[0], (which,))
@@ -3621,7 +3604,7 @@ class GetOrgTestCase(TestCase):
         with mock.patch.object(entities.Organization, 'search') as search:
             search.return_value = [mock.Mock()]
             self.assertEqual(
-                entities._get_org(*self.args),  # pylint:disable=W0212
+                entities._get_org(*self.args),
                 search.return_value[0].read.return_value,
             )
         self.assertEqual(search.call_count, 1)
@@ -3632,7 +3615,6 @@ class GetOrgTestCase(TestCase):
             with mock.patch.object(entities.Organization, 'search') as search:
                 search.return_value = return_value
                 with self.assertRaises(entities.APIResponseError):
-                    # pylint:disable=protected-access
                     entities._get_org(*self.args)
             self.assertEqual(search.call_count, 1)
 
@@ -3757,7 +3739,7 @@ class HandleResponseTestCase(TestCase):
         response = mock.Mock()
         response.headers = {'content-type': 'application/json'}
         self.assertEqual(
-            entities._handle_response(response, 'foo'),  # pylint:disable=W0212
+            entities._handle_response(response, 'foo'),
             response.json.return_value,
         )
         self.assertEqual(
@@ -3770,7 +3752,7 @@ class HandleResponseTestCase(TestCase):
         response = mock.Mock()
         response.headers = {'content-type': 'application/json; charset=utf-8'}
         self.assertEqual(
-            entities._handle_response(response, 'foo'),  # pylint:disable=W0212
+            entities._handle_response(response, 'foo'),
             response.json.return_value,
         )
         self.assertEqual(
@@ -3783,7 +3765,7 @@ class HandleResponseTestCase(TestCase):
         response = mock.Mock()
         response.headers = {'content-type': 'not_application_json'}
         self.assertEqual(
-            entities._handle_response(response, 'foo'),  # pylint:disable=W0212
+            entities._handle_response(response, 'foo'),
             response.content,
         )
         self.assertEqual(
@@ -3796,7 +3778,7 @@ class HandleResponseTestCase(TestCase):
         response = mock.Mock()
         response.status_code = NO_CONTENT
         self.assertEqual(
-            entities._handle_response(response, 'foo'),  # pylint:disable=W0212
+            entities._handle_response(response, 'foo'),
             None,
         )
         self.assertEqual(response.mock_calls, [mock.call.raise_for_status()])
@@ -3815,7 +3797,7 @@ class HandleResponseTestCase(TestCase):
         response.headers = {'content-type': 'application/json'}
         for args in [response, 'foo'], [response, 'foo', False]:
             self.assertEqual(
-                entities._handle_response(*args),  # pylint:disable=W0212
+                entities._handle_response(*args),
                 response.json.return_value,
             )
             self.assertEqual(
@@ -3836,7 +3818,6 @@ class HandleResponseTestCase(TestCase):
         with mock.patch.object(entities, 'ForemanTask') as foreman_task:
             self.assertEqual(
                 foreman_task.return_value.poll.return_value,
-                # pylint:disable=protected-access
                 entities._handle_response(response, 'foo', True),
             )
 

@@ -22,7 +22,7 @@ import requests
 import urllib3
 
 
-logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
+logger = logging.getLogger(__name__)
 
 # The urllib3 module (which requests uses) refuses to make insecure HTTPS
 # connections. You can override this behaviour by passing `verify=False` to any
@@ -46,7 +46,6 @@ logger = logging.getLogger(__name__)  # pylint:disable=invalid-name
 # out the warnings produced by that library, due to the process-wide nature of
 # Python's warnings and filter system. The `warnings.catch_warnings` context
 # manager is not a good solution to this problem, as it is thread-unsafe.
-# pylint:disable=no-member
 simplefilter(
     'ignore',
     urllib3.exceptions.InsecureRequestWarning,

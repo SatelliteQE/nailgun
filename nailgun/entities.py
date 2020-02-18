@@ -43,20 +43,18 @@ from nailgun.entity_mixins import (
 from nailgun.entity_mixins import to_json_serializable  # noqa: F401
 
 if version_info.major == 2:  # pragma: no cover
-    from httplib import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
-    from urlparse import urljoin  # pylint:disable=import-error
+    from httplib import ACCEPTED, NO_CONTENT
+    from urlparse import urljoin
 else:  # pragma: no cover
-    from http.client import ACCEPTED, NO_CONTENT  # pylint:disable=import-error
-    from urllib.parse import urljoin  # pylint:disable=F0401,E0611
+    from http.client import ACCEPTED, NO_CONTENT
+    from urllib.parse import urljoin  # noqa:F0401,E0611
 
-# pylint:disable=too-many-lines
 # The size of this file is a direct reflection of the size of Satellite's API.
 # This file's size has already been significantly cut down through the use of
 # mixins and fields, and cutting the file down in size further would simply
 # obfuscate the design of the entities. It might be possible to place entity
 # definitions in separate modules, though.
 
-# pylint:disable=attribute-defined-outside-init
 # NailGun aims to be like a traditional database ORM and allow uses of the dot
 # operator such as these:
 #
@@ -323,7 +321,7 @@ class ActivationKey(
         """
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         if 'data' in kwargs and 'id' not in kwargs['data']:
-            kwargs['data']['id'] = self.id  # pylint:disable=no-member
+            kwargs['data']['id'] = self.id
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('copy'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
@@ -660,7 +658,6 @@ class Bookmark(
 
 class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of a Capsule entity."""
-    # pylint:disable=invalid-name
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
@@ -1297,7 +1294,6 @@ class ExternalUserGroup(
         }
         super(ExternalUserGroup, self).__init__(server_config, **kwargs)
         self._meta = {
-            # pylint:disable=no-member
             'api_path': '{0}/external_usergroups'.format(self.usergroup.path()),
         }
 
@@ -1307,7 +1303,7 @@ class ExternalUserGroup(
         if entity is None:
             entity = type(self)(
                 self._server_config,
-                usergroup=self.usergroup,  # pylint:disable=no-member
+                usergroup=self.usergroup,
             )
         if ignore is None:
             ignore = set()
@@ -1368,7 +1364,7 @@ class KatelloStatus(Entity, EntityReadMixin):
         super(KatelloStatus, self).__init__(server_config, **kwargs)
 
 
-class LibvirtComputeResource(AbstractComputeResource):  # pylint:disable=R0901
+class LibvirtComputeResource(AbstractComputeResource):
     """A representation of a Libvirt Compute Resource entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1386,7 +1382,6 @@ class LibvirtComputeResource(AbstractComputeResource):  # pylint:disable=R0901
 
 
 class OVirtComputeResource(AbstractComputeResource):
-    # pylint: disable=too-many-ancestors
     """A representation for compute resources with Ovirt provider
     """
 
@@ -1414,7 +1409,6 @@ class OVirtComputeResource(AbstractComputeResource):
 
 
 class VMWareComputeResource(AbstractComputeResource):
-    # pylint: disable=too-many-ancestors
     """A representation for compute resources with Vmware provider
     """
 
@@ -1457,7 +1451,6 @@ class GCEComputeResource(AbstractComputeResource):
 
 
 class AzureRMComputeResource(AbstractComputeResource):
-    # pylint: disable=too-many-ancestors
     """A representation for compute resources with AzureRM provider
     """
 
@@ -2104,7 +2097,6 @@ class ContentUpload(
         # a ContentUpload does not have an id field, only an upload_id
         self._fields.pop('id')
         self._meta = {
-            # pylint:disable=no-member
             'api_path': '{0}/content_uploads'.format(self.repository.path()),
             'server_modes': ('sat'),
         }
@@ -2129,7 +2121,7 @@ class ContentUpload(
         if entity is None:
             entity = type(self)(
                 self._server_config,
-                repository=self.repository,  # pylint:disable=no-member
+                repository=self.repository,
             )
         if ignore is None:
             ignore = set()
@@ -2165,10 +2157,9 @@ class ContentUpload(
         """
         base = urljoin(
             self._server_config.url + '/',
-            self._meta['api_path']  # pylint:disable=no-member
+            self._meta['api_path']
         )
         if (which == 'self' or which is None) and hasattr(self, 'upload_id'):
-            # pylint:disable=E1101
             return urljoin(base + '/', str(self.upload_id))
         return super(ContentUpload, self).path(which)
 
@@ -2219,7 +2210,6 @@ class ContentUpload(
 
             uploads = [{'id': content_upload.upload_id, 'name': filename,
                         'size': size, 'checksum': checksum.hexdigest()}]
-            # pylint:disable=no-member
             json = self.repository.import_uploads(uploads=uploads, content_type=content_type)
         finally:
             content_upload.delete()
@@ -2353,7 +2343,6 @@ class ContentViewFilterRule(
         self._meta = {
             'server_modes': ('sat'),
             'api_path': '{0}/rules'.format(
-                # pylint:disable=no-member
                 self.content_view_filter.path('self')
             )
         }
@@ -2374,7 +2363,6 @@ class ContentViewFilterRule(
         if entity is None:
             entity = type(self)(
                 self._server_config,
-                # pylint:disable=no-member
                 content_view_filter=self.content_view_filter,
             )
         if attrs is None:
@@ -2527,7 +2515,7 @@ class ContentViewPuppetModule(
         self._meta = {
             'server_modes': ('sat'),
             'api_path': '{0}/content_view_puppet_modules'.format(
-                self.content_view.path('self')  # pylint:disable=no-member
+                self.content_view.path('self')
             )
         }
 
@@ -2552,7 +2540,7 @@ class ContentViewPuppetModule(
         if entity is None:
             entity = type(self)(
                 self._server_config,
-                content_view=self.content_view,  # pylint:disable=no-member
+                content_view=self.content_view,
             )
         if ignore is None:
             ignore = set()
@@ -2712,7 +2700,7 @@ class ContentView(
         """
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         if 'data' in kwargs and 'id' not in kwargs['data']:
-            kwargs['data']['id'] = self.id  # pylint:disable=no-member
+            kwargs['data']['id'] = self.id
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('publish'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
@@ -2748,7 +2736,7 @@ class ContentView(
         """
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         if 'data' in kwargs and 'id' not in kwargs['data']:
-            kwargs['data']['id'] = self.id  # pylint:disable=no-member
+            kwargs['data']['id'] = self.id
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('copy'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
@@ -3287,7 +3275,7 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
         # See nailgun.entity_mixins._poll_task for an explanation of why a
         # private method is called.
         return _poll_task(
-            self.id,  # pylint:disable=no-member
+            self.id,
             self._server_config,
             poll_rate,
             timeout
@@ -3707,7 +3695,6 @@ class HostPackage(Entity):
         }
         super(HostPackage, self).__init__(server_config, **kwargs)
         self._meta = {
-            # pylint:disable=no-member
             'api_path': '{0}/packages'.format(self.host.path()),
             'server_modes': ('sat'),
         }
@@ -3731,7 +3718,6 @@ class HostSubscription(Entity):
         }
         super(HostSubscription, self).__init__(server_config, **kwargs)
         self._meta = {
-            # pylint:disable=no-member
             'api_path': '{0}/subscriptions'.format(self.host.path()),
             'server_modes': ('sat'),
         }
@@ -3793,7 +3779,7 @@ class HostSubscription(Entity):
         return _handle_response(response, self._server_config, synchronous)
 
 
-class Host(  # pylint:disable=too-many-instance-attributes,R0904
+class Host(
         Entity,
         EntityCreateMixin,
         EntityDeleteMixin,
@@ -3861,8 +3847,8 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
 
         # See https://github.com/SatelliteQE/nailgun/issues/258
         if (hasattr(self, 'owner') and hasattr(self.owner, 'id') and
-                isinstance(self.owner.id, Entity)):  # pylint:disable=no-member
-            self.owner = self.owner.id  # pylint:disable=no-member
+                isinstance(self.owner.id, Entity)):
+            self.owner = self.owner.id
 
     @property
     def owner_type(self):
@@ -3882,7 +3868,6 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
         if value == 'User':
             self._fields['owner'] = entity_fields.OneToOneField(User)
             if hasattr(self, 'owner'):
-                # pylint:disable=no-member
                 self.owner = User(
                     self._server_config,
                     id=self.owner.id if isinstance(self.owner, Entity)
@@ -3891,7 +3876,6 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
         elif value == 'Usergroup':
             self._fields['owner'] = entity_fields.OneToOneField(UserGroup)
             if hasattr(self, 'owner'):
-                # pylint:disable=no-member
                 self.owner = UserGroup(
                     self._server_config,
                     id=self.owner.id if isinstance(self.owner, Entity)
@@ -3930,7 +3914,6 @@ class Host(  # pylint:disable=too-many-instance-attributes,R0904
         initialized and not read, and therefore contains only `id` field)
         perform additional read request.
         """
-        # pylint:disable=no-member,too-many-branches,too-many-statements
         super(Host, self).create_missing()
         # See: https://bugzilla.redhat.com/show_bug.cgi?id=1227854
         self.name = self.name.lower()
@@ -4512,7 +4495,6 @@ class Image(
         super(Image, self).__init__(server_config, **kwargs)
         self._meta = {
             'api_path': '{0}/images'.format(
-                # pylint:disable=no-member
                 self.compute_resource.path('self')),
             'server_modes': ('sat'),
         }
@@ -4546,7 +4528,7 @@ class Image(
         if entity is None:
             entity = type(self)(
                 self._server_config,
-                compute_resource=self.compute_resource,  # pylint:disable=E1101
+                compute_resource=self.compute_resource,
             )
         if ignore is None:
             ignore = set()
@@ -4608,7 +4590,6 @@ class Interface(
         }
         super(Interface, self).__init__(server_config, **kwargs)
         self._meta = {
-            # pylint:disable=no-member
             'api_path': '{}/interfaces'.format(self.host.path()),
             'server_modes': ('sat'),
         }
@@ -4637,7 +4618,7 @@ class Interface(
         if entity is None:
             entity = type(self)(
                 self._server_config,
-                host=self.host,  # pylint:disable=no-member
+                host=self.host,
             )
         if attrs is None:
             attrs = self.read_json()
@@ -4664,7 +4645,7 @@ class Interface(
         :class:`Interface` successfully
         """
         for interface in results:
-            interface[u'host_id'] = self.host.id  # pylint:disable=no-member
+            interface[u'host_id'] = self.host.id
         return super(Interface, self).search_normalize(results)
 
 
@@ -4737,14 +4718,14 @@ class LifecycleEnvironment(
         # We call `super` first b/c it populates `self.organization`, and we
         # need that field to perform a search a little later.
         super(LifecycleEnvironment, self).create_missing()
-        if (self.name != 'Library' and  # pylint:disable=no-member
+        if (self.name != 'Library' and
                 not hasattr(self, 'prior')):
             results = self.search({'organization'}, {u'name': u'Library'})
             if len(results) != 1:
                 raise APIResponseError(
                     u'Could not find the "Library" lifecycle environment for '
                     u'organization {0}. Search results: {1}'
-                    .format(self.organization, results)  # pylint:disable=E1101
+                    .format(self.organization, results)
                 )
             self.prior = results[0]
 
@@ -5083,7 +5064,7 @@ class OperatingSystemParameter(
         super(OperatingSystemParameter, self).__init__(server_config, **kwargs)
         self._meta = {
             'api_path': '{0}/parameters'.format(
-                self.operatingsystem.path('self')  # pylint:disable=no-member
+                self.operatingsystem.path('self')
             ),
             'server_modes': ('sat'),
         }
@@ -5109,7 +5090,7 @@ class OperatingSystemParameter(
         if entity is None:
             entity = type(self)(
                 self._server_config,
-                operatingsystem=self.operatingsystem,  # pylint:disable=E1101
+                operatingsystem=self.operatingsystem,
             )
         if ignore is None:
             ignore = set()
@@ -5297,7 +5278,7 @@ class OSDefaultTemplate(
         super(OSDefaultTemplate, self).__init__(server_config, **kwargs)
         self._meta = {
             'api_path': '{0}/os_default_templates'.format(
-                self.operatingsystem.path('self')  # pylint:disable=no-member
+                self.operatingsystem.path('self')
             ),
             'server_modes': ('sat'),
         }
@@ -5310,9 +5291,7 @@ class OSDefaultTemplate(
         if entity is None:
             entity = type(self)(
                 self._server_config,
-                # pylint:disable=no-member
                 operatingsystem=self.operatingsystem,
-                # pylint:enable=no-member
             )
         if ignore is None:
             ignore = set()
@@ -5351,11 +5330,9 @@ class OverrideValue(
         super(OverrideValue, self).__init__(server_config, **kwargs)
         # Create an override value for a specific smart class parameter
         if hasattr(self, 'smart_class_parameter'):
-            # pylint:disable=no-member
             partial_path = self.smart_class_parameter.path('self')
         # Create an override value for a specific smart_variable
         elif hasattr(self, 'smart_variable'):
-            # pylint:disable=no-member
             partial_path = self.smart_variable.path('self')
         else:
             raise TypeError(
@@ -5400,13 +5377,11 @@ class OverrideValue(
             if hasattr(self, 'smart_class_parameter'):
                 entity = type(self)(
                     self._server_config,
-                    # pylint:disable=no-member
                     smart_class_parameter=self.smart_class_parameter,
                 )
             elif hasattr(self, 'smart_variable'):
                 entity = type(self)(
                     self._server_config,
-                    # pylint:disable=no-member
                     smart_variable=self.smart_variable,
                 )
         if ignore is None:
@@ -6341,7 +6316,6 @@ class Repository(
         json = _handle_response(response, self._server_config, synchronous)
         if json['status'] != 'success':
             raise APIResponseError(
-                # pylint:disable=no-member
                 'Received error when uploading file {0} to repository {1}: {2}'
                 .format(kwargs.get('files'), self.id, json)
             )
@@ -6610,7 +6584,7 @@ class RepositorySet(
         if entity is None:
             entity = type(self)(
                 self._server_config,
-                product=self.product,  # pylint:disable=no-member
+                product=self.product,
             )
         if ignore is None:
             ignore = set()
@@ -7119,7 +7093,7 @@ class Snapshot(
         if entity is None:
             entity = type(self)(
                 self._server_config,
-                host=self.host,  # pylint:disable=E1101
+                host=self.host,
             )
         if ignore is None:
             ignore = set()
@@ -7132,7 +7106,7 @@ class Snapshot(
         """
 
         for snapshot in results:
-            snapshot[u'host_id'] = self.host.id  # pylint:disable=no-member
+            snapshot[u'host_id'] = self.host.id
         return super(Snapshot, self).search_normalize(results)
 
     def revert(self, **kwargs):
@@ -7181,7 +7155,6 @@ class SSHKey(
         }
         super(SSHKey, self).__init__(server_config, **kwargs)
         self._meta = {
-            # pylint:disable=no-member
             'api_path': '{0}/ssh_keys'.format(self.user.path()),
         }
 
@@ -7205,7 +7178,7 @@ class SSHKey(
         if entity is None:
             entity = type(self)(
                 self._server_config,
-                user=self.user,  # pylint:disable=no-member
+                user=self.user,
             )
         if ignore is None:
             ignore = set()
@@ -7217,7 +7190,7 @@ class SSHKey(
         :class:`User` successfully
         """
         for sshkey in results:
-            sshkey[u'user_id'] = self.user.id  # pylint:disable=no-member
+            sshkey[u'user_id'] = self.user.id
         return super(SSHKey, self).search_normalize(results)
 
 
@@ -7378,7 +7351,6 @@ class Subscription(
                 'refresh_manifest',
                 'upload'):
             _check_for_value('organization', self.get_values())
-            # pylint:disable=no-member
             return self.organization.path('subscriptions/{0}'.format(which))
         return super(Subscription, self).path(which)
 
@@ -7553,7 +7525,6 @@ class SyncPlan(
         }
         super(SyncPlan, self).__init__(server_config, **kwargs)
         self._meta = {
-            # pylint:disable=no-member
             'api_path': '{0}/sync_plans'.format(self.organization.path()),
         }
 
@@ -7577,7 +7548,7 @@ class SyncPlan(
         if entity is None:
             entity = type(self)(
                 self._server_config,
-                organization=self.organization,  # pylint:disable=no-member
+                organization=self.organization,
             )
         if ignore is None:
             ignore = set()
@@ -7764,13 +7735,13 @@ class System(
         if which == 'subscriptions':
             return '{0}/{1}/{2}'.format(
                 super(System, self).path('base'),
-                self.uuid,  # pylint:disable=no-member
+                self.uuid,
                 which,
             )
         if hasattr(self, 'uuid') and (which is None or which == 'self'):
             return '{0}/{1}'.format(
                 super(System, self).path('base'),
-                self.uuid  # pylint:disable=no-member
+                self.uuid
             )
         return super(System, self).path(which)
 
