@@ -2,11 +2,9 @@
 mock
 unittest2 ; python_version < '3.4'
 
-# For `make lint`. See: https://github.com/SatelliteQE/nailgun/issues/246
-# and https://github.com/SatelliteQE/nailgun/issues/247
+# For `pre-commit`
 flake8
-pylint
-astroid
+pre-commit
 
 # For `make docs-html` and `make docs-clean`
 sphinx

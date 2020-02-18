@@ -25,11 +25,10 @@ with open(os.path.join(ROOT_DIR, 'VERSION')) as handle:
     VERSION = Version(handle.read().strip())
 
 
-# pylint:disable=invalid-name
 # Project Information ---------------------------------------------------------
 
 project = 'NailGun'
-copyright = '2014, Jeremy Audet'  # pylint:disable=redefined-builtin
+copyright = '2014, Jeremy Audet'
 version = VERSION.base_version  # e.g. '1.2'
 release = str(VERSION)  # e.g. '1.2a3.dev4'
 
