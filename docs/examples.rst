@@ -410,7 +410,7 @@ easy to get wrong. For example, one piece of code might place a value named
 ``'verify_ssl'`` in to a dictionary and a second piece of code might retrieve a
 value named ``'verify'``. This is a mistake, but you won't know about it until
 runtime. In contrast, the ``ServerConfig`` objects have an explicit set of
-possible instance attributes, and tools such as Pylint can use this information
+possible instance attributes, and tools such as Flake can use this information
 when linting code. (Similarly, NailGun's entity objects such as ``Organization``
 and ``User`` have an explicit set of possible instance attributes.) Thus,
 NailGun allows for more effective static analysis.

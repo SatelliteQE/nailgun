@@ -6,7 +6,8 @@ python:
 install:
     - pip install -r requirements.txt -r requirements-dev.txt --no-cache-dir
 script:
-    - make lint
+    - pre-commit clean
+    - pre-commit run --all-files
     - make test-coverage
     - make docs-html
     - make docs-clean

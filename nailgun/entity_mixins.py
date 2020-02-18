@@ -15,16 +15,13 @@ from nailgun.entity_fields import (
     IntegerField, OneToManyField, OneToOneField, ListField)
 
 if version_info.major == 2:  # pragma: no cover
-    # pylint:disable=import-error
     from urlparse import urljoin
     import httplib as http_client
     import thread
 else:  # pragma: no cover
-    from urllib.parse import urljoin  # pylint:disable=F0401,E0611
-    import _thread as thread  # pylint:disable=import-error
-    import http.client as http_client  # pylint:disable=import-error
-
-# pylint:disable=too-many-lines
+    from urllib.parse import urljoin
+    import _thread as thread
+    import http.client as http_client
 # This module contains very extensive docstrings, so this module is easier to
 # understand than its size suggests. That said, it could be useful to split
 # each mixin in to a separate module. That would help to ensure that each
@@ -484,12 +481,12 @@ class Entity(object):
         #
         base = urljoin(
             self._server_config.url + '/',
-            self._meta['api_path']  # pylint:disable=no-member
+            self._meta['api_path']
         )
         if which == 'base' or (which is None and not hasattr(self, 'id')):
             return base
         elif (which == 'self' or which is None) and hasattr(self, 'id'):
-            return urljoin(base + '/', str(self.id))  # pylint:disable=E1101
+            return urljoin(base + '/', str(self.id))
         raise NoSuchPathError
 
     def get_fields(self):
@@ -519,7 +516,6 @@ class Entity(object):
         return attrs
 
     def __repr__(self):
-        # pylint: disable=duplicate-code
         return u'{0}.{1}({2})'.format(
             self.__module__,
             type(self).__name__,

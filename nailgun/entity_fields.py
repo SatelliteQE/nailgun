@@ -33,7 +33,6 @@ from fauxfactory import (
     gen_url,
 )
 import random
-# pylint:disable=too-few-public-methods
 # The classes in this module serve a declarative role. It is OK that they don't
 # do much.
 #
@@ -77,7 +76,6 @@ class BooleanField(Field):
 
     def gen_value(self):
         """Return a value suitable for a :class:`BooleanField`."""
-        # pylint:disable=no-self-use
         # See comment near top of module.
         return gen_boolean()
 
@@ -87,7 +85,6 @@ class EmailField(Field):
 
     def gen_value(self):
         """Return a value suitable for a :class:`EmailField`."""
-        # pylint:disable=no-self-use
         # See comment near top of module.
         return gen_email()
 
@@ -97,7 +94,6 @@ class FloatField(Field):
 
     def gen_value(self):
         """Return a value suitable for a :class:`FloatField`."""
-        # pylint:disable=no-self-use
         # See comment near top of module.
         return random.random() * 10000
 
@@ -194,7 +190,6 @@ class DictField(Field):
 
     def gen_value(self):
         """Return a value suitable for a :class:`DictField`."""
-        # pylint:disable=no-self-use
         # See comment near top of module.
         return {}
 

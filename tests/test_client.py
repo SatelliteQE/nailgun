@@ -8,7 +8,7 @@ import requests
 
 from sys import version_info
 if version_info < (3, 4):
-    from unittest2 import TestCase  # pylint:disable=import-error
+    from unittest2 import TestCase
 else:
     from unittest import TestCase
 
@@ -22,7 +22,6 @@ class ContentTypeIsJsonTestCase(TestCase):
                 {'headers': {'content-type': 'application/json'}},
                 {'headers': {'content-type': 'appLICatiON/JSoN'}},
                 {'headers': {'content-type': 'APPLICATION/JSON'}}):
-            # pylint:disable=protected-access
             self.assertTrue(client._content_type_is_json(kwargs))
 
     def test_false(self):
@@ -31,12 +30,10 @@ class ContentTypeIsJsonTestCase(TestCase):
                 {'headers': {'content-type': ''}},
                 {'headers': {'content-type': 'application-json'}},
                 {'headers': {'content-type': 'application/pson'}}):
-            # pylint:disable=protected-access
             self.assertFalse(client._content_type_is_json(kwargs))
 
     def test_false_with_no_headers(self):
         """If no headers passed should return None"""
-        # pylint:disable=protected-access
         self.assertFalse(client._content_type_is_json({}))
 
 
@@ -46,7 +43,7 @@ class SetContentTypeTestCase(TestCase):
     def test_no_value(self):
         """Assert that a content-type is provided if none is set."""
         kwargs = {'headers': {}}
-        client._set_content_type(kwargs)  # pylint:disable=protected-access
+        client._set_content_type(kwargs)
         self.assertEqual(
             kwargs,
             {'headers': {'content-type': 'application/json'}},
@@ -55,13 +52,13 @@ class SetContentTypeTestCase(TestCase):
     def test_existing_value(self):
         """Assert that no content-type is provided if one is set."""
         kwargs = {'headers': {'content-type': ''}}
-        client._set_content_type(kwargs)  # pylint:disable=protected-access
+        client._set_content_type(kwargs)
         self.assertEqual(kwargs, {'headers': {'content-type': ''}})
 
     def test_files_in_kwargs(self):
         """Assert that no content-type is provided if files are given."""
         kwargs = {'files': None}
-        client._set_content_type(kwargs)  # pylint:disable=protected-access
+        client._set_content_type(kwargs)
         self.assertEqual(kwargs, {'files': None})
 
 

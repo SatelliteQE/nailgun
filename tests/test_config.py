@@ -11,11 +11,11 @@ if version_info.major == 2:
     # The `__builtins__` module (note the "s") also provides the `open`
     # function. However, that module is an implementation detail for CPython 2,
     # so it should not be relied on.
-    import __builtin__ as builtins  # pylint:disable=import-error
+    import __builtin__ as builtins
 else:
-    import builtins  # pylint:disable=import-error
+    import builtins
 if version_info < (3, 4):
-    from unittest2 import TestCase  # pylint:disable=import-error
+    from unittest2 import TestCase
 else:
     from unittest import TestCase
 
@@ -165,7 +165,6 @@ class ServerConfigTestCase(TestCase):
     def test_raise_config_file_error(self):
         """Should raise error if path not found"""
         with self.assertRaises(ConfigFileError):
-            # pylint:disable=protected-access
             _get_config_file_path('foo', 'bar')
 
     def test_get_client_kwargs(self):
@@ -215,8 +214,7 @@ class ReprTestCase(TestCase):
         """
         target = "nailgun.config.BaseServerConfig(url='bogus')"
         self.assertEqual(target, repr(BaseServerConfig('bogus')))
-        import nailgun  # noqa pylint:disable=unused-variable
-        # pylint:disable=eval-used
+        import nailgun  # noqa
         self.assertEqual(target, repr(eval(repr(BaseServerConfig('bogus')))))
 
     def test_bsc_v2(self):
@@ -231,8 +229,7 @@ class ReprTestCase(TestCase):
             "nailgun.config.BaseServerConfig(auth='flam', url='flim')",
         )
         self.assertIn(repr(BaseServerConfig('flim', auth='flam')), targets)
-        import nailgun  # noqa pylint:disable=unused-variable
-        # pylint:disable=eval-used
+        import nailgun  # noqa
         self.assertIn(
             repr(eval(repr(BaseServerConfig('flim', auth='flam')))),
             targets
@@ -259,8 +256,7 @@ class ReprTestCase(TestCase):
         """
         target = "nailgun.config.ServerConfig(url='bogus')"
         self.assertEqual(target, repr(ServerConfig('bogus')))
-        import nailgun  # noqa pylint:disable=unused-variable
-        # pylint:disable=eval-used
+        import nailgun  # noqa
         self.assertEqual(target, repr(eval(repr(ServerConfig('bogus')))))
 
     def test_sc_v2(self):
@@ -275,8 +271,7 @@ class ReprTestCase(TestCase):
             "nailgun.config.ServerConfig(auth='flam', url='flim')",
         )
         self.assertIn(repr(ServerConfig('flim', auth='flam')), targets)
-        import nailgun  # noqa pylint:disable=unused-variable
-        # pylint:disable=eval-used
+        import nailgun  # noqa
         self.assertIn(
             repr(eval(repr(ServerConfig('flim', auth='flam')))),
             targets
@@ -307,8 +302,7 @@ class ReprTestCase(TestCase):
             "nailgun.config.ServerConfig(verify='flub', url='flim')",
         )
         self.assertIn(repr(ServerConfig('flim', verify='flub')), targets)
-        import nailgun  # noqa pylint:disable=unused-variable
-        # pylint:disable=eval-used
+        import nailgun  # noqa
         self.assertIn(
             repr(eval(repr(ServerConfig('flim', verify='flub')))),
             targets

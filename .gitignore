@@ -14,3 +14,6 @@ __pycache__/
 # Coverage information
 /.coverage
 /htmlcov/
+
+# Common venv name
+.nailgun/
