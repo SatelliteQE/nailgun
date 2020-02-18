@@ -247,7 +247,6 @@ class ServerConfig(BaseServerConfig):
         the server? No instance attribute is created if no value is provided.
 
     """
-    # pylint:disable=too-few-public-methods
     # It's OK that this class has only one public method. This class is
     # intentionally small so that the parent class can be re-used.
     _xdg_config_dir = 'nailgun'
