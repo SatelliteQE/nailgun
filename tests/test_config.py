@@ -1,12 +1,16 @@
 """Unit tests for :mod:`nailgun.config`."""
-from mock import call, mock_open, patch
-from nailgun.config import (
-    BaseServerConfig, ServerConfig, _get_config_file_path, ConfigFileError
-)
-from packaging.version import parse
 import json
-
 from sys import version_info
+
+from mock import call
+from mock import mock_open
+from mock import patch
+from packaging.version import parse
+
+from nailgun.config import _get_config_file_path
+from nailgun.config import BaseServerConfig
+from nailgun.config import ConfigFileError
+from nailgun.config import ServerConfig
 if version_info.major == 2:
     # The `__builtins__` module (note the "s") also provides the `open`
     # function. However, that module is an implementation detail for CPython 2,

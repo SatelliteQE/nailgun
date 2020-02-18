@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """Unit tests for :mod:`nailgun.entity_fields`."""
-from fauxfactory.constants import VALID_NETMASKS
-from nailgun import entity_fields
-from random import randint
 import datetime
 import socket
-
+from random import randint
 from sys import version_info
+
+from fauxfactory.constants import VALID_NETMASKS
+
+from nailgun import entity_fields
 if version_info.major == 2:
     from urlparse import urlparse
 else:

@@ -7,11 +7,13 @@ server. :class:`nailgun.config.ServerConfig` eases the task of managing and
 presenting that information.
 
 """
-from os.path import isfile, join
-from packaging.version import parse
-from threading import Lock
-from xdg import BaseDirectory
 import json
+from os.path import isfile
+from os.path import join
+from threading import Lock
+
+from packaging.version import parse
+from xdg import BaseDirectory
 
 
 class ConfigFileError(Exception):

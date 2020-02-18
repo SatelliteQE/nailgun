@@ -4,15 +4,19 @@ import json as std_json
 import threading
 import time
 from collections import Iterable
-from datetime import date, datetime
+from datetime import date
+from datetime import datetime
 from sys import version_info
 
 from fauxfactory import gen_choice
 from inflection import pluralize
 
-from nailgun import client, config
-from nailgun.entity_fields import (
-    IntegerField, OneToManyField, OneToOneField, ListField)
+from nailgun import client
+from nailgun import config
+from nailgun.entity_fields import IntegerField
+from nailgun.entity_fields import ListField
+from nailgun.entity_fields import OneToManyField
+from nailgun.entity_fields import OneToOneField
 
 if version_info.major == 2:  # pragma: no cover
     from urlparse import urljoin
