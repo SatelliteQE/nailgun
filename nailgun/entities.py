@@ -1086,13 +1086,18 @@ class DiscoveredHost(
 
         facts
             /discovered_hosts/facts
+        refresh_facts
+            /discovered_hosts/<id>/refresh_facts
+        reboot
+            /discovered_hosts/<id>/reboot
 
         ``super`` is called otherwise.
 
         """
-        if which == 'facts':
+        if which in ('facts', 'refresh_facts', 'reboot'):
+            prefix = 'base' if which == 'facts' else 'self'
             return '{0}/{1}'.format(
-                super(DiscoveredHost, self).path(which='base'),
+                super(DiscoveredHost, self).path(which=prefix),
                 which
             )
         return super(DiscoveredHost, self).path(which)
@@ -1134,6 +1139,23 @@ class DiscoveredHost(
         response = client.post(self.path('facts'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
+    def refresh_facts(self, synchronous=True, **kwargs):
+        """Helper to refresh facts for discovered host
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('refresh_facts'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Make sure, ``ip, mac, root_pass and hostgroup`` are in the ignore list for read"""
         if ignore is None:
@@ -1143,6 +1165,23 @@ class DiscoveredHost(
         ignore.add('root_pass')
         ignore.add('hostgroup')
         return super(DiscoveredHost, self).read(entity, attrs, ignore, params)
+
+    def reboot(self, synchronous=True, **kwargs):
+        """Helper to reboot the discovered host
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('reboot'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 
 class DiscoveryRule(
