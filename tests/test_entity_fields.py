@@ -1,21 +1,13 @@
-# -*- coding: utf-8 -*-
 """Unit tests for :mod:`nailgun.entity_fields`."""
 import datetime
 import socket
 from random import randint
-from sys import version_info
+from unittest import TestCase
+from urllib.parse import urlparse
 
 from fauxfactory.constants import VALID_NETMASKS
 
 from nailgun import entity_fields
-if version_info.major == 2:
-    from urlparse import urlparse
-else:
-    from urllib.parse import urlparse
-if version_info < (3, 4):
-    from unittest2 import TestCase
-else:
-    from unittest import TestCase
 
 
 # It is OK that this class has no public methods. It just needs to exist for
@@ -70,7 +62,7 @@ class GenValueTestCase(TestCase):
 
         """
         email = entity_fields.EmailField().gen_value()
-        self.assertIsInstance(email, type(u''))
+        self.assertIsInstance(email, type(''))
         self.assertIn('@', email)
 
     def test_float_field(self):
@@ -87,7 +79,7 @@ class GenValueTestCase(TestCase):
         try:
             socket.inet_aton(addr)
         except socket.error as err:
-            self.fail('({0}) {1}'.format(addr, err))
+            self.fail(f'({addr}) {err}')
 
     def test_mac_address_field(self):
         """Test :meth:`nailgun.entity_fields.MACAddressField.gen_value`.
@@ -147,7 +139,7 @@ class StringFieldTestCase(TestCase):
     def test_str_is_returned(self):
         """Ensure a unicode string at least 1 char long is returned."""
         string = entity_fields.StringField().gen_value()
-        self.assertIsInstance(string, type(u''))
+        self.assertIsInstance(string, type(''))
         self.assertGreater(len(string), 0)
 
     def test_length_arg(self):

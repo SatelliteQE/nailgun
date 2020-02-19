@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The root of the NailGun namespace.
 
 NailGun's modules are organized in to a tree of dependencies, where each module
