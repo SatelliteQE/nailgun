@@ -1,6 +1,7 @@
 """Unit tests for :mod:`nailgun.config`."""
+import builtins
 import json
-from sys import version_info
+from unittest import TestCase
 
 from mock import call
 from mock import mock_open
@@ -11,17 +12,6 @@ from nailgun.config import _get_config_file_path
 from nailgun.config import BaseServerConfig
 from nailgun.config import ConfigFileError
 from nailgun.config import ServerConfig
-if version_info.major == 2:
-    # The `__builtins__` module (note the "s") also provides the `open`
-    # function. However, that module is an implementation detail for CPython 2,
-    # so it should not be relied on.
-    import __builtin__ as builtins
-else:
-    import builtins
-if version_info < (3, 4):
-    from unittest2 import TestCase
-else:
-    from unittest import TestCase
 
 
 FILE_PATH = '/tmp/bogus.json'

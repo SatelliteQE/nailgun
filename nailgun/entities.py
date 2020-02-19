@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 """This module defines all entities which Foreman exposes.
 
 Each class in this module allows you to work with a certain set of logically
@@ -24,7 +23,9 @@ workings of entity classes.
 import hashlib
 import os.path
 from datetime import datetime
-from sys import version_info
+from http.client import ACCEPTED
+from http.client import NO_CONTENT
+from urllib.parse import urljoin  # noqa:F0401,E0611
 
 from fauxfactory import gen_alphanumeric
 from fauxfactory import gen_choice
@@ -42,13 +43,6 @@ from nailgun.entity_mixins import EntityReadMixin
 from nailgun.entity_mixins import EntitySearchMixin
 from nailgun.entity_mixins import EntityUpdateMixin
 from nailgun.entity_mixins import to_json_serializable  # noqa: F401
-
-if version_info.major == 2:  # pragma: no cover
-    from httplib import ACCEPTED, NO_CONTENT
-    from urlparse import urljoin
-else:  # pragma: no cover
-    from http.client import ACCEPTED, NO_CONTENT
-    from urllib.parse import urljoin  # noqa:F0401,E0611
 
 # The size of this file is a direct reflection of the size of Satellite's API.
 # This file's size has already been significantly cut down through the use of
@@ -153,9 +147,7 @@ def _check_for_value(field_name, field_values):
 
     """
     if field_name not in field_values:
-        raise TypeError(
-            'A value must be provided for the "{0}" field.'.format(field_name)
-        )
+        raise TypeError(f'A value must be provided for the "{field_name}" field.')
 
 
 def _get_org(server_config, label):
@@ -168,14 +160,10 @@ def _get_org(server_config, label):
     :returns: An :class:`nailgun.entities.Organization` object.
 
     """
-    organizations = Organization(server_config).search(
-        query={u'search': u'label={0}'.format(label)}
-    )
+    organizations = Organization(server_config).search(query={'search': f'label={label}'})
     if len(organizations) != 1:
-        raise APIResponseError(
-            u'Could not find exactly one organization with label "{0}". '
-            u'Actual search results: {1}'.format(label, organizations)
-        )
+        raise APIResponseError(f'Could not find exactly one organization with label "{label}". '
+                               f'Actual search results: {organizations}')
     return organizations[0].read()
 
 
@@ -445,7 +433,7 @@ class Architecture(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {u'architecture': super(Architecture, self).create_payload()}
+        return {'architecture': super(Architecture, self).create_payload()}
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -938,7 +926,7 @@ class AbstractComputeResource(
 
         """
         return {
-            u'compute_resource': super(
+            'compute_resource': super(
                 AbstractComputeResource,
                 self
             ).create_payload()
@@ -947,7 +935,7 @@ class AbstractComputeResource(
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {
-            u'compute_resource': super(
+            'compute_resource': super(
                 AbstractComputeResource,
                 self
             ).update_payload(fields)
@@ -1117,13 +1105,13 @@ class DiscoveredHost(
 
         """
         return {
-            u'discovered_host': super(DiscoveredHost, self).create_payload()
+            'discovered_host': super(DiscoveredHost, self).create_payload()
         }
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {
-            u'discovered_host': super(
+            'discovered_host': super(
                 DiscoveredHost,
                 self
             ).update_payload(fields)
@@ -1206,7 +1194,7 @@ class DiscoveryRule(
         payload = super(DiscoveryRule, self).create_payload()
         if 'search_' in payload:
             payload['search'] = payload.pop('search_')
-        return {u'discovery_rule': payload}
+        return {'discovery_rule': payload}
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
@@ -1259,7 +1247,7 @@ class DiscoveryRule(
         payload = super(DiscoveryRule, self).update_payload(fields)
         if 'search_' in payload:
             payload['search'] = payload.pop('search_')
-        return {u'discovery_rule': payload}
+        return {'discovery_rule': payload}
 
 
 class ExternalUserGroup(
@@ -1371,7 +1359,7 @@ class LibvirtComputeResource(AbstractComputeResource):
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'display_type': entity_fields.StringField(
-                choices=(u'vnc', u'spice'),
+                choices=('vnc', 'spice'),
                 required=True,
             ),
             'set_console_password': entity_fields.BooleanField(),
@@ -1561,7 +1549,7 @@ class ConfigTemplate(
         if 'template_combinations' in payload:
             payload['template_combinations_attributes'] = payload.pop(
                 'template_combinations')
-        return {u'config_template': payload}
+        return {'config_template': payload}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
@@ -1569,7 +1557,7 @@ class ConfigTemplate(
         if 'template_combinations' in payload:
             payload['template_combinations_attributes'] = payload.pop(
                 'template_combinations')
-        return {u'config_template': payload}
+        return {'config_template': payload}
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -1734,8 +1722,8 @@ class JobInvocation(
                 raise KeyError('Provide either search_query or bookmark_id value')
             for param_name in ['targeting_type', 'inputs']:
                 if param_name not in kwargs['data']:
-                    raise KeyError('Provide {} value'.format(param_name))
-            kwargs['data'] = {u'job_invocation': kwargs['data']}
+                    raise KeyError(f'Provide {param_name} value')
+            kwargs['data'] = {'job_invocation': kwargs['data']}
         response = client.post(self.path('base'), **kwargs)
         response.raise_for_status()
         if synchronous is True:
@@ -1777,19 +1765,19 @@ class JobTemplate(
         """Wrap submitted data within an extra dict."""
 
         payload = super(JobTemplate, self).create_payload()
-        effective_user = payload.pop(u'effective_user', None)
+        effective_user = payload.pop('effective_user', None)
         if effective_user:
-            payload[u'ssh'] = {u'effective_user': effective_user}
+            payload['ssh'] = {'effective_user': effective_user}
 
-        return {u'job_template': payload}
+        return {'job_template': payload}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         payload = super(JobTemplate, self).update_payload(fields)
-        effective_user = payload.pop(u'effective_user', None)
+        effective_user = payload.pop('effective_user', None)
         if effective_user:
-            payload[u'ssh'] = {u'effective_user': effective_user}
-        return {u'job_template': payload}
+            payload['ssh'] = {'effective_user': effective_user}
+        return {'job_template': payload}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Ignore the template inputs when initially reading the job template.
@@ -1871,7 +1859,7 @@ class ProvisioningTemplate(
         if 'template_combinations' in payload:
             payload['template_combinations_attributes'] = payload.pop(
                 'template_combinations')
-        return {u'provisioning_template': payload}
+        return {'provisioning_template': payload}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
@@ -1879,7 +1867,7 @@ class ProvisioningTemplate(
         if 'template_combinations' in payload:
             payload['template_combinations_attributes'] = payload.pop(
                 'template_combinations')
-        return {u'provisioning_template': payload}
+        return {'provisioning_template': payload}
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -1977,7 +1965,7 @@ class ReportTemplate(
         if 'template_combinations' in payload:
             payload['template_combinations_attributes'] = payload.pop(
                 'template_combinations')
-        return {u'report_template': payload}
+        return {'report_template': payload}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
@@ -1985,7 +1973,7 @@ class ReportTemplate(
         if 'template_combinations' in payload:
             payload['template_combinations_attributes'] = payload.pop(
                 'template_combinations')
-        return {u'report_template': payload}
+        return {'report_template': payload}
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -2918,7 +2906,7 @@ class Domain(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {u'domain': super(Domain, self).create_payload()}
+        return {'domain': super(Domain, self).create_payload()}
 
     def create(self, create_missing=None):
         """Manually fetch a complete set of attributes for this entity.
@@ -2956,7 +2944,7 @@ class Domain(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {u'domain': super(Domain, self).update_payload(fields)}
+        return {'domain': super(Domain, self).update_payload(fields)}
 
 
 class Environment(
@@ -2992,7 +2980,7 @@ class Environment(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {u'environment': super(Environment, self).create_payload()}
+        return {'environment': super(Environment, self).create_payload()}
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -3007,7 +2995,7 @@ class Environment(
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {
-            u'environment': super(
+            'environment': super(
                 Environment,
                 self
             ).update_payload(fields)
@@ -3171,7 +3159,7 @@ class Filter(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {u'filter': super(Filter, self).create_payload()}
+        return {'filter': super(Filter, self).create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Deal with different named data returned from the server
@@ -3184,7 +3172,7 @@ class Filter(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {u'filter': super(Filter, self).update_payload(fields)}
+        return {'filter': super(Filter, self).update_payload(fields)}
 
 
 class ForemanStatus(Entity, EntityReadMixin):
@@ -3477,7 +3465,7 @@ class HostGroup(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {u'hostgroup': super(HostGroup, self).create_payload()}
+        return {'hostgroup': super(HostGroup, self).create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Deal with several bugs.
@@ -3532,7 +3520,7 @@ class HostGroup(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {u'hostgroup': super(HostGroup, self).update_payload(fields)}
+        return {'hostgroup': super(HostGroup, self).update_payload(fields)}
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -4017,7 +4005,7 @@ class Host(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {u'host': super(Host, self).create_payload()}
+        return {'host': super(Host, self).create_payload()}
 
     def create(self, create_missing=None):
         """Manually fetch a complete set of attributes for this entity.
@@ -4256,7 +4244,7 @@ class Host(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {u'host': super(Host, self).update_payload(fields)}
+        return {'host': super(Host, self).update_payload(fields)}
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -4502,11 +4490,11 @@ class Image(
 
     def create_payload(self):
         """Wrap submitted data within an extra dict."""
-        return {u'image': super(Image, self).create_payload()}
+        return {'image': super(Image, self).create_payload()}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {u'image': super(Image, self).update_payload(fields)}
+        return {'image': super(Image, self).update_payload(fields)}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
@@ -4646,7 +4634,7 @@ class Interface(
         :class:`Interface` successfully
         """
         for interface in results:
-            interface[u'host_id'] = self.host.id
+            interface['host_id'] = self.host.id
         return super(Interface, self).search_normalize(results)
 
 
@@ -4721,12 +4709,11 @@ class LifecycleEnvironment(
         super(LifecycleEnvironment, self).create_missing()
         if (self.name != 'Library' and
                 not hasattr(self, 'prior')):
-            results = self.search({'organization'}, {u'name': u'Library'})
+            results = self.search({'organization'}, {'name': 'Library'})
             if len(results) != 1:
                 raise APIResponseError(
-                    u'Could not find the "Library" lifecycle environment for '
-                    u'organization {0}. Search results: {1}'
-                    .format(self.organization, results)
+                    'Could not find the "Library" lifecycle environment for '
+                    f'organization {self.organization}. Search results: {results}'
                 )
             self.prior = results[0]
 
@@ -4815,7 +4802,7 @@ class Location(
 
         """
         return {
-            u'location': super(Location, self).create_payload()
+            'location': super(Location, self).create_payload()
         }
 
     def create(self, create_missing=None):
@@ -4854,7 +4841,7 @@ class Location(
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {
-            u'location': super(Location, self).update_payload(fields)
+            'location': super(Location, self).update_payload(fields)
         }
 
 
@@ -4899,7 +4886,7 @@ class Media(
         payload = super(Media, self).create_payload()
         if 'path_' in payload:
             payload['path'] = payload.pop('path_')
-        return {u'medium': payload}
+        return {'medium': payload}
 
     def create(self, create_missing=None):
         """Manually fetch a complete set of attributes for this entity.
@@ -4936,7 +4923,7 @@ class Media(
         payload = super(Media, self).update_payload(fields)
         if 'path_' in payload:
             payload['path'] = payload.pop('path_')
-        return {u'medium': payload}
+        return {'medium': payload}
 
 
 class Model(
@@ -5024,13 +5011,13 @@ class OperatingSystem(
 
         """
         return {
-            u'operatingsystem': super(OperatingSystem, self).create_payload()
+            'operatingsystem': super(OperatingSystem, self).create_payload()
         }
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {
-            u'operatingsystem': super(
+            'operatingsystem': super(
                 OperatingSystem,
                 self
             ).update_payload(fields)
@@ -5230,7 +5217,7 @@ class Organization(
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         org_payload = super(Organization, self).update_payload(fields)
-        payload = {u'organization': org_payload}
+        payload = {'organization': org_payload}
         if 'redhat_repository_url' in org_payload:
             rh_repo_url = org_payload.pop('redhat_repository_url')
             payload['redhat_repository_url'] = rh_repo_url
@@ -5420,12 +5407,9 @@ class Parameter(
         }
         self._fields.update(self._path_fields)
         super(Parameter, self).__init__(server_config, **kwargs)
-        if not any(
-                getattr(self, attr, None) for attr in self._path_fields):
-            raise TypeError(
-                'A value must be provided for any of "{0}" fields.'.format(
-                    self._path_fields.keys())
-            )
+        if not any(getattr(self, attr, None) for attr in self._path_fields):
+            raise TypeError(f'Must provide value for any of "{self._path_fields.keys()}" fields.')
+
         self._parent_type = next(
             attr for attr in self._path_fields if getattr(self, attr, None))
         self._parent_id = getattr(self, self._parent_type).id
@@ -6317,8 +6301,8 @@ class Repository(
         json = _handle_response(response, self._server_config, synchronous)
         if json['status'] != 'success':
             raise APIResponseError(
-                'Received error when uploading file {0} to repository {1}: {2}'
-                .format(kwargs.get('files'), self.id, json)
+                f'Received error when uploading file {kwargs.get("files")} '
+                f'to repository {self.id}: {json}'
             )
         return json
 
@@ -6739,11 +6723,11 @@ class Role(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {u'role': super(Role, self).create_payload()}
+        return {'role': super(Role, self).create_payload()}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {u'role': super(Role, self).update_payload(fields)}
+        return {'role': super(Role, self).update_payload(fields)}
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -6800,7 +6784,7 @@ class Setting(Entity, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin):
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {u'setting': super(Setting, self).update_payload(fields)}
+        return {'setting': super(Setting, self).update_payload(fields)}
 
 
 class SmartProxy(
@@ -6889,10 +6873,9 @@ class SmartProxy(
                 environment_id = kwargs.pop('environment').id
             else:
                 environment_id = kwargs.pop('environment')
-            path = '{0}/environments/{1}/import_puppetclasses'.format(
-                self.path(), environment_id)
+            path = f'{self.path()}/environments/{environment_id}/import_puppetclasses'
         else:
-            path = '{0}/import_puppetclasses'.format(self.path())
+            path = f'{self.path()}/import_puppetclasses'
         return _handle_response(
             client.post(path, **kwargs), self._server_config, synchronous)
 
@@ -6921,7 +6904,7 @@ class SmartProxy(
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {
-            u'smart_proxy': super(SmartProxy, self).update_payload(fields)
+            'smart_proxy': super(SmartProxy, self).update_payload(fields)
         }
 
 
@@ -7013,12 +6996,12 @@ class SmartVariable(
 
     def create_payload(self):
         """Wrap submitted data within an extra dict."""
-        return {u'smart_variable': super(SmartVariable, self).create_payload()}
+        return {'smart_variable': super(SmartVariable, self).create_payload()}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {
-            u'smart_variable':
+            'smart_variable':
                 super(SmartVariable, self).update_payload(fields)
         }
 
@@ -7059,8 +7042,7 @@ class Snapshot(
         }
         super(Snapshot, self).__init__(server_config, **kwargs)
         self._meta = {
-            'api_path': '{0}/snapshots'.format(
-                self.host.path('self')),
+            'api_path': f'{self.host.path("self")}/snapshots',
             'server_modes': ('sat'),
         }
 
@@ -7107,7 +7089,7 @@ class Snapshot(
         """
 
         for snapshot in results:
-            snapshot[u'host_id'] = self.host.id
+            snapshot['host_id'] = self.host.id
         return super(Snapshot, self).search_normalize(results)
 
     def revert(self, **kwargs):
@@ -7155,9 +7137,7 @@ class SSHKey(
             )
         }
         super(SSHKey, self).__init__(server_config, **kwargs)
-        self._meta = {
-            'api_path': '{0}/ssh_keys'.format(self.user.path()),
-        }
+        self._meta = {'api_path': f'{self.user.path()}/ssh_keys'}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
@@ -7191,7 +7171,7 @@ class SSHKey(
         :class:`User` successfully
         """
         for sshkey in results:
-            sshkey[u'user_id'] = self.user.id
+            sshkey['user_id'] = self.user.id
         return super(SSHKey, self).search_normalize(results)
 
 
@@ -7219,7 +7199,7 @@ class Subnet(
         self._fields = {
             'boot_mode': entity_fields.StringField(
                 choices=('Static', 'DHCP',),
-                default=u'DHCP',
+                default='DHCP',
             ),
             'cidr': entity_fields.IntegerField(),
             'description': entity_fields.StringField(),
@@ -7234,12 +7214,12 @@ class Subnet(
             'from_': entity_fields.IPAddressField(),
             'gateway': entity_fields.StringField(),
             'ipam': entity_fields.StringField(
-                choices=(u'DHCP', u'Internal DB'),
-                default=u'DHCP',
+                choices=('DHCP', 'Internal DB'),
+                default='DHCP',
             ),
             'location': entity_fields.OneToManyField(Location),
             'mask': entity_fields.NetmaskField(required=True),
-            'mtu': entity_fields.IntegerField(min_val=68, max_val=4294967295),
+            'mt': entity_fields.IntegerField(min_val=68, max_val=4294967295),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
@@ -7275,7 +7255,7 @@ class Subnet(
         payload = super(Subnet, self).create_payload()
         if 'from_' in payload:
             payload['from'] = payload.pop('from_')
-        return {u'subnet': payload}
+        return {'subnet': payload}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Fetch as many attributes as possible for this entity.
@@ -7306,7 +7286,7 @@ class Subnet(
         payload = super(Subnet, self).update_payload(fields)
         if 'from_' in payload:
             payload['from'] = payload.pop('from_')
-        return {u'subnet': payload}
+        return {'subnet': payload}
 
 
 class Subscription(
@@ -7352,7 +7332,7 @@ class Subscription(
                 'refresh_manifest',
                 'upload'):
             _check_for_value('organization', self.get_values())
-            return self.organization.path('subscriptions/{0}'.format(which))
+            return self.organization.path(f'subscriptions/{which}')
         return super(Subscription, self).path(which)
 
     def _org_path(self, which, payload):
@@ -7525,9 +7505,7 @@ class SyncPlan(
             'foreman_tasks_recurring_logic': entity_fields.OneToOneField(RecurringLogic)
         }
         super(SyncPlan, self).__init__(server_config, **kwargs)
-        self._meta = {
-            'api_path': '{0}/sync_plans'.format(self.organization.path()),
-        }
+        self._meta = {'api_path': f'{self.organization.path()}/sync_plans'}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
@@ -7677,7 +7655,7 @@ class System(
             'description': entity_fields.StringField(),
             'environment': entity_fields.OneToOneField(LifecycleEnvironment),
             'facts': entity_fields.DictField(
-                default={u'uname.machine': u'unknown'},
+                default={'uname.machine': 'unknown'},
                 required=True,
             ),
             'host_collection': entity_fields.OneToManyField(HostCollection),
@@ -7895,7 +7873,7 @@ class UserGroup(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {u'usergroup': super(UserGroup, self).create_payload()}
+        return {'usergroup': super(UserGroup, self).create_payload()}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict.
@@ -7904,7 +7882,7 @@ class UserGroup(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {u'usergroup': super(UserGroup, self).update_payload(fields)}
+        return {'usergroup': super(UserGroup, self).update_payload(fields)}
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
@@ -7997,7 +7975,7 @@ class User(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {u'user': super(User, self).create_payload()}
+        return {'user': super(User, self).create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Do not read the ``password`` argument."""
@@ -8008,7 +7986,7 @@ class User(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {u'user': super(User, self).update_payload(fields)}
+        return {'user': super(User, self).update_payload(fields)}
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -8093,14 +8071,14 @@ class VirtWhoConfig(
         """
         Wraps config in extra dict
         """
-        return {u'foreman_virt_who_configure_config': super(VirtWhoConfig, self).create_payload()}
+        return {'foreman_virt_who_configure_config': super(VirtWhoConfig, self).create_payload()}
 
     def update_payload(self, fields=None):
         """
         Wraps config in extra dict
         """
         return {
-            u'foreman_virt_who_configure_config': super(VirtWhoConfig, self).update_payload(fields)
+            'foreman_virt_who_configure_config': super(VirtWhoConfig, self).update_payload(fields)
         }
 
     def deploy_script(self, synchronous=True, **kwargs):

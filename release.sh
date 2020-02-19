@@ -36,21 +36,19 @@ echo "${NEW_VERSION}" > VERSION
 # Generate the package
 make package-clean package
 
-# Sanity check NailGun packages on both Python 2 and Python 3
-for python in python{2,3}; do
-    venv="$(mktemp --directory)"
-    virtualenv -p "${python}" "${venv}"
-    set +u
-    source "${venv}/bin/activate"
-    set -u
-    for dist in dist/*; do
-        pip install --quiet "${dist}"
-        python -c "import nailgun" 1>/dev/null
-        pip uninstall --quiet --yes nailgun
-    done
-    deactivate
-    rm -rf "${venv}"
+# Sanity check NailGun packages
+venv="$(mktemp --directory)"
+python3 -m virtualenv "${venv}"
+set +u
+source "${venv}/bin/activate"
+set -u
+for dist in dist/*; do
+    pip install --quiet "${dist}"
+    python -c "import nailgun" 1>/dev/null
+    pip uninstall --quiet --yes nailgun
 done
+deactivate
+rm -rf "${venv}"
 
 # Get the changes from last release and commit
 git add VERSION

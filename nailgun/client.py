@@ -114,10 +114,7 @@ def _log_response(response):
     :return: Nothing is returned.
 
     """
-    message = u'Received HTTP {0} response: {1}'.format(
-        response.status_code,
-        response.text
-    )
+    message = f'Received HTTP {response.status_code} response: {response.text}'
     if response.status_code >= 400:  # pragma: no cover
         logger.warning(message)
     else:

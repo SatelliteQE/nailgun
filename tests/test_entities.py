@@ -304,7 +304,7 @@ class PathTestCase(TestCase):
             with self.subTest((entity, path)):
                 self.assertIn(path, entity(self.cfg).path())
                 self.assertIn(
-                    '{}/{}'.format(path, self.id_),
+                    f'{path}/{self.id_}',
                     entity(self.cfg, id=self.id_).path()
                 )
         # Deprecated entities
@@ -314,7 +314,7 @@ class PathTestCase(TestCase):
             with self.subTest((entity, path)):
                 self.assertIn(path, entity(self.cfg_610).path())
                 self.assertIn(
-                    '{}/{}'.format(path, self.id_),
+                    f'{path}/{self.id_}',
                     entity(self.cfg_610, id=self.id_).path()
                 )
 
@@ -381,7 +381,7 @@ class PathTestCase(TestCase):
         ):
             with self.subTest((entity, which)):
                 path = entity(self.cfg, id=self.id_).path(which=which)
-                self.assertIn('{}/{}'.format(self.id_, which), path)
+                self.assertIn(f'{self.id_}/{which}', path)
                 self.assertRegex(path, which + '$')
 
     def test_noid_and_which(self):
@@ -469,7 +469,7 @@ class PathTestCase(TestCase):
                 id=1,
             ).path(which)
             self.assertIn('compliance/arf_reports/1/' + which, path)
-            self.assertRegex(path, '{}$'.format(which))
+            self.assertRegex(path, f'{which}$')
 
     def test_os_default_template(self):
         """ Test ``nailgun.entities.OSDefaultTemplate.path``
@@ -504,7 +504,7 @@ class PathTestCase(TestCase):
                 usergroup=1,
             ).path(which)
             self.assertIn('usergroups/1/external_usergroups/2/' + which, path)
-            self.assertRegex(path, '{}$'.format(which))
+            self.assertRegex(path, f'{which}$')
 
     def test_repository_set(self):
         """Test :meth:`nailgun.entities.RepositorySet.path`.
@@ -528,7 +528,7 @@ class PathTestCase(TestCase):
                 product=1,
             ).path(which)
             self.assertIn('/repository_sets/2/' + which, path)
-            self.assertRegex(path, '{}$'.format(which))
+            self.assertRegex(path, f'{which}$')
 
     def test_snapshot(self):
         """Test :meth:`nailgun.entities.Snapshot.path`.
@@ -550,7 +550,7 @@ class PathTestCase(TestCase):
             host=1,
         ).path(which)
         self.assertIn('hosts/1/snapshots/snapshot-2/' + which, path)
-        self.assertRegex(path, '{}$'.format(which))
+        self.assertRegex(path, f'{which}$')
 
     def test_sync_plan(self):
         """Test :meth:`nailgun.entities.SyncPlan.path`.
@@ -573,7 +573,7 @@ class PathTestCase(TestCase):
                 organization=1,
             ).path(which)
             self.assertIn('organizations/1/sync_plans/2/' + which, path)
-            self.assertRegex(path, '{}$'.format(which))
+            self.assertRegex(path, f'{which}$')
 
     def test_system(self):
         """Test :meth:`nailgun.entities.System.path`.
@@ -594,12 +594,12 @@ class PathTestCase(TestCase):
 
         system = entities.System(self.cfg_610, uuid=self.id_)
         for path in (system.path(), system.path('self')):
-            self.assertIn('/systems/{}'.format(self.id_), path)
-            self.assertRegex(path, '{}$'.format(self.id_))
+            self.assertIn(f'/systems/{self.id_}', path)
+            self.assertRegex(path, f'{self.id_}$')
 
         path = system.path('subscriptions')
-        self.assertIn('/systems/{}/subscriptions'.format(self.id_), path)
-        self.assertRegex(path, '{}$'.format('subscriptions'))
+        self.assertIn('/systems/{self.id_}/subscriptions', path)
+        self.assertRegex(path, 'subscriptions$')
 
     def test_subscription(self):
         """Test :meth:`nailgun.entities.Subscription.path`.
@@ -621,13 +621,10 @@ class PathTestCase(TestCase):
             with self.subTest(which):
                 path = sub.path(which)
                 self.assertIn(
-                    'organizations/{}/subscriptions/{}'.format(
-                        sub.organization.id,
-                        which,
-                    ),
+                    f'organizations/{sub.organization.id}/subscriptions/{which}',
                     path
                 )
-                self.assertRegex(path, '{}$'.format(which))
+                self.assertRegex(path, '{which}$')
 
     def test_capsule(self):
         """Test :meth:`nailgun.entities.Capsule.path`.
@@ -644,14 +641,12 @@ class PathTestCase(TestCase):
                 'content_sync'):
             with self.subTest(which):
                 path = capsule.path(which)
+                which_parts = which.split("_", 1)
                 self.assertIn(
-                    'capsules/{}/content/{}'.format(
-                        capsule.id,
-                        which.split('_', 1)[1],
-                    ),
+                    f'capsules/{capsule.id}/content/{which_parts[1]}',
                     path
                 )
-                self.assertRegex(path, '{}/{}$'.format(*which.split('_', 1)))
+                self.assertRegex(path, f'{which_parts[0]}/{which_parts[1]}$')
 
     def test_hostsubscription(self):
         """Test :meth:`nailgun.entities.HostSubscription.path`.
@@ -667,13 +662,10 @@ class PathTestCase(TestCase):
             with self.subTest(which):
                 path = sub.path(which)
                 self.assertIn(
-                    'hosts/{}/subscriptions/{}'.format(
-                        sub.host.id,
-                        which,
-                    ),
+                    f'hosts/{sub.host.id}/subscriptions/{which}',
                     path
                 )
-                self.assertRegex(path, '{}$'.format(which))
+                self.assertRegex(path, f'{which}$')
 
 
 class CreateTestCase(TestCase):
@@ -2418,12 +2410,12 @@ class FileTestCase(TestCase):
         """Check json serialisation on nested entities"""
         file_kwargs = {
             'id': 1,
-            'name': u'test_file.txt',
-            'path': u'test_file.txt',
-            'uuid': u'3a013738-e5b8-43b2-81f5-3732b6e42776',
+            'name': 'test_file.txt',
+            'path': 'test_file.txt',
+            'uuid': '3a013738-e5b8-43b2-81f5-3732b6e42776',
             'checksum': (
-                u'16c946e116072838b213f622298b74baa75c52c8fee50a6230b4680e3c1'
-                u'36fb1'
+                '16c946e116072838b213f622298b74baa75c52c8fee50a6230b4680e3c1'
+                '36fb1'
             ),
         }
         cfg = config.ServerConfig(
@@ -2492,7 +2484,7 @@ class ConfigTemplateTestCase(TestCase):
             template_kind=8,
             template_combinations=template_combinations)
         expected_dct = {
-            u'config_template': {
+            'config_template': {
                 'name': 'cfg', 'snippet': False, 'template': 'cat',
                 'template_kind_id': 8, 'template_combinations_attributes': [
                     {'environment_id': 1, 'hostgroup_id': 1},
@@ -2507,7 +2499,7 @@ class ConfigTemplateTestCase(TestCase):
             hostgroup=hostgroup,
             environment=env3)
         cfg_template.template_combinations.append(combination3)
-        attrs = expected_dct[u'config_template']
+        attrs = expected_dct['config_template']
         attrs['template_combinations_attributes'].append(
             {'environment_id': 3, 'hostgroup_id': 2}
         )
@@ -2787,9 +2779,10 @@ class ContentViewComponentTestCase(TestCase):
     def test_path(self):
         for which in ['add', 'remove']:
             path = self.cvc.path(which=which)
-            self.assertIn('{}/content_view_components/{}'.format(
-                self.cvc.composite_content_view.id,
-                which), path)
+            self.assertIn(
+                f'{self.cvc.composite_content_view.id}/content_view_components/{which}',
+                path
+            )
             self.assertRegex(path, which + '$')
 
     def test_add(self):
@@ -2856,14 +2849,14 @@ class ReportTemplateTestCase(TestCase):
             default=False,
             template='cat')
         expected_dct = {
-            u'report_template': {
+            'report_template': {
                 'name': 'cfg', 'default': False, 'template': 'cat',
             }
         }
         self.assertEqual(expected_dct, report_template.create_payload())
         # Testing update
         report_template.template = 'dog'
-        expected_dct[u'report_template']['template'] = 'dog'
+        expected_dct['report_template']['template'] = 'dog'
         self.assertEqual(expected_dct, report_template.update_payload())
 
     def test_generate(self):
@@ -2905,7 +2898,7 @@ class ProvisioningTemplateTestCase(TestCase):
             template_kind=8,
             template_combinations=template_combinations)
         expected_dct = {
-            u'provisioning_template': {
+            'provisioning_template': {
                 'name': 'cfg', 'snippet': False, 'template': 'cat',
                 'template_kind_id': 8, 'template_combinations_attributes': [
                     {'environment_id': 1, 'hostgroup_id': 1},
@@ -2920,7 +2913,7 @@ class ProvisioningTemplateTestCase(TestCase):
             hostgroup=hostgroup,
             environment=env3)
         cfg_template.template_combinations.append(combination3)
-        attrs = expected_dct[u'provisioning_template']
+        attrs = expected_dct['provisioning_template']
         attrs['template_combinations_attributes'].append(
             {'environment_id': 3, 'hostgroup_id': 2}
         )
@@ -3639,20 +3632,20 @@ class PackageTestCase(TestCase):
     def test_to_json(self):
         """Check json serialisation on nested entities"""
         package_kwargs = {
-            'nvrea': u'sclo-git25-1.0-2.el7.x86_64',
+            'nvrea': 'sclo-git25-1.0-2.el7.x86_64',
             'checksum': (
-                u'751e639a0b8add0adc0c5cf0bf77693b3197b17533037ce2e7b9daa6188'
-                u'98b99'
+                '751e639a0b8add0adc0c5cf0bf77693b3197b17533037ce2e7b9daa6188'
+                '98b99'
             ),
-            'summary': u'Package that installs sclo-git25',
-            'filename': u'sclo-git25-1.0-2.el7.x86_64.rpm',
-            'epoch': u'0', 'version': u'1.0',
-            'nvra': u'sclo-git25-1.0-2.el7.x86_64',
-            'release': u'2.el7',
-            'sourcerpm': u'sclo-git25-1.0-2.el7.src.rpm',
-            'arch': u'x86_64',
+            'summary': 'Package that installs sclo-git25',
+            'filename': 'sclo-git25-1.0-2.el7.x86_64.rpm',
+            'epoch': '0', 'version': '1.0',
+            'nvra': 'sclo-git25-1.0-2.el7.x86_64',
+            'release': '2.el7',
+            'sourcerpm': 'sclo-git25-1.0-2.el7.src.rpm',
+            'arch': 'x86_64',
             'id': 64529,
-            'name': u'sclo-git25'
+            'name': 'sclo-git25'
         }
         cfg = config.ServerConfig(
             url='https://foo.bar', verify=False,
@@ -3961,20 +3954,20 @@ class JsonSerializableTestCase(TestCase):
     def test_entities(self):
         """Testing nested entities serialization"""
         package_kwargs = {
-            'nvrea': u'sclo-git25-1.0-2.el7.x86_64',
+            'nvrea': 'sclo-git25-1.0-2.el7.x86_64',
             'checksum': (
-                u'751e639a0b8add0adc0c5cf0bf77693b3197b17533037ce2e7b9daa6188'
-                u'98b99'
+                '751e639a0b8add0adc0c5cf0bf77693b3197b17533037ce2e7b9daa6188'
+                '98b99'
             ),
-            'summary': u'Package that installs sclo-git25',
-            'filename': u'sclo-git25-1.0-2.el7.x86_64.rpm',
-            'epoch': u'0', 'version': u'1.0',
-            'nvra': u'sclo-git25-1.0-2.el7.x86_64',
-            'release': u'2.el7',
-            'sourcerpm': u'sclo-git25-1.0-2.el7.src.rpm',
-            'arch': u'x86_64',
+            'summary': 'Package that installs sclo-git25',
+            'filename': 'sclo-git25-1.0-2.el7.x86_64.rpm',
+            'epoch': '0', 'version': '1.0',
+            'nvra': 'sclo-git25-1.0-2.el7.x86_64',
+            'release': '2.el7',
+            'sourcerpm': 'sclo-git25-1.0-2.el7.src.rpm',
+            'arch': 'x86_64',
             'id': 64529,
-            'name': u'sclo-git25'
+            'name': 'sclo-git25'
         }
 
         repo_kwargs = {'id': 3, 'content_type': 'file'}
@@ -4067,7 +4060,7 @@ class VirtWhoConfigTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.server = 'sat.example.com'
-        cls.cfg = config.ServerConfig('http://{}/'.format(cls.server))
+        cls.cfg = config.ServerConfig(f'http://{cls.server}/')
 
     def test_create(self):
         org = entities.Organization(self.cfg, name='vhorg', id=2)

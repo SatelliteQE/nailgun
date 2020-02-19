@@ -1,5 +1,6 @@
-# -*- encoding: utf-8 -*-
 """Defines a set of mixins that provide tools for interacting with entities."""
+import _thread as thread
+import http.client as http_client
 import json as std_json
 import threading
 import time
@@ -7,6 +8,7 @@ from collections import Iterable
 from datetime import date
 from datetime import datetime
 from sys import version_info
+from urllib.parse import urljoin
 
 from fauxfactory import gen_choice
 from inflection import pluralize
@@ -17,15 +19,6 @@ from nailgun.entity_fields import IntegerField
 from nailgun.entity_fields import ListField
 from nailgun.entity_fields import OneToManyField
 from nailgun.entity_fields import OneToOneField
-
-if version_info.major == 2:  # pragma: no cover
-    from urlparse import urljoin
-    import httplib as http_client
-    import thread
-else:  # pragma: no cover
-    from urllib.parse import urljoin
-    import _thread as thread
-    import http.client as http_client
 # This module contains very extensive docstrings, so this module is easier to
 # understand than its size suggests. That said, it could be useful to split
 # each mixin in to a separate module. That would help to ensure that each
@@ -89,7 +82,7 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
     timer = threading.Timer(timeout, raise_task_timeout)
 
     # Poll until the task finishes. The timeout prevents an infinite loop.
-    path = '{0}/foreman_tasks/api/tasks/{1}'.format(server_config.url, task_id)
+    path = f'{server_config.url}/foreman_tasks/api/tasks/{task_id}'
     try:
         timer.start()
         while True:
@@ -102,19 +95,13 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
     except KeyboardInterrupt:  # pragma: no cover
         # raise_task_timeout will raise a KeyboardInterrupt when the timeout
         # expires. Catch the exception and raise TaskTimedOutError
-        raise TaskTimedOutError(
-            'Timed out polling task {0}. Task information: {1}'
-            .format(task_id, task_info)
-        )
+        raise TaskTimedOutError(f'Timed out polling task {task_id}. Task information: {task_info}')
     finally:
         timer.cancel()
 
     # Check for task success or failure.
     if task_info['result'] != 'success':
-        raise TaskFailedError(
-            'Task {0} did not succeed. Task information: {1}'
-            .format(task_id, task_info)
-        )
+        raise TaskFailedError(f'Task {task_id} did not succeed. Task information: {task_info}')
     return task_info
 
 
@@ -255,9 +242,9 @@ def _get_entity_id(field_name, attrs):
         return attrs[field_name_id]
     else:
         raise MissingValueError(
-            'Cannot find a value for the "{0}" field. Searched for keys named '
-            '{1}, but available keys are {2}.'
-            .format(field_name, (field_name, field_name_id), attrs.keys())
+            f'Cannot find a value for the "{field_name}" field. '
+            f'Searched for keys named {field_name}, {field_name_id},'
+            f' but available keys are {attrs.keys()}.'
         )
 
 
@@ -288,13 +275,9 @@ def _get_entity_ids(field_name, attrs):
         return [entity['id'] for entity in attrs[plural_field_name]]
     else:
         raise MissingValueError(
-            'Cannot find a value for the "{0}" field. Searched for keys named '
-            '{1}, but available keys are {2}.'
-            .format(
-                field_name,
-                (field_name_ids, field_name, plural_field_name),
-                attrs.keys()
-            )
+            f'Cannot find a value for the "{field_name}" field. '
+            f'Searched for keys named {field_name_ids}, {field_name}, {plural_field_name} '
+            f'but available keys are {attrs.keys()}.'
         )
 
 
@@ -400,8 +383,7 @@ class Entity(object):
         # Check that a valid set of field values has been passed in.
         if not set(kwargs.keys()).issubset(self._fields.keys()):
             raise NoSuchFieldError(
-                'Valid fields are {0}, but received {1} instead.'
-                .format(self._fields.keys(), kwargs.keys())
+                f'Valid fields are {self._fields.keys()}, but received {kwargs.keys()} instead.'
             )
 
         # Iterate through the values passed in and assign them as instance
@@ -425,10 +407,9 @@ class Entity(object):
                 # `field_value` could have a faulty __iter__ implementation.
                 if not isinstance(field_value, Iterable):
                     raise BadValueError(
-                        'An inappropriate value was assigned to the "{0}" '
+                        f'An inappropriate value was assigned to the "{field_name}" '
                         'field. An iterable of entities and/or entity IDs '
-                        'should be assigned, but the following was given: {1}'
-                        .format(field_name, field_value)
+                        f'should be assigned, but the following was given: {field_value}'
                     )
                 setattr(self, field_name, _make_entities_from_ids(
                     field.gen_value(),
@@ -520,11 +501,11 @@ class Entity(object):
         return attrs
 
     def __repr__(self):
-        return u'{0}.{1}({2})'.format(
+        return '{0}.{1}({2})'.format(
             self.__module__,
             type(self).__name__,
-            u', '.join(
-                u'{0}={1}'.format(key, repr(value))
+            ', '.join(
+                f'{key}={repr(value)}'
                 for key, value
                 in self.get_values().items()
                 if not key.startswith('_')
@@ -1402,15 +1383,14 @@ class EntitySearchMixin(object):
         fields = entities[0].get_fields()  # assume all entities are identical
         if not set(filters).issubset(fields):
             raise NoSuchFieldError(
-                'Valid filters are {0}, but received {1} instead.'
-                .format(fields.keys(), filters.keys())
+                f'Valid filters are {fields.keys()}, but received {filters.keys()} instead.'
             )
         for field_name in filters:
             if isinstance(fields[field_name], (OneToOneField, OneToManyField)):
                 raise NotImplementedError(
                     'Search results cannot (yet?) be locally filtered by '
-                    '`OneToOneField`s and `OneToManyField`s. {0} is a {1}.'
-                    .format(field_name, type(fields[field_name]).__name__)
+                    f'`OneToOneField`s and `OneToManyField`s. '
+                    f'{field_name} is a {type(fields[field_name]).__name__}.'
                 )
 
         # The arguments are sane. Filter away!
