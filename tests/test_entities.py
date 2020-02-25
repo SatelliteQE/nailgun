@@ -381,7 +381,7 @@ class PathTestCase(TestCase):
             with self.subTest((entity, which)):
                 path = entity(self.cfg, id=self.id_).path(which=which)
                 self.assertIn(f'{self.id_}/{which}', path)
-                self.assertRegex(path, which + '$')
+                self.assertRegex(path, fr'{which}$')
 
     def test_noid_and_which(self):
         """Execute ``entity().path(which=…)``."""
@@ -407,7 +407,7 @@ class PathTestCase(TestCase):
             with self.subTest((entity, which)):
                 path = entity(self.cfg).path(which)
                 self.assertIn(which, path)
-                self.assertRegex(path, which + '$')
+                self.assertRegex(path, fr'{which}$')
 
     def test_no_such_path_error(self):
         """Trigger :class:`nailgun.entity_mixins.NoSuchPathError` exceptions.
@@ -468,7 +468,7 @@ class PathTestCase(TestCase):
                 id=1,
             ).path(which)
             self.assertIn('compliance/arf_reports/1/' + which, path)
-            self.assertRegex(path, f'{which}$')
+            self.assertRegex(path, fr'{which}$')
 
     def test_os_default_template(self):
         """ Test ``nailgun.entities.OSDefaultTemplate.path``
@@ -503,7 +503,7 @@ class PathTestCase(TestCase):
                 usergroup=1,
             ).path(which)
             self.assertIn('usergroups/1/external_usergroups/2/' + which, path)
-            self.assertRegex(path, f'{which}$')
+            self.assertRegex(path, fr'{which}$')
 
     def test_repository_set(self):
         """Test :meth:`nailgun.entities.RepositorySet.path`.
@@ -527,7 +527,7 @@ class PathTestCase(TestCase):
                 product=1,
             ).path(which)
             self.assertIn('/repository_sets/2/' + which, path)
-            self.assertRegex(path, f'{which}$')
+            self.assertRegex(path, fr'{which}$')
 
     def test_snapshot(self):
         """Test :meth:`nailgun.entities.Snapshot.path`.
@@ -549,7 +549,7 @@ class PathTestCase(TestCase):
             host=1,
         ).path(which)
         self.assertIn('hosts/1/snapshots/snapshot-2/' + which, path)
-        self.assertRegex(path, f'{which}$')
+        self.assertRegex(path, fr'{which}$')
 
     def test_sync_plan(self):
         """Test :meth:`nailgun.entities.SyncPlan.path`.
@@ -572,7 +572,7 @@ class PathTestCase(TestCase):
                 organization=1,
             ).path(which)
             self.assertIn('organizations/1/sync_plans/2/' + which, path)
-            self.assertRegex(path, f'{which}$')
+            self.assertRegex(path, fr'{which}$')
 
     def test_system(self):
         """Test :meth:`nailgun.entities.System.path`.
@@ -589,16 +589,16 @@ class PathTestCase(TestCase):
         system = entities.System(self.cfg_610)
         for path in (system.path(), system.path('base')):
             self.assertIn('/systems', path)
-            self.assertRegex(path, 'systems$')
+            self.assertRegex(path, r'systems$')
 
         system = entities.System(self.cfg_610, uuid=self.id_)
         for path in (system.path(), system.path('self')):
             self.assertIn(f'/systems/{self.id_}', path)
-            self.assertRegex(path, f'{self.id_}$')
+            self.assertRegex(path, fr'{self.id_}$')
 
         path = system.path('subscriptions')
-        self.assertIn('/systems/{self.id_}/subscriptions', path)
-        self.assertRegex(path, 'subscriptions$')
+        self.assertIn(f'/systems/{self.id_}/subscriptions', path)
+        self.assertRegex(path, r'subscriptions$')
 
     def test_subscription(self):
         """Test :meth:`nailgun.entities.Subscription.path`.
@@ -623,7 +623,7 @@ class PathTestCase(TestCase):
                     f'organizations/{sub.organization.id}/subscriptions/{which}',
                     path
                 )
-                self.assertRegex(path, '{which}$')
+                self.assertRegex(path, fr'{which}$')
 
     def test_capsule(self):
         """Test :meth:`nailgun.entities.Capsule.path`.
@@ -645,7 +645,7 @@ class PathTestCase(TestCase):
                     f'capsules/{capsule.id}/content/{which_parts[1]}',
                     path
                 )
-                self.assertRegex(path, f'{which_parts[0]}/{which_parts[1]}$')
+                self.assertRegex(path, fr'{which_parts[0]}/{which_parts[1]}$')
 
     def test_hostsubscription(self):
         """Test :meth:`nailgun.entities.HostSubscription.path`.
@@ -664,7 +664,7 @@ class PathTestCase(TestCase):
                     f'hosts/{sub.host.id}/subscriptions/{which}',
                     path
                 )
-                self.assertRegex(path, f'{which}$')
+                self.assertRegex(path, fr'{which}$')
 
 
 class CreateTestCase(TestCase):
@@ -2782,7 +2782,7 @@ class ContentViewComponentTestCase(TestCase):
                 f'{self.cvc.composite_content_view.id}/content_view_components/{which}',
                 path
             )
-            self.assertRegex(path, which + '$')
+            self.assertRegex(path, fr'{which}$')
 
     def test_add(self):
         """Check that helper method is sane.
