@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """Create an identical user account on a pair of satellites."""
 from __future__ import print_function
 

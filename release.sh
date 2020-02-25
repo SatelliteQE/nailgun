@@ -38,7 +38,7 @@ make package-clean package
 
 # Sanity check NailGun packages
 venv="$(mktemp --directory)"
-python3 -m virtualenv "${venv}"
+python3 -m venv "${venv}"
 set +u
 source "${venv}/bin/activate"
 set -u
