@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 """Create an identical user account on a pair of satellites."""
 from __future__ import print_function
-from nailgun.config import ServerConfig
-from nailgun.entities import Organization, User
+
 from pprint import pprint
+
+from nailgun.config import ServerConfig
+from nailgun.entities import Organization
+from nailgun.entities import User
 
 
 def main():

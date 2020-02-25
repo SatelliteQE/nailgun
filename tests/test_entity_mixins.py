@@ -3,19 +3,20 @@
 # Python 3.3 and later includes module `ipaddress` in the standard library. If
 # NailGun ever moves past Python 2.x, that module should be used instead of
 # `socket`.
-from fauxfactory import gen_integer
-from nailgun import client, config, entity_mixins
-from nailgun.entity_fields import (
-    IntegerField,
-    ListField,
-    OneToManyField,
-    OneToOneField,
-    StringField,
-)
-from requests.exceptions import HTTPError
-import mock
-
 from sys import version_info
+
+import mock
+from fauxfactory import gen_integer
+from requests.exceptions import HTTPError
+
+from nailgun import client
+from nailgun import config
+from nailgun import entity_mixins
+from nailgun.entity_fields import IntegerField
+from nailgun.entity_fields import ListField
+from nailgun.entity_fields import OneToManyField
+from nailgun.entity_fields import OneToOneField
+from nailgun.entity_fields import StringField
 if version_info.major == 2:
     import httplib as http_client
 else:
