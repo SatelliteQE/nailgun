@@ -94,7 +94,7 @@ class GenValueTestCase(TestCase):
         """
         self.assertRegex(
             entity_fields.MACAddressField().gen_value().upper(),
-            '^([0-9A-F]{2}[:]){5}[0-9A-F]{2}$'
+            r'^([0-9A-F]{2}[:]){5}[0-9A-F]{2}$'
         )
 
     def test_dict_field(self):
