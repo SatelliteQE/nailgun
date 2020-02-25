@@ -2,4 +2,3 @@
 ===============================
 
 .. automodule:: tests.test_entity_mixins
-

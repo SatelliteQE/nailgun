@@ -8,7 +8,9 @@ For more information, see:
 
 """
 import sys
-from setuptools import find_packages, setup  # prefer setuptools over distutils
+
+from setuptools import find_packages
+from setuptools import setup
 
 
 with open('README.rst') as handle:

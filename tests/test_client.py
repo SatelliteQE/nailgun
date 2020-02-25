@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """Unit tests for :mod:`nailgun.client`."""
-from fauxfactory import gen_alpha
-from nailgun import client
 import inspect
+from sys import version_info
+
 import mock
 import requests
+from fauxfactory import gen_alpha
 
-from sys import version_info
+from nailgun import client
 if version_info < (3, 4):
     from unittest2 import TestCase
 else:

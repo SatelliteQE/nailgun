@@ -4,8 +4,8 @@ The full set of configuration options is listed on the Sphinx website:
 http://sphinx-doc.org/config.html
 
 """
-import sys
 import os
+import sys
 
 from packaging.version import Version
 

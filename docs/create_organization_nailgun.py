@@ -5,9 +5,10 @@
 Use NailGun to accomplish this task.
 
 """
+from pprint import pprint
+
 from nailgun.config import ServerConfig
 from nailgun.entities import Organization
-from pprint import pprint
 
 
 def main():

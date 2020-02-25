@@ -18,21 +18,20 @@ still legal, so they will often return nonsense UTF-8 values, which is
 unpleasant to work with manually.
 
 """
-from fauxfactory import (
-    gen_alpha,
-    gen_boolean,
-    gen_choice,
-    gen_date,
-    gen_datetime,
-    gen_email,
-    gen_integer,
-    gen_ipaddr,
-    gen_mac,
-    gen_netmask,
-    gen_string,
-    gen_url,
-)
 import random
+
+from fauxfactory import gen_alpha
+from fauxfactory import gen_boolean
+from fauxfactory import gen_choice
+from fauxfactory import gen_date
+from fauxfactory import gen_datetime
+from fauxfactory import gen_email
+from fauxfactory import gen_integer
+from fauxfactory import gen_ipaddr
+from fauxfactory import gen_mac
+from fauxfactory import gen_netmask
+from fauxfactory import gen_string
+from fauxfactory import gen_url
 # The classes in this module serve a declarative role. It is OK that they don't
 # do much.
 #

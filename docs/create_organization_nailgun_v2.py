@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Create an organization, print out its attributes and delete it."""
-from nailgun.entities import Organization
 from pprint import pprint
+
+from nailgun.entities import Organization
 
 
 def main():
