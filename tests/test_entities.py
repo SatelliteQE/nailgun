@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 """Tests for :mod:`nailgun.entities`."""
 import inspect
 import json

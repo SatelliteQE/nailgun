@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """A setuptools-based script for installing NailGun.
 
 For more information, see:
@@ -7,8 +7,6 @@ For more information, see:
 * https://docs.python.org/distutils/sourcedist.html
 
 """
-import sys
-
 from setuptools import find_packages
 from setuptools import setup
 

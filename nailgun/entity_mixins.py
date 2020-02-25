@@ -7,7 +7,6 @@ import time
 from collections import Iterable
 from datetime import date
 from datetime import datetime
-from sys import version_info
 from urllib.parse import urljoin
 
 from fauxfactory import gen_choice
