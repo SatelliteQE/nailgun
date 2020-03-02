@@ -2046,7 +2046,7 @@ class ReportTemplate(
         return _handle_response(response, self._server_config, synchronous)
 
     def report_data(self, synchronous=True, **kwargs):
-        """Helper to schedule an existing report template
+        """Helper to call report_data on an existing scheduled report
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
