@@ -2062,7 +2062,7 @@ class ReportTemplate(
         job_id = kwargs.get('data', {}).get('job_id')
         if job_id:
             temp_path = '{}/{}'.format(temp_path, job_id)
-        response = client.get(temp_path,**kwargs)
+        response = client.get(temp_path, **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
