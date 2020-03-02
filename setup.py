@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """A setuptools-based script for installing NailGun.
 
 For more information, see:
@@ -7,8 +7,6 @@ For more information, see:
 * https://docs.python.org/distutils/sourcedist.html
 
 """
-import sys
-
 from setuptools import find_packages
 from setuptools import setup
 
@@ -26,16 +24,9 @@ REQUIREMENTS = [
     'packaging',
     'pyxdg',
     'requests>=2.7',
-    'blinker_herald'
+    'blinker_herald',
+    'fauxfactory'
 ]
-
-
-if sys.version_info >= (3, 0):
-    REQUIREMENTS.append('fauxfactory')
-else:
-    # Fauxfactory 3.0+ dropped support for Python 2.x
-    REQUIREMENTS.append('fauxfactory<3.0')
-
 
 setup(
     name='nailgun',
@@ -50,11 +41,8 @@ setup(
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
-        ('License :: OSI Approved :: GNU General Public License v3 or later '
-         '(GPLv3+)'),
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
+        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+        'Programming Language :: Python :: 3.6',
     ],
     packages=find_packages(exclude=['docs', 'tests']),
     install_requires=REQUIREMENTS,
