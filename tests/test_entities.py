@@ -2874,6 +2874,34 @@ class ReportTemplateTestCase(TestCase):
                          'foo/api/v2/report_templates/42/generate')
         self.assertEqual(post.call_args[1], {'data': {'input_values': {'hosts': 'whatever'}}})
 
+    def test_schedule(self):
+        """Schedule template"""
+        cfg = config.ServerConfig(url='foo')
+        report_template = entities.ReportTemplate(cfg, id=43)
+        with mock.patch.object(client, 'post') as post:
+            report_template.schedule_report(data={"input_values": {"hosts": "whatever"}})
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(len(post.call_args), 2)
+        self.assertEqual(len(post.call_args[0]), 1)  # post called with 1 positional argument
+        self.assertEqual(len(post.call_args[1]), 1)  # post called with 1 keyword argument
+        self.assertEqual(post.call_args[0][0],
+                         'foo/api/v2/report_templates/43/schedule_report')
+        self.assertEqual(post.call_args[1], {'data': {'input_values': {'hosts': 'whatever'}}})
+
+    def test_report_data(self):
+        """Schedule template"""
+        cfg = config.ServerConfig(url='foo')
+        report_template = entities.ReportTemplate(cfg, id=44)
+        with mock.patch.object(client, 'get') as get_response:
+            report_template.report_data(data={"job_id": 100})
+        self.assertEqual(get_response.call_count, 1)
+        self.assertEqual(len(get_response.call_args), 2)
+        self.assertEqual(len(get_response.call_args[0]), 1)  # post called with 1 positional argument
+        self.assertEqual(len(get_response.call_args[1]), 1)  # post called with 1 keyword argument
+        self.assertEqual(get_response.call_args[0][0],
+                         'foo/api/v2/report_templates/44/report_data/100')
+        self.assertEqual(get_response.call_args[1], {'data': {'job_id': 100}})
+
 
 class ProvisioningTemplateTestCase(TestCase):
     """Tests for :class:`nailgun.entities.ProvisioningTemplate`."""
