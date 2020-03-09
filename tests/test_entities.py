@@ -2896,8 +2896,8 @@ class ReportTemplateTestCase(TestCase):
             report_template.report_data(data={"job_id": 100})
         self.assertEqual(get_response.call_count, 1)
         self.assertEqual(len(get_response.call_args), 2)
-        self.assertEqual(len(get_response.call_args[0]), 1)  # post called with 1 positional argument
-        self.assertEqual(len(get_response.call_args[1]), 1)  # post called with 1 keyword argument
+        self.assertEqual(len(get_response.call_args[0]), 1)
+        self.assertEqual(len(get_response.call_args[1]), 1)
         self.assertEqual(get_response.call_args[0][0],
                          'foo/api/v2/report_templates/44/report_data/100')
         self.assertEqual(get_response.call_args[1], {'data': {'job_id': 100}})
