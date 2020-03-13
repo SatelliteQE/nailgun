@@ -1989,7 +1989,7 @@ class ReportTemplate(
         ``super`` is called otherwise.
 
         """
-        if which in ('clone', 'generate'):
+        if which in ('clone', 'generate', 'schedule_report', 'report_data'):
             prefix = 'self'
             return '{0}/{1}'.format(
                 super(ReportTemplate, self).path(prefix),
@@ -2027,6 +2027,42 @@ class ReportTemplate(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('generate'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def schedule_report(self, synchronous=True, **kwargs):
+        """Helper to schedule an existing report template
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('schedule_report'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def report_data(self, synchronous=True, **kwargs):
+        """Helper to call report_data on an existing scheduled report
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        temp_path = self.path('report_data')
+        job_id = kwargs.get('data', {}).get('job_id')
+        if job_id:
+            temp_path = f'{temp_path}/{job_id}'
+        response = client.get(temp_path, **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
