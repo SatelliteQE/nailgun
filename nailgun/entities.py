@@ -4757,6 +4757,17 @@ class HTTPProxy(
         self._meta = {'api_path': 'api/v2/http_proxies', 'server_modes': ('sat')}
         super(HTTPProxy, self).__init__(server_config, **kwargs)
 
+    def update_payload(self, fields=None):
+        """Wrap submitted data within an extra dict."""
+        return {'http_proxy': super(HTTPProxy, self).update_payload(fields)}
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict.
+        For more information, see `Bugzilla #1151220
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
+        """
+        return {'http_proxy': super(HTTPProxy, self).create_payload()}
+
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Make sure, password, organization and location is in the ignore list for read.
         For more information, see `Bugzilla #1779642
