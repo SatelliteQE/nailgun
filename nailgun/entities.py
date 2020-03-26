@@ -3428,6 +3428,7 @@ class HostGroup(
             'puppet_ca_proxy': entity_fields.OneToOneField(SmartProxy),
             'content_source': entity_fields.OneToOneField(SmartProxy),
             'compute_resource': entity_fields.OneToOneField(AbstractComputeResource),
+            'compute_profile': entity_fields.OneToOneField(ComputeProfile),
             'environment': entity_fields.OneToOneField(Environment),
             'kickstart_repository': entity_fields.OneToOneField(Repository),
             'lifecycle_environment': entity_fields.OneToOneField(
