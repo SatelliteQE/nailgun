@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
 """Tests for :mod:`nailgun.entity_mixins`."""
-# Python 3.3 and later includes module `ipaddress` in the standard library. If
-# NailGun ever moves past Python 2.x, that module should be used instead of
-# `socket`.
-from sys import version_info
+import http.client as http_client
+from unittest import TestCase
 
 import mock
 from fauxfactory import gen_integer
@@ -17,14 +14,6 @@ from nailgun.entity_fields import ListField
 from nailgun.entity_fields import OneToManyField
 from nailgun.entity_fields import OneToOneField
 from nailgun.entity_fields import StringField
-if version_info.major == 2:
-    import httplib as http_client
-else:
-    import http.client as http_client
-if version_info < (3, 4):
-    from unittest2 import TestCase
-else:
-    from unittest import TestCase
 # The size of this module is a direct reflection of the size of module
 # `nailgun.entity_mixins`. It would be good to split that module up, then split
 # this module up similarly.
@@ -359,10 +348,8 @@ class EntityTestCase(TestCase):
     def test_path(self):
         """Test :meth:`nailgun.entity_mixins.Entity.path`."""
         # e.g. 'https://sat.example.com/katello/api/v2'
-        path = '{0}/{1}'.format(
-            self.cfg.url,
-            SampleEntity(self.cfg)._meta['api_path']
-        )
+        api_path = SampleEntity(self.cfg)._meta["api_path"]
+        path = f'{self.cfg.url}/{api_path}'
 
         # Call `path()` on an entity with no ID.
         self.assertEqual(SampleEntity(self.cfg).path(), path)
@@ -528,10 +515,7 @@ class EntityTestCase(TestCase):
 
         """
         entity = SampleEntityTwo(self.cfg, id=gen_integer())
-        target = (
-            'tests.test_entity_mixins.SampleEntityTwo(id={0})'
-            .format(entity.id)
-        )
+        target = f'tests.test_entity_mixins.SampleEntityTwo(id={entity.id})'
         self.assertEqual(repr(entity), target)
         # create default config if it does not exist
         try:
@@ -552,9 +536,7 @@ class EntityTestCase(TestCase):
         entity_id = gen_integer()
         target = (
             'tests.test_entity_mixins.SampleEntityTwo('
-            'one_to_many=[tests.test_entity_mixins.SampleEntity(id={0})]'
-            ')'
-            .format(entity_id)
+            f'one_to_many=[tests.test_entity_mixins.SampleEntity(id={entity_id})])'
         )
         entity = SampleEntityTwo(
             self.cfg,

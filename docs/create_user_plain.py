@@ -1,11 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """Create an identical user account on a pair of satellites.
 
 If you'd like to test out this script, you can quickly set up an environment
 like so::
 
-    virtualenv env
+    python3 -m venv env
     source env/bin/activate
     pip install requests
     ./create_user_plain.py  # copy this script to the current directory

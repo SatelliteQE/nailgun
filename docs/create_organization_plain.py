@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """Create an organization, print out its attributes and delete it.
 
 Use Requests and standard library modules to accomplish this task.

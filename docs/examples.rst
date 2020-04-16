@@ -7,14 +7,14 @@ from simple to more advanced.
 You can run any of the scripts presented in this document. This is the set-up
 procedure for scripts that use NailGun::
 
-    virtualenv env
+    python3 -m venv env
     source env/bin/activate
     pip install nailgun
     ./some_script.py  # some script of your choice
 
 This is the set-up procedure for scripts that do not use NailGun::
 
-    virtualenv env
+    python3 -m venv env
     source env/bin/activate
     pip install requests
     ./some_script.py  # some script of your choice
