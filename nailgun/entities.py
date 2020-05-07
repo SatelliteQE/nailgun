@@ -4873,6 +4873,7 @@ class Location(
         if ignore is None:
             ignore = set()
         ignore.add('realm')
+        ignore.add('config_template')
         return super(Location, self).read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
@@ -5247,6 +5248,7 @@ class Organization(
         if ignore is None:
             ignore = set()
         ignore.add('realm')
+        ignore.add('config_template')
         return super(Organization, self).read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
