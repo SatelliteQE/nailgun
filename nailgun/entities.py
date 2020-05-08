@@ -4818,7 +4818,6 @@ class Location(
         self._fields = {
             'compute_resource': entity_fields.OneToManyField(
                 AbstractComputeResource),
-            'config_template': entity_fields.OneToManyField(ConfigTemplate),
             'description': entity_fields.StringField(),
             'domain': entity_fields.OneToManyField(Domain),
             'environment': entity_fields.OneToManyField(Environment),
@@ -5153,7 +5152,6 @@ class Organization(
             'compute_resource': entity_fields.OneToManyField(
                 AbstractComputeResource
             ),
-            'config_template': entity_fields.OneToManyField(ConfigTemplate),
             'description': entity_fields.StringField(),
             'domain': entity_fields.OneToManyField(Domain),
             'environment': entity_fields.OneToManyField(Environment),
