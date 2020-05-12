@@ -7304,7 +7304,7 @@ class Subnet(
             ),
             'location': entity_fields.OneToManyField(Location),
             'mask': entity_fields.NetmaskField(required=True),
-            'mt': entity_fields.IntegerField(min_val=68, max_val=4294967295),
+            'mtu': entity_fields.IntegerField(min_val=68, max_val=4294967295),
             'name': entity_fields.StringField(
                 required=True,
                 str_type='alpha',
