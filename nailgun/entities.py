@@ -1768,6 +1768,22 @@ class ProvisioningTemplate(
             )
         return super(ProvisioningTemplate, self).path(which)
 
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Provide a default value for ``entity``.
+
+        By default, ``nailgun.entity_mixins.EntityReadMixin.read`` provides a
+        default value for ``entity`` like so::
+
+            entity = type(self)()
+
+        However, :class:`ProvisioningTemplate` requires that a ``audit_comment`` is
+        provided, so this technique will not work.
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('audit_comment')
+        return super(ProvisioningTemplate, self).read(entity, attrs, ignore, params)
+
     def build_pxe_default(self, synchronous=True, **kwargs):
         """Helper to build pxe default template.
 
