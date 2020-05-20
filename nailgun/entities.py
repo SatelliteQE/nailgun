@@ -1491,130 +1491,6 @@ class ConfigGroup(
         super(ConfigGroup, self).__init__(server_config, **kwargs)
 
 
-class ConfigTemplate(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
-    """A representation of a Config Template entity."""
-
-    def __init__(self, server_config=None, **kwargs):
-        self._fields = {
-            'audit_comment': entity_fields.StringField(),
-            'locked': entity_fields.BooleanField(),
-            'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
-            ),
-            'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
-            'organization': entity_fields.OneToManyField(Organization),
-            'location': entity_fields.OneToManyField(Location),
-            'snippet': entity_fields.BooleanField(required=True),
-            'template': entity_fields.StringField(required=True),
-            'template_combinations': entity_fields.ListField(),
-            'template_kind': entity_fields.OneToOneField(TemplateKind),
-        }
-        self._meta = {
-            'api_path': 'api/v2/config_templates',
-            'server_modes': ('sat'),
-        }
-        super(ConfigTemplate, self).__init__(server_config, **kwargs)
-
-    def create_missing(self):
-        """Customize the process of auto-generating instance attributes.
-
-        Populate ``template_kind`` if:
-
-        * this template is not a snippet, and
-        * the ``template_kind`` instance attribute is unset.
-
-        """
-        super(ConfigTemplate, self).create_missing()
-        if (getattr(self, 'snippet', None) is False and
-                not hasattr(self, 'template_kind')):
-            self.template_kind = TemplateKind(self._server_config, id=1)
-
-    def create_payload(self):
-        """Wrap submitted data within an extra dict.
-
-        For more information, see `Bugzilla #1151220
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
-
-        """
-        payload = super(ConfigTemplate, self).create_payload()
-        if 'template_combinations' in payload:
-            payload['template_combinations_attributes'] = payload.pop(
-                'template_combinations')
-        return {'config_template': payload}
-
-    def update_payload(self, fields=None):
-        """Wrap submitted data within an extra dict."""
-        payload = super(ConfigTemplate, self).update_payload(fields)
-        if 'template_combinations' in payload:
-            payload['template_combinations_attributes'] = payload.pop(
-                'template_combinations')
-        return {'config_template': payload}
-
-    def path(self, which=None):
-        """Extend ``nailgun.entity_mixins.Entity.path``.
-
-        The format of the returned path depends on the value of ``which``:
-
-        build_pxe_default
-            /config_templates/build_pxe_default
-        clone
-            /config_templates/clone
-        revision
-            /config_templates/revision
-
-        ``super`` is called otherwise.
-
-        """
-        if which in ('build_pxe_default', 'clone', 'revision'):
-            prefix = 'self' if which == 'clone' else 'base'
-            return '{0}/{1}'.format(
-                super(ConfigTemplate, self).path(prefix),
-                which
-            )
-        return super(ConfigTemplate, self).path(which)
-
-    def build_pxe_default(self, synchronous=True, **kwargs):
-        """Helper to build pxe default template.
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-        """
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.post(self.path('build_pxe_default'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
-
-    def clone(self, synchronous=True, **kwargs):
-        """Helper to clone an existing provision template
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-        """
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.post(self.path('clone'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
-
-
 class TemplateInput(
     Entity,
     EntityCreateMixin,
@@ -5034,7 +4910,6 @@ class OperatingSystem(
                 unique=True
             ),
             'ptable': entity_fields.OneToManyField(PartitionTable),
-            'config_template': entity_fields.OneToManyField(ConfigTemplate),
             'provisioning_template': entity_fields.OneToManyField(
                 ProvisioningTemplate),
             'release_name': entity_fields.StringField(),
@@ -5300,7 +5175,6 @@ class OSDefaultTemplate(
     def __init__(self, server_config=None, **kwargs):
         _check_for_value('operatingsystem', kwargs)
         self._fields = {
-            'config_template': entity_fields.OneToOneField(ConfigTemplate),
             'operatingsystem': entity_fields.OneToOneField(
                 OperatingSystem,
                 required=True,
@@ -7755,7 +7629,6 @@ class TemplateCombination(Entity, EntityDeleteMixin, EntityReadMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'config_template': entity_fields.OneToOneField(ConfigTemplate),
             'environment': entity_fields.OneToOneField(Environment),
             'hostgroup': entity_fields.OneToOneField(HostGroup),
             'provisioning_template': entity_fields.OneToOneField(

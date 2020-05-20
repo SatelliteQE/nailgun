@@ -107,7 +107,6 @@ class InitTestCase(TestCase):
                 entities.ComputeAttribute,
                 entities.ComputeProfile,
                 entities.ConfigGroup,
-                entities.ConfigTemplate,
                 entities.CompliancePolicies,
                 entities.ProvisioningTemplate,
                 entities.ReportTemplate,
@@ -272,7 +271,6 @@ class PathTestCase(TestCase):
         for entity, path in (
                 (entities.ActivationKey, '/activation_keys'),
                 (entities.Capsule, '/capsules'),
-                (entities.ConfigTemplate, '/config_templates'),
                 (entities.ProvisioningTemplate, '/provisioning_templates'),
                 (entities.ReportTemplate, '/report_templates'),
                 (entities.Role, '/roles'),
@@ -332,7 +330,6 @@ class PathTestCase(TestCase):
                 (entities.AbstractComputeResource, 'associate'),
                 (entities.AbstractComputeResource, 'images'),
                 (entities.ArfReport, 'download_html'),
-                (entities.ConfigTemplate, 'clone'),
                 (entities.ProvisioningTemplate, 'clone'),
                 (entities.ReportTemplate, 'clone'),
                 (entities.Role, 'clone'),
@@ -384,8 +381,6 @@ class PathTestCase(TestCase):
     def test_noid_and_which(self):
         """Execute ``entity().path(which=…)``."""
         for entity, which in (
-                (entities.ConfigTemplate, 'build_pxe_default'),
-                (entities.ConfigTemplate, 'revision'),
                 (entities.ProductBulkAction, 'destroy'),
                 (entities.ProductBulkAction, 'sync'),
                 (entities.ProductBulkAction, 'http_proxy'),
@@ -710,7 +705,6 @@ class CreatePayloadTestCase(TestCase):
                 entities.AbstractComputeResource,
                 entities.Architecture,
                 entities.ConfigGroup,
-                entities.ConfigTemplate,
                 entities.ProvisioningTemplate,
                 entities.ReportTemplate,
                 entities.DiscoveredHost,
@@ -926,45 +920,6 @@ class CreateMissingTestCase(TestCase):
         for key, value in attrs.items():
             with self.subTest((key, value)):
                 self.assertEqual(getattr(entity, key), value)
-
-    def test_config_template_v1(self):
-        """Test ``ConfigTemplate(snippet=True)``."""
-        entity = entities.ConfigTemplate(self.cfg, snippet=True)
-        with mock.patch.object(EntityCreateMixin, 'create_raw'):
-            with mock.patch.object(EntityReadMixin, 'read_raw'):
-                entity.create_missing()
-        self.assertEqual(
-            _get_required_field_names(entity),
-            set(entity.get_values().keys()),
-        )
-
-    def test_config_template_v2(self):
-        """Test ``ConfigTemplate(snippet=False)``."""
-        entity = entities.ConfigTemplate(self.cfg, snippet=False)
-        with mock.patch.object(EntityCreateMixin, 'create_raw'):
-            with mock.patch.object(EntityReadMixin, 'read_raw'):
-                entity.create_missing()
-        self.assertEqual(
-            _get_required_field_names(entity).union(['template_kind']),
-            set(entity.get_values().keys()),
-        )
-
-    def test_config_template_v3(self):
-        """Test ``ConfigTemplate(snippet=False, template_kind=…)``."""
-        tk_id = gen_integer()
-        entity = entities.ConfigTemplate(
-            self.cfg,
-            snippet=False,
-            template_kind=tk_id,
-        )
-        with mock.patch.object(EntityCreateMixin, 'create_raw'):
-            with mock.patch.object(EntityReadMixin, 'read_raw'):
-                entity.create_missing()
-        self.assertEqual(
-            _get_required_field_names(entity).union(['template_kind']),
-            set(entity.get_values().keys()),
-        )
-        self.assertEqual(entity.template_kind.id, tk_id)
 
     def test_report_template_v1(self):
         """Test ``ReportTemplate(name='testName')``."""
@@ -1935,7 +1890,6 @@ class UpdatePayloadTestCase(TestCase):
         """Instantiate a variety of entities and call ``update_payload``."""
         entities_payloads = [
             (entities.AbstractComputeResource, {'compute_resource': {}}),
-            (entities.ConfigTemplate, {'config_template': {}}),
             (entities.Filter, {'filter': {}}),
             (entities.ProvisioningTemplate, {'provisioning_template': {}}),
             (entities.ReportTemplate, {'report_template': {}}),
@@ -2193,8 +2147,6 @@ class GenericTestCase(TestCase):
                 'get'
             ),
             (entities.Capsule(**generic).content_sync, 'post'),
-            (entities.ConfigTemplate(**generic).build_pxe_default, 'post'),
-            (entities.ConfigTemplate(**generic).clone, 'post'),
             (entities.Role(**generic).clone, 'post'),
             (
                 entities.ProvisioningTemplate(**generic).build_pxe_default,
@@ -2397,52 +2349,6 @@ class ForemanTaskTestCase(TestCase):
                     poll_task.call_args[0][3],
                     kwargs.get('timeout', None),
                 )
-
-
-class ConfigTemplateTestCase(TestCase):
-    """Tests for :class:`nailgun.entities.ConfigTemplate`."""
-
-    def test_creation_and_update(self):
-        """Check template combinations as json or entity is set on correct
-        attribute template_combinations_attributes ( check #333)
-        """
-        cfg = config.ServerConfig(url='foo')
-        env = entities.Environment(cfg, id=2, name='env')
-        hostgroup = entities.HostGroup(cfg, id=2, name='hgroup')
-        combination = entities.TemplateCombination(
-            cfg,
-            hostgroup=hostgroup,
-            environment=env)
-        template_combinations = [
-            {'hostgroup_id': 1, 'environment_id': 1},
-            combination]
-        cfg_template = entities.ConfigTemplate(
-            cfg, name='cfg',
-            snippet=False,
-            template='cat',
-            template_kind=8,
-            template_combinations=template_combinations)
-        expected_dct = {
-            'config_template': {
-                'name': 'cfg', 'snippet': False, 'template': 'cat',
-                'template_kind_id': 8, 'template_combinations_attributes': [
-                    {'environment_id': 1, 'hostgroup_id': 1},
-                    {'environment_id': 2, 'hostgroup_id': 2}]
-            }
-        }
-        self.assertEqual(expected_dct, cfg_template.create_payload())
-        # Testing update
-        env3 = entities.Environment(cfg, id=3, name='env3')
-        combination3 = entities.TemplateCombination(
-            cfg,
-            hostgroup=hostgroup,
-            environment=env3)
-        cfg_template.template_combinations.append(combination3)
-        attrs = expected_dct['config_template']
-        attrs['template_combinations_attributes'].append(
-            {'environment_id': 3, 'hostgroup_id': 2}
-        )
-        self.assertEqual(expected_dct, cfg_template.update_payload())
 
 
 class ContentUploadTestCase(TestCase):
