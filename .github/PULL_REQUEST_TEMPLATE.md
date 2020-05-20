@@ -1,15 +1,28 @@
-**Point to the API documentation/Plugin/feature? Please describe.**
+**Description of changes**
 
-A clear and concise description of the plugin you have added or the entity you have updated
+Describe in detail the changes made, and any potential impacts to callers.
 
-**Presentation that this code works**
+**Upstream API documentation, plugin, or feature links**
 
-An Example that the code works. You can exercise the code as raw API calls or using any other method
+Link to any relevant upstream API documentation that relates to the content of the PR
 
-`Eg: # Read Snapshot
-       Snapshot(host=<host_id>, id=<snapshot_id>).read()`
+**Functional demonstration**
 
-~~~~~~~~
+Provide an execution of the modified code, with ipython code blocks or screen shots.
+You can exercise the code as raw API calls or using any other method.
+
+Your contribution should include updates to the unit tests, covering the modified portions or adding new coverage.
+
+Example:
+```
+# Demonstrate functional Snapshot read in ipython
+In [1]: from nailgun.entities import Snapshot                                                                                           
+In [2]: Snapshot(host='sat.instance.addr.com', id='snap_uuid').read()
+Out [2]: <read method result> 
+```
+
 **Additional Information**
+
+Any additional notes for reviewers, comments about the change, TODO lists on WIP PRs, etc.
 
 
