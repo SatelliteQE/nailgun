@@ -16,13 +16,11 @@ Your contribution should include updates to the unit tests, covering the modifie
 Example:
 ```
 # Demonstrate functional Snapshot read in ipython
-In [1]: from nailgun.entities import Snapshot                                                                                           
+In [1]: from nailgun.entities import Snapshot
 In [2]: Snapshot(host='sat.instance.addr.com', id='snap_uuid').read()
-Out [2]: <read method result> 
+Out [2]: <read method result>
 ```
 
 ##### Additional Information
 
 Any additional notes for reviewers, comments about the change, TODO lists on WIP PRs, etc.
-
-
