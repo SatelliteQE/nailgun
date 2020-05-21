@@ -5287,7 +5287,6 @@ class OverrideValue(
             'smart_class_parameter': entity_fields.OneToOneField(
                 SmartClassParameters),
             'smart_variable': entity_fields.OneToOneField(SmartVariable),
-            'use_puppet_default': entity_fields.BooleanField(),
             'omit': entity_fields.BooleanField(),
         }
         super(OverrideValue, self).__init__(server_config, **kwargs)
@@ -6898,7 +6897,7 @@ class SmartClassParameters(
             'default_value': entity_fields.StringField(),
             'hidden_value': entity_fields.BooleanField(),
             'hidden_value?': entity_fields.BooleanField(),
-            'use_puppet_default': entity_fields.BooleanField(),
+            'omit': entity_fields.BooleanField(),
             'validator_type': entity_fields.StringField(
                 choices=('regexp', 'list')
             ),
