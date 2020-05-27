@@ -3867,11 +3867,11 @@ class Host(
         else:
             if not hasattr(self.environment, 'organization'):
                 self.environment = self.environment.read()
-            if self.location.id not in [
+            if int(self.location.id) not in [
                     loc.id for loc in self.environment.location]:
                 self.environment.location.append(self.location)
                 self.environment.update(['location'])
-            if self.organization.id not in [
+            if int(self.organization.id) not in [
                     org.id for org in self.environment.organization]:
                 self.environment.organization.append(self.organization)
                 self.environment.update(['organization'])
