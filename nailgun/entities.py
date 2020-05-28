@@ -7702,6 +7702,73 @@ class System(
         return super(System, self).read(entity, attrs, ignore, params)
 
 
+class TailoringFile(
+        Entity,
+        EntityCreateMixin,
+        EntityDeleteMixin,
+        EntityReadMixin,
+        EntitySearchMixin,
+        EntityUpdateMixin):
+    """A representation of a Tailoring File entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(
+                required=True,
+                str_type='alpha',
+                length=(4, 30),
+                unique=True
+            ),
+            'scap_file': entity_fields.StringField(),
+            'original_filename': entity_fields.StringField(),
+            'tailoring_file_profiles': entity_fields.StringField(),
+            'location': entity_fields.OneToManyField(Location),
+            'organization': entity_fields.OneToManyField(Organization),
+        }
+        if 'scap_file' in kwargs:
+            with open(kwargs['scap_file']) as input_file:
+                kwargs['scap_file'] = input_file.read()
+        self._meta = {
+            'api_path': 'api/v2/compliance/tailoring_files',
+            'server_modes': ('sat')
+        }
+        super(TailoringFile, self).__init__(server_config, **kwargs)
+
+    def create(self, create_missing=None):
+        """Do extra work to fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1381129
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1381129>`_.
+
+        """
+        return type(self)(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
+
+    def create_payload(self, **kwargs):
+        """Wrap submitted data within an extra dict."""
+        return {'tailoring_file': super(TailoringFile, self).create_payload()}
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Ignore ``scap_file`` field.
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.update(['scap_file'])
+        return super(TailoringFile, self).read(entity, attrs, ignore, params)
+
+    def update(self, fields=None):
+        """Fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1234964
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1234964>`_.
+
+        """
+        self.update_json(fields)
+        return self.read()
+
+
 class Template(Entity):
     """A representation of a Template entity."""
 
@@ -8104,11 +8171,26 @@ class ScapContents(
             'organization': entity_fields.OneToManyField(Organization),
             'scap_content_profiles': entity_fields.StringField(),
         }
+        if 'scap_file' in kwargs:
+            with open(kwargs['scap_file']) as input_file:
+                kwargs['scap_file'] = input_file.read()
         self._meta = {
             'api_path': 'api/compliance/scap_contents',
             'server_modes': ('sat'),
         }
         super(ScapContents, self).__init__(server_config, **kwargs)
+
+    def create(self, create_missing=None):
+        """Do extra work to fetch a complete set of attributes for this entity.
+
+        For more information, see `Bugzilla #1381129
+        <https://bugzilla.redhat.com/show_bug.cgi?id=1381129>`_.
+
+        """
+        return type(self)(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Override :meth:`nailgun.entity_mixins.EntityReadMixin.read` to ignore

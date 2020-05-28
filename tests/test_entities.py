@@ -175,6 +175,7 @@ class InitTestCase(TestCase):
                 entities.Subscription,
                 # entities.System,  # see below
                 # entities.SystemPackage,  # see below
+                entities.TailoringFile,
                 entities.TemplateCombination,
                 entities.Template,
                 entities.TemplateKind,
@@ -689,6 +690,7 @@ class CreateTestCase(TestCase):
             entities.Realm(self.cfg),
             entities.ScapContents(self.cfg),
             entities.SmartProxy(self.cfg),
+            entities.TailoringFile(self.cfg),
             entities.UserGroup(self.cfg),
             entities.VirtWhoConfig(self.cfg)
         )
@@ -751,6 +753,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.ScapContents,
                 entities.SmartVariable,
                 entities.Subnet,
+                entities.TailoringFile,
                 entities.User,
                 entities.UserGroup,
                 entities.VirtWhoConfig
@@ -1386,6 +1389,7 @@ class ReadTestCase(TestCase):
                 (entities.Repository, {'organization', 'upstream_password'}),
                 (entities.User, {'password'}),
                 (entities.ScapContents, {'scap_file'}),
+                (entities.TailoringFile, {'scap_file'}),
                 (entities.VirtWhoConfig, {'hypervisor_password'}),
                 (entities.VMWareComputeResource, {'password'}),
                 (entities.DiscoveredHost, {'ip', 'mac', 'root_pass', 'hostgroup'}),
@@ -1578,9 +1582,7 @@ class ReadTestCase(TestCase):
 
     def test_http_proxy_ignore_arg(self):
         """Call :meth:`nailgun.entities.HTTPProxy.read`.
-
         Assert that the entity ignores the ``password, organization and location`` field.
-
         """
         with mock.patch.object(EntityReadMixin, 'read') as read:
             with mock.patch.object(EntityReadMixin, 'read_json'):
@@ -1840,6 +1842,7 @@ class UpdateTestCase(TestCase):
             entities.Organization(self.cfg),
             entities.ScapContents(self.cfg),
             entities.SmartProxy(self.cfg),
+            entities.TailoringFile(self.cfg),
             entities.User(self.cfg),
             entities.UserGroup(self.cfg),
         )
@@ -4141,3 +4144,47 @@ class JobInvocationTestCase(TestCase):
                     'targeting_type': 'foo'
                 })
         self.assertEqual(poll_task.call_count, 1)
+
+
+class TailoringFileTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.TailoringFile`."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set ``self.server_config``."""
+        cls.server_config = config.ServerConfig('http://example.com')
+
+    def test_scap_tailoring_file(self):
+        """Test ``nailgun.entities.TailoringFile.create``.
+        """
+        entity = entities.TailoringFile(
+            self.server_config, name="TF1",
+            scap_file="tests/data/ssg-rhel7-ds-tailoring.xml",
+        )
+        with mock.patch.object(EntityCreateMixin, 'create_missing'):
+            entity.create_missing()
+        self.assertEqual({'name'}, _get_required_field_names(entity).union())
+
+
+class ScapContentsTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.ScapContents`."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set ``self.server_config``."""
+        cls.server_config = config.ServerConfig('http://example.com')
+
+    def test_scap_tailoring_file(self):
+        """Test ``nailgun.entities.ScapContents.create``.
+        """
+        entity = entities.ScapContents(
+            self.server_config,
+            title="TF1",
+            scap_file="tests/data/ssg-rhel7-ds-tailoring.xml"
+        )
+        with mock.patch.object(EntityCreateMixin, 'create_missing'):
+            entity.create_missing()
+        self.assertEqual(
+            _get_required_field_names(entity),
+            set(entity.get_values().keys()),
+        )
