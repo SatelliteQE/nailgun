@@ -48,9 +48,17 @@ CREATE_MISSING = False
 class TaskTimedOutError(Exception):
     """Indicates that a task did not finish before the timout limit."""
 
+    def __init__(self, message, task_id):
+        super().__init__(message)
+        self.task_id = task_id
+
 
 class TaskFailedError(Exception):
     """Indicates that a task finished with a result other than "success"."""
+
+    def __init__(self, message, task_id):
+        super().__init__(message)
+        self.task_id = task_id
 
 
 def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
@@ -94,13 +102,17 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
     except KeyboardInterrupt:  # pragma: no cover
         # raise_task_timeout will raise a KeyboardInterrupt when the timeout
         # expires. Catch the exception and raise TaskTimedOutError
-        raise TaskTimedOutError(f'Timed out polling task {task_id}. Task information: {task_info}')
+        raise TaskTimedOutError(
+            f"Timed out polling task {task_id}. Task information: {task_info}", task_id
+        )
     finally:
         timer.cancel()
 
     # Check for task success or failure.
     if task_info['result'] != 'success':
-        raise TaskFailedError(f'Task {task_id} did not succeed. Task information: {task_info}')
+        raise TaskFailedError(
+            f"Task {task_id} did not succeed. Task information: {task_info}", task_id
+        )
     return task_info
 
 
