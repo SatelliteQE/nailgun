@@ -7996,6 +7996,7 @@ class User(
                 default=AuthSourceLDAP(server_config, id=1),
                 required=True,
             ),
+            'auth_source_name': entity_fields.StringField(),
             'default_location': entity_fields.OneToOneField(Location),
             'default_organization': entity_fields.OneToOneField(Organization),
             'description': entity_fields.StringField(),
