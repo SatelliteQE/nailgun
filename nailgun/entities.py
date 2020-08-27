@@ -5381,6 +5381,7 @@ class Permission(Entity, EntityReadMixin, EntitySearchMixin):
                 length=(6, 12),
                 unique=True
             ),
+            'resource_type': entity_fields.StringField(required=True),
         }
         self._meta = {
             'api_path': 'api/v2/permissions',
