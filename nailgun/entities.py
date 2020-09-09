@@ -187,6 +187,44 @@ def _get_version(server_config):
     """
     return getattr(server_config, 'version', Version('1!0'))
 
+class Trace(
+        Entity,
+        EntityUpdateMixin):
+    """A representation of Host Trace entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._meta = {
+            'api_path': 'katello/api/traces',
+        }
+        super(Trace, self).__init__(server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        There's only a single path for the traces endpoint: /traces
+        """
+        if which in ('resolve'):
+            return '{0}/{1}'.format(
+                super(Trace, self).path('base'),
+                which
+        )
+        return super(Trace, self).path(which),
+
+    def resolve(self, synchronous=True, **kwargs):
+        """Resolve the supplied list of traces
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('resolve'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
 
 class ActivationKey(
         Entity,
