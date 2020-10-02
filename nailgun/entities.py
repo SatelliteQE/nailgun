@@ -3813,6 +3813,7 @@ class Host(
             'root_pass': entity_fields.StringField(
                 length=(8, 30), str_type='alpha'),
             'subnet': entity_fields.OneToOneField(Subnet),
+            'traces_status_label': entity_fields.StringField(),
             'uuid': entity_fields.StringField(),
         }
         self._owner_type = None  # actual ``owner_type`` value
