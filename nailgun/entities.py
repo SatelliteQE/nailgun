@@ -2031,6 +2031,17 @@ class ContentCredential(
         }
         super(ContentCredential, self).__init__(server_config, **kwargs)
 
+    def update_payload(self, fields=None):
+        """Override the method to only update fields that actually can be updated
+        """
+        updatable_fields = set.intersection({'name', 'content_type', 'content'},
+                                            self.get_values().keys())
+        if fields is None:
+            fields = updatable_fields
+        else:
+            fields = set.intersection(set(fields), updatable_fields)
+        return super().update_payload(fields=fields)
+
 
 class ContentUpload(
         Entity,
@@ -3359,11 +3370,16 @@ class HostCollection(
         ).read()
 
     def update_payload(self, fields=None):
-        """Rename ``system_ids`` to ``system_uuids``."""
-        payload = super(HostCollection, self).update_payload(fields)
-        if 'system_ids' in payload:
-            payload['system_uuids'] = payload.pop('system_ids')
-        return payload
+        """Override the method to only update fields that actually can be updated
+        """
+        updatable_fields = set.intersection({'name', 'description', 'host_ids',
+                                            'max_hosts', 'unlimited_hosts'},
+                                            self.get_values().keys())
+        if fields is None:
+            fields = updatable_fields
+        else:
+            fields = set.intersection(set(fields), updatable_fields)
+        return super().update_payload(fields=fields)
 
 
 class HostGroup(
@@ -5027,7 +5043,7 @@ class Media(
 
 
 class Model(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, EntityUpdateMixin):
     """A representation of a Model entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -5856,6 +5872,7 @@ class PuppetClass(
         EntityCreateMixin,
         EntityDeleteMixin,
         EntityReadMixin,
+        EntityUpdateMixin,
         EntitySearchMixin):
     """A representation of a Puppet Class entity."""
 
@@ -5939,6 +5956,16 @@ class PuppetClass(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_variables'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
+
+    def update_payload(self, fields=None):
+        """Override the method to only update fields that actually can be updated
+        """
+        updatable_fields = set.intersection({'name'}, self.get_values().keys())
+        if fields is None:
+            fields = updatable_fields
+        else:
+            fields = set.intersection(set(fields), updatable_fields)
+        return super().update_payload(fields=fields)
 
 
 class PackageGroup(Entity, EntityReadMixin, EntitySearchMixin):
