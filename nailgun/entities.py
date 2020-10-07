@@ -4219,6 +4219,23 @@ class Host(
         response = client.put(self.path('bulk/remove_subscriptions'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
+    def bulk_available_incremental_updates(self, synchronous=True, **kwargs):
+        """Get available_incremental_updates for one or more hosts
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('bulk/available_incremental_updates'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
     def get_facts(self, synchronous=True, **kwargs):
         """List all fact values of a given host
 
@@ -4377,11 +4394,9 @@ class Host(
                 super(Host, self).path(which='self'),
                 which
             )
-        elif which in ('bulk/install_content',
-                       'bulk/add_subscriptions',
-                       'bulk/remove_subscriptions',
-                       'bulk/traces',
-                       'bulk/resolve_traces'):
+        elif which in ('bulk/install_content', 'bulk/add_subscriptions',
+                       'bulk/remove_subscriptions', 'bulk/available_incremental_updates',
+                       'bulk/traces', 'bulk/resolve_traces'):
             return '{0}/{1}'.format(
                 super(Host, self).path(which='base'),
                 which
