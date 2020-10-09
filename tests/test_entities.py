@@ -2090,19 +2090,6 @@ class UpdatePayloadTestCase(TestCase):
         self.assertNotIn('path_', payload['medium'])
         self.assertIn('path', payload['medium'])
 
-    def test_hostcollection_system_uuid(self):
-        """Check whether ``HostCollection`` updates its ``system_ids`` field.
-
-        The field should be renamed from ``system_ids`` to ``system_uuids``
-        when ``update_payload`` is called.
-        """
-        payload = entities.HostCollection(
-            self.cfg_610,
-            system=[1],
-        ).update_payload()
-        self.assertNotIn('system_ids', payload)
-        self.assertIn('system_uuids', payload)
-
     def test_job_template(self):
         """Create a :class:`nailgun.entities.JobTemplate`."""
         payload = entities.JobTemplate(
