@@ -4070,7 +4070,7 @@ class Host(
         return _handle_response(response, self._server_config, synchronous)
 
     def resolve_traces(self, synchronous=True, **kwargs):
-        """Resolve traces the host
+        """Resolve traces for the host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
@@ -4086,7 +4086,7 @@ class Host(
         return _handle_response(response, self._server_config, synchronous)
 
     def bulk_resolve_traces(self, synchronous=True, **kwargs):
-        """Resolve traces the host
+        """Resolve traces on the specified set of hosts
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
