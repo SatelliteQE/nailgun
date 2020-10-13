@@ -4039,7 +4039,7 @@ class Host(
         return _handle_response(response, self._server_config, synchronous)
 
     def traces(self, synchronous=True, **kwargs):
-        """List services that need restarting on the host
+        """List services that need restarting for the host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
@@ -4055,7 +4055,7 @@ class Host(
         return _handle_response(response, self._server_config, synchronous)
 
     def bulk_traces(self, synchronous=True, **kwargs):
-        """List services that need restarting on the specified set of hosts
+        """List services that need restarting for the specified set of hosts
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
@@ -4087,7 +4087,7 @@ class Host(
         return _handle_response(response, self._server_config, synchronous)
 
     def bulk_resolve_traces(self, synchronous=True, **kwargs):
-        """Resolve traces on the specified set of hosts
+        """Resolve traces for the specified set of hosts
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
@@ -4312,9 +4312,10 @@ class Host(
             ]
         if 'build_status_label' in attrs:
             result.build_status_label = attrs['build_status_label']
-        if not attrs['content_facet_attributes']['katello_tracer_installed']:
-           ignore.add('traces_status')
-           ignore.add('traces_status_label')
+        if 'content_facet_attributes' in attrs and \
+                not attrs['content_facet_attributes']['katello_tracer_installed']:
+            ignore.add('traces_status')
+            ignore.add('traces_status_label')
         return result
 
     def update(self, fields=None):
