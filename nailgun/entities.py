@@ -3813,6 +3813,7 @@ class Host(
             'root_pass': entity_fields.StringField(
                 length=(8, 30), str_type='alpha'),
             'subnet': entity_fields.OneToOneField(Subnet),
+            'traces_status': entity_fields.IntegerField(min_val=-1, max_val=2),
             'traces_status_label': entity_fields.StringField(),
             'uuid': entity_fields.StringField(),
         }
@@ -4311,6 +4312,9 @@ class Host(
             ]
         if 'build_status_label' in attrs:
             result.build_status_label = attrs['build_status_label']
+        if not attrs['content_facet_attributes']['katello_tracer_installed']:
+           ignore.add('traces_status')
+           ignore.add('traces_status_label')
         return result
 
     def update(self, fields=None):
