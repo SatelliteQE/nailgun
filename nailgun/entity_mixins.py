@@ -979,6 +979,9 @@ class EntityUpdateMixin(object):
 
         """
         values = self.get_values()
+        updatable_fields =( self.updatable_fields if hasattr(self, 'updatable_fields') else
+                           values.keys() )
+        values = {field: value for field, value in values.items() if field in updatable_fields}
         if fields is not None:
             values = {field: values[field] for field in fields}
         return _payload(self.get_fields(), values)
