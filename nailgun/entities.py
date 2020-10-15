@@ -2007,6 +2007,7 @@ class ContentCredential(
     """A representation of a Content Credential entity."""
 
     def __init__(self, server_config=None, **kwargs):
+        self.updatable_fields = ['name', 'content_type', 'content']
         self._fields = {
             'content': entity_fields.StringField(required=True),
             'name': entity_fields.StringField(
@@ -2030,17 +2031,6 @@ class ContentCredential(
             'server_modes': ('sat'),
         }
         super(ContentCredential, self).__init__(server_config, **kwargs)
-
-    def update_payload(self, fields=None):
-        """Override the method to only update fields that actually can be updated
-        """
-        updatable_fields = set.intersection({'name', 'content_type', 'content'},
-                                            self.get_values().keys())
-        if fields is None:
-            fields = updatable_fields
-        else:
-            fields = set.intersection(set(fields), updatable_fields)
-        return super().update_payload(fields=fields)
 
 
 class ContentUpload(
@@ -3318,6 +3308,7 @@ class HostCollection(
     """A representation of a Host Collection entity."""
 
     def __init__(self, server_config=None, **kwargs):
+        self.updatable_fields = ['name', 'description', 'host_ids', 'max_hosts', 'unlimited_hosts']
         self._fields = {
             'description': entity_fields.StringField(),
             'host': entity_fields.OneToManyField(Host),
@@ -3368,18 +3359,6 @@ class HostCollection(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
-
-    def update_payload(self, fields=None):
-        """Override the method to only update fields that actually can be updated
-        """
-        updatable_fields = set.intersection({'name', 'description', 'host_ids',
-                                            'max_hosts', 'unlimited_hosts'},
-                                            self.get_values().keys())
-        if fields is None:
-            fields = updatable_fields
-        else:
-            fields = set.intersection(set(fields), updatable_fields)
-        return super().update_payload(fields=fields)
 
 
 class HostGroup(
@@ -5877,6 +5856,7 @@ class PuppetClass(
     """A representation of a Puppet Class entity."""
 
     def __init__(self, server_config=None, **kwargs):
+        self.updatable_fields = ['name']
         self._fields = {
             'name': entity_fields.StringField(
                 required=True,
@@ -5956,16 +5936,6 @@ class PuppetClass(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_variables'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
-
-    def update_payload(self, fields=None):
-        """Override the method to only update fields that actually can be updated
-        """
-        updatable_fields = set.intersection({'name'}, self.get_values().keys())
-        if fields is None:
-            fields = updatable_fields
-        else:
-            fields = set.intersection(set(fields), updatable_fields)
-        return super().update_payload(fields=fields)
 
 
 class PackageGroup(Entity, EntityReadMixin, EntitySearchMixin):
