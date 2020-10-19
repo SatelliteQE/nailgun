@@ -2090,6 +2090,17 @@ class UpdatePayloadTestCase(TestCase):
         self.assertNotIn('path_', payload['medium'])
         self.assertIn('path', payload['medium'])
 
+    def test_hostcollection_updatable_fields(self):
+        org1 = entities.Organization(self.cfg, name='org1')
+        org2 = entities.Organization(self.cfg, name='org2')
+        host_collection = entities.HostCollection(self.cfg, name='oldname', organization=org1)
+        host_collection.name = 'newname'
+        host_collection.organization_id = org2
+        payload = host_collection.update_payload()
+        self.assertEquals(payload['name'], 'newname')
+        self.assertNotIn('organization', payload.keys())  # organization NOT changed
+        self.assertNotIn('organization_id', payload.keys())  # organization NOT changed
+
     def test_job_template(self):
         """Create a :class:`nailgun.entities.JobTemplate`."""
         payload = entities.JobTemplate(

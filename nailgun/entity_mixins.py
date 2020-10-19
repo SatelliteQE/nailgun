@@ -958,6 +958,7 @@ class EntityUpdateMixin(object):
     :meth:`update_payload`
         Assemble a payload of data that can be encoded and sent to the
         server.
+        Set self.updatable_fields (list of strings) to limit the fields that can be updated.
     :meth:`update_raw`
         Make an HTTP PUT request to the server, including the payload.
     :meth:`update_json`
@@ -979,8 +980,7 @@ class EntityUpdateMixin(object):
 
         """
         values = self.get_values()
-        updatable_fields =( self.updatable_fields if hasattr(self, 'updatable_fields') else
-                           values.keys() )
+        updatable_fields = getattr(self, 'updatable_fields', None) or list(values.keys())
         values = {field: value for field, value in values.items() if field in updatable_fields}
         if fields is not None:
             values = {field: values[field] for field in fields}
