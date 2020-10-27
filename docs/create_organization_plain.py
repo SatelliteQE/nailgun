@@ -18,21 +18,19 @@ def main():
     args = {'auth': auth, 'headers': {'content-type': 'application/json'}}
 
     response = requests.post(
-        base_url + '/katello/api/v2/organizations',
-        json.dumps({
-            'name': organization_name,
-            'organization': {'name': organization_name},
-        }),
-        **args
+        f'{base_url}/katello/api/v2/organizations',
+        json.dumps(
+            {
+                'name': organization_name,
+                'organization': {'name': organization_name},
+            }
+        ),
+        **args,
     )
     response.raise_for_status()
     pprint(response.json())
     response = requests.delete(
-        '{0}/katello/api/v2/organizations/{1}'.format(
-            base_url,
-            response.json()['id'],
-        ),
-        **args
+        f"{base_url}/katello/api/v2/organizations/{response.json()['id']}", **args
     )
     response.raise_for_status()
 

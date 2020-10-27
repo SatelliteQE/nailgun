@@ -18,6 +18,7 @@ from nailgun.entity_fields import IntegerField
 from nailgun.entity_fields import ListField
 from nailgun.entity_fields import OneToManyField
 from nailgun.entity_fields import OneToOneField
+
 # This module contains very extensive docstrings, so this module is easier to
 # understand than its size suggests. That said, it could be useful to split
 # each mixin in to a separate module. That would help to ensure that each
@@ -136,8 +137,7 @@ def _make_entities_from_ids(entity_cls, entity_objs_and_ids, server_config):
     """
     return [
         _make_entity_from_id(entity_cls, entity_or_id, server_config)
-        for entity_or_id
-        in entity_objs_and_ids
+        for entity_or_id in entity_objs_and_ids
     ]
 
 
@@ -177,14 +177,11 @@ def _payload(fields, values):
     for field_name, field in fields.items():
         if field_name in values:
             if isinstance(field, OneToOneField):
-                values[field_name + '_id'] = (
-                    getattr(values.pop(field_name), 'id', None)
-                )
+                values[f'{field_name}_id'] = getattr(values.pop(field_name), 'id', None)
             elif isinstance(field, OneToManyField):
-                values[field_name + '_ids'] = [
-                    entity.id for entity in values.pop(field_name)
-                ]
+                values[f'{field_name}_ids'] = [entity.id for entity in values.pop(field_name)]
             elif isinstance(field, ListField):
+
                 def parse(obj):
                     """parse obj payload if it is an Entity"""
                     if isinstance(obj, Entity):
@@ -194,8 +191,7 @@ def _payload(fields, values):
                 if values[field_name] is None:
                     continue
 
-                values[field_name] = [
-                    parse(obj) for obj in values[field_name]]
+                values[field_name] = [parse(obj) for obj in values[field_name]]
     return values
 
 
@@ -231,7 +227,7 @@ def _get_entity_id(field_name, attrs):
     :returns: Either an entity ID or None.
 
     """
-    field_name_id = field_name + '_id'
+    field_name_id = f'{field_name}_id'
     if field_name in attrs:
         if attrs[field_name] is None:
             return None
@@ -264,7 +260,7 @@ def _get_entity_ids(field_name, attrs):
     :returns: An iterable of entity IDs.
 
     """
-    field_name_ids = field_name + '_ids'
+    field_name_ids = f'{field_name}_ids'
     plural_field_name = pluralize(field_name)
     if field_name_ids in attrs:
         return attrs[field_name_ids]
@@ -301,7 +297,7 @@ class MissingValueError(Exception):
     """Indicates that no value can be found for a field."""
 
 
-class Entity(object):
+class Entity:
     """A representation of a logically related set of API paths.
 
     This class is rather useless as is, and it is intended to be subclassed.
@@ -394,11 +390,11 @@ class Entity(object):
                 if field_value is None:
                     setattr(self, field_name, field_value)
                 else:
-                    setattr(self, field_name, _make_entity_from_id(
-                        field.gen_value(),
-                        field_value,
-                        self._server_config
-                    ))
+                    setattr(
+                        self,
+                        field_name,
+                        _make_entity_from_id(field.gen_value(), field_value, self._server_config),
+                    )
             elif isinstance(field, OneToManyField):
                 # `try:; …; except TypeError:; raise BadValueError(…)` better
                 # follows the "ask forgiveness" principle. However, a TypeError
@@ -410,11 +406,11 @@ class Entity(object):
                         'field. An iterable of entities and/or entity IDs '
                         f'should be assigned, but the following was given: {field_value}'
                     )
-                setattr(self, field_name, _make_entities_from_ids(
-                    field.gen_value(),
-                    field_value,
-                    self._server_config
-                ))
+                setattr(
+                    self,
+                    field_name,
+                    _make_entities_from_ids(field.gen_value(), field_value, self._server_config),
+                )
             else:
                 setattr(self, field_name, field_value)
 
@@ -463,14 +459,11 @@ class Entity(object):
         #     urljoin('example.com', '/foo') => '/foo'
         #     urljoin('example.com/', '/foo') => '/foo'
         #
-        base = urljoin(
-            self._server_config.url + '/',
-            self._meta['api_path']
-        )
+        base = urljoin(f'{self._server_config.url}/', self._meta['api_path'])
         if which == 'base' or (which is None and not hasattr(self, 'id')):
             return base
         elif (which == 'self' or which is None) and hasattr(self, 'id'):
-            return urljoin(base + '/', str(self.id))
+            return urljoin(f'{base}/', str(self.id))
         raise NoSuchPathError
 
     def get_fields(self):
@@ -502,16 +495,12 @@ class Entity(object):
         return attrs
 
     def __repr__(self):
-        return '{0}.{1}({2})'.format(
-            self.__module__,
-            type(self).__name__,
-            ', '.join(
-                f'{key}={repr(value)}'
-                for key, value
-                in self.get_values().items()
-                if not key.startswith('_')
-            )
+        kv_pairs = ", ".join(
+            f"{key}={repr(value)}"
+            for key, value in self.get_values().items()
+            if not key.startswith("_")
         )
+        return f'{self.__module__}.{type(self).__name__}({kv_pairs})'
 
     def to_json(self):
         r"""Create a JSON encoded string with Entity properties. Ex:
@@ -547,9 +536,7 @@ class Entity(object):
         fields, values = self.get_fields(), self.get_values()
         filtered_fields = fields.items()
         if filter_fcn is not None:
-            filtered_fields = (
-                tpl for tpl in filtered_fields if filter_fcn(tpl[0], tpl[1])
-            )
+            filtered_fields = (tpl for tpl in filtered_fields if filter_fcn(tpl[0], tpl[1]))
         json_dct = {}
         for field_name, field in filtered_fields:
             if field_name in values:
@@ -563,9 +550,7 @@ class Entity(object):
                 elif isinstance(field, OneToOneField):
                     json_dct[field_name] = value.to_json_dict()
                 elif isinstance(field, OneToManyField):
-                    json_dct[field_name] = [
-                        entity.to_json_dict() for entity in value
-                    ]
+                    json_dct[field_name] = [entity.to_json_dict() for entity in value]
                 else:
                     json_dct[field_name] = to_json_serializable(value)
         return json_dct
@@ -600,15 +585,17 @@ class Entity(object):
         if not isinstance(other, type(self)):
             return False
         if filter_fcn is None:
+
             def filter_unique(_, field):
                 """Filter function for unique fields"""
                 return not field.unique
+
             filter_fcn = filter_unique
 
         return self.to_json_dict(filter_fcn) == other.to_json_dict(filter_fcn)
 
 
-class EntityDeleteMixin(object):
+class EntityDeleteMixin:
     """This mixin provides the ability to delete an entity.
 
     The methods provided by this class work together. The call tree looks like
@@ -633,10 +620,7 @@ class EntityDeleteMixin(object):
         :return: A ``requests.response`` object.
 
         """
-        return client.delete(
-            self.path(which='self'),
-            **self._server_config.get_client_kwargs()
-        )
+        return client.delete(self.path(which='self'), **self._server_config.get_client_kwargs())
 
     def delete(self, synchronous=True):
         """Delete the current entity.
@@ -663,13 +647,13 @@ class EntityDeleteMixin(object):
         response = self.delete_raw()
         response.raise_for_status()
 
-        if (synchronous is True and
-                response.status_code == http_client.ACCEPTED):
+        if synchronous is True and response.status_code == http_client.ACCEPTED:
             return _poll_task(response.json()['id'], self._server_config)
-        elif (response.status_code == http_client.NO_CONTENT or
-              (response.status_code == http_client.OK and
-               hasattr(response, 'content') and
-               not response.content.strip())):
+        elif response.status_code == http_client.NO_CONTENT or (
+            response.status_code == http_client.OK
+            and hasattr(response, 'content')
+            and not response.content.strip()
+        ):
             # "The server successfully processed the request, but is not
             # returning any content. Usually used as a response to a successful
             # delete request."
@@ -677,7 +661,7 @@ class EntityDeleteMixin(object):
         return response.json()
 
 
-class EntityReadMixin(object):
+class EntityReadMixin:
     """This mixin provides the ability to read an entity.
 
     The methods provided by this class work together. The call tree looks like
@@ -711,9 +695,7 @@ class EntityReadMixin(object):
         path_type = self._meta.get('read_type', 'self')
 
         return client.get(
-            self.path(path_type),
-            params=params,
-            **self._server_config.get_client_kwargs()
+            self.path(path_type), params=params, **self._server_config.get_client_kwargs()
         )
 
     def read_json(self, params=None):
@@ -798,8 +780,7 @@ class EntityReadMixin(object):
             elif isinstance(field, OneToManyField):
                 referenced_entities = [
                     field.entity(self._server_config, id=entity_id)
-                    for entity_id
-                    in _get_entity_ids(field_name, attrs)
+                    for entity_id in _get_entity_ids(field_name, attrs)
                 ]
                 setattr(entity, field_name, referenced_entities)
             else:
@@ -807,7 +788,7 @@ class EntityReadMixin(object):
         return entity
 
 
-class EntityCreateMixin(object):
+class EntityCreateMixin:
     """This mixin provides the ability to create an entity.
 
     The methods provided by this class work together. The call tree looks like
@@ -864,9 +845,7 @@ class EntityCreateMixin(object):
                 elif isinstance(field, OneToOneField):
                     value = field.gen_value()(self._server_config).create(True)
                 elif isinstance(field, OneToManyField):
-                    value = [
-                        field.gen_value()(self._server_config).create(True)
-                    ]
+                    value = [field.gen_value()(self._server_config).create(True)]
                 else:
                     value = field.gen_value()
                 setattr(self, field_name, value)
@@ -897,9 +876,7 @@ class EntityCreateMixin(object):
         if create_missing is True:
             self.create_missing()
         return client.post(
-            self.path('base'),
-            self.create_payload(),
-            **self._server_config.get_client_kwargs()
+            self.path('base'), self.create_payload(), **self._server_config.get_client_kwargs()
         )
 
     def create_json(self, create_missing=None):
@@ -947,7 +924,7 @@ class EntityCreateMixin(object):
         return self.read(attrs=self.create_json(create_missing))
 
 
-class EntityUpdateMixin(object):
+class EntityUpdateMixin:
     """This mixin provides the ability to update an entity.
 
     The methods provided by this class work together. The call tree looks
@@ -1002,7 +979,7 @@ class EntityUpdateMixin(object):
         return client.put(
             self.path('self'),
             self.update_payload(fields),
-            **self._server_config.get_client_kwargs()
+            **self._server_config.get_client_kwargs(),
         )
 
     def update_json(self, fields=None):
@@ -1046,7 +1023,7 @@ class EntityUpdateMixin(object):
         return self.read(attrs=self.update_json(fields))
 
 
-class EntitySearchMixin(object):
+class EntitySearchMixin:
     """This mixin provides the ability to search for entities.
 
     The methods provided by this class work together. The call tree looks like
@@ -1149,9 +1126,9 @@ class EntitySearchMixin(object):
         for field in fields:
             value = getattr(self, field)
             if isinstance(fields_dict[field], OneToOneField):
-                payload[field + '_id'] = value.id
+                payload[f'{field}_id'] = value.id
             elif isinstance(fields_dict[field], OneToManyField):
-                payload[field + '_ids'] = [entity.id for entity in value]
+                payload[f'{field}_ids'] = [entity.id for entity in value]
             else:
                 payload[field] = value
         payload.update(query)
@@ -1175,7 +1152,7 @@ class EntitySearchMixin(object):
         return client.get(
             self.path('base'),
             data=self.search_payload(fields, query),
-            **self._server_config.get_client_kwargs()
+            **self._server_config.get_client_kwargs(),
         )
 
     def search_json(self, fields=None, query=None):
@@ -1347,10 +1324,7 @@ class EntitySearchMixin(object):
         #
         results = self.search_json(fields, query)['results']
         results = self.search_normalize(results)
-        entities = [
-            type(self)(self._server_config, **result)
-            for result in results
-        ]
+        entities = [type(self)(self._server_config, **result) for result in results]
         if filters is not None:
             entities = self.search_filter(entities, filters)
         return entities
@@ -1401,14 +1375,13 @@ class EntitySearchMixin(object):
         filtered = [entity.read() for entity in entities]  # don't alter inputs
         for field_name, field_value in filters.items():
             filtered = [
-                entity for entity in filtered
-                if getattr(entity, field_name) == field_value
+                entity for entity in filtered if getattr(entity, field_name) == field_value
             ]
         return filtered
 
 
 def to_json_serializable(obj):
-    """ Transforms obj into a json serializable object.
+    """Transforms obj into a json serializable object.
 
     :param obj: entity or any json serializable object
 

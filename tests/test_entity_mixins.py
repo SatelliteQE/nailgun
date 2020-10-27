@@ -1,8 +1,8 @@
 """Tests for :mod:`nailgun.entity_mixins`."""
 import http.client as http_client
+from unittest import mock
 from unittest import TestCase
 
-import mock
 from fauxfactory import gen_integer
 from requests.exceptions import HTTPError
 
@@ -14,6 +14,7 @@ from nailgun.entity_fields import ListField
 from nailgun.entity_fields import OneToManyField
 from nailgun.entity_fields import OneToOneField
 from nailgun.entity_fields import StringField
+
 # The size of this module is a direct reflection of the size of module
 # `nailgun.entity_mixins`. It would be good to split that module up, then split
 # this module up similarly.
@@ -34,10 +35,10 @@ class SampleEntity(entity_mixins.Entity):
         self._fields = {
             'name': StringField(),
             'number': IntegerField(),
-            'unique': StringField(unique=True)
+            'unique': StringField(unique=True),
         }
         self._meta = {'api_path': 'foo'}
-        super(SampleEntity, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class SampleEntityTwo(entity_mixins.Entity):
@@ -50,7 +51,7 @@ class SampleEntityTwo(entity_mixins.Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {'one_to_many': OneToManyField(SampleEntity)}
-        super(SampleEntityTwo, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class SampleEntityThree(entity_mixins.Entity):
@@ -65,11 +66,8 @@ class SampleEntityThree(entity_mixins.Entity):
     """
 
     def __init__(self, server_config=None, **kwargs):
-        self._fields = {
-            'one_to_one': OneToOneField(SampleEntityTwo),
-            'list': ListField()
-        }
-        super(SampleEntityThree, self).__init__(server_config, **kwargs)
+        self._fields = {'one_to_one': OneToOneField(SampleEntityTwo), 'list': ListField()}
+        super().__init__(server_config, **kwargs)
 
 
 class EntityWithCreate(entity_mixins.Entity, entity_mixins.EntityCreateMixin):
@@ -77,7 +75,7 @@ class EntityWithCreate(entity_mixins.Entity, entity_mixins.EntityCreateMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._meta = {'api_path': ''}
-        super(EntityWithCreate, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class EntityWithRead(entity_mixins.Entity, entity_mixins.EntityReadMixin):
@@ -85,7 +83,7 @@ class EntityWithRead(entity_mixins.Entity, entity_mixins.EntityReadMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._meta = {'api_path': ''}
-        super(EntityWithRead, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class EntityWithUpdate(entity_mixins.Entity, entity_mixins.EntityUpdateMixin):
@@ -93,7 +91,7 @@ class EntityWithUpdate(entity_mixins.Entity, entity_mixins.EntityUpdateMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._meta = {'api_path': ''}
-        super(EntityWithUpdate, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class EntityWithDelete(entity_mixins.Entity, entity_mixins.EntityDeleteMixin):
@@ -101,7 +99,7 @@ class EntityWithDelete(entity_mixins.Entity, entity_mixins.EntityDeleteMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._meta = {'api_path': ''}
-        super(EntityWithDelete, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class EntityWithSearch(entity_mixins.Entity, entity_mixins.EntitySearchMixin):
@@ -109,7 +107,7 @@ class EntityWithSearch(entity_mixins.Entity, entity_mixins.EntitySearchMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._meta = {'api_path': ''}
-        super(EntityWithSearch, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class EntityWithSearch2(EntityWithSearch):
@@ -120,7 +118,7 @@ class EntityWithSearch2(EntityWithSearch):
             'one': OneToOneField(SampleEntity),
             'many': OneToManyField(SampleEntity),
         }
-        super(EntityWithSearch2, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 # 2. Tests for private methods. ------------------------------------------ {{{1
@@ -136,22 +134,14 @@ class MakeEntityFromIdTestCase(TestCase):
     def test_pass_in_entity_obj(self):
         """Let the ``entity_obj_or_id`` argument be an entity object."""
         self.assertIsInstance(
-            entity_mixins._make_entity_from_id(
-                SampleEntity,
-                SampleEntity(self.cfg),
-                self.cfg
-            ),
-            SampleEntity
+            entity_mixins._make_entity_from_id(SampleEntity, SampleEntity(self.cfg), self.cfg),
+            SampleEntity,
         )
 
     def test_pass_in_entity_id(self):
         """Let the ``entity_obj_or_id`` argument be an integer."""
         entity_id = gen_integer(min_value=1)
-        entity_obj = entity_mixins._make_entity_from_id(
-            SampleEntity,
-            entity_id,
-            self.cfg
-        )
+        entity_obj = entity_mixins._make_entity_from_id(SampleEntity, entity_id, self.cfg)
         self.assertIsInstance(entity_obj, SampleEntity)
         self.assertEqual(entity_obj.id, entity_id)
 
@@ -167,24 +157,16 @@ class MakeEntitiesFromIdsTestCase(TestCase):
         """Let the ``entity_objs_and_ids`` argument be an empty iterable."""
         for iterable in ([], tuple()):
             self.assertEqual(
-                entity_mixins._make_entities_from_ids(
-                    SampleEntity,
-                    iterable,
-                    self.cfg
-                ),
+                entity_mixins._make_entities_from_ids(SampleEntity, iterable, self.cfg),
                 [],
             )
 
     def test_pass_in_entity_obj(self):
         """Let the ``entity_objs_and_ids`` arg be an iterable of entities."""
         for num_entities in range(4):
-            input_entities = [
-                SampleEntity(self.cfg) for _ in range(num_entities)
-            ]
+            input_entities = [SampleEntity(self.cfg) for _ in range(num_entities)]
             output_entities = entity_mixins._make_entities_from_ids(
-                SampleEntity,
-                input_entities,
-                self.cfg
+                SampleEntity, input_entities, self.cfg
             )
             self.assertEqual(num_entities, len(output_entities))
             for output_entity in output_entities:
@@ -193,14 +175,8 @@ class MakeEntitiesFromIdsTestCase(TestCase):
     def test_pass_in_entity_ids(self):
         """Let the ``entity_objs_and_ids`` arg be an iterable of integers."""
         for num_entities in range(4):
-            entity_ids = [
-                gen_integer(min_value=1) for _ in range(num_entities)
-            ]
-            entities = entity_mixins._make_entities_from_ids(
-                SampleEntity,
-                entity_ids,
-                self.cfg
-            )
+            entity_ids = [gen_integer(min_value=1) for _ in range(num_entities)]
+            entities = entity_mixins._make_entities_from_ids(SampleEntity, entity_ids, self.cfg)
             self.assertEqual(len(entities), len(entity_ids))
             for i, entity_id in enumerate(entity_ids):
                 self.assertIsInstance(entities[i], SampleEntity)
@@ -209,9 +185,7 @@ class MakeEntitiesFromIdsTestCase(TestCase):
     def test_pass_in_both(self):
         """Let ``entity_objs_and_ids`` be an iterable of integers and IDs."""
         entities = entity_mixins._make_entities_from_ids(
-            SampleEntity,
-            [SampleEntity(self.cfg), 5],
-            self.cfg
+            SampleEntity, [SampleEntity(self.cfg), 5], self.cfg
         )
         self.assertEqual(len(entities), 2)
         for entity in entities:
@@ -235,10 +209,7 @@ class PollTaskTestCase(TestCase):
         for state in ('paused', 'stopped'):
             with self.subTest(state):
                 with mock.patch.object(client, 'get') as get:
-                    get.return_value.json.return_value = {
-                        'state': state,
-                        'result': 'not success'
-                    }
+                    get.return_value.json.return_value = {'state': state, 'result': 'not success'}
                     with self.assertRaises(entity_mixins.TaskFailedError):
                         entity_mixins._poll_task(gen_integer(), self.cfg)
 
@@ -251,10 +222,7 @@ class PollTaskTestCase(TestCase):
         for state in ('paused', 'stopped'):
             with self.subTest(state):
                 with mock.patch.object(client, 'get') as get:
-                    get.return_value.json.return_value = {
-                        'state': state,
-                        'result': 'success'
-                    }
+                    get.return_value.json.return_value = {'state': state, 'result': 'success'}
                     self.assertEqual(
                         get.return_value.json.return_value,
                         entity_mixins._poll_task(gen_integer(), self.cfg),
@@ -296,26 +264,23 @@ class EntityTestCase(TestCase):
         """Test :meth:`nailgun.entity_mixins.Entity.get_fields`."""
         fields = SampleEntity(self.cfg).get_fields()
         self.assertEqual(len(fields), 4)
-        self.assertEqual(
-            set(fields.keys()),
-            {'id', 'name', 'number', 'unique'}
-        )
+        self.assertEqual(set(fields.keys()), {'id', 'name', 'number', 'unique'})
         self.assertIsInstance(fields['name'], StringField)
         self.assertIsInstance(fields['number'], IntegerField)
 
     def test_entity_get_values(self):
         """Test :meth:`nailgun.entity_mixins.Entity.get_values`."""
         for values in (
-                {},
-                {'id': gen_integer()},
-                {'name': gen_integer()},
-                {'number': gen_integer()},
-                {'name': gen_integer(), 'number': gen_integer()},
-                {
-                    'id': gen_integer(),
-                    'name': gen_integer(),
-                    'number': gen_integer(),
-                },
+            {},
+            {'id': gen_integer()},
+            {'name': gen_integer()},
+            {'number': gen_integer()},
+            {'name': gen_integer(), 'number': gen_integer()},
+            {
+                'id': gen_integer(),
+                'name': gen_integer(),
+                'number': gen_integer(),
+            },
         ):
             self.assertEqual(
                 SampleEntity(self.cfg, **values).get_values(),
@@ -327,16 +292,16 @@ class EntityTestCase(TestCase):
         ``_path_fields`` are never returned.
         """
         for values in (
-                {},
-                {'id': gen_integer()},
-                {'name': gen_integer()},
-                {'number': gen_integer()},
-                {'name': gen_integer(), 'number': gen_integer()},
-                {
-                    'id': gen_integer(),
-                    'name': gen_integer(),
-                    'number': gen_integer(),
-                },
+            {},
+            {'id': gen_integer()},
+            {'name': gen_integer()},
+            {'number': gen_integer()},
+            {'name': gen_integer(), 'number': gen_integer()},
+            {
+                'id': gen_integer(),
+                'name': gen_integer(),
+                'number': gen_integer(),
+            },
         ):
             entity = SampleEntity(self.cfg, **values)
             entity._path_fields = {'foo': 1}
@@ -358,10 +323,9 @@ class EntityTestCase(TestCase):
             SampleEntity(self.cfg).path('self')
 
         # Call `path()` on an entity with an ID.
-        self.assertEqual(SampleEntity(self.cfg, id=5).path(), path + '/5')
+        self.assertEqual(SampleEntity(self.cfg, id=5).path(), f'{path}/5')
         self.assertEqual(SampleEntity(self.cfg, id=5).path('base'), path)
-        self.assertEqual(
-            SampleEntity(self.cfg, id=5).path('self'), path + '/5')
+        self.assertEqual(SampleEntity(self.cfg, id=5).path('self'), f'{path}/5')
 
     def test_no_such_field_error(self):
         """Try to raise a :class:`nailgun.entity_mixins.NoSuchFieldError`."""
@@ -405,9 +369,13 @@ class EntityTestCase(TestCase):
         john_clone = SampleEntityTwo(self.cfg, one_to_many=[alice, alice_2])
         self.assertEqual(john, john_clone)
 
-        john_different_order = SampleEntityTwo(self.cfg, one_to_many=[
-            alice_2, alice,
-        ])
+        john_different_order = SampleEntityTwo(
+            self.cfg,
+            one_to_many=[
+                alice_2,
+                alice,
+            ],
+        )
         self.assertNotEqual(john, john_different_order)
 
         john_missing_alice = SampleEntityTwo(self.cfg, one_to_many=[alice])
@@ -419,12 +387,10 @@ class EntityTestCase(TestCase):
         # Testing OneToOne nested objects
 
         mary = SampleEntityThree(self.cfg, one_to_one=john)
-        mary_clone = SampleEntityThree(
-            self.cfg, one_to_one=john_clone)
+        mary_clone = SampleEntityThree(self.cfg, one_to_one=john_clone)
         self.assertEqual(mary, mary_clone)
 
-        mary_different = SampleEntityThree(
-            self.cfg, one_to_one=john_different_order)
+        mary_different = SampleEntityThree(self.cfg, one_to_one=john_different_order)
         self.assertNotEqual(mary, mary_different)
 
         mary_none_john = SampleEntityThree(self.cfg, one_to_one=None)
@@ -449,13 +415,11 @@ class EntityTestCase(TestCase):
         alice_2 = SampleEntity(self.cfg, id=2, name='Alice', unique='b')
         self.assertTrue(
             alice.compare(alice_2),
-            'Both "id" and "unique" are unique fields, thus must be ignored '
-            'compare by default'
+            'Both "id" and "unique" are unique fields, thus must be ignored compare by default',
         )
         self.assertFalse(
-            alice.compare(
-                SampleEntity(self.cfg, id=1, name='Not Alice', unique='a')),
-            'Name is not unique, so it compare should return False'
+            alice.compare(SampleEntity(self.cfg, id=1, name='Not Alice', unique='a')),
+            'Name is not unique, so it compare should return False',
         )
 
     def test_compare_with_filter(self):
@@ -466,26 +430,20 @@ class EntityTestCase(TestCase):
         def filter_example(fields_name, _):
             """Filter function to avoid comparison only on id"""
             return fields_name != 'id'
+
         self.assertTrue(
             alice.compare(alice_2, filter_example),
-            'Only id is ignored, so it should return True because other '
-            'properties are equal'
+            'Only id is ignored, so it should return True because other properties are equal',
         )
         self.assertFalse(
             alice.compare(
-                SampleEntity(self.cfg, id=1, name='Not Alice', unique='a'),
-                filter_example
+                SampleEntity(self.cfg, id=1, name='Not Alice', unique='a'), filter_example
             ),
-            'Only id is ignored, so it should return False because "name" is '
-            'different'
+            'Only id is ignored, so it should return False because "name" is different',
         )
         self.assertFalse(
-            alice.compare(
-                SampleEntity(self.cfg, id=1, name='Alice', unique='b'),
-                filter_example
-            ),
-            'Only id is ignored, so it should return False because "unique" '
-            'is different'
+            alice.compare(SampleEntity(self.cfg, id=1, name='Alice', unique='b'), filter_example),
+            'Only id is ignored, so it should return False because "unique" is different',
         )
 
     def test_repr_v1(self):
@@ -505,6 +463,7 @@ class EntityTestCase(TestCase):
             self.cfg.save()
         import nailgun  # noqa
         import tests  # noqa
+
         self.assertEqual(repr(eval(repr(entity))), target)
 
     def test_repr_v2(self):
@@ -524,6 +483,7 @@ class EntityTestCase(TestCase):
             self.cfg.save()
         import nailgun  # noqa
         import tests  # noqa
+
         self.assertEqual(repr(eval(repr(entity))), target)
 
     def test_repr_v3(self):
@@ -538,10 +498,7 @@ class EntityTestCase(TestCase):
             'tests.test_entity_mixins.SampleEntityTwo('
             f'one_to_many=[tests.test_entity_mixins.SampleEntity(id={entity_id})])'
         )
-        entity = SampleEntityTwo(
-            self.cfg,
-            one_to_many=[SampleEntity(self.cfg, id=entity_id)]
-        )
+        entity = SampleEntityTwo(self.cfg, one_to_many=[SampleEntity(self.cfg, id=entity_id)])
         self.assertEqual(repr(entity), target)
         # create default config if it does not exist
         try:
@@ -550,6 +507,7 @@ class EntityTestCase(TestCase):
             self.cfg.save()
         import nailgun  # noqa
         import tests  # noqa
+
         self.assertEqual(repr(eval(repr(entity))), target)
 
 
@@ -566,9 +524,7 @@ class EntityCreateMixinTestCase(TestCase):
     def test_create_missing(self):
         """Call method ``create_missing``."""
 
-        class FKEntityWithCreate(
-                entity_mixins.Entity,
-                entity_mixins.EntityCreateMixin):
+        class FKEntityWithCreate(entity_mixins.Entity, entity_mixins.EntityCreateMixin):
             """An entity that can be created and has foreign key fields."""
 
             def __init__(self, server_config=None, **kwargs):
@@ -579,10 +535,7 @@ class EntityCreateMixinTestCase(TestCase):
                     'many': OneToManyField(SampleEntity, required=True),
                     'one': OneToOneField(SampleEntity, required=True),
                 }
-                super(FKEntityWithCreate, self).__init__(
-                    server_config,
-                    **kwargs
-                )
+                super().__init__(server_config, **kwargs)
 
         cfg = config.ServerConfig('example.com')
         entity = FKEntityWithCreate(cfg)
@@ -596,7 +549,7 @@ class EntityCreateMixinTestCase(TestCase):
                     mock.call(),  # gen_value() returns a class. The returned
                     mock.call()(cfg),  # class is instantiated, and
                     mock.call()().create(True),  # create(True) is called.
-                ]
+                ],
             )
         self.assertEqual(
             set(entity.get_fields().keys()) - {'id'},
@@ -618,10 +571,7 @@ class EntityCreateMixinTestCase(TestCase):
             with mock.patch.object(self.entity, 'create_payload') as c_payload:
                 with mock.patch.object(client, 'post') as post:
                     self.entity.create_raw()
-        self.assertEqual(
-            c_missing.call_count,
-            1 if entity_mixins.CREATE_MISSING else 0
-        )
+        self.assertEqual(c_missing.call_count, 1 if entity_mixins.CREATE_MISSING else 0)
         self.assertEqual(c_payload.call_count, 1)
         self.assertEqual(post.call_count, 1)
 
@@ -661,9 +611,7 @@ class EntityCreateMixinTestCase(TestCase):
     def test_create(self):
         """Test :meth:`nailgun.entity_mixins.EntityCreateMixin.create`."""
 
-        class EntityWithCreateRead(
-                EntityWithCreate,
-                entity_mixins.EntityReadMixin):
+        class EntityWithCreateRead(EntityWithCreate, entity_mixins.EntityReadMixin):
             """An entity that can be created and read."""
 
         readable = EntityWithCreateRead(
@@ -706,7 +654,7 @@ class EntityReadMixinTestCase(TestCase):
                     'one': OneToOneField(SampleEntity),
                 }
                 self._meta = {'api_path': ''}
-                super(TestEntity, self).__init__(server_config, **kwargs)
+                super().__init__(server_config, **kwargs)
 
         cls.test_entity = TestEntity
 
@@ -723,8 +671,7 @@ class EntityReadMixinTestCase(TestCase):
         self.assertEqual(len(get.call_args[0]), 1)  # path='…'
         self.assertEqual(get.call_args[0][0], self.entity.path())
         self.assertEqual(
-            get.call_args[1],
-            dict(params=None, **self.entity._server_config.get_client_kwargs())
+            get.call_args[1], dict(params=None, **self.entity._server_config.get_client_kwargs())
         )
 
     def test_read_json(self):
@@ -829,16 +776,16 @@ class EntityReadMixinTestCase(TestCase):
         """Raise a :class:`nailgun.entity_mixins.MissingValueError`."""
         entity = self.test_entity(config.ServerConfig('example.com'))
         for attrs in (
-                {
-                    'id': gen_integer(min_value=1),
-                    'none': None,
-                    'one_id': gen_integer(min_value=1),
-                },
-                {
-                    'id': gen_integer(min_value=1),
-                    'many_ids': [gen_integer(min_value=1)],
-                    'none': None,
-                },
+            {
+                'id': gen_integer(min_value=1),
+                'none': None,
+                'one_id': gen_integer(min_value=1),
+            },
+            {
+                'id': gen_integer(min_value=1),
+                'many_ids': [gen_integer(min_value=1)],
+                'none': None,
+            },
         ):
             with self.subTest(attrs):
                 with mock.patch.object(entity, 'read_json') as read_json:
@@ -870,7 +817,7 @@ class EntityUpdateMixinTestCase(TestCase):
 
             def __init__(self, server_config=None, **kwargs):
                 self._fields = {'one': IntegerField(), 'two': IntegerField()}
-                super(TestEntity, self).__init__(server_config, **kwargs)
+                super().__init__(server_config, **kwargs)
 
         cfg = config.ServerConfig('url')
         args_list = (
@@ -916,7 +863,7 @@ class EntityUpdateMixinTestCase(TestCase):
 
             def __init__(self, server_config=None, **kwargs):
                 self._fields = {'other': OneToOneField(SampleEntity)}
-                super(TestEntity, self).__init__(server_config, **kwargs)
+                super().__init__(server_config, **kwargs)
 
         cfg = config.ServerConfig('url')
         entities = [TestEntity(cfg, other=None), TestEntity(cfg)]
@@ -953,9 +900,7 @@ class EntityUpdateMixinTestCase(TestCase):
     def test_update(self):
         """Test :meth:`nailgun.entity_mixins.EntityUpdateMixin.update`."""
 
-        class EntityWithUpdateRead(
-                EntityWithUpdate,
-                entity_mixins.EntityReadMixin):
+        class EntityWithUpdateRead(EntityWithUpdate, entity_mixins.EntityReadMixin):
             """An entity that can be updated and read."""
 
         readable = EntityWithUpdateRead(
@@ -1024,7 +969,7 @@ class EntityDeleteMixinTestCase(TestCase):
         self.assertEqual(poll_task.call_count, 1)
         self.assertEqual(
             poll_task.call_args[0],  # a tuple of (positional, keyword) args
-            (response.json.return_value['id'], self.entity._server_config)
+            (response.json.return_value['id'], self.entity._server_config),
         )
 
     def test_delete_v3(self):
@@ -1096,10 +1041,10 @@ class EntitySearchMixinTestCase(TestCase):
     def test_search_payload_v1(self):
         """Call ``search_payload``. Generate an empty query."""
         for kwargs in (
-                {'fields': set()},
-                {'query': {}, 'fields': set()},
-                {'query': {}},
-                {},
+            {'fields': set()},
+            {'query': {}, 'fields': set()},
+            {'query': {}},
+            {},
         ):
             with self.subTest(kwargs):
                 self.assertEqual(self.entity.search_payload(**kwargs), {})
@@ -1170,12 +1115,16 @@ class EntitySearchMixinTestCase(TestCase):
         """
         with mock.patch.object(entity_mixins, '_get_entity_ids') as get_ids:
             with mock.patch.object(entity_mixins, '_get_entity_id') as get_id:
-                attrs_list = EntityWithSearch2(self.cfg).search_normalize([{
-                    'extra': 'foo',  # simulate extra value returned by server
-                    'id': 'bar',
-                    'many_ids': [gen_integer()],
-                    'one_id': gen_integer(),
-                }])
+                attrs_list = EntityWithSearch2(self.cfg).search_normalize(
+                    [
+                        {
+                            'extra': 'foo',  # simulate extra value returned by server
+                            'id': 'bar',
+                            'many_ids': [gen_integer()],
+                            'one_id': gen_integer(),
+                        }
+                    ]
+                )
         self.assertEqual(get_ids.call_count, 1)
         self.assertEqual(get_id.call_count, 1)
         self.assertEqual(len(attrs_list), 1)
@@ -1185,7 +1134,7 @@ class EntitySearchMixinTestCase(TestCase):
                 'id': 'bar',
                 'many': get_ids.return_value,
                 'one': get_id.return_value,
-            }
+            },
         )
 
     def test_search_normalize_v2(self):
@@ -1295,8 +1244,7 @@ class EntitySearchMixinTestCase(TestCase):
 
         """
 
-        class EntityWithSearch3(
-                EntityWithSearch, entity_mixins.EntityReadMixin):
+        class EntityWithSearch3(EntityWithSearch, entity_mixins.EntityReadMixin):
             """An entity inheriting from the search and read mixins."""
 
         with mock.patch.object(EntityWithSearch3, 'read') as read:

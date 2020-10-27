@@ -4,9 +4,11 @@ import json
 import os
 from datetime import date
 from datetime import datetime
-from sys import version_info
+from http.client import ACCEPTED
+from http.client import NO_CONTENT
+from unittest import mock
+from unittest import TestCase
 
-import mock
 from fauxfactory import gen_integer
 from fauxfactory import gen_string
 
@@ -18,25 +20,19 @@ from nailgun.entity_mixins import EntityReadMixin
 from nailgun.entity_mixins import EntitySearchMixin
 from nailgun.entity_mixins import EntityUpdateMixin
 from nailgun.entity_mixins import NoSuchPathError
-if version_info < (3, 4):
-    from unittest2 import TestCase
-else:
-    from unittest import TestCase
-if version_info.major == 2:
-    from httplib import ACCEPTED, NO_CONTENT
-    _BUILTIN_OPEN = '__builtin__.open'
-else:
-    from http.client import ACCEPTED, NO_CONTENT
-    _BUILTIN_OPEN = 'builtins.open'
+
+_BUILTIN_OPEN = 'builtins.open'
+# For inspection comparison, a tuple matching the expected func arg spec
+# https://docs.python.org/3/library/inspect.html#inspect.getfullargspec
+EXPECTED_ARGSPEC = (['self', 'synchronous'], None, 'kwargs', (True,), [], None, {})
+
 # The size of this file is a direct reflection of the size of module
 # `nailgun.entities` and the Satellite API.
 
 
 def make_entity(cls, **kwargs):
     """Helper function to create entity with dummy ServerConfig"""
-    cfg = config.ServerConfig(
-        url='https://foo.bar', verify=False,
-        auth=('foo', 'bar'))
+    cfg = config.ServerConfig(url='https://foo.bar', verify=False, auth=('foo', 'bar'))
     return cls(cfg, **kwargs)
 
 
@@ -47,12 +43,9 @@ def _get_required_field_names(entity):
     :returns: A set in the form ``{'field_name_1', 'field_name_2', …}``.
 
     """
-    return set((
-        field_name
-        for field_name, field
-        in entity.get_fields().items()
-        if field.required is True
-    ))
+    return {
+        field_name for field_name, field in entity.get_fields().items() if field.required is True
+    }
 
 
 # This file is divided in to three sets of test cases (`TestCase` subclasses):
@@ -76,8 +69,7 @@ class InitTestCase(TestCase):
     def setUpClass(cls):
         """Set a server configuration at ``cls.cfg``."""
         cls.cfg = config.ServerConfig('http://example.com')
-        cls.cfg_610 = config.ServerConfig(
-            'http://example.com', version='6.1.0')
+        cls.cfg_610 = config.ServerConfig('http://example.com', version='6.1.0')
 
     def test_init_succeeds(self):
         """Instantiate every entity.
@@ -186,37 +178,39 @@ class InitTestCase(TestCase):
                 entities.VMWareComputeResource,
             )
         ]
-        entities_.extend([
-            (
-                entities.LibvirtComputeResource,
-                {'display_type': 'VNC', 'set_console_password': False},
-            ),
-            (entities.ContentUpload, {'repository': 1}),
-            (entities.ContentViewComponent, {'composite_content_view': 1}),
-            (entities.ContentViewFilterRule, {'content_view_filter': 1}),
-            (entities.ContentViewPuppetModule, {'content_view': 1}),
-            (entities.ExternalUserGroup, {'usergroup': 1}),
-            (entities.HostPackage, {'host': 1}),
-            (entities.HostSubscription, {'host': 1}),
-            (entities.Interface, {'host': 1}),
-            (entities.Image, {'compute_resource': 1}),
-            (entities.OperatingSystemParameter, {'operatingsystem': 1}),
-            (entities.OSDefaultTemplate, {'operatingsystem': 1}),
-            (entities.OverrideValue, {'smart_class_parameter': 1}),
-            (entities.OverrideValue, {'smart_variable': 1}),
-            (entities.Parameter, {'domain': 1}),
-            (entities.Parameter, {'host': 1}),
-            (entities.Parameter, {'hostgroup': 1}),
-            (entities.Parameter, {'location': 1}),
-            (entities.Parameter, {'operatingsystem': 1}),
-            (entities.Parameter, {'organization': 1}),
-            (entities.Parameter, {'subnet': 1}),
-            (entities.RepositorySet, {'product': 1}),
-            (entities.Snapshot, {'host': 1}),
-            (entities.SSHKey, {'user': 1}),
-            (entities.SyncPlan, {'organization': 1}),
-            (entities.TemplateInput, {'template': 1}),
-        ])
+        entities_.extend(
+            [
+                (
+                    entities.LibvirtComputeResource,
+                    {'display_type': 'VNC', 'set_console_password': False},
+                ),
+                (entities.ContentUpload, {'repository': 1}),
+                (entities.ContentViewComponent, {'composite_content_view': 1}),
+                (entities.ContentViewFilterRule, {'content_view_filter': 1}),
+                (entities.ContentViewPuppetModule, {'content_view': 1}),
+                (entities.ExternalUserGroup, {'usergroup': 1}),
+                (entities.HostPackage, {'host': 1}),
+                (entities.HostSubscription, {'host': 1}),
+                (entities.Interface, {'host': 1}),
+                (entities.Image, {'compute_resource': 1}),
+                (entities.OperatingSystemParameter, {'operatingsystem': 1}),
+                (entities.OSDefaultTemplate, {'operatingsystem': 1}),
+                (entities.OverrideValue, {'smart_class_parameter': 1}),
+                (entities.OverrideValue, {'smart_variable': 1}),
+                (entities.Parameter, {'domain': 1}),
+                (entities.Parameter, {'host': 1}),
+                (entities.Parameter, {'hostgroup': 1}),
+                (entities.Parameter, {'location': 1}),
+                (entities.Parameter, {'operatingsystem': 1}),
+                (entities.Parameter, {'organization': 1}),
+                (entities.Parameter, {'subnet': 1}),
+                (entities.RepositorySet, {'product': 1}),
+                (entities.Snapshot, {'host': 1}),
+                (entities.SSHKey, {'user': 1}),
+                (entities.SyncPlan, {'organization': 1}),
+                (entities.TemplateInput, {'template': 1}),
+            ]
+        )
         for entity, params in entities_:
             with self.subTest(entity):
                 self.assertIsInstance(entity(self.cfg, **params), entity)
@@ -240,19 +234,19 @@ class InitTestCase(TestCase):
 
         """
         for entity in (
-                entities.ContentViewComponent,
-                entities.ContentViewFilterRule,
-                entities.ContentViewPuppetModule,
-                entities.ExternalUserGroup,
-                entities.HostPackage,
-                entities.HostSubscription,
-                entities.Image,
-                entities.OverrideValue,
-                entities.OperatingSystemParameter,
-                entities.OSDefaultTemplate,
-                entities.Parameter,
-                entities.SyncPlan,
-                entities.TemplateInput,
+            entities.ContentViewComponent,
+            entities.ContentViewFilterRule,
+            entities.ContentViewPuppetModule,
+            entities.ExternalUserGroup,
+            entities.HostPackage,
+            entities.HostSubscription,
+            entities.Image,
+            entities.OverrideValue,
+            entities.OperatingSystemParameter,
+            entities.OSDefaultTemplate,
+            entities.Parameter,
+            entities.SyncPlan,
+            entities.TemplateInput,
         ):
             with self.subTest():
                 with self.assertRaises(TypeError):
@@ -261,124 +255,115 @@ class InitTestCase(TestCase):
 
 class PathTestCase(TestCase):
     """Tests for extensions of :meth:`nailgun.entity_mixins.Entity.path`."""
+
     longMessage = True
 
     def setUp(self):
         """Set ``self.cfg`` and ``self.id_``."""
         self.cfg = config.ServerConfig('http://example.com')
-        self.cfg_610 = config.ServerConfig(
-            'http://example.com', version='6.1.0')
+        self.cfg_610 = config.ServerConfig('http://example.com', version='6.1.0')
         self.id_ = gen_integer(min_value=1)
 
     def test_nowhich(self):
         """Execute ``entity().path()`` and ``entity(id=…).path()``."""
         for entity, path in (
-                (entities.ActivationKey, '/activation_keys'),
-                (entities.Capsule, '/capsules'),
-                (entities.ProvisioningTemplate, '/provisioning_templates'),
-                (entities.ReportTemplate, '/report_templates'),
-                (entities.Role, '/roles'),
-                (entities.ContentView, '/content_views'),
-                (entities.ContentViewVersion, '/content_view_versions'),
-                (entities.CompliancePolicies, '/compliance/policies'),
-                (entities.DiscoveredHost, '/discovered_hosts'),
-                (entities.DiscoveryRule, '/discovery_rules'),
-                (entities.Environment, '/environments'),
-                (entities.Errata, '/errata'),
-                (entities.Organization, '/organizations'),
-                (entities.Host, '/hosts'),
-                (entities.HostGroup, '/hostgroups'),
-                (entities.Product, '/products'),
-                (entities.ProductBulkAction, '/products/bulk'),
-                (entities.PuppetClass, '/puppetclasses'),
-                (entities.RHCIDeployment, '/deployments'),
-                (entities.Repository, '/repositories'),
-                (entities.Setting, '/settings'),
-                (entities.SmartProxy, '/smart_proxies'),
-                (entities.Subscription, '/subscriptions'),
-                (entities.ScapContents, '/scap_contents'),
-                (entities.VirtWhoConfig,
-                 '/foreman_virt_who_configure/api/v2/configs')
+            (entities.ActivationKey, '/activation_keys'),
+            (entities.Capsule, '/capsules'),
+            (entities.ProvisioningTemplate, '/provisioning_templates'),
+            (entities.ReportTemplate, '/report_templates'),
+            (entities.Role, '/roles'),
+            (entities.ContentView, '/content_views'),
+            (entities.ContentViewVersion, '/content_view_versions'),
+            (entities.CompliancePolicies, '/compliance/policies'),
+            (entities.DiscoveredHost, '/discovered_hosts'),
+            (entities.DiscoveryRule, '/discovery_rules'),
+            (entities.Environment, '/environments'),
+            (entities.Errata, '/errata'),
+            (entities.Organization, '/organizations'),
+            (entities.Host, '/hosts'),
+            (entities.HostGroup, '/hostgroups'),
+            (entities.Product, '/products'),
+            (entities.ProductBulkAction, '/products/bulk'),
+            (entities.PuppetClass, '/puppetclasses'),
+            (entities.RHCIDeployment, '/deployments'),
+            (entities.Repository, '/repositories'),
+            (entities.Setting, '/settings'),
+            (entities.SmartProxy, '/smart_proxies'),
+            (entities.Subscription, '/subscriptions'),
+            (entities.ScapContents, '/scap_contents'),
+            (entities.VirtWhoConfig, '/foreman_virt_who_configure/api/v2/configs'),
         ):
             with self.subTest((entity, path)):
                 self.assertIn(path, entity(self.cfg).path())
-                self.assertIn(
-                    f'{path}/{self.id_}',
-                    entity(self.cfg, id=self.id_).path()
-                )
+                self.assertIn(f'{path}/{self.id_}', entity(self.cfg, id=self.id_).path())
         # Deprecated entities
-        for entity, path in (
-                (entities.System, '/systems'),
-        ):
+        for entity, path in ((entities.System, '/systems'),):
             with self.subTest((entity, path)):
                 self.assertIn(path, entity(self.cfg_610).path())
-                self.assertIn(
-                    f'{path}/{self.id_}',
-                    entity(self.cfg_610, id=self.id_).path()
-                )
+                self.assertIn(f'{path}/{self.id_}', entity(self.cfg_610, id=self.id_).path())
 
     def test_id_and_which(self):
         """Execute ``entity(id=…).path(which=…)``."""
         for entity, which in (
-                (entities.ActivationKey, 'add_subscriptions'),
-                (entities.ActivationKey, 'content_override'),
-                (entities.ActivationKey, 'copy'),
-                (entities.ActivationKey, 'host_collections'),
-                (entities.ActivationKey, 'releases'),
-                (entities.ActivationKey, 'remove_subscriptions'),
-                (entities.ActivationKey, 'subscriptions'),
-                (entities.AbstractComputeResource, 'available_images'),
-                (entities.AbstractComputeResource, 'available_zones'),
-                (entities.AbstractComputeResource, 'available_flavors'),
-                (entities.AbstractComputeResource, 'available_networks'),
-                (entities.AbstractComputeResource, 'associate'),
-                (entities.AbstractComputeResource, 'images'),
-                (entities.ArfReport, 'download_html'),
-                (entities.ProvisioningTemplate, 'clone'),
-                (entities.ReportTemplate, 'clone'),
-                (entities.Role, 'clone'),
-                (entities.ContentView, 'available_puppet_module_names'),
-                (entities.ContentView, 'content_view_puppet_modules'),
-                (entities.ContentView, 'content_view_versions'),
-                (entities.ContentView, 'copy'),
-                (entities.ContentView, 'publish'),
-                (entities.ContentViewVersion, 'promote'),
-                (entities.DiscoveredHost, 'auto_provision'),
-                (entities.DiscoveredHost, 'refresh_facts'),
-                (entities.DiscoveredHost, 'reboot'),
-                (entities.Environment, 'smart_class_parameters'),
-                (entities.Host, 'enc'),
-                (entities.Host, 'errata'),
-                (entities.Host, 'errata/apply'),
-                (entities.Host, 'errata/applicability'),
-                (entities.Host, 'module_streams'),
-                (entities.Host, 'packages'),
-                (entities.Host, 'puppetclass_ids'),
-                (entities.Host, 'smart_class_parameters'),
-                (entities.Host, 'smart_variables'),
-                (entities.HostGroup, 'clone'),
-                (entities.HostGroup, 'puppetclass_ids'),
-                (entities.HostGroup, 'rebuild_config'),
-                (entities.HostGroup, 'smart_class_parameters'),
-                (entities.HostGroup, 'smart_variables'),
-                (entities.Organization, 'download_debug_certificate'),
-                (entities.Organization, 'subscriptions'),
-                (entities.Organization, 'subscriptions/delete_manifest'),
-                (entities.Organization, 'subscriptions/manifest_history'),
-                (entities.Organization, 'subscriptions/refresh_manifest'),
-                (entities.Organization, 'subscriptions/upload'),
-                (entities.Organization, 'sync_plans'),
-                (entities.Product, 'sync'),
-                (entities.PuppetClass, 'smart_class_parameters'),
-                (entities.Repository, 'errata'),
-                (entities.Repository, 'packages'),
-                (entities.Repository, 'puppet_modules'),
-                (entities.Repository, 'remove_content'),
-                (entities.Repository, 'sync'),
-                (entities.Repository, 'upload_content'),
-                (entities.RHCIDeployment, 'deploy'),
-                (entities.ScapContents, 'xml'),
-                (entities.VirtWhoConfig, 'deploy_script')
+            (entities.ActivationKey, 'add_subscriptions'),
+            (entities.ActivationKey, 'content_override'),
+            (entities.ActivationKey, 'copy'),
+            (entities.ActivationKey, 'host_collections'),
+            (entities.ActivationKey, 'releases'),
+            (entities.ActivationKey, 'remove_subscriptions'),
+            (entities.ActivationKey, 'subscriptions'),
+            (entities.AbstractComputeResource, 'available_images'),
+            (entities.AbstractComputeResource, 'available_zones'),
+            (entities.AbstractComputeResource, 'available_flavors'),
+            (entities.AbstractComputeResource, 'available_networks'),
+            (entities.AbstractComputeResource, 'associate'),
+            (entities.AbstractComputeResource, 'images'),
+            (entities.ArfReport, 'download_html'),
+            (entities.ProvisioningTemplate, 'clone'),
+            (entities.ReportTemplate, 'clone'),
+            (entities.Role, 'clone'),
+            (entities.ContentView, 'available_puppet_module_names'),
+            (entities.ContentView, 'content_view_puppet_modules'),
+            (entities.ContentView, 'content_view_versions'),
+            (entities.ContentView, 'copy'),
+            (entities.ContentView, 'publish'),
+            (entities.ContentViewVersion, 'promote'),
+            (entities.DiscoveredHost, 'auto_provision'),
+            (entities.DiscoveredHost, 'refresh_facts'),
+            (entities.DiscoveredHost, 'reboot'),
+            (entities.Environment, 'smart_class_parameters'),
+            (entities.Host, 'enc'),
+            (entities.Host, 'errata'),
+            (entities.Host, 'errata/apply'),
+            (entities.Host, 'errata/applicability'),
+            (entities.Host, 'module_streams'),
+            (entities.Host, 'packages'),
+            (entities.Host, 'puppetclass_ids'),
+            (entities.Host, 'smart_class_parameters'),
+            (entities.Host, 'smart_variables'),
+            (entities.HostGroup, 'clone'),
+            (entities.HostGroup, 'puppetclass_ids'),
+            (entities.HostGroup, 'rebuild_config'),
+            (entities.HostGroup, 'smart_class_parameters'),
+            (entities.HostGroup, 'smart_variables'),
+            (entities.Organization, 'download_debug_certificate'),
+            (entities.Organization, 'subscriptions'),
+            (entities.Organization, 'subscriptions/delete_manifest'),
+            (entities.Organization, 'subscriptions/manifest_history'),
+            (entities.Organization, 'subscriptions/refresh_manifest'),
+            (entities.Organization, 'subscriptions/upload'),
+            (entities.Organization, 'sync_plans'),
+            (entities.Product, 'sync'),
+            (entities.PuppetClass, 'smart_class_parameters'),
+            (entities.Repository, 'errata'),
+            (entities.Repository, 'packages'),
+            (entities.Repository, 'puppet_modules'),
+            (entities.Repository, 'remove_content'),
+            (entities.Repository, 'sync'),
+            (entities.Repository, 'upload_content'),
+            (entities.RHCIDeployment, 'deploy'),
+            (entities.ScapContents, 'xml'),
+            (entities.VirtWhoConfig, 'deploy_script'),
         ):
             with self.subTest((entity, which)):
                 path = entity(self.cfg, id=self.id_).path(which=which)
@@ -388,23 +373,23 @@ class PathTestCase(TestCase):
     def test_noid_and_which(self):
         """Execute ``entity().path(which=…)``."""
         for entity, which in (
-                (entities.ProductBulkAction, 'destroy'),
-                (entities.ProductBulkAction, 'sync'),
-                (entities.ProductBulkAction, 'http_proxy'),
-                (entities.ProductBulkAction, 'sync_plan'),
-                (entities.ProvisioningTemplate, 'build_pxe_default'),
-                (entities.ProvisioningTemplate, 'revision'),
-                (entities.ContentViewVersion, 'incremental_update'),
-                (entities.DiscoveredHost, 'auto_provision_all'),
-                (entities.DiscoveredHost, 'facts'),
-                (entities.DiscoveredHost, 'reboot_all'),
-                (entities.Errata, 'compare'),
-                (entities.ForemanTask, 'bulk_resume'),
-                (entities.ForemanTask, 'bulk_search'),
-                (entities.ForemanTask, 'summary'),
-                (entities.Host, 'bulk/install_content'),
-                (entities.Template, 'imports'),
-                (entities.Template, 'exports')
+            (entities.ProductBulkAction, 'destroy'),
+            (entities.ProductBulkAction, 'sync'),
+            (entities.ProductBulkAction, 'http_proxy'),
+            (entities.ProductBulkAction, 'sync_plan'),
+            (entities.ProvisioningTemplate, 'build_pxe_default'),
+            (entities.ProvisioningTemplate, 'revision'),
+            (entities.ContentViewVersion, 'incremental_update'),
+            (entities.DiscoveredHost, 'auto_provision_all'),
+            (entities.DiscoveredHost, 'facts'),
+            (entities.DiscoveredHost, 'reboot_all'),
+            (entities.Errata, 'compare'),
+            (entities.ForemanTask, 'bulk_resume'),
+            (entities.ForemanTask, 'bulk_search'),
+            (entities.ForemanTask, 'summary'),
+            (entities.Host, 'bulk/install_content'),
+            (entities.Template, 'imports'),
+            (entities.Template, 'exports'),
         ):
             with self.subTest((entity, which)):
                 path = entity(self.cfg).path(which)
@@ -418,38 +403,36 @@ class PathTestCase(TestCase):
 
         """
         for entity, which in (
-                (entities.ActivationKey, 'releases'),
-                (entities.ContentView, 'available_puppet_module_names'),
-                (entities.ContentView, 'content_view_puppet_modules'),
-                (entities.ContentView, 'content_view_versions'),
-                (entities.ContentView, 'publish'),
-                (entities.ContentViewVersion, 'promote'),
-                (entities.ForemanTask, 'self'),
-                (entities.HostGroup, 'rebuild_config'),
-                (entities.Organization, 'products'),
-                (entities.Organization, 'self'),
-                (entities.Organization, 'subscriptions'),
-                (entities.Organization, 'download_debug_certificate'),
-                (entities.Organization, 'subscriptions/delete_manifest'),
-                (entities.Organization, 'subscriptions/refresh_manifest'),
-                (entities.Organization, 'subscriptions/upload'),
-                (entities.Organization, 'sync_plans'),
-                (entities.Product, 'repository_sets'),
-                (entities.Repository, 'sync'),
-                (entities.Repository, 'upload_content'),
-                (entities.ScapContents, 'xml'),
-                (entities.RHCIDeployment, 'deploy'),
-                (entities.SmartProxy, 'refresh'),
-                (entities.VirtWhoConfig, 'deploy_script'),
-                (entities.VirtWhoConfig, 'configs')
+            (entities.ActivationKey, 'releases'),
+            (entities.ContentView, 'available_puppet_module_names'),
+            (entities.ContentView, 'content_view_puppet_modules'),
+            (entities.ContentView, 'content_view_versions'),
+            (entities.ContentView, 'publish'),
+            (entities.ContentViewVersion, 'promote'),
+            (entities.ForemanTask, 'self'),
+            (entities.HostGroup, 'rebuild_config'),
+            (entities.Organization, 'products'),
+            (entities.Organization, 'self'),
+            (entities.Organization, 'subscriptions'),
+            (entities.Organization, 'download_debug_certificate'),
+            (entities.Organization, 'subscriptions/delete_manifest'),
+            (entities.Organization, 'subscriptions/refresh_manifest'),
+            (entities.Organization, 'subscriptions/upload'),
+            (entities.Organization, 'sync_plans'),
+            (entities.Product, 'repository_sets'),
+            (entities.Repository, 'sync'),
+            (entities.Repository, 'upload_content'),
+            (entities.ScapContents, 'xml'),
+            (entities.RHCIDeployment, 'deploy'),
+            (entities.SmartProxy, 'refresh'),
+            (entities.VirtWhoConfig, 'deploy_script'),
+            (entities.VirtWhoConfig, 'configs'),
         ):
             with self.subTest((entity, which)):
                 with self.assertRaises(NoSuchPathError):
                     entity(self.cfg).path(which=which)
         # Deprecated entities
-        for entity, which in (
-                (entities.System, 'self'),
-        ):
+        for entity, which in ((entities.System, 'self'),):
             with self.subTest((entity, which)):
                 with self.assertRaises(NoSuchPathError):
                     entity(self.cfg_610).path(which=which)
@@ -460,20 +443,17 @@ class PathTestCase(TestCase):
         * ``ArfReport(id=…).path()``
         * ``ArfReport(id=…).path('download_html')``
         """
-        self.assertIn(
-            'compliance/arf_reports/1',
-            entities.ArfReport(self.cfg, id=1).path()
-        )
+        self.assertIn('compliance/arf_reports/1', entities.ArfReport(self.cfg, id=1).path())
         for which in ['download_html']:
             path = entities.ArfReport(
                 self.cfg,
                 id=1,
             ).path(which)
-            self.assertIn('compliance/arf_reports/1/' + which, path)
+            self.assertIn(f'compliance/arf_reports/1/{which}', path)
             self.assertRegex(path, fr'{which}$')
 
     def test_os_default_template(self):
-        """ Test ``nailgun.entities.OSDefaultTemplate.path``
+        """Test ``nailgun.entities.OSDefaultTemplate.path``
 
         Assert that the following return appropriate paths:
 
@@ -481,8 +461,7 @@ class PathTestCase(TestCase):
         """
         self.assertIn(
             'operatingsystems/1/os_default_templates/2',
-            entities.OSDefaultTemplate(
-                self.cfg, id=2, operatingsystem=1).path()
+            entities.OSDefaultTemplate(self.cfg, id=2, operatingsystem=1).path(),
         )
 
     def test_externalusergroup(self):
@@ -496,7 +475,7 @@ class PathTestCase(TestCase):
         """
         self.assertIn(
             'usergroups/1/external_usergroups/2',
-            entities.ExternalUserGroup(self.cfg, id=2, usergroup=1).path()
+            entities.ExternalUserGroup(self.cfg, id=2, usergroup=1).path(),
         )
         for which in ['refresh']:
             path = entities.ExternalUserGroup(
@@ -504,7 +483,7 @@ class PathTestCase(TestCase):
                 id=2,
                 usergroup=1,
             ).path(which)
-            self.assertIn('usergroups/1/external_usergroups/2/' + which, path)
+            self.assertIn(f'usergroups/1/external_usergroups/2/{which}', path)
             self.assertRegex(path, fr'{which}$')
 
     def test_repository_set(self):
@@ -519,8 +498,7 @@ class PathTestCase(TestCase):
 
         """
         self.assertIn(
-            '/repository_sets/2',
-            entities.RepositorySet(self.cfg, id=2, product=1).path()
+            '/repository_sets/2', entities.RepositorySet(self.cfg, id=2, product=1).path()
         )
         for which in ('available_repositories', 'disable', 'enable'):
             path = entities.RepositorySet(
@@ -528,7 +506,7 @@ class PathTestCase(TestCase):
                 id=2,
                 product=1,
             ).path(which)
-            self.assertIn('/repository_sets/2/' + which, path)
+            self.assertIn(f'/repository_sets/2/{which}', path)
             self.assertRegex(path, fr'{which}$')
 
     def test_snapshot(self):
@@ -542,7 +520,7 @@ class PathTestCase(TestCase):
         """
         self.assertIn(
             'hosts/1/snapshots/snapshot-2',
-            entities.Snapshot(self.cfg, id='snapshot-2', host=1).path()
+            entities.Snapshot(self.cfg, id='snapshot-2', host=1).path(),
         )
         which = 'revert'
         path = entities.Snapshot(
@@ -550,7 +528,7 @@ class PathTestCase(TestCase):
             id='snapshot-2',
             host=1,
         ).path(which)
-        self.assertIn('hosts/1/snapshots/snapshot-2/' + which, path)
+        self.assertIn(f'hosts/1/snapshots/snapshot-2/{which}', path)
         self.assertRegex(path, fr'{which}$')
 
     def test_sync_plan(self):
@@ -565,7 +543,7 @@ class PathTestCase(TestCase):
         """
         self.assertIn(
             'organizations/1/sync_plans/2',
-            entities.SyncPlan(self.cfg, id=2, organization=1).path()
+            entities.SyncPlan(self.cfg, id=2, organization=1).path(),
         )
         for which in ('add_products', 'remove_products'):
             path = entities.SyncPlan(
@@ -573,7 +551,7 @@ class PathTestCase(TestCase):
                 id=2,
                 organization=1,
             ).path(which)
-            self.assertIn('organizations/1/sync_plans/2/' + which, path)
+            self.assertIn(f'organizations/1/sync_plans/2/{which}', path)
             self.assertRegex(path, fr'{which}$')
 
     def test_system(self):
@@ -614,17 +592,10 @@ class PathTestCase(TestCase):
 
         """
         sub = entities.Subscription(self.cfg, organization=gen_integer(1, 100))
-        for which in (
-                'delete_manifest',
-                'manifest_history',
-                'refresh_manifest',
-                'upload'):
+        for which in ('delete_manifest', 'manifest_history', 'refresh_manifest', 'upload'):
             with self.subTest(which):
                 path = sub.path(which)
-                self.assertIn(
-                    f'organizations/{sub.organization.id}/subscriptions/{which}',
-                    path
-                )
+                self.assertIn(f'organizations/{sub.organization.id}/subscriptions/{which}', path)
                 self.assertRegex(path, fr'{which}$')
 
     def test_capsule(self):
@@ -637,16 +608,11 @@ class PathTestCase(TestCase):
 
         """
         capsule = entities.Capsule(self.cfg, id=gen_integer(1, 100))
-        for which in (
-                'content_lifecycle_environments',
-                'content_sync'):
+        for which in ('content_lifecycle_environments', 'content_sync'):
             with self.subTest(which):
                 path = capsule.path(which)
                 which_parts = which.split("_", 1)
-                self.assertIn(
-                    f'capsules/{capsule.id}/content/{which_parts[1]}',
-                    path
-                )
+                self.assertIn(f'capsules/{capsule.id}/content/{which_parts[1]}', path)
                 self.assertRegex(path, fr'{which_parts[0]}/{which_parts[1]}$')
 
     def test_hostsubscription(self):
@@ -662,10 +628,7 @@ class PathTestCase(TestCase):
         for which in ('add_subscriptions', 'remove_subscriptions'):
             with self.subTest(which):
                 path = sub.path(which)
-                self.assertIn(
-                    f'hosts/{sub.host.id}/subscriptions/{which}',
-                    path
-                )
+                self.assertIn(f'hosts/{sub.host.id}/subscriptions/{which}', path)
                 self.assertRegex(path, fr'{which}$')
 
 
@@ -697,7 +660,7 @@ class CreateTestCase(TestCase):
             entities.SmartProxy(self.cfg),
             entities.TailoringFile(self.cfg),
             entities.UserGroup(self.cfg),
-            entities.VirtWhoConfig(self.cfg)
+            entities.VirtWhoConfig(self.cfg),
         )
         for entity in entities_:
             with self.subTest(entity):
@@ -727,8 +690,7 @@ class CreatePayloadTestCase(TestCase):
     def setUpClass(cls):
         """Set a server configuration at ``cls.cfg``."""
         cls.cfg = config.ServerConfig('http://example.com')
-        cls.cfg_610 = config.ServerConfig(
-            'http://example.com', version='6.1.0')
+        cls.cfg_610 = config.ServerConfig('http://example.com', version='6.1.0')
 
     def test_no_attributes(self):
         """Instantiate an entity and call ``create_payload`` on it."""
@@ -761,21 +723,20 @@ class CreatePayloadTestCase(TestCase):
                 entities.TailoringFile,
                 entities.User,
                 entities.UserGroup,
-                entities.VirtWhoConfig
+                entities.VirtWhoConfig,
             )
         ]
-        entities_.extend([
-            (entities.ExternalUserGroup, {'usergroup': 1}),
-            (entities.Image, {'compute_resource': 1}),
-            (entities.SyncPlan, {'organization': 1}),
-            (entities.ContentViewFilterRule, {'content_view_filter': 1})
-        ])
+        entities_.extend(
+            [
+                (entities.ExternalUserGroup, {'usergroup': 1}),
+                (entities.Image, {'compute_resource': 1}),
+                (entities.SyncPlan, {'organization': 1}),
+                (entities.ContentViewFilterRule, {'content_view_filter': 1}),
+            ]
+        )
         for entity, params in entities_:
             with self.subTest():
-                self.assertIsInstance(
-                    entity(self.cfg, **params).create_payload(),
-                    dict
-                )
+                self.assertIsInstance(entity(self.cfg, **params).create_payload(), dict)
 
     def test_external_usergroup_payload(self):
         """Call ``create_payload`` on a :class:`nailgun.entities.ExternalUserGroup`."""
@@ -793,7 +754,7 @@ class CreatePayloadTestCase(TestCase):
                 organization=1,
                 sync_date=datetime.now(),
             ).create_payload()['sync_date'],
-            type('')  # different for Python 2 and 3
+            type(''),  # different for Python 2 and 3
         )
 
     def test_host_collection(self):
@@ -833,12 +794,9 @@ class CreatePayloadTestCase(TestCase):
                     "context": "deadbeef",
                     "arch": "noarch",
                     "id": 1,
-                    "packages": [
-                        "duck-0.8-1.noarch"
-                    ]
+                    "packages": ["duck-0.8-1.noarch"],
                 }
-            ]
-
+            ],
         }
 
         with mock.patch.object(entities.Errata, 'read_json') as read_json:
@@ -928,25 +886,18 @@ class CreateMissingTestCase(TestCase):
         entity = entities.AuthSourceLDAP(self.cfg, onthefly_register=False)
         with mock.patch.object(EntityCreateMixin, 'create_missing'):
             entity.create_missing()
-        self.assertTrue(
-            set((self.AS_LDAP_FIELDS)).isdisjoint(entity.get_values())
-        )
+        self.assertTrue(set(self.AS_LDAP_FIELDS).isdisjoint(entity.get_values()))
 
     def test_auth_source_ldap_v2(self):
         """Test ``AuthSourceLDAP(onthefly_register=True).create_missing()``."""
         entity = entities.AuthSourceLDAP(self.cfg, onthefly_register=True)
         with mock.patch.object(EntityCreateMixin, 'create_missing'):
             entity.create_missing()
-        self.assertTrue(
-            set((self.AS_LDAP_FIELDS)).issubset(entity.get_values())
-        )
+        self.assertTrue(set(self.AS_LDAP_FIELDS).issubset(entity.get_values()))
 
     def test_auth_source_ldap_v3(self):
         """Does ``AuthSourceLDAP.create_missing`` overwrite fields?"""
-        attrs = {
-            field: i
-            for i, field in enumerate(self.AS_LDAP_FIELDS)
-        }
+        attrs = {field: i for i, field in enumerate(self.AS_LDAP_FIELDS)}
         attrs.update({'onthefly_register': True})
         entity = entities.AuthSourceLDAP(self.cfg, **attrs)
         with mock.patch.object(EntityCreateMixin, 'create_missing'):
@@ -1064,16 +1015,18 @@ class CreateMissingTestCase(TestCase):
                     entity.create_missing()
         self.assertEqual(
             set(entity.get_values().keys()),
-            _get_required_field_names(entity).union((
-                'architecture',
-                'domain',
-                'environment',
-                'mac',
-                'medium',
-                'operatingsystem',
-                'ptable',
-                'root_pass',
-            )),
+            _get_required_field_names(entity).union(
+                (
+                    'architecture',
+                    'domain',
+                    'environment',
+                    'mac',
+                    'medium',
+                    'operatingsystem',
+                    'ptable',
+                    'root_pass',
+                )
+            ),
         )
 
     def test_host_v2(self):
@@ -1217,8 +1170,7 @@ class ReadTestCase(TestCase):
     def setUp(self):
         """Set a server configuration at ``self.cfg``."""
         self.cfg = config.ServerConfig('http://example.com')
-        self.cfg_610 = config.ServerConfig(
-            'http://example.com', version='6.1.0')
+        self.cfg_610 = config.ServerConfig('http://example.com', version='6.1.0')
 
     def test_entity_arg(self):
         """Call ``read`` on entities that require parameters for instantiation.
@@ -1232,30 +1184,30 @@ class ReadTestCase(TestCase):
 
         """
         for entity in (
-                entities.ContentViewFilterRule(
-                    self.cfg,
-                    content_view_filter=2,
-                ),
-                entities.ContentViewComponent(self.cfg, composite_content_view=2, content_view=1),
-                entities.ContentViewPuppetModule(self.cfg, content_view=2),
-                entities.ExternalUserGroup(self.cfg, usergroup=1),
-                entities.Interface(self.cfg, host=2),
-                entities.Image(self.cfg, compute_resource=1),
-                entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
-                entities.OSDefaultTemplate(self.cfg, operatingsystem=2),
-                entities.OverrideValue(self.cfg, smart_class_parameter=2),
-                entities.OverrideValue(self.cfg, smart_variable=2),
-                entities.Parameter(self.cfg, domain=2),
-                entities.Parameter(self.cfg, host=2),
-                entities.Parameter(self.cfg, hostgroup=2),
-                entities.Parameter(self.cfg, location=2),
-                entities.Parameter(self.cfg, operatingsystem=2),
-                entities.Parameter(self.cfg, organization=2),
-                entities.Parameter(self.cfg, subnet=2),
-                entities.RepositorySet(self.cfg, product=2),
-                entities.Snapshot(self.cfg, host=2),
-                entities.SSHKey(self.cfg, user=2),
-                entities.SyncPlan(self.cfg, organization=2),
+            entities.ContentViewFilterRule(
+                self.cfg,
+                content_view_filter=2,
+            ),
+            entities.ContentViewComponent(self.cfg, composite_content_view=2, content_view=1),
+            entities.ContentViewPuppetModule(self.cfg, content_view=2),
+            entities.ExternalUserGroup(self.cfg, usergroup=1),
+            entities.Interface(self.cfg, host=2),
+            entities.Image(self.cfg, compute_resource=1),
+            entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
+            entities.OSDefaultTemplate(self.cfg, operatingsystem=2),
+            entities.OverrideValue(self.cfg, smart_class_parameter=2),
+            entities.OverrideValue(self.cfg, smart_variable=2),
+            entities.Parameter(self.cfg, domain=2),
+            entities.Parameter(self.cfg, host=2),
+            entities.Parameter(self.cfg, hostgroup=2),
+            entities.Parameter(self.cfg, location=2),
+            entities.Parameter(self.cfg, operatingsystem=2),
+            entities.Parameter(self.cfg, organization=2),
+            entities.Parameter(self.cfg, subnet=2),
+            entities.RepositorySet(self.cfg, product=2),
+            entities.Snapshot(self.cfg, host=2),
+            entities.SSHKey(self.cfg, user=2),
+            entities.SyncPlan(self.cfg, organization=2),
         ):
             # We mock read_json() because it may be called by read().
             with mock.patch.object(EntityReadMixin, 'read_json'):
@@ -1273,16 +1225,16 @@ class ReadTestCase(TestCase):
 
         """
         for entity in (
-                # entities.DiscoveryRule,  # see test_discovery_rule
-                # entities.HostGroup,  # see HostGroupTestCase.test_read
-                # entities.Product,  # See Product.test_read
-                # entities.UserGroup,  # see test_attrs_arg_v2
-                entities.ContentView,
-                entities.Domain,
-                entities.Filter,
-                entities.Host,
-                entities.Media,
-                entities.RHCIDeployment,
+            # entities.DiscoveryRule,  # see test_discovery_rule
+            # entities.HostGroup,  # see HostGroupTestCase.test_read
+            # entities.Product,  # See Product.test_read
+            # entities.UserGroup,  # see test_attrs_arg_v2
+            entities.ContentView,
+            entities.Domain,
+            entities.Filter,
+            entities.Host,
+            entities.Media,
+            entities.RHCIDeployment,
         ):
             with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
                 with mock.patch.object(EntityReadMixin, 'read') as read:
@@ -1291,9 +1243,7 @@ class ReadTestCase(TestCase):
                         self.assertEqual(read_json.call_count, 1)
                         self.assertEqual(read.call_count, 1)
         # Deprecated entities
-        for entity in (
-                entities.System,
-        ):
+        for entity in (entities.System,):
             with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
                 with mock.patch.object(EntityReadMixin, 'read') as read:
                     with self.subTest():
@@ -1310,9 +1260,7 @@ class ReadTestCase(TestCase):
         """
         # test_data is a single-use variable. We use it anyway for formatting
         # purposes.
-        test_data = (
-            (entities.UserGroup(self.cfg, id=1), {'admin': 'foo'}),
-        )
+        test_data = ((entities.UserGroup(self.cfg, id=1), {'admin': 'foo'}),)
         for entity, server_response in test_data:
             with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
                 read_json.return_value = {}
@@ -1360,11 +1308,9 @@ class ReadTestCase(TestCase):
             ),
             (
                 entities.Filter(self.cfg),
-                {'override?': None,
-                 'unlimited?': None},
-                {'override': None,
-                 'unlimited': None},
-            )
+                {'override?': None, 'unlimited?': None},
+                {'override': None, 'unlimited': None},
+            ),
         )
         for entity, attrs_before, attrs_after in test_data:
             with self.subTest(entity):
@@ -1379,29 +1325,29 @@ class ReadTestCase(TestCase):
 
         """
         for entity, ignored_attrs in (
-                (entities.AzureRMComputeResource, {'secret_key'}),
-                (entities.Errata,
-                 {'content_view_version', 'environment', 'repository'}),
-                (entities.OVirtComputeResource, {'password'}),
-                (entities.SmartProxy, {'download_policy'}),
-                (entities.SmartClassParameters, {'hidden_value'}),
-                (entities.SmartVariable, {'hidden_value'}),
-                (entities.Subnet, {
-                    'discovery',
-                    'remote_execution_proxy',
-                    'subnet_parameters_attributes'}),
-                (entities.Subscription, {'organization'}),
-                (entities.Repository, {'organization', 'upstream_password'}),
-                (entities.User, {'password'}),
-                (entities.ScapContents, {'scap_file'}),
-                (entities.TailoringFile, {'scap_file'}),
-                (entities.VirtWhoConfig, {'hypervisor_password'}),
-                (entities.VMWareComputeResource, {'password'}),
-                (entities.DiscoveredHost, {'ip', 'mac', 'root_pass', 'hostgroup'}),
+            (entities.AzureRMComputeResource, {'secret_key'}),
+            (entities.Errata, {'content_view_version', 'environment', 'repository'}),
+            (entities.OVirtComputeResource, {'password'}),
+            (entities.SmartProxy, {'download_policy'}),
+            (entities.SmartClassParameters, {'hidden_value'}),
+            (entities.SmartVariable, {'hidden_value'}),
+            (
+                entities.Subnet,
+                {'discovery', 'remote_execution_proxy', 'subnet_parameters_attributes'},
+            ),
+            (entities.Subscription, {'organization'}),
+            (entities.Repository, {'organization', 'upstream_password'}),
+            (entities.User, {'password'}),
+            (entities.ScapContents, {'scap_file'}),
+            (entities.TailoringFile, {'scap_file'}),
+            (entities.VirtWhoConfig, {'hypervisor_password'}),
+            (entities.VMWareComputeResource, {'password'}),
+            (entities.DiscoveredHost, {'ip', 'mac', 'root_pass', 'hostgroup'}),
         ):
             with self.subTest(entity):
-                with mock.patch.object(EntityReadMixin, 'read') as read,\
-                        mock.patch.object(EntityReadMixin, 'read_json'):
+                with mock.patch.object(EntityReadMixin, 'read') as read, mock.patch.object(
+                    EntityReadMixin, 'read_json'
+                ):
                     entity(self.cfg).read()
                 # `call_args` is a two-tuple of (positional, keyword) args.
                 self.assertEqual(ignored_attrs, read.call_args[0][2])
@@ -1427,10 +1373,10 @@ class ReadTestCase(TestCase):
 
         """
         for input_ignore, actual_ignore in (
-                (None, {'password'}),
-                ({'password'}, {'password'}),
-                ({'email'}, {'email', 'password'}),
-                ({'email', 'password'}, {'email', 'password'}),
+            (None, {'password'}),
+            ({'password'}, {'password'}),
+            ({'email'}, {'email', 'password'}),
+            ({'email', 'password'}, {'email', 'password'}),
         ):
             with self.subTest(input_ignore):
                 with mock.patch.object(EntityReadMixin, 'read') as read:
@@ -1445,17 +1391,47 @@ class ReadTestCase(TestCase):
         correctly passed on.
         """
         for input_type, actual_ignore in (
-                ('interface', {'host', 'username', 'password', 'provider',
-                               'mode', 'bond_options', 'attached_to', 'tag',
-                               'attached_devices'}),
-                ('bmc', {'host', 'mode', 'bond_options', 'attached_to', 'tag',
-                         'attached_devices'}),
-                ('bond', {'host', 'username', 'password', 'provider',
-                          'attached_to', 'tag'}),
-                ('bridge', {'host', 'username', 'password', 'provider', 'mode',
-                            'bond_options', 'attached_to', 'tag'}),
-                ('virtual', {'host', 'username', 'password', 'provider',
-                             'mode', 'bond_options', 'attached_devices'}),
+            (
+                'interface',
+                {
+                    'host',
+                    'username',
+                    'password',
+                    'provider',
+                    'mode',
+                    'bond_options',
+                    'attached_to',
+                    'tag',
+                    'attached_devices',
+                },
+            ),
+            ('bmc', {'host', 'mode', 'bond_options', 'attached_to', 'tag', 'attached_devices'}),
+            ('bond', {'host', 'username', 'password', 'provider', 'attached_to', 'tag'}),
+            (
+                'bridge',
+                {
+                    'host',
+                    'username',
+                    'password',
+                    'provider',
+                    'mode',
+                    'bond_options',
+                    'attached_to',
+                    'tag',
+                },
+            ),
+            (
+                'virtual',
+                {
+                    'host',
+                    'username',
+                    'password',
+                    'provider',
+                    'mode',
+                    'bond_options',
+                    'attached_devices',
+                },
+            ),
         ):
             with self.subTest(input_type):
                 with mock.patch.object(EntityReadMixin, 'read') as read:
@@ -1464,8 +1440,7 @@ class ReadTestCase(TestCase):
                         'read_json',
                         return_value={'type': input_type},
                     ):
-                        entities.Interface(
-                            self.cfg, id=2, host=2, type=input_type).read()
+                        entities.Interface(self.cfg, id=2, host=2, type=input_type).read()
                 # `call_args` is a two-tuple of (positional, keyword) args.
                 self.assertEqual(actual_ignore, read.call_args[0][2])
 
@@ -1476,8 +1451,13 @@ class ReadTestCase(TestCase):
         correctly passed on.
         """
         parents = {
-            'domain', 'host', 'hostgroup', 'location', 'operatingsystem',
-            'organization', 'subnet'
+            'domain',
+            'host',
+            'hostgroup',
+            'location',
+            'operatingsystem',
+            'organization',
+            'subnet',
         }
         for parent in parents:
             with self.subTest(parent):
@@ -1487,8 +1467,7 @@ class ReadTestCase(TestCase):
                         'read_json',
                         return_value={parent: 3},
                     ):
-                        entities.Parameter(
-                            self.cfg, id=2, **{parent: 3}).read()
+                        entities.Parameter(self.cfg, id=2, **{parent: 3}).read()
                 # `call_args` is a two-tuple of (positional, keyword) args.
                 self.assertEqual(parents, read.call_args[0][2])
 
@@ -1506,7 +1485,7 @@ class ReadTestCase(TestCase):
             ):
                 entities.Snapshot(self.cfg, id=2, host=3).read()
         # `call_args` is a two-tuple of (positional, keyword) args.
-        self.assertEqual(set(['host']), read.call_args[0][2])
+        self.assertEqual({'host'}, read.call_args[0][2])
 
     def test_host_with_interface(self):
         """Call :meth:`nailgun.entities.Host.read`.
@@ -1532,10 +1511,7 @@ class ReadTestCase(TestCase):
         self.assertTrue(isinstance(host.interface, list))
         for interface in host.interface:
             self.assertTrue(isinstance(interface, entities.Interface))
-        self.assertEqual(
-            {interface.id for interface in host.interface},
-            {2, 3}
-        )
+        self.assertEqual({interface.id for interface in host.interface}, {2, 3})
 
     def test_discovery_rule(self):
         """Call :meth:`nailgun.entities.DiscoveryRule.read`.
@@ -1647,18 +1623,19 @@ class SearchTestCase(TestCase):
             # Synplan set
             search_json.return_value = {
                 'results': [
-                    {'id': 2,
-                     'name': 'test_product',
-                     'organization': {
-                         'id': 1,
-                         'label': 'Default_Organization',
-                         'name': 'Default Organization'},
-                     'organization_id': 1,
-                     'sync_plan': {
-                         'id': 1,
-                         'interval': 'hourly',
-                         'name': 'sync1'},
-                     'sync_plan_id': 1}]
+                    {
+                        'id': 2,
+                        'name': 'test_product',
+                        'organization': {
+                            'id': 1,
+                            'label': 'Default_Organization',
+                            'name': 'Default Organization',
+                        },
+                        'organization_id': 1,
+                        'sync_plan': {'id': 1, 'interval': 'hourly', 'name': 'sync1'},
+                        'sync_plan_id': 1,
+                    }
+                ]
             }
             result = entities.Product(self.cfg, organization=1).search()
             self.assertIsNotNone(result[0].sync_plan)
@@ -1666,15 +1643,19 @@ class SearchTestCase(TestCase):
             # Synplan not set
             search_json.return_value = {
                 'results': [
-                    {'id': 3,
-                     'name': 'test_product2',
-                     'organization': {
-                         'id': 1,
-                         'label': 'Default_Organization',
-                         'name': 'Default Organization'},
-                     'organization_id': 1,
-                     'sync_plan': None,
-                     'sync_plan_id': None}]
+                    {
+                        'id': 3,
+                        'name': 'test_product2',
+                        'organization': {
+                            'id': 1,
+                            'label': 'Default_Organization',
+                            'name': 'Default Organization',
+                        },
+                        'organization_id': 1,
+                        'sync_plan': None,
+                        'sync_plan_id': None,
+                    }
+                ]
             }
             result = entities.Product(self.cfg, organization=1).search()
             self.assertIsNone(result[0].sync_plan)
@@ -1690,15 +1671,16 @@ class SearchTestCase(TestCase):
             # Image is set
             search_json.return_value = {
                 'results': [
-                    {'id': 2,
-                     'name': 'host1',
-                     'organization': {
-                         'id': 1,
-                         'name': 'Default Organization'},
-                     'organization_id': 1,
-                     'image_name': 'rhel7_image',
-                     'image_file': '/usr/share/imagefile/xyz7.img',
-                     'image_id': 1}]
+                    {
+                        'id': 2,
+                        'name': 'host1',
+                        'organization': {'id': 1, 'name': 'Default Organization'},
+                        'organization_id': 1,
+                        'image_name': 'rhel7_image',
+                        'image_file': '/usr/share/imagefile/xyz7.img',
+                        'image_id': 1,
+                    }
+                ]
             }
             result = entities.Host(self.cfg, organization=1).search()
             self.assertIsNotNone(result[0].image)
@@ -1706,15 +1688,16 @@ class SearchTestCase(TestCase):
             # image not set
             search_json.return_value = {
                 'results': [
-                    {'id': 3,
-                     'name': 'host2',
-                     'organization': {
-                         'id': 1,
-                         'name': 'Default Organization'},
-                     'organization_id': 1,
-                     'image_name': None,
-                     'image_file': '',
-                     'image_id': None}]
+                    {
+                        'id': 3,
+                        'name': 'host2',
+                        'organization': {'id': 1, 'name': 'Default Organization'},
+                        'organization_id': 1,
+                        'image_name': None,
+                        'image_file': '',
+                        'image_id': None,
+                    }
+                ]
             }
             result = entities.Host(self.cfg, organization=1).search()
             self.assertIsNone(result[0].image)
@@ -1887,20 +1870,15 @@ class SearchPayloadTestCase(TestCase):
 
     def test_generic(self):
         """Instantiate a variety of entities and call ``search_payload``."""
-        entities_ = ([
-            (entities.ContentViewFilterRule, {'content_view_filter': 1})
-        ])
+        entities_ = [(entities.ContentViewFilterRule, {'content_view_filter': 1})]
 
         for entity, params in entities_:
             with self.subTest():
-                self.assertIsInstance(
-                    entity(self.cfg, **params).search_payload(),
-                    dict
-                )
+                self.assertIsInstance(entity(self.cfg, **params).search_payload(), dict)
 
     def test_content_view_filter_rule(self):
         """errata_id field should be Errata ID when sent to the server,
-           not DB ID.
+        not DB ID.
         """
         errata_kwargs = {
             "id": 1,
@@ -1928,12 +1906,9 @@ class SearchPayloadTestCase(TestCase):
                     "context": "deadbeef",
                     "arch": "noarch",
                     "id": 1,
-                    "packages": [
-                        "duck-0.8-1.noarch"
-                    ]
+                    "packages": ["duck-0.8-1.noarch"],
                 }
-            ]
-
+            ],
         }
 
         with mock.patch.object(entities.Errata, 'read_json') as read_json:
@@ -1953,8 +1928,7 @@ class UpdatePayloadTestCase(TestCase):
     def setUpClass(cls):
         """Set a server configuration at ``cls.cfg``."""
         cls.cfg = config.ServerConfig('http://example.com')
-        cls.cfg_610 = config.ServerConfig(
-            'http://example.com', version='6.1.0')
+        cls.cfg_610 = config.ServerConfig('http://example.com', version='6.1.0')
 
     def test_generic(self):
         """Instantiate a variety of entities and call ``update_payload``."""
@@ -2040,12 +2014,9 @@ class UpdatePayloadTestCase(TestCase):
                     "context": "deadbeef",
                     "arch": "noarch",
                     "id": 1,
-                    "packages": [
-                        "duck-0.8-1.noarch"
-                    ]
+                    "packages": ["duck-0.8-1.noarch"],
                 }
-            ]
-
+            ],
         }
 
         with mock.patch.object(entities.Errata, 'read_json') as read_json:
@@ -2102,7 +2073,7 @@ class UpdatePayloadTestCase(TestCase):
         host_collection.name = 'newname'
         host_collection.organization_id = org2
         payload = host_collection.update_payload()
-        self.assertEquals(payload['name'], 'newname')
+        self.assertEqual(payload['name'], 'newname')
         self.assertNotIn('organization', payload.keys())  # organization NOT changed
         self.assertNotIn('organization_id', payload.keys())  # organization NOT changed
 
@@ -2142,14 +2113,12 @@ class UpdatePayloadTestCase(TestCase):
             self.cfg,
             operatingsystem=entities.OperatingSystem(self.cfg, id=1),
             template_kind=entities.TemplateKind(self.cfg, id=2),
-            provisioning_template=entities.ProvisioningTemplate(self.cfg,
-                                                                id=3),
+            provisioning_template=entities.ProvisioningTemplate(self.cfg, id=3),
         ).update_payload()
         self.assertNotIn('template_kind_id', payload)
         self.assertNotIn('provisioning_template_id', payload)
         self.assertIn('template_kind_id', payload['os_default_template'])
-        self.assertIn('provisioning_template_id',
-                      payload['os_default_template'])
+        self.assertIn('provisioning_template_id', payload['os_default_template'])
 
     def test_subnet_from(self):
         """Check whether ``Subnet`` updates its ``from_`` field.
@@ -2164,6 +2133,7 @@ class UpdatePayloadTestCase(TestCase):
         ).update_payload()
         self.assertNotIn('from_', payload['subnet'])
         self.assertIn('from', payload['subnet'])
+
 
 # 2. Tests for entity-specific methods. ---------------------------------- {{{1
 
@@ -2204,31 +2174,19 @@ class GenericTestCase(TestCase):
             (entities.ActivationKey(**generic).content_override, 'put'),
             (entities.ActivationKey(**generic).product_content, 'get'),
             (entities.ActivationKey(**generic).remove_host_collection, 'put'),
-            (
-                entities.Capsule(**generic).content_add_lifecycle_environment,
-                'post'
-            ),
+            (entities.Capsule(**generic).content_add_lifecycle_environment, 'post'),
             (entities.ArfReport(**generic).download_html, 'get'),
             (entities.Capsule(**generic).content_get_sync, 'get'),
-            (
-                entities.Capsule(**generic).content_lifecycle_environments,
-                'get'
-            ),
+            (entities.Capsule(**generic).content_lifecycle_environments, 'get'),
             (entities.Capsule(**generic).content_sync, 'post'),
             (entities.Role(**generic).clone, 'post'),
-            (
-                entities.ProvisioningTemplate(**generic).build_pxe_default,
-                'post'
-            ),
+            (entities.ProvisioningTemplate(**generic).build_pxe_default, 'post'),
             (entities.ProvisioningTemplate(**generic).clone, 'post'),
             (entities.ReportTemplate(**generic).clone, 'post'),
             (entities.ContentView(**generic).available_puppet_modules, 'get'),
             (entities.ContentView(**generic).copy, 'post'),
             (entities.ContentView(**generic).publish, 'post'),
-            (
-                entities.ContentViewVersion(**generic).incremental_update,
-                'post'
-            ),
+            (entities.ContentViewVersion(**generic).incremental_update, 'post'),
             (entities.ContentViewVersion(**generic).promote, 'post'),
             (entities.DiscoveredHost(cfg).facts, 'post'),
             (entities.DiscoveredHost(**generic).refresh_facts, 'put'),
@@ -2237,10 +2195,7 @@ class GenericTestCase(TestCase):
             (entities.Errata(**generic).compare, 'get'),
             (entities.ExternalUserGroup(**external_usergroup).refresh, 'put'),
             (entities.ForemanTask(cfg).summary, 'get'),
-            (
-                entities.Organization(**generic).download_debug_certificate,
-                'get'
-            ),
+            (entities.Organization(**generic).download_debug_certificate, 'get'),
             (entities.Host(**generic).add_puppetclass, 'post'),
             (entities.Host(**generic).enc, 'get'),
             (entities.Host(**generic).errata, 'get'),
@@ -2285,7 +2240,7 @@ class GenericTestCase(TestCase):
             (entities.SyncPlan(**sync_plan).remove_products, 'put'),
             (entities.Template(**generic).imports, 'post'),
             (entities.Template(**generic).exports, 'post'),
-            (entities.VirtWhoConfig(**generic).deploy_script, 'get')
+            (entities.VirtWhoConfig(**generic).deploy_script, 'get'),
         )
         repo_set = {'server_config': cfg, 'id': 1, 'product': 2}
         snapshot = {'server_config': cfg, 'id': 'snapshot-1', 'host': 1}
@@ -2310,10 +2265,7 @@ class GenericTestCase(TestCase):
         """
         for method, request in self.methods_requests:
             with self.subTest((method, request)):
-                self.assertEqual(
-                    inspect.getargspec(method),
-                    (['self', 'synchronous'], None, 'kwargs', (True,))
-                )
+                self.assertEqual(inspect.getfullargspec(method), EXPECTED_ARGSPEC)
                 kwargs = {'kwarg': gen_integer()}
                 with mock.patch.object(entities, '_handle_response') as handlr:
                     with mock.patch.object(client, request) as client_request:
@@ -2373,6 +2325,7 @@ class ForemanStatusTestCase(TestCase):
 
 class FileTestCase(TestCase):
     """Class with entity File tests"""
+
     def test_to_json(self):
         """Check json serialisation on nested entities"""
         file_kwargs = {
@@ -2380,14 +2333,9 @@ class FileTestCase(TestCase):
             'name': 'test_file.txt',
             'path': 'test_file.txt',
             'uuid': '3a013738-e5b8-43b2-81f5-3732b6e42776',
-            'checksum': (
-                '16c946e116072838b213f622298b74baa75c52c8fee50a6230b4680e3c1'
-                '36fb1'
-            ),
+            'checksum': ('16c946e116072838b213f622298b74baa75c52c8fee50a6230b4680e3c136fb1'),
         }
-        cfg = config.ServerConfig(
-            url='https://foo.bar', verify=False,
-            auth=('foo', 'bar'))
+        cfg = config.ServerConfig(url='https://foo.bar', verify=False, auth=('foo', 'bar'))
         repo_kwargs = {'id': 3, 'content_type': 'file'}
         repo = entities.Repository(cfg, **repo_kwargs)
         file = entities.File(cfg, repository=repo, **file_kwargs)
@@ -2408,10 +2356,10 @@ class ForemanTaskTestCase(TestCase):
     def test_poll(self):
         """Call :meth:`nailgun.entities.ForemanTask.poll`."""
         for kwargs in (
-                {},
-                {'poll_rate': gen_integer()},
-                {'timeout': gen_integer()},
-                {'poll_rate': gen_integer(), 'timeout': gen_integer()}
+            {},
+            {'poll_rate': gen_integer()},
+            {'timeout': gen_integer()},
+            {'poll_rate': gen_integer(), 'timeout': gen_integer()},
         ):
             with self.subTest(kwargs):
                 with mock.patch.object(entities, '_poll_task') as poll_task:
@@ -2437,8 +2385,7 @@ class ContentUploadTestCase(TestCase):
             server_config,
             id=gen_integer(min_value=1),
         )
-        self.content_upload = entities.ContentUpload(
-            server_config, repository=repo)
+        self.content_upload = entities.ContentUpload(server_config, repository=repo)
 
     def test_content_upload_create(self):
         """Test ``nailgun.entities.ContentUpload.create``.
@@ -2500,19 +2447,17 @@ class ContentUploadTestCase(TestCase):
         filename = gen_string('alpha')
         filepath = os.path.join(gen_string('alpha'), filename)
         with mock.patch.object(
-            entities.ContentUpload, 'create',
+            entities.ContentUpload,
+            'create',
         ) as create:
             with mock.patch.object(
-                entities.Repository, 'import_uploads',
+                entities.Repository,
+                'import_uploads',
                 return_value={'status': 'success'},
             ) as import_uploads:
-                mock_open = mock.mock_open(
-                    read_data=gen_string('alpha').encode('ascii'))
-                with mock.patch(
-                    _BUILTIN_OPEN, mock_open, create=True
-                ):
-                    response = self.content_upload.upload(
-                        filepath, filename)
+                mock_open = mock.mock_open(read_data=gen_string('alpha').encode('ascii'))
+                with mock.patch(_BUILTIN_OPEN, mock_open, create=True):
+                    response = self.content_upload.upload(filepath, filename)
         self.assertEqual(import_uploads.call_count, 1)
         self.assertEqual(create.call_count, 1)
         self.assertEqual(import_uploads.return_value, response)
@@ -2528,19 +2473,17 @@ class ContentUploadTestCase(TestCase):
         filename = gen_string('alpha')
         filepath = os.path.join(gen_string('alpha'), filename)
         with mock.patch.object(
-            entities.ContentUpload, 'create',
+            entities.ContentUpload,
+            'create',
         ) as create:
             with mock.patch.object(
-                entities.Repository, 'import_uploads',
+                entities.Repository,
+                'import_uploads',
                 return_value={'status': 'success'},
             ) as import_uploads:
-                mock_open = mock.mock_open(
-                    read_data=gen_string('alpha').encode('ascii'))
-                with mock.patch(
-                    _BUILTIN_OPEN, mock_open, create=True
-                ):
-                    response = self.content_upload.upload(
-                        filepath)
+                mock_open = mock.mock_open(read_data=gen_string('alpha').encode('ascii'))
+                with mock.patch(_BUILTIN_OPEN, mock_open, create=True):
+                    response = self.content_upload.upload(filepath)
         self.assertEqual(import_uploads.call_count, 1)
         self.assertEqual(create.call_count, 1)
         self.assertEqual(import_uploads.return_value, response)
@@ -2548,6 +2491,7 @@ class ContentUploadTestCase(TestCase):
 
 class ContentViewTestCase(TestCase):
     """Tests for :class:`nailgun.entities.ContentView`."""
+
     def setUp(self):
         self.server_config = config.ServerConfig('http://example.com')
         self.cv = entities.ContentView(
@@ -2559,79 +2503,80 @@ class ContentViewTestCase(TestCase):
             "composite": True,
             "components": [],
             "content_host_count": 0,
-            "content_view_components": [{
-                "composite_content_view": {
-                    "id": 11,
-                    "label": "My_CVC",
-                    "name": "My CVC",
-                },
-                "content_view": {
-                    "id": 10,
-                    "label": "My_CV",
-                    "name": "My CV",
-                },
-                "content_view_version": {
+            "content_view_components": [
+                {
+                    "composite_content_view": {
+                        "id": 11,
+                        "label": "My_CVC",
+                        "name": "My CVC",
+                    },
                     "content_view": {
                         "id": 10,
                         "label": "My_CV",
-                        "name": "My CV"
+                        "name": "My CV",
                     },
-                    "content_view_id": 10,
-                    "environments": [
-                        {
-                            "id": 1,
-                        }
-                    ],
-                    "id": 21,
-                    "name": "My_CV 2.0",
-                    "version": "6.0"
-                },
-                "id": 4,
-                "latest": True,
-
-            }],
+                    "content_view_version": {
+                        "content_view": {"id": 10, "label": "My_CV", "name": "My CV"},
+                        "content_view_id": 10,
+                        "environments": [
+                            {
+                                "id": 1,
+                            }
+                        ],
+                        "id": 21,
+                        "name": "My_CV 2.0",
+                        "version": "6.0",
+                    },
+                    "id": 4,
+                    "latest": True,
+                }
+            ],
             "description": None,
-            "environments": [{
-                "id": 1,
-                "name": "Library",
-                "label": "Library",
-            }],
+            "environments": [
+                {
+                    "id": 1,
+                    "name": "Library",
+                    "label": "Library",
+                }
+            ],
             "id": 5,
             "label": "my_CV",
             "last_published": '2018-11-23 11:51:30 UTC',
             "name": "my CV",
             "next_version": "3.0",
             "organization_id": 1,
-            "puppet_modules": [{
-                "name": "katello-katello",
-                "id": 1,
-            }],
-            "repositories": [{
-                "name": "my_tst_repo",
-                "id": 3,
-            }],
-            "versions": [{
-                "id": 4,
-                "version": "2.0",
-                "environment_ids": [1],
-            }],
-            "solve_dependencies": False
+            "puppet_modules": [
+                {
+                    "name": "katello-katello",
+                    "id": 1,
+                }
+            ],
+            "repositories": [
+                {
+                    "name": "my_tst_repo",
+                    "id": 3,
+                }
+            ],
+            "versions": [
+                {
+                    "id": 4,
+                    "version": "2.0",
+                    "environment_ids": [1],
+                }
+            ],
+            "solve_dependencies": False,
         }
 
     def test_read(self):
-        """Check that helper method is sane.
-        """
+        """Check that helper method is sane."""
         with mock.patch.object(self.cv, 'read_json', return_value=self.single_entity) as handlr:
             response = self.cv.read()
         self.assertEqual(handlr.call_count, 1)
         self.assertEqual(type(response), entities.ContentView)
-        self.assertEqual(type(response.content_view_component[0]),
-                         entities.ContentViewComponent)
+        self.assertEqual(type(response.content_view_component[0]), entities.ContentViewComponent)
 
     def test_search(self):
-        """Check that helper method is sane.
-
-        """
+        """Check that helper method is sane."""
         return_dict = {
             'results': [self.single_entity],
         }
@@ -2639,8 +2584,9 @@ class ContentViewTestCase(TestCase):
             response = self.cv.search()
         self.assertEqual(handlr.call_count, 1)
         self.assertEqual(type(response[0]), entities.ContentView)
-        self.assertEqual(type(response[0].content_view_component[0]),
-                         entities.ContentViewComponent)
+        self.assertEqual(
+            type(response[0].content_view_component[0]), entities.ContentViewComponent
+        )
 
 
 class ContentViewComponentTestCase(TestCase):
@@ -2681,18 +2627,22 @@ class ContentViewComponentTestCase(TestCase):
                     'label': 'test',
                     'id': 10,
                 },
-                'repositories': [{
-                    'label': 'my_repo',
-                    'id': 19,
-                }],
-                'environments': [{
-                    'label': 'Library',
-                    'id': 1,
-                }],
+                'repositories': [
+                    {
+                        'label': 'my_repo',
+                        'id': 19,
+                    }
+                ],
+                'environments': [
+                    {
+                        'label': 'Library',
+                        'id': 1,
+                    }
+                ],
                 'id': 21,
             },
             'id': 2,
-            'latest': True
+            'latest': True,
         }
 
         self.read_json_pacther = mock.patch.object(self.cvc, 'read_json')
@@ -2701,29 +2651,23 @@ class ContentViewComponentTestCase(TestCase):
         for which in ['add', 'remove']:
             path = self.cvc.path(which=which)
             self.assertIn(
-                f'{self.cvc.composite_content_view.id}/content_view_components/{which}',
-                path
+                f'{self.cvc.composite_content_view.id}/content_view_components/{which}', path
             )
             self.assertRegex(path, fr'{which}$')
 
     def test_add(self):
         """Check that helper method is sane.
 
-            Assert that:
+        Assert that:
 
-            * Method has a correct signature.
-            * Method calls `client.*` once.
-            * Method calls `entities._handle_response` once.
+        * Method has a correct signature.
+        * Method calls `client.*` once.
+        * Method calls `entities._handle_response` once.
 
 
         """
-        self.assertEqual(
-            inspect.getargspec(self.cvc.add),
-            (['self', 'synchronous'], None, 'kwargs', (True,))
-        )
-        return_dict = {
-            'results': [self.common_return_value]
-        }
+        self.assertEqual(inspect.getfullargspec(self.cvc.add), EXPECTED_ARGSPEC)
+        return_dict = {'results': [self.common_return_value]}
         with mock.patch.object(entities, '_handle_response', return_value=return_dict) as handlr:
             with mock.patch.object(client, 'put') as client_request:
                 self.cvc.add()
@@ -2734,21 +2678,16 @@ class ContentViewComponentTestCase(TestCase):
     def test_remove(self):
         """Check that helper method is sane.
 
-            Assert that:
+        Assert that:
 
-            * Method has a correct signature.
-            * Method calls `client.*` once.
-            * Method calls `entities._handle_response` once.
+        * Method has a correct signature.
+        * Method calls `client.*` once.
+        * Method calls `entities._handle_response` once.
 
 
         """
-        self.assertEqual(
-            inspect.getargspec(self.cvc.remove),
-            (['self', 'synchronous'], None, 'kwargs', (True,))
-        )
-        return_dict = {
-            'results': self.common_return_value
-        }
+        self.assertEqual(inspect.getfullargspec(self.cvc.remove), EXPECTED_ARGSPEC)
+        return_dict = {'results': self.common_return_value}
         with mock.patch.object(entities, '_handle_response', return_value=return_dict) as handlr:
             with mock.patch.object(client, 'put') as client_request:
                 self.cvc.remove()
@@ -2765,13 +2704,12 @@ class ReportTemplateTestCase(TestCase):
         attribute template_combinations_attributes ( check #333)
         """
         cfg = config.ServerConfig(url='foo')
-        report_template = entities.ReportTemplate(
-            cfg, name='cfg',
-            default=False,
-            template='cat')
+        report_template = entities.ReportTemplate(cfg, name='cfg', default=False, template='cat')
         expected_dct = {
             'report_template': {
-                'name': 'cfg', 'default': False, 'template': 'cat',
+                'name': 'cfg',
+                'default': False,
+                'template': 'cat',
             }
         }
         self.assertEqual(expected_dct, report_template.create_payload())
@@ -2790,8 +2728,7 @@ class ReportTemplateTestCase(TestCase):
         self.assertEqual(len(post.call_args), 2)
         self.assertEqual(len(post.call_args[0]), 1)  # post called with 1 positional argument
         self.assertEqual(len(post.call_args[1]), 1)  # post called with 1 keyword argument
-        self.assertEqual(post.call_args[0][0],
-                         'foo/api/v2/report_templates/42/generate')
+        self.assertEqual(post.call_args[0][0], 'foo/api/v2/report_templates/42/generate')
         self.assertEqual(post.call_args[1], {'data': {'input_values': {'hosts': 'whatever'}}})
 
     def test_schedule(self):
@@ -2804,8 +2741,7 @@ class ReportTemplateTestCase(TestCase):
         self.assertEqual(len(post.call_args), 2)
         self.assertEqual(len(post.call_args[0]), 1)  # post called with 1 positional argument
         self.assertEqual(len(post.call_args[1]), 1)  # post called with 1 keyword argument
-        self.assertEqual(post.call_args[0][0],
-                         'foo/api/v2/report_templates/43/schedule_report')
+        self.assertEqual(post.call_args[0][0], 'foo/api/v2/report_templates/43/schedule_report')
         self.assertEqual(post.call_args[1], {'data': {'input_values': {'hosts': 'whatever'}}})
 
     def test_report_data(self):
@@ -2818,8 +2754,9 @@ class ReportTemplateTestCase(TestCase):
         self.assertEqual(len(get_response.call_args), 2)
         self.assertEqual(len(get_response.call_args[0]), 1)
         self.assertEqual(len(get_response.call_args[1]), 1)
-        self.assertEqual(get_response.call_args[0][0],
-                         'foo/api/v2/report_templates/44/report_data/100')
+        self.assertEqual(
+            get_response.call_args[0][0], 'foo/api/v2/report_templates/44/report_data/100'
+        )
         self.assertEqual(get_response.call_args[1], {'data': {'job_id': 100}})
 
 
@@ -2833,51 +2770,45 @@ class ProvisioningTemplateTestCase(TestCase):
         cfg = config.ServerConfig(url='foo')
         env = entities.Environment(cfg, id=2, name='env')
         hostgroup = entities.HostGroup(cfg, id=2, name='hgroup')
-        combination = entities.TemplateCombination(
-            cfg,
-            hostgroup=hostgroup,
-            environment=env)
-        template_combinations = [
-            {'hostgroup_id': 1, 'environment_id': 1},
-            combination]
+        combination = entities.TemplateCombination(cfg, hostgroup=hostgroup, environment=env)
+        template_combinations = [{'hostgroup_id': 1, 'environment_id': 1}, combination]
         cfg_template = entities.ProvisioningTemplate(
-            cfg, name='cfg',
+            cfg,
+            name='cfg',
             snippet=False,
             template='cat',
             template_kind=8,
-            template_combinations=template_combinations)
+            template_combinations=template_combinations,
+        )
         expected_dct = {
             'provisioning_template': {
-                'name': 'cfg', 'snippet': False, 'template': 'cat',
-                'template_kind_id': 8, 'template_combinations_attributes': [
+                'name': 'cfg',
+                'snippet': False,
+                'template': 'cat',
+                'template_kind_id': 8,
+                'template_combinations_attributes': [
                     {'environment_id': 1, 'hostgroup_id': 1},
-                    {'environment_id': 2, 'hostgroup_id': 2}]
+                    {'environment_id': 2, 'hostgroup_id': 2},
+                ],
             }
         }
         self.assertEqual(expected_dct, cfg_template.create_payload())
         # Testing update
         env3 = entities.Environment(cfg, id=3, name='env3')
-        combination3 = entities.TemplateCombination(
-            cfg,
-            hostgroup=hostgroup,
-            environment=env3)
+        combination3 = entities.TemplateCombination(cfg, hostgroup=hostgroup, environment=env3)
         cfg_template.template_combinations.append(combination3)
         attrs = expected_dct['provisioning_template']
-        attrs['template_combinations_attributes'].append(
-            {'environment_id': 3, 'hostgroup_id': 2}
-        )
+        attrs['template_combinations_attributes'].append({'environment_id': 3, 'hostgroup_id': 2})
         self.assertEqual(expected_dct, cfg_template.update_payload())
 
 
 class TemplateInputTestCase(TestCase):
     """Tests for :class:`nailgun.entities.TemplateInput`."""
+
     def setUp(self):
         self.cfg = config.ServerConfig('some url')
         self.job_template = entities.JobTemplate(self.cfg, id=2)
-        self.entity = entities.TemplateInput(
-            self.cfg,
-            id=1,
-            template=self.job_template)
+        self.entity = entities.TemplateInput(self.cfg, id=1, template=self.job_template)
         self.data = dict(
             id=1,
             description=None,
@@ -2891,9 +2822,7 @@ class TemplateInputTestCase(TestCase):
             template_id=self.job_template.id,
             variable_name=None,
         )
-        self.read_json_patcher = mock.patch.object(
-            EntityReadMixin,
-            'read_json')
+        self.read_json_patcher = mock.patch.object(EntityReadMixin, 'read_json')
         self.read_json = self.read_json_patcher.start()
         self.read_json.return_value = self.data.copy()
         del self.data['template_id']
@@ -2904,22 +2833,18 @@ class TemplateInputTestCase(TestCase):
     def test_read(self):
         entity = self.entity.read()
         self.read_json.assert_called_once()
-        self.assertEqual(
-            self.data,
-            {key: getattr(entity, key) for key in self.data.keys()}
-        )
+        self.assertEqual(self.data, {key: getattr(entity, key) for key in self.data.keys()})
         self.assertIsInstance(entity.template, entities.JobTemplate)
         self.assertEqual(entity.template.id, self.job_template.id)
 
 
 class JobTemplateTestCase(TestCase):
     """Tests for :class:`nailgun.entities.JobTemplate`."""
+
     def setUp(self):
         self.cfg = config.ServerConfig('some url')
         self.entity = entities.JobTemplate(self.cfg, id=1)
-        self.read_json_patcher = mock.patch.object(
-            EntityReadMixin,
-            'read_json')
+        self.read_json_patcher = mock.patch.object(EntityReadMixin, 'read_json')
         self.read_json = self.read_json_patcher.start()
         self.template_input_data = dict(id=1, template=1)
         self.data = dict(
@@ -2946,32 +2871,23 @@ class JobTemplateTestCase(TestCase):
     def test_read(self):
         entity = self.entity.read()
         self.read_json.assert_called_once()
-        self.assertEqual(
-            self.data,
-            {key: getattr(entity, key) for key in self.data.keys()}
-        )
+        self.assertEqual(self.data, {key: getattr(entity, key) for key in self.data.keys()})
         self.assertEqual(len(entity.template_inputs), 1)
         template_input = entity.template_inputs[0]
         self.assertIsInstance(template_input, entities.TemplateInput)
-        self.assertIsInstance(
-            template_input.template,
-            entities.JobTemplate)
-        self.assertEqual(
-            template_input.id,
-            self.template_input_data['id'])
-        self.assertEqual(
-            template_input.template.id,
-            self.template_input_data['template'])
+        self.assertIsInstance(template_input.template, entities.JobTemplate)
+        self.assertEqual(template_input.id, self.template_input_data['id'])
+        self.assertEqual(template_input.template.id, self.template_input_data['template'])
 
 
 class HostGroupTestCase(TestCase):
     """Tests for :class:`nailgun.entities.HostGroup`."""
+
     def setUp(self):
         self.entity = entities.HostGroup(config.ServerConfig('some url'))
         self.read_json_pacther = mock.patch.object(self.entity, 'read_json')
         self.read_pacther = mock.patch.object(EntityReadMixin, 'read')
-        self.update_json_patcher = mock.patch.object(
-            entities.HostGroup, 'update_json')
+        self.update_json_patcher = mock.patch.object(entities.HostGroup, 'update_json')
 
     def test_read_sat61z(self):
         """Ensure ``read``, ``read_json`` and ``update_json`` are called once.
@@ -3025,7 +2941,8 @@ class HostGroupTestCase(TestCase):
             read = self.read_pacther.start()
             update_json = self.update_json_patcher.start()
             read_json.return_value = {
-                'ancestry': None, 'id': 641212,  # random
+                'ancestry': None,
+                'id': 641212,  # random
                 'content_source_id': None,
                 'content_view_id': None,
                 'lifecycle_environment_id': None,
@@ -3055,27 +2972,21 @@ class HostGroupTestCase(TestCase):
     def test_delete_puppetclass(self):
         """Check that helper method is sane.
 
-            Assert that:
+        Assert that:
 
-            * Method has a correct signature.
-            * Method calls `client.*` once.
-            * Method passes the right arguments to `client.*` and special
-                argument 'puppetclass_id' removed from data dict.
-            * Method calls `entities._handle_response` once.
-            * The result of `_handle_response(…)` is the return value.
+        * Method has a correct signature.
+        * Method calls `client.*` once.
+        * Method passes the right arguments to `client.*` and special
+            argument 'puppetclass_id' removed from data dict.
+        * Method calls `entities._handle_response` once.
+        * The result of `_handle_response(…)` is the return value.
 
 
         """
         entity = self.entity
         entity.id = 1
-        self.assertEqual(
-            inspect.getargspec(entity.delete_puppetclass),
-            (['self', 'synchronous'], None, 'kwargs', (True,))
-        )
-        kwargs = {
-            'kwarg': gen_integer(),
-            'data': {'puppetclass_id': gen_integer()}
-        }
+        self.assertEqual(inspect.getfullargspec(entity.delete_puppetclass), EXPECTED_ARGSPEC)
+        kwargs = {'kwarg': gen_integer(), 'data': {'puppetclass_id': gen_integer()}}
         with mock.patch.object(entities, '_handle_response') as handlr:
             with mock.patch.object(client, 'delete') as client_request:
                 response = entity.delete_puppetclass(**kwargs)
@@ -3087,19 +2998,13 @@ class HostGroupTestCase(TestCase):
         self.assertEqual(handlr.return_value, response)
 
     def test_clone_hostgroup(self):
-        """"Test for :meth:`nailgun.entities.HostGroup.clone`
+        """Test for :meth:`nailgun.entities.HostGroup.clone`
         Assert that the method is called one with correct argumets
         """
         entity = self.entity
         entity.id = 1
-        self.assertEqual(
-            inspect.getargspec(entity.clone),
-            (['self', 'synchronous'], None, 'kwargs', (True,))
-        )
-        kwargs = {
-            'kwarg': gen_integer(),
-            'data': {'name': gen_string('utf8', 5)}
-        }
+        self.assertEqual(inspect.getfullargspec(entity.clone), EXPECTED_ARGSPEC)
+        kwargs = {'kwarg': gen_integer(), 'data': {'name': gen_string('utf8', 5)}}
         with mock.patch.object(entities, '_handle_response') as handler:
             with mock.patch.object(client, 'post') as post:
                 response = entity.clone(**kwargs)
@@ -3110,19 +3015,13 @@ class HostGroupTestCase(TestCase):
         self.assertEqual(handler.return_value, response)
 
     def test_rebuild_config(self):
-        """"Test for :meth:`nailgun.entities.HostGroup.rebuild_config`
+        """Test for :meth:`nailgun.entities.HostGroup.rebuild_config`
         Assert that the method is called one with correct arguments
         """
         entity = self.entity
         entity.id = 1
-        self.assertEqual(
-            inspect.getargspec(entity.rebuild_config),
-            (['self', 'synchronous'], None, 'kwargs', (True,))
-        )
-        kwargs = {
-            'kwarg': gen_integer(),
-            'data': {'only': 'TFTP'}
-        }
+        self.assertEqual(inspect.getfullargspec(entity.rebuild_config), EXPECTED_ARGSPEC)
+        kwargs = {'kwarg': gen_integer(), 'data': {'only': 'TFTP'}}
         with mock.patch.object(entities, '_handle_response') as handler:
             with mock.patch.object(client, 'put') as put:
                 response = entity.rebuild_config(**kwargs)
@@ -3143,9 +3042,7 @@ class HostTestCase(TestCase):
     def test_init_with_owner_type(self):
         """Assert ``owner`` attribute is an entity of correct type, according
         to ``owner_type`` field value"""
-        for owner_type, entity in (
-                ('User', entities.User),
-                ('Usergroup', entities.UserGroup)):
+        for owner_type, entity in (('User', entities.User), ('Usergroup', entities.UserGroup)):
             host = entities.Host(
                 self.cfg,
                 id=gen_integer(min_value=1),
@@ -3213,35 +3110,31 @@ class HostTestCase(TestCase):
         ``content_facet_attributes`` attribute is not returned for host
         """
         with mock.patch.object(EntityReadMixin, 'read') as read:
-            entities.Host(self.cfg).read(attrs={
-                'parameters': None,
-                'puppetclasses': None,
-            })
+            entities.Host(self.cfg).read(
+                attrs={
+                    'parameters': None,
+                    'puppetclasses': None,
+                }
+            )
             self.assertNotIn('content_facet_attributes', read.call_args[0][1])
             self.assertIn('content_facet_attributes', read.call_args[0][2])
 
     def test_delete_puppetclass(self):
         """Check that helper method is sane.
 
-            Assert that:
+        Assert that:
 
-            * Method has a correct signature.
-            * Method calls `client.*` once.
-            * Method passes the right arguments to `client.*` and special
-                argument 'puppetclass_id' removed from data dict.
-            * Method calls `entities._handle_response` once.
-            * The result of `_handle_response(…)` is the return value.
+        * Method has a correct signature.
+        * Method calls `client.*` once.
+        * Method passes the right arguments to `client.*` and special
+            argument 'puppetclass_id' removed from data dict.
+        * Method calls `entities._handle_response` once.
+        * The result of `_handle_response(…)` is the return value.
 
         """
         entity = entities.Host(self.cfg, id=1)
-        self.assertEqual(
-            inspect.getargspec(entity.delete_puppetclass),
-            (['self', 'synchronous'], None, 'kwargs', (True,))
-        )
-        kwargs = {
-            'kwarg': gen_integer(),
-            'data': {'puppetclass_id': gen_integer()}
-        }
+        self.assertEqual(inspect.getfullargspec(entity.delete_puppetclass), EXPECTED_ARGSPEC)
+        kwargs = {'kwarg': gen_integer(), 'data': {'puppetclass_id': gen_integer()}}
         with mock.patch.object(entities, '_handle_response') as handlr:
             with mock.patch.object(client, 'delete') as client_request:
                 response = entity.delete_puppetclass(**kwargs)
@@ -3262,8 +3155,7 @@ class HostTestCase(TestCase):
         self.assertEqual(len(put.call_args), 2)
         self.assertEqual(len(put.call_args[0]), 1)  # post called with 1 positional argument
         self.assertEqual(len(put.call_args[1]), 0)  # post called with no keyword argument
-        self.assertEqual(put.call_args[0][0],
-                         'foo/api/v2/hosts/42/disassociate')
+        self.assertEqual(put.call_args[0][0], 'foo/api/v2/hosts/42/disassociate')
 
 
 class PuppetClassTestCase(TestCase):
@@ -3281,14 +3173,12 @@ class PuppetClassTestCase(TestCase):
         Assert that returned value is a list and contains all subdictionaries.
         """
         with mock.patch.object(EntitySearchMixin, 'search_normalize') as s_n:
-            self.puppet_class.search_normalize({
-                'class1': [
-                    {'name': 'subclass1'},
-                    {'name': 'subclass2'}],
-                'class2': [
-                    {'name': 'subclass1'},
-                    {'name': 'subclass2'}]
-            })
+            self.puppet_class.search_normalize(
+                {
+                    'class1': [{'name': 'subclass1'}, {'name': 'subclass2'}],
+                    'class2': [{'name': 'subclass1'}, {'name': 'subclass2'}],
+                }
+            )
         self.assertEqual(s_n.call_count, 1)
         self.assertIsInstance(s_n.call_args[0][0], list)
         self.assertEqual(len(s_n.call_args[0][0]), 4)
@@ -3357,8 +3247,14 @@ class RepositoryTestCase(TestCase):
 
         """
         kwargs = {'kwarg': gen_integer()}
-        uploads = [{'id': gen_string('numeric'), 'name': gen_string('alpha'),
-                    'size': gen_integer(), 'checksum': gen_string('numeric')}]
+        uploads = [
+            {
+                'id': gen_string('numeric'),
+                'name': gen_string('alpha'),
+                'size': gen_integer(),
+                'checksum': gen_string('numeric'),
+            }
+        ]
         with mock.patch.object(client, 'put') as put:
             with mock.patch.object(
                 entities,
@@ -3389,8 +3285,7 @@ class RepositoryTestCase(TestCase):
                 '_handle_response',
                 return_value={'status': 'success'},
             ) as handler:
-                response = self.repo.import_uploads(upload_ids=upload_ids,
-                                                    **kwargs)
+                response = self.repo.import_uploads(upload_ids=upload_ids, **kwargs)
         self.assertEqual(put.call_count, 1)
         self.assertEqual(len(put.call_args[0]), 2)
         self.assertEqual(put.call_args[1], kwargs)
@@ -3398,17 +3293,11 @@ class RepositoryTestCase(TestCase):
         self.assertEqual(handler.return_value, response)
 
     def test_files(self):
-        """"Test for :meth:`nailgun.entities.Repository.files`
+        """Test for :meth:`nailgun.entities.Repository.files`
         Assert that the method is called one with correct arguments
         """
-        self.assertEqual(
-            inspect.getargspec(self.repo.files),
-            (['self', 'synchronous'], None, 'kwargs', (True,))
-        )
-        kwargs = {
-            'kwarg': gen_integer(),
-            'data': {'name': gen_string('utf8', 5)}
-        }
+        self.assertEqual(inspect.getfullargspec(self.repo.files), EXPECTED_ARGSPEC)
+        kwargs = {'kwarg': gen_integer(), 'data': {'name': gen_string('utf8', 5)}}
         with mock.patch.object(entities, '_handle_response') as handler:
             with mock.patch.object(client, 'get') as get:
                 response = self.repo.files(**kwargs)
@@ -3450,11 +3339,7 @@ class SmartProxyTestCase(TestCase):
         * ``environment`` parameter is not sent to requests,
         * proper path is built
         """
-        params = [
-            {},
-            {'environment': 2},
-            {'environment': self.env}
-        ]
+        params = [{}, {'environment': 2}, {'environment': self.env}]
         for param in params:
             with self.subTest(param):
                 with mock.patch.object(client, 'post') as post:
@@ -3513,17 +3398,11 @@ class SubscriptionTestCase(TestCase):
         )
         for method, request in methods_requests:
             with self.subTest((method, request)):
-                self.assertEqual(
-                    inspect.getargspec(method),
-                    (['self', 'synchronous'], None, 'kwargs', (True,))
-                )
+                self.assertEqual(inspect.getfullargspec(method), EXPECTED_ARGSPEC)
                 kwargs = {'data': gen_integer()}
                 with mock.patch.object(entities, '_handle_response') as handlr:
                     with mock.patch.object(client, request) as client_request:
-                        with mock.patch.object(
-                            entities.Subscription,
-                            '_org_path'
-                        ) as org_path:
+                        with mock.patch.object(entities.Subscription, '_org_path') as org_path:
                             response = method(**kwargs)
                 self.assertEqual(client_request.call_count, 1)
                 self.assertEqual(len(client_request.call_args[0]), 1)
@@ -3578,27 +3457,24 @@ class GetOrgTestCase(TestCase):
 
 class PackageTestCase(TestCase):
     """Class with entity Package tests"""
+
     def test_to_json(self):
         """Check json serialisation on nested entities"""
         package_kwargs = {
             'nvrea': 'sclo-git25-1.0-2.el7.x86_64',
-            'checksum': (
-                '751e639a0b8add0adc0c5cf0bf77693b3197b17533037ce2e7b9daa6188'
-                '98b99'
-            ),
+            'checksum': ('751e639a0b8add0adc0c5cf0bf77693b3197b17533037ce2e7b9daa618898b99'),
             'summary': 'Package that installs sclo-git25',
             'filename': 'sclo-git25-1.0-2.el7.x86_64.rpm',
-            'epoch': '0', 'version': '1.0',
+            'epoch': '0',
+            'version': '1.0',
             'nvra': 'sclo-git25-1.0-2.el7.x86_64',
             'release': '2.el7',
             'sourcerpm': 'sclo-git25-1.0-2.el7.src.rpm',
             'arch': 'x86_64',
             'id': 64529,
-            'name': 'sclo-git25'
+            'name': 'sclo-git25',
         }
-        cfg = config.ServerConfig(
-            url='https://foo.bar', verify=False,
-            auth=('foo', 'bar'))
+        cfg = config.ServerConfig(url='https://foo.bar', verify=False, auth=('foo', 'bar'))
         repo_kwargs = {'id': 3, 'content_type': 'rpm'}
         repo = entities.Repository(cfg, **repo_kwargs)
         package = entities.Package(cfg, repository=repo, **package_kwargs)
@@ -3608,6 +3484,7 @@ class PackageTestCase(TestCase):
 
 class SrpmsTestCase(TestCase):
     """Class with entity Srpms tests"""
+
     def test_to_json(self):
         """Check json serialisation on nested entities"""
         package_kwargs = {
@@ -3620,12 +3497,10 @@ class SrpmsTestCase(TestCase):
             "release": "3.el7",
             "summary": "Frantic street painting game",
             "version": "1.01b",
-            "id": 5
+            "id": 5,
         }
 
-        cfg = config.ServerConfig(
-            url='https://foo.bar', verify=False,
-            auth=('foo', 'bar'))
+        cfg = config.ServerConfig(url='https://foo.bar', verify=False, auth=('foo', 'bar'))
         repo_kwargs = {'id': 1, 'content_type': 'yum'}
         repo = entities.Repository(cfg, **repo_kwargs)
         entities.ContentUpload(cfg, repository=repo)
@@ -3635,24 +3510,24 @@ class SrpmsTestCase(TestCase):
 
 class PackageGroupTestCase(TestCase):
     """Class with entity Package Group tests"""
+
     def test_to_json(self):
         """Check json serialisation on nested entities"""
         pkg_group_kwargs = {
             'description': None,
             'id': 3,
             'name': 'birds',
-            'uuid': 'a12c62a5-b452-4dfb-987c-86c8b287460a'
+            'uuid': 'a12c62a5-b452-4dfb-987c-86c8b287460a',
         }
 
-        cfg = config.ServerConfig(
-            url='https://foo.bar', verify=False,
-            auth=('foo', 'bar'))
+        cfg = config.ServerConfig(url='https://foo.bar', verify=False, auth=('foo', 'bar'))
         pkg_group = entities.PackageGroup(cfg, **pkg_group_kwargs)
         self.assertDictEqual(pkg_group_kwargs, json.loads(pkg_group.to_json()))
 
 
 class ModuleStreamTestCase(TestCase):
     """Class with entity Module Stream tests"""
+
     def test_to_json(self):
         """Check json serialisation on nested entities"""
         module_stream_kwargs = {
@@ -3665,15 +3540,12 @@ class ModuleStreamTestCase(TestCase):
             "arch": "x86_64",
             "description": "A module for the walrus 0.71 package",
             "summary": "Walrus 0.71 module",
-            "module_spec": "walrus:0.71:20180707144203:c0ffee42:x86_64"
+            "module_spec": "walrus:0.71:20180707144203:c0ffee42:x86_64",
         }
 
-        cfg = config.ServerConfig(
-            url='https://foo.bar', verify=False,
-            auth=('foo', 'bar'))
+        cfg = config.ServerConfig(url='https://foo.bar', verify=False, auth=('foo', 'bar'))
         module_stream_group = entities.ModuleStream(cfg, **module_stream_kwargs)
-        self.assertDictEqual(module_stream_kwargs,
-                             json.loads(module_stream_group.to_json()))
+        self.assertDictEqual(module_stream_kwargs, json.loads(module_stream_group.to_json()))
 
 
 class HandleResponseTestCase(TestCase):
@@ -3773,7 +3645,7 @@ class VersionTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         """Create several server configs with different versions."""
-        super(VersionTestCase, cls).setUpClass()
+        super().setUpClass()
         cls.cfg_608 = config.ServerConfig('bogus url', version='6.0.8')
         cls.cfg_610 = config.ServerConfig('bogus url', version='6.1.0')
         cls.cfg_620 = config.ServerConfig('bogus url', version='6.2.0')
@@ -3808,8 +3680,7 @@ class VersionTestCase(TestCase):
                 with mock.patch.object(EntityReadMixin, 'read') as read:
                     entity(self.cfg_610).read()
             self.assertTrue(
-                read.call_args[0][2] is None or
-                'organization' not in read.call_args[0][2]
+                read.call_args[0][2] is None or 'organization' not in read.call_args[0][2]
             )
 
     def test_lifecycle_environment(self):
@@ -3848,10 +3719,7 @@ class VersionTestCase(TestCase):
         for field_name in ('docker_upstream_name', 'checksum_type'):
             self.assertNotIn(field_name, repo_608.get_fields())
             self.assertIn(field_name, repo_610.get_fields())
-        self.assertNotIn(
-            'docker',
-            repo_608.get_fields()['content_type'].choices
-        )
+        self.assertNotIn('docker', repo_608.get_fields()['content_type'].choices)
         self.assertIn('docker', repo_610.get_fields()['content_type'].choices)
 
     def test_hostpackage(self):
@@ -3904,26 +3772,22 @@ class JsonSerializableTestCase(TestCase):
         """Testing nested entities serialization"""
         package_kwargs = {
             'nvrea': 'sclo-git25-1.0-2.el7.x86_64',
-            'checksum': (
-                '751e639a0b8add0adc0c5cf0bf77693b3197b17533037ce2e7b9daa6188'
-                '98b99'
-            ),
+            'checksum': ('751e639a0b8add0adc0c5cf0bf77693b3197b17533037ce2e7b9daa618898b99'),
             'summary': 'Package that installs sclo-git25',
             'filename': 'sclo-git25-1.0-2.el7.x86_64.rpm',
-            'epoch': '0', 'version': '1.0',
+            'epoch': '0',
+            'version': '1.0',
             'nvra': 'sclo-git25-1.0-2.el7.x86_64',
             'release': '2.el7',
             'sourcerpm': 'sclo-git25-1.0-2.el7.src.rpm',
             'arch': 'x86_64',
             'id': 64529,
-            'name': 'sclo-git25'
+            'name': 'sclo-git25',
         }
 
         repo_kwargs = {'id': 3, 'content_type': 'file'}
         repo = make_entity(entities.Repository, **repo_kwargs)
-        package = make_entity(entities.Package,
-                              repository=repo,
-                              **package_kwargs)
+        package = make_entity(entities.Package, repository=repo, **package_kwargs)
         package_kwargs['repository'] = repo_kwargs
 
         org_kwargs = {
@@ -3937,10 +3801,7 @@ class JsonSerializableTestCase(TestCase):
 
         to_be_transformed = [{'packages': [package]}, {'org': org}]
         expected = [{'packages': [package_kwargs]}, {'org': org_kwargs}]
-        self.assertListEqual(
-            expected,
-            entities.to_json_serializable(to_be_transformed)
-        )
+        self.assertListEqual(expected, entities.to_json_serializable(to_be_transformed))
 
     def test_nested_entities(self):
         """Check nested entities serialization"""
@@ -3951,53 +3812,38 @@ class JsonSerializableTestCase(TestCase):
         locations = [make_entity(entities.Location, **location_kwargs)]
 
         hostgroup_kwargs = {'id': 2, 'name': 'hgroup'}
-        hostgroup = make_entity(
-            entities.HostGroup,
-            location=locations,
-            **hostgroup_kwargs)
+        hostgroup = make_entity(entities.HostGroup, location=locations, **hostgroup_kwargs)
 
         hostgroup_kwargs['location'] = [location_kwargs]
 
         combinations = [
             {'environment_id': 3, 'hostgroup_id': 4},
-            make_entity(entities.TemplateCombination,
-                        hostgroup=hostgroup,
-                        environment=env)
+            make_entity(entities.TemplateCombination, hostgroup=hostgroup, environment=env),
         ]
 
         expected_combinations = [
             {'environment_id': 3, 'hostgroup_id': 4},
-            {'environment': env_kwargs, 'hostgroup': hostgroup_kwargs}
+            {'environment': env_kwargs, 'hostgroup': hostgroup_kwargs},
         ]
 
         cfg_kwargs = {'id': 5, 'snippet': False, 'template': 'cat'}
         cfg_template = make_entity(
-            entities.ProvisioningTemplate,
-            template_combinations=combinations,
-            **cfg_kwargs)
+            entities.ProvisioningTemplate, template_combinations=combinations, **cfg_kwargs
+        )
 
         cfg_kwargs['template_combinations'] = expected_combinations
-        self.assertDictEqual(cfg_kwargs,
-                             entities.to_json_serializable(cfg_template))
+        self.assertDictEqual(cfg_kwargs, entities.to_json_serializable(cfg_template))
 
     def test_date_field(self):
         """Check date field serialization"""
 
         errata = make_entity(entities.Errata, issued=date(2016, 9, 20))
-        self.assertDictEqual(
-            {'issued': '2016-09-20'},
-            entities.to_json_serializable(errata)
-        )
+        self.assertDictEqual({'issued': '2016-09-20'}, entities.to_json_serializable(errata))
 
     def test_boolean_datetime_float(self):
         """Check serialization for boolean, datetime and float fields"""
-        kwargs = {
-            'pending': True,
-            'progress': 0.25,
-            'started_at': datetime(2016, 11, 20, 1, 2, 3)
-        }
-        task = make_entity(
-            entities.ForemanTask, **kwargs)
+        kwargs = {'pending': True, 'progress': 0.25, 'started_at': datetime(2016, 11, 20, 1, 2, 3)}
+        task = make_entity(entities.ForemanTask, **kwargs)
         kwargs['started_at'] = '2016-11-20 01:02:03'
         self.assertDictEqual(kwargs, entities.to_json_serializable(task))
 
@@ -4006,6 +3852,7 @@ class VirtWhoConfigTestCase(TestCase):
     """
     Tests for :class:`nailgun.entities.VirtWhoConfig`
     """
+
     @classmethod
     def setUpClass(cls):
         cls.server = 'sat.example.com'
@@ -4013,68 +3860,71 @@ class VirtWhoConfigTestCase(TestCase):
 
     def test_create(self):
         org = entities.Organization(self.cfg, name='vhorg', id=2)
-        vh = entities.VirtWhoConfig(server_config=self.cfg, name='vhtest1',
-                                    organization_id=org.id,
-                                    filtering_mode=1,
-                                    whitelist='*.example.com',
-                                    proxy='proxy.example.com',
-                                    no_proxy='*.proxy-bypass.example.com',
-                                    satellite_url=self.server,
-                                    hypervisor_type='libvirt',
-                                    hypervisor_username='root',
-                                    hypervisor_server='libvirt.example.com',
-                                    hypervisor_id='hostname',
-                                    hypervisor_password='',
-                                    debug=True)
+        vh = entities.VirtWhoConfig(
+            server_config=self.cfg,
+            name='vhtest1',
+            organization_id=org.id,
+            filtering_mode=1,
+            whitelist='*.example.com',
+            proxy='proxy.example.com',
+            no_proxy='*.proxy-bypass.example.com',
+            satellite_url=self.server,
+            hypervisor_type='libvirt',
+            hypervisor_username='root',
+            hypervisor_server='libvirt.example.com',
+            hypervisor_id='hostname',
+            hypervisor_password='',
+            debug=True,
+        )
 
         expected_dict = {
-            'foreman_virt_who_configure_config':
-                {
-                    'debug': True,
-                    'filtering_mode': 1,
-                    'hypervisor_id': 'hostname',
-                    'hypervisor_server': 'libvirt.example.com',
-                    'hypervisor_type': 'libvirt',
-                    'hypervisor_username': 'root',
-                    'hypervisor_password': '',
-                    'name': 'vhtest1',
-                    'no_proxy': '*.proxy-bypass.example.com',
-                    'organization_id': 2,
-                    'proxy': 'proxy.example.com',
-                    'satellite_url': self.server,
-                    'whitelist': '*.example.com'
-                }
+            'foreman_virt_who_configure_config': {
+                'debug': True,
+                'filtering_mode': 1,
+                'hypervisor_id': 'hostname',
+                'hypervisor_server': 'libvirt.example.com',
+                'hypervisor_type': 'libvirt',
+                'hypervisor_username': 'root',
+                'hypervisor_password': '',
+                'name': 'vhtest1',
+                'no_proxy': '*.proxy-bypass.example.com',
+                'organization_id': 2,
+                'proxy': 'proxy.example.com',
+                'satellite_url': self.server,
+                'whitelist': '*.example.com',
+            }
         }
         self.assertDictEqual(expected_dict, vh.create_payload())
 
     def test_update(self):
         org = entities.Organization(self.cfg, name='vhorg', id=2)
-        vh = entities.VirtWhoConfig(server_config=self.cfg, name='vhtest1',
-                                    organization_id=org.id,
-                                    filtering_mode=1,
-                                    whitelist='*.example.com',
-                                    proxy='proxy.example.com',
-                                    no_proxy='*.proxy-bypass.example.com',
-                                    satellite_url=self.server,
-                                    hypervisor_type='libvirt',
-                                    hypervisor_username='root',
-                                    hypervisor_server='libvirt.example.com',
-                                    hypervisor_id='hostname',
-                                    hypervisor_password='',
-                                    debug=True)
+        vh = entities.VirtWhoConfig(
+            server_config=self.cfg,
+            name='vhtest1',
+            organization_id=org.id,
+            filtering_mode=1,
+            whitelist='*.example.com',
+            proxy='proxy.example.com',
+            no_proxy='*.proxy-bypass.example.com',
+            satellite_url=self.server,
+            hypervisor_type='libvirt',
+            hypervisor_username='root',
+            hypervisor_server='libvirt.example.com',
+            hypervisor_id='hostname',
+            hypervisor_password='',
+            debug=True,
+        )
 
         vh.name = 'newname'
         vh.hypervisor_username = 'admin'
 
         expected_dict = {
-            'foreman_virt_who_configure_config':
-                {
-                    'hypervisor_username': 'admin',
-                    'name': 'newname',
-                }
+            'foreman_virt_who_configure_config': {
+                'hypervisor_username': 'admin',
+                'name': 'newname',
+            }
         }
-        self.assertDictEqual(expected_dict,
-                             vh.update_payload(['name', 'hypervisor_username']))
+        self.assertDictEqual(expected_dict, vh.update_payload(['name', 'hypervisor_username']))
 
     def test_methods(self):
         """Check that get_organization_configs helper method is sane.
@@ -4091,10 +3941,7 @@ class VirtWhoConfigTestCase(TestCase):
         method = entities.VirtWhoConfig(**generic).get_organization_configs
         request = 'get'
         with self.subTest((method, request)):
-            self.assertEqual(
-                inspect.getargspec(method),
-                (['self', 'synchronous'], None, 'kwargs', (True,))
-            )
+            self.assertEqual(inspect.getfullargspec(method), EXPECTED_ARGSPEC)
             kwargs = {'kwarg': gen_integer()}
             with mock.patch.object(entities, '_handle_response') as handlr:
                 with mock.patch.object(client, request) as client_request:
@@ -4131,12 +3978,15 @@ class JobInvocationTestCase(TestCase):
         post request is sent
         """
         with mock.patch.object(client, 'post') as post:
-            entities.JobInvocation(self.cfg).run(synchronous=False, data={
-                'job_template_id': 1,
-                'search_query': 'foo',
-                'inputs': 'ls',
-                'targeting_type': 'foo'
-            })
+            entities.JobInvocation(self.cfg).run(
+                synchronous=False,
+                data={
+                    'job_template_id': 1,
+                    'search_query': 'foo',
+                    'inputs': 'ls',
+                    'targeting_type': 'foo',
+                },
+            )
         self.assertEqual(post.call_count, 1)
         self.assertEqual(len(post.call_args[0]), 1)
 
@@ -4144,12 +3994,15 @@ class JobInvocationTestCase(TestCase):
         """Check that sync run will result in ForemanTask poll"""
         with mock.patch.object(entities, '_poll_task') as poll_task:
             with mock.patch.object(client, 'post'):
-                entities.JobInvocation(self.cfg).run(synchronous=True, data={
-                    'job_template_id': 1,
-                    'search_query': 'foo',
-                    'inputs': 'ls',
-                    'targeting_type': 'foo'
-                })
+                entities.JobInvocation(self.cfg).run(
+                    synchronous=True,
+                    data={
+                        'job_template_id': 1,
+                        'search_query': 'foo',
+                        'inputs': 'ls',
+                        'targeting_type': 'foo',
+                    },
+                )
         self.assertEqual(poll_task.call_count, 1)
 
 
@@ -4162,10 +4015,10 @@ class TailoringFileTestCase(TestCase):
         cls.server_config = config.ServerConfig('http://example.com')
 
     def test_scap_tailoring_file(self):
-        """Test ``nailgun.entities.TailoringFile.create``.
-        """
+        """Test ``nailgun.entities.TailoringFile.create``."""
         entity = entities.TailoringFile(
-            self.server_config, name="TF1",
+            self.server_config,
+            name="TF1",
             scap_file="tests/data/ssg-rhel7-ds-tailoring.xml",
         )
         with mock.patch.object(EntityCreateMixin, 'create_missing'):
@@ -4182,12 +4035,9 @@ class ScapContentsTestCase(TestCase):
         cls.server_config = config.ServerConfig('http://example.com')
 
     def test_scap_tailoring_file(self):
-        """Test ``nailgun.entities.ScapContents.create``.
-        """
+        """Test ``nailgun.entities.ScapContents.create``."""
         entity = entities.ScapContents(
-            self.server_config,
-            title="TF1",
-            scap_file="tests/data/ssg-rhel7-ds-tailoring.xml"
+            self.server_config, title="TF1", scap_file="tests/data/ssg-rhel7-ds-tailoring.xml"
         )
         with mock.patch.object(EntityCreateMixin, 'create_missing'):
             entity.create_missing()

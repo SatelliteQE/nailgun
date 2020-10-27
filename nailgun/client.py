@@ -98,9 +98,9 @@ def _log_request(method, url, kwargs, data=None, params=None):
         'Making HTTP %s request to %s with %s, %s and %s.',
         method,
         url,
-        'options {0}'.format(kwargs) if len(kwargs) > 0 else 'no options',
-        'params {0}'.format(params) if params else 'no params',
-        'data {0}'.format(data) if data is not None else 'no data',
+        f'options {kwargs}' if len(kwargs) > 0 else 'no options',
+        f'params {params}' if params else 'no params',
+        f'data {data}' if data is not None else 'no data',
     )
 
 

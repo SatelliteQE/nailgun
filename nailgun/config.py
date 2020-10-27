@@ -48,13 +48,13 @@ def _get_config_file_path(xdg_config_dir, xdg_config_file):
         if isfile(path):
             return path
     raise ConfigFileError(
-        'No configuration files could be located after searching for a file '
-        'named "{0}" in the standard XDG configuration paths, such as '
-        '"~/.config/{1}/".'.format(xdg_config_file, xdg_config_dir)
+        "No configuration files could be located after searching for a file "
+        f'named "{xdg_config_file}" in the standard XDG configuration paths, such as '
+        f'"~/.config/{xdg_config_dir}/".'
     )
 
 
-class BaseServerConfig(object):
+class BaseServerConfig:
     """A set of facts for communicating with a Satellite server.
 
     This object stores a set of facts that can be used when communicating with
@@ -94,6 +94,7 @@ class BaseServerConfig(object):
         this class, as those references will likely need to be changed.
 
     """
+
     # Used to lock access to the configuration file when performing certain
     # operations, such as saving.
     _file_lock = Lock()
@@ -111,17 +112,10 @@ class BaseServerConfig(object):
 
     def __repr__(self):
         attrs = vars(self).copy()
-        if 'version' in attrs:
-            attrs['version'] = str(attrs.pop('version'))
-        return '{0}.{1}({2})'.format(
-            self.__module__,
-            type(self).__name__,
-            ', '.join(
-                '{0}={1}'.format(key, repr(value))
-                for key, value
-                in attrs.items()
-            )
-        )
+        if "version" in attrs:
+            attrs["version"] = str(attrs.pop("version"))
+        kv_pairs = ", ".join(f"{key}={repr(value)}" for key, value in attrs.items())
+        return f"{self.__module__}.{type(self).__name__}({kv_pairs})"
 
     @classmethod
     def delete(cls, label='default', path=None):
@@ -138,10 +132,7 @@ class BaseServerConfig(object):
 
         """
         if path is None:
-            path = _get_config_file_path(
-                cls._xdg_config_dir,
-                cls._xdg_config_file
-            )
+            path = _get_config_file_path(cls._xdg_config_dir, cls._xdg_config_file)
         cls._file_lock.acquire()
         try:
             with open(path) as config_file:
@@ -167,10 +158,7 @@ class BaseServerConfig(object):
 
         """
         if path is None:
-            path = _get_config_file_path(
-                cls._xdg_config_dir,
-                cls._xdg_config_file
-            )
+            path = _get_config_file_path(cls._xdg_config_dir, cls._xdg_config_file)
         with open(path) as config_file:
             return cls(**json.load(config_file)[label])
 
@@ -185,10 +173,7 @@ class BaseServerConfig(object):
 
         """
         if path is None:
-            path = _get_config_file_path(
-                cls._xdg_config_dir,
-                cls._xdg_config_file
-            )
+            path = _get_config_file_path(cls._xdg_config_dir, cls._xdg_config_file)
         with open(path) as config_file:
             # keys() returns a list in Python 2 and a view in Python 3.
             return tuple(json.load(config_file).keys())
@@ -217,8 +202,7 @@ class BaseServerConfig(object):
         # Where is the file we're writing to?
         if path is None:
             path = join(
-                BaseDirectory.save_config_path(self._xdg_config_dir),
-                self._xdg_config_file
+                BaseDirectory.save_config_path(self._xdg_config_dir), self._xdg_config_file
             )
         self._file_lock.acquire()
 
@@ -228,7 +212,7 @@ class BaseServerConfig(object):
             try:
                 with open(path) as config_file:
                     config = json.load(config_file)
-            except IOError:  # pragma: no cover
+            except OSError:  # pragma: no cover
                 config = {}
             config[label] = cfg
             with open(path, 'w') as config_file:
@@ -249,13 +233,14 @@ class ServerConfig(BaseServerConfig):
         the server? No instance attribute is created if no value is provided.
 
     """
+
     # It's OK that this class has only one public method. This class is
     # intentionally small so that the parent class can be re-used.
     _xdg_config_dir = 'nailgun'
     _xdg_config_file = 'server_configs.json'
 
     def __init__(self, url, auth=None, version=None, verify=None):
-        super(ServerConfig, self).__init__(url, auth, version)
+        super().__init__(url, auth, version)
         if verify is not None:
             self.verify = verify
 
@@ -266,7 +251,7 @@ class ServerConfig(BaseServerConfig):
         as kwargs via the ``**`` operator. For example::
 
             cfg = ServerConfig.get()
-            client.get(cfg.url + '/api/v2', **cfg.get_client_kwargs())
+            client.get(f'{cfg.url}/api/v2', **cfg.get_client_kwargs())
 
         This method is useful because client code may not know which attributes
         should be passed from a ``ServerConfig`` object to one of the
@@ -274,7 +259,7 @@ class ServerConfig(BaseServerConfig):
         also be written like this::
 
             cfg = ServerConfig.get()
-            client.get(cfg.url + '/api/v2', auth=cfg.auth, verify=cfg.verify)
+            client.get(f'{cfg.url}/api/v2', auth=cfg.auth, verify=cfg.verify)
 
         But this latter approach is more fragile. It will break if ``cfg`` does
         not have an ``auth`` or ``verify`` attribute.
@@ -308,7 +293,7 @@ class ServerConfig(BaseServerConfig):
         may be desirable.
 
         """
-        config = super(ServerConfig, cls).get(label, path)
+        config = super().get(label, path)
         if hasattr(config, 'auth') and isinstance(config.auth, list):
             config.auth = tuple(config.auth)
         return config

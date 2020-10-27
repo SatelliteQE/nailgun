@@ -2,10 +2,10 @@
 import builtins
 import json
 from unittest import TestCase
+from unittest.mock import call
+from unittest.mock import mock_open
+from unittest.mock import patch
 
-from mock import call
-from mock import mock_open
-from mock import patch
 from packaging.version import parse
 
 from nailgun.config import _get_config_file_path
@@ -22,10 +22,12 @@ CONFIGS = {
     'King Adas': {'url': 'burger', 'version': 'silly version'},
 }
 CONFIGS2 = CONFIGS.copy()
-CONFIGS2.update({
-    'Abeloth': {'url': 'bogus value', 'verify': True},
-    'Admiral Gial Ackbar': {'url': 'bogus', 'auth': [], 'verify': False},
-})
+CONFIGS2.update(
+    {
+        'Abeloth': {'url': 'bogus value', 'verify': True},
+        'Admiral Gial Ackbar': {'url': 'bogus', 'auth': [], 'verify': False},
+    }
+)
 
 
 def _convert_bsc_attrs(bsc_attrs):
@@ -177,10 +179,7 @@ class ServerConfigTestCase(TestCase):
             target.pop('version', None)
             server_config = ServerConfig(**config)
             self.assertDictEqual(target, server_config.get_client_kwargs())
-            self.assertDictEqual(
-                vars(ServerConfig(**config)),
-                vars(server_config)
-            )
+            self.assertDictEqual(vars(ServerConfig(**config)), vars(server_config))
 
     def test_get(self):
         """Test :meth:`nailgun.config.ServerConfig.get`.
@@ -209,6 +208,7 @@ class ReprTestCase(TestCase):
         target = "nailgun.config.BaseServerConfig(url='bogus')"
         self.assertEqual(target, repr(BaseServerConfig('bogus')))
         import nailgun  # noqa
+
         self.assertEqual(target, repr(eval(repr(BaseServerConfig('bogus')))))
 
     def test_bsc_v2(self):
@@ -224,10 +224,8 @@ class ReprTestCase(TestCase):
         )
         self.assertIn(repr(BaseServerConfig('flim', auth='flam')), targets)
         import nailgun  # noqa
-        self.assertIn(
-            repr(eval(repr(BaseServerConfig('flim', auth='flam')))),
-            targets
-        )
+
+        self.assertIn(repr(eval(repr(BaseServerConfig('flim', auth='flam')))), targets)
 
     def test_bsc_v3(self):
         """Test :class:`nailgun.config.BaseServerConfig`.
@@ -251,6 +249,7 @@ class ReprTestCase(TestCase):
         target = "nailgun.config.ServerConfig(url='bogus')"
         self.assertEqual(target, repr(ServerConfig('bogus')))
         import nailgun  # noqa
+
         self.assertEqual(target, repr(eval(repr(ServerConfig('bogus')))))
 
     def test_sc_v2(self):
@@ -266,10 +265,8 @@ class ReprTestCase(TestCase):
         )
         self.assertIn(repr(ServerConfig('flim', auth='flam')), targets)
         import nailgun  # noqa
-        self.assertIn(
-            repr(eval(repr(ServerConfig('flim', auth='flam')))),
-            targets
-        )
+
+        self.assertIn(repr(eval(repr(ServerConfig('flim', auth='flam')))), targets)
 
     def test_sc_v3(self):
         """Test :class:`nailgun.config.ServerConfig`.
@@ -297,17 +294,11 @@ class ReprTestCase(TestCase):
         )
         self.assertIn(repr(ServerConfig('flim', verify='flub')), targets)
         import nailgun  # noqa
-        self.assertIn(
-            repr(eval(repr(ServerConfig('flim', verify='flub')))),
-            targets
-        )
+
+        self.assertIn(repr(eval(repr(ServerConfig('flim', verify='flub')))), targets)
 
 
 def _get_written_json(mock_obj):
     """Return the JSON that has been written to a mock `open` object."""
     # json.dump() calls write() for each individual JSON token.
-    return json.loads(''.join(
-        tuple(call_obj)[1][0]
-        for call_obj
-        in mock_obj().write.mock_calls
-    ))
+    return json.loads(''.join(tuple(call_obj)[1][0] for call_obj in mock_obj().write.mock_calls))

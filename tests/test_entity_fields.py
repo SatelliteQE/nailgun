@@ -12,7 +12,7 @@ from nailgun import entity_fields
 
 # It is OK that this class has no public methods. It just needs to exist for
 # use by other tests, not be independently useful.
-class TestClass(object):
+class TestClass:
     """A class that is used when testing the OneTo{One,Many}Field classes."""
 
 
@@ -26,17 +26,11 @@ class GenValueTestCase(TestCase):
 
     def test_one_to_one_field(self):
         """Test :meth:`nailgun.entity_fields.OneToOneField.gen_value`."""
-        self.assertEqual(
-            entity_fields.OneToOneField(TestClass).gen_value(),
-            TestClass
-        )
+        self.assertEqual(entity_fields.OneToOneField(TestClass).gen_value(), TestClass)
 
     def test_one_to_many_field(self):
         """Test :meth:`nailgun.entity_fields.OneToManyField.gen_value`."""
-        self.assertEqual(
-            entity_fields.OneToManyField(TestClass).gen_value(),
-            TestClass
-        )
+        self.assertEqual(entity_fields.OneToManyField(TestClass).gen_value(), TestClass)
 
     def test_boolean_field(self):
         """Test :meth:`nailgun.entity_fields.BooleanField.gen_value`."""
@@ -44,15 +38,11 @@ class GenValueTestCase(TestCase):
 
     def test_date_field(self):
         """Test :meth:`nailgun.entity_fields.DateField.gen_value`."""
-        self.assertIsInstance(
-            entity_fields.DateField().gen_value(), datetime.date
-        )
+        self.assertIsInstance(entity_fields.DateField().gen_value(), datetime.date)
 
     def test_datetime_field(self):
         """Test :meth:`nailgun.entity_fields.DateTimeField.gen_value`."""
-        self.assertIsInstance(
-            entity_fields.DateTimeField().gen_value(), datetime.datetime
-        )
+        self.assertIsInstance(entity_fields.DateTimeField().gen_value(), datetime.datetime)
 
     def test_email_field(self):
         """Test :meth:`nailgun.entity_fields.EmailField.gen_value`.
@@ -78,7 +68,7 @@ class GenValueTestCase(TestCase):
         addr = entity_fields.IPAddressField().gen_value()
         try:
             socket.inet_aton(addr)
-        except socket.error as err:
+        except OSError as err:
             self.fail(f'({addr}) {err}')
 
     def test_mac_address_field(self):
@@ -94,7 +84,7 @@ class GenValueTestCase(TestCase):
         """
         self.assertRegex(
             entity_fields.MACAddressField().gen_value().upper(),
-            r'^([0-9A-F]{2}[:]){5}[0-9A-F]{2}$'
+            r'^([0-9A-F]{2}[:]){5}[0-9A-F]{2}$',
         )
 
     def test_dict_field(self):
@@ -116,10 +106,7 @@ class GenValueTestCase(TestCase):
         module and that the resultant object has a ``netloc`` attribute.
 
         """
-        self.assertTrue(hasattr(
-            urlparse(entity_fields.URLField().gen_value()),
-            'netloc'
-        ))
+        self.assertTrue(hasattr(urlparse(entity_fields.URLField().gen_value()), 'netloc'))
 
     def test_gen_netmask(self):
         """Test :meth:`nailgun.entity_fields.NetmaskField.gen_value`.
@@ -127,10 +114,7 @@ class GenValueTestCase(TestCase):
         Assert that the result is in ``fauxfactory.constants.VALID_NETMASKS``.
 
         """
-        self.assertIn(
-            entity_fields.NetmaskField().gen_value(),
-            VALID_NETMASKS
-        )
+        self.assertIn(entity_fields.NetmaskField().gen_value(), VALID_NETMASKS)
 
 
 class StringFieldTestCase(TestCase):

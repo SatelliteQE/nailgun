@@ -32,6 +32,7 @@ from fauxfactory import gen_mac
 from fauxfactory import gen_netmask
 from fauxfactory import gen_string
 from fauxfactory import gen_url
+
 # The classes in this module serve a declarative role. It is OK that they don't
 # do much.
 #
@@ -47,7 +48,7 @@ from fauxfactory import gen_url
 _SENTINEL = object()
 
 
-class Field(object):
+class Field:
     """Base class to implement other fields
 
     Record this field's attributes.
@@ -60,8 +61,7 @@ class Field(object):
 
     """
 
-    def __init__(self, required=False, choices=None, default=_SENTINEL,
-                 unique=False):
+    def __init__(self, required=False, choices=None, default=_SENTINEL, unique=False):
         self.unique = unique
         self.required = required
         if choices is not None:
@@ -103,7 +103,7 @@ class IntegerField(Field):
     def __init__(self, min_val=None, max_val=None, *args, **kwargs):
         self.min_val = min_val
         self.max_val = max_val
-        super(IntegerField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def gen_value(self):
         """Return a value suitable for a :class:`IntegerField`."""
@@ -146,14 +146,11 @@ class StringField(Field):
         else:
             self.str_type = (str_type,)
 
-        super(StringField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def gen_value(self):
         """Return a value suitable for a :class:`StringField`."""
-        return gen_string(
-            gen_choice(self.str_type),
-            gen_integer(self.min_len, self.max_len)
-        )
+        return gen_string(gen_choice(self.str_type), gen_integer(self.min_len, self.max_len))
 
 
 class DateField(Field):
@@ -163,7 +160,7 @@ class DateField(Field):
         # If ``None`` is passed then ``FauxFactory`` will deal with it.
         self.min_date = min_date
         self.max_date = max_date
-        super(DateField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def gen_value(self):
         """Return a value suitable for a :class:`DateField`."""
@@ -177,7 +174,7 @@ class DateTimeField(Field):
         # If ``None`` is passed then ``FauxFactory`` will deal with it.
         self.min_date = min_date
         self.max_date = max_date
-        super(DateTimeField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def gen_value(self):
         """Return a value suitable for a :class:`DateTimeField`."""
@@ -233,7 +230,7 @@ class OneToOneField(Field):
 
     def __init__(self, entity, *args, **kwargs):
         self.entity = entity
-        super(OneToOneField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def gen_value(self):
         """Return the class that this field references."""
@@ -250,7 +247,7 @@ class OneToManyField(Field):
 
     def __init__(self, entity, *args, **kwargs):
         self.entity = entity
-        super(OneToManyField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def gen_value(self):
         """Return the class that this field references."""

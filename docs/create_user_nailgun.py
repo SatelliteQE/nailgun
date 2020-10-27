@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 """Create an identical user account on a pair of satellites."""
-from __future__ import print_function
-
 from pprint import pprint
 
 from nailgun.config import ServerConfig
@@ -13,9 +11,9 @@ def main():
     """Create an identical user account on a pair of satellites."""
     server_configs = ServerConfig.get('sat1'), ServerConfig.get('sat2')
     for server_config in server_configs:
-        org = Organization(server_config).search(
-            query={'search': 'name="Default_Organization"'}
-        )[0]
+        org = Organization(server_config).search(query={'search': 'name="Default_Organization"'})[
+            0
+        ]
         # The LDAP authentication source with an ID of 1 is internal. It is
         # nearly guaranteed to exist and be functioning.
         user = User(
