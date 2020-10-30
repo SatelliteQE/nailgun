@@ -1094,8 +1094,9 @@ class DiscoveredHost(
         ``super`` is called otherwise.
 
         """
-        if which in ('facts', 'refresh_facts', 'reboot'):
-            prefix = 'base' if which == 'facts' else 'self'
+        if which in ('auto_provision', 'auto_provision_all', 'facts', 'refresh_facts', 'reboot',
+                     'reboot_all'):
+            prefix = 'base' if which in ['auto_provision_all', 'facts', 'reboot_all'] else 'self'
             return '{0}/{1}'.format(
                 super(DiscoveredHost, self).path(which=prefix),
                 which
@@ -1181,6 +1182,54 @@ class DiscoveredHost(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('reboot'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def reboot_all(self, synchronous=True, **kwargs):
+        """Helper for rebooting all discovered hosts
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('reboot_all'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def auto_provision(self, synchronous=True, **kwargs):
+        """Helper for auto-provisioning of the discovered host
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('auto_provision'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous)
+
+    def auto_provision_all(self, synchronous=True, **kwargs):
+        """Helper for auto-provisioning of all discovered hosts
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('auto_provision_all'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
