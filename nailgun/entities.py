@@ -4260,6 +4260,9 @@ class Host(
         `content_facet_attributes` are returned only in case any of facet
         attributes were actually set.
 
+        `traces_status` and `traces_status_label` are returned only in case when
+        katello-host-tools-tracer is installed on the host
+
         Also add image to the response if needed, as
         :meth:`nailgun.entity_mixins.EntityReadMixin.read` can't initialize
         image.
@@ -4274,6 +4277,9 @@ class Host(
             ignore.add('host_parameters_attributes')
         if 'content_facet_attributes' not in attrs:
             ignore.add('content_facet_attributes')
+        if 'traces_status' not in attrs and 'traces_status_label' not in attrs:
+            ignore.add('traces_status')
+            ignore.add('traces_status_label')
         ignore.add('compute_attributes')
         ignore.add('interfaces_attributes')
         ignore.add('root_pass')
@@ -4307,10 +4313,6 @@ class Host(
             ]
         if 'build_status_label' in attrs:
             result.build_status_label = attrs['build_status_label']
-        if 'content_facet_attributes' in attrs and \
-                not attrs['content_facet_attributes']['katello_tracer_installed']:
-            ignore.add('traces_status')
-            ignore.add('traces_status_label')
         return result
 
     def update(self, fields=None):
