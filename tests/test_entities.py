@@ -116,6 +116,7 @@ class InitTestCase(TestCase):
                 entities.ContentViewVersion,
                 entities.DiscoveredHost,
                 entities.DiscoveryRule,
+                entities.DockerContentViewFilter,
                 entities.Domain,
                 entities.Environment,
                 entities.Errata,

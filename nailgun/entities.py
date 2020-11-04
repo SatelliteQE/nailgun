@@ -2431,7 +2431,7 @@ class AbstractContentViewFilter(
             ),
             'description': entity_fields.StringField(),
             'type': entity_fields.StringField(
-                choices=('erratum', 'package_group', 'rpm', 'modulemd'),
+                choices=('erratum', 'package_group', 'rpm', 'modulemd', 'docker'),
                 required=True,
             ),
             'inclusion': entity_fields.BooleanField(),
@@ -2490,6 +2490,14 @@ class RPMContentViewFilter(AbstractContentViewFilter):
         self._fields = {'original_packages': entity_fields.BooleanField()}
         super(RPMContentViewFilter, self).__init__(server_config, **kwargs)
         self._fields['type'].default = 'rpm'
+
+
+class DockerContentViewFilter(AbstractContentViewFilter):
+    """A representation of a Content View Filter of type "docker"."""
+
+    def __init__(self, server_config=None, **kwargs):
+        super(DockerContentViewFilter, self).__init__(server_config, **kwargs)
+        self._fields['type'].default = 'docker'
 
 
 class ContentViewPuppetModule(
