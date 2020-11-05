@@ -495,6 +495,8 @@ class Entity(object):
         attrs.pop('_server_config')
         attrs.pop('_fields')
         attrs.pop('_meta')
+        if '_updatable_fields' in attrs:
+            attrs.pop('_updatable_fields')
         if '_path_fields' in attrs:
             attrs.pop('_path_fields')
         return attrs
@@ -958,7 +960,7 @@ class EntityUpdateMixin(object):
     :meth:`update_payload`
         Assemble a payload of data that can be encoded and sent to the
         server.
-        Set self.updatable_fields (list of strings) to limit the fields that can be updated.
+        Set self._updatable_fields (list of strings) to limit the fields that can be updated.
     :meth:`update_raw`
         Make an HTTP PUT request to the server, including the payload.
     :meth:`update_json`
@@ -980,8 +982,8 @@ class EntityUpdateMixin(object):
 
         """
         values = self.get_values()
-        updatable_fields = getattr(self, 'updatable_fields', None) or list(values.keys())
-        values = {field: value for field, value in values.items() if field in updatable_fields}
+        _updatable_fields = getattr(self, '_updatable_fields', None) or list(values.keys())
+        values = {field: value for field, value in values.items() if field in _updatable_fields}
         if fields is not None:
             values = {field: values[field] for field in fields}
         return _payload(self.get_fields(), values)
