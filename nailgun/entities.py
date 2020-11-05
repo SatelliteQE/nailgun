@@ -2056,7 +2056,7 @@ class ContentCredential(
     """A representation of a Content Credential entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        self.updatable_fields = ['name', 'content_type', 'content']
+        self._updatable_fields = ['name', 'content_type', 'content']
         self._fields = {
             'content': entity_fields.StringField(required=True),
             'name': entity_fields.StringField(
@@ -3365,7 +3365,8 @@ class HostCollection(
     """A representation of a Host Collection entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        self.updatable_fields = ['name', 'description', 'host_ids', 'max_hosts', 'unlimited_hosts']
+        self._updatable_fields = ['name', 'description', 'host_ids',
+                                  'max_hosts', 'unlimited_hosts']
         self._fields = {
             'description': entity_fields.StringField(),
             'host': entity_fields.OneToManyField(Host),
@@ -5935,7 +5936,7 @@ class PuppetClass(
     """A representation of a Puppet Class entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        self.updatable_fields = ['name']
+        self._updatable_fields = ['name']
         self._fields = {
             'name': entity_fields.StringField(
                 required=True,
