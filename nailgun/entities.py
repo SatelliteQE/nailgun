@@ -219,7 +219,6 @@ class ActivationKey(
         }
         self._meta = {
             'api_path': 'katello/api/v2/activation_keys',
-            'server_modes': ('sat', 'sam'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -433,7 +432,6 @@ class Architecture(
         }
         self._meta = {
             'api_path': 'api/v2/architectures',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -535,7 +533,6 @@ class Audit(Entity, EntityReadMixin, EntitySearchMixin):
         }
         self._meta = {
             'api_path': 'api/v2/audits',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -581,7 +578,6 @@ class AuthSourceLDAP(
         }
         self._meta = {
             'api_path': 'api/v2/auth_source_ldaps',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -644,7 +640,7 @@ class Bookmark(
             'public': entity_fields.BooleanField(),
             'query': entity_fields.StringField(required=True),
         }
-        self._meta = {'api_path': 'api/v2/bookmarks', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/bookmarks'}
         super().__init__(server_config, **kwargs)
 
 
@@ -665,7 +661,6 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
         }
         self._meta = {
             'api_path': 'katello/api/capsules',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -778,7 +773,6 @@ class CommonParameter(
         }
         self._meta = {
             'api_path': 'api/v2/common_parameters',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -803,7 +797,6 @@ class ComputeAttribute(
         }
         self._meta = {
             'api_path': 'api/v2/compute_attributes',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -827,7 +820,6 @@ class ComputeProfile(
         }
         self._meta = {
             'api_path': 'api/v2/compute_profiles',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -885,7 +877,6 @@ class AbstractComputeResource(
         self._fields = fields
         self._meta = {
             'api_path': 'api/v2/compute_resources',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -1075,7 +1066,6 @@ class DiscoveredHost(
         }
         self._meta = {
             'api_path': '/api/v2/discovered_hosts',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -1272,7 +1262,6 @@ class DiscoveryRule(
         }
         self._meta = {
             'api_path': '/api/v2/discovery_rules',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -1436,7 +1425,6 @@ class KatelloStatus(Entity, EntityReadMixin):
         }
         self._meta = {
             'api_path': 'katello/api/v2/status',
-            'server_modes': ('sat'),
             'read_type': 'base',
         }
         super().__init__(server_config, **kwargs)
@@ -1561,7 +1549,6 @@ class ConfigGroup(
         }
         self._meta = {
             'api_path': 'api/v2/config_groups',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -1595,7 +1582,6 @@ class TemplateInput(
         super().__init__(server_config, **kwargs)
         self._meta = {
             'api_path': f'/api/v2/templates/{self.template.id}/template_inputs',
-            'server_modes': ('sat'),
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -1630,7 +1616,7 @@ class JobInvocation(Entity, EntityReadMixin, EntitySearchMixin):
             'template_invocations': entity_fields.ListField(),
             'total': entity_fields.IntegerField(),
         }
-        self._meta = {'api_path': 'api/job_invocations', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/job_invocations'}
         super().__init__(server_config, **kwargs)
 
     def run(self, synchronous=True, **kwargs):
@@ -1703,7 +1689,7 @@ class JobTemplate(
             'template': entity_fields.StringField(),
             'template_inputs': entity_fields.OneToManyField(TemplateInput),
         }
-        self._meta = {'api_path': 'api/v2/job_templates', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/job_templates'}
         super().__init__(server_config, **kwargs)
 
     def create_payload(self):
@@ -1773,7 +1759,6 @@ class ProvisioningTemplate(
         }
         self._meta = {
             'api_path': 'api/v2/provisioning_templates',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -1905,7 +1890,6 @@ class ReportTemplate(
         }
         self._meta = {
             'api_path': 'api/v2/report_templates',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -2053,7 +2037,6 @@ class ContentCredential(
         }
         self._meta = {
             'api_path': 'katello/api/v2/content_credentials',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -2077,7 +2060,6 @@ class ContentUpload(
         self._fields.pop('id')
         self._meta = {
             'api_path': f'{self.repository.path()}/content_uploads',
-            'server_modes': ('sat'),
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -2213,7 +2195,6 @@ class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearc
         }
         self._meta = {
             'api_path': 'katello/api/v2/content_view_versions',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -2307,7 +2288,6 @@ class ContentViewFilterRule(
         }
         super().__init__(server_config, **kwargs)
         self._meta = {
-            "server_modes": ("sat"),
             "api_path": f'{self.content_view_filter.path("self")}/rules',
         }
 
@@ -2396,7 +2376,6 @@ class AbstractContentViewFilter(
         self._fields = fields
         self._meta = {
             'api_path': 'katello/api/v2/content_view_filters',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -2466,7 +2445,6 @@ class ContentViewPuppetModule(Entity, EntityCreateMixin, EntityDeleteMixin, Enti
         }
         super().__init__(server_config, **kwargs)
         self._meta = {
-            "server_modes": ("sat"),
             "api_path": f'{self.content_view.path("self")}/content_view_puppet_modules',
         }
 
@@ -2535,7 +2513,6 @@ class ContentView(
         }
         self._meta = {
             'api_path': 'katello/api/v2/content_views',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -2549,14 +2526,8 @@ class ContentView(
         :meth:`nailgun.entity_mixins.EntityReadMixin.read` can't initialize
         content_view_component.
         """
-        if attrs is None:
-            attrs = self.read_json()
-        if _get_version(self._server_config) < Version('6.1'):
-            org = _get_org(self._server_config, attrs['organization']['label'])
-            attrs['organization'] = org.get_values()
-
-        if ignore is None:
-            ignore = set()
+        attrs = attrs or self.read_json()
+        ignore = ignore or set()
         ignore.add('content_view_component')
         result = super().read(entity, attrs, ignore, params)
         if 'content_view_components' in attrs and attrs['content_view_components']:
@@ -2841,7 +2812,7 @@ class Domain(
             ),
             'organization': entity_fields.OneToManyField(Organization),
         }
-        self._meta = {'api_path': 'api/v2/domains', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/domains'}
         super().__init__(server_config, **kwargs)
 
     def create_missing(self):
@@ -2927,7 +2898,6 @@ class Environment(
         }
         self._meta = {
             'api_path': 'api/v2/environments',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -3015,7 +2985,7 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
             ),
             'updated': entity_fields.DateField(),
         }
-        self._meta = {'api_path': '/katello/api/v2/errata', 'server_modes': ('sat')}
+        self._meta = {'api_path': '/katello/api/v2/errata'}
         super().__init__(server_config, **kwargs)
 
     def compare(self, synchronous=True, timeout=None, **kwargs):
@@ -3100,7 +3070,7 @@ class Filter(
             'override': entity_fields.BooleanField(),
             'unlimited': entity_fields.BooleanField(),
         }
-        self._meta = {'api_path': 'api/v2/filters', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/filters'}
         super().__init__(server_config, **kwargs)
 
     def create_payload(self):
@@ -3137,7 +3107,6 @@ class ForemanStatus(Entity, EntityReadMixin):
         }
         self._meta = {
             'api_path': 'api/v2/status',
-            'server_modes': ('sat'),
             'read_type': 'base',
         }
         super().__init__(server_config, **kwargs)
@@ -3163,7 +3132,6 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
         }
         self._meta = {
             'api_path': 'foreman_tasks/api/tasks',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -3252,7 +3220,6 @@ class HostCollectionErrata(Entity):
                 'katello/api/v2/organizations/:organization_id/'
                 'host_collections/:host_collection_id/errata'
             ),
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -3270,7 +3237,6 @@ class HostCollectionPackage(Entity):
                 'katello/api/v2/organizations/:organization_id/'
                 'host_collections/:host_collection_id/packages'
             ),
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -3306,18 +3272,8 @@ class HostCollection(
             ),
             'unlimited_hosts': entity_fields.BooleanField(),
         }
-        # The following attributes have been renamed with Satellite
-        # 6.2, so we revert them to their old values if we have an
-        # older version of Satellite
-        if _get_version(server_config) < Version('6.2'):
-            self._fields['max_content_hosts'] = self._fields.pop('max_hosts')
-            self._fields['unlimited_content_hosts'] = self._fields.pop('unlimited_hosts')
-            self._fields['system'] = entity_fields.OneToManyField(System)
-            self._fields.pop('host')
-
         self._meta = {
             'api_path': 'katello/api/v2/host_collections',
-            'server_modes': ('sat', 'sam'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -3377,14 +3333,14 @@ class HostGroup(
             'subnet': entity_fields.OneToOneField(Subnet),
             'group_parameters_attributes': entity_fields.ListField(),
         }
-        if _get_version(server_config) >= Version('6.1'):
-            self._fields.update(
-                {
-                    'content_view': entity_fields.OneToOneField(ContentView),
-                    'lifecycle_environment': entity_fields.OneToOneField(LifecycleEnvironment),
-                }
-            )
-        self._meta = {'api_path': 'api/v2/hostgroups', 'server_modes': ('sat')}
+
+        self._fields.update(
+            {
+                'content_view': entity_fields.OneToOneField(ContentView),
+                'lifecycle_environment': entity_fields.OneToOneField(LifecycleEnvironment),
+            }
+        )
+        self._meta = {'api_path': 'api/v2/hostgroups'}
         super().__init__(server_config, **kwargs)
 
     def create(self, create_missing=None):
@@ -3421,23 +3377,15 @@ class HostGroup(
           <https://bugzilla.redhat.com/show_bug.cgi?id=1450379>`_
 
         """
-        if ignore is None:
-            ignore = set()
+        ignore = ignore or set()
         ignore.add('root_pass')
         ignore.add('kickstart_repository')
         ignore.add('compute_resource')
 
-        if attrs is None:
-            attrs = self.read_json()
+        attrs = attrs or self.read_json()
         attrs['parent_id'] = attrs.pop('ancestry')  # either an ID or None
         attrs['group_parameters_attributes'] = attrs.pop('parameters')
-        version = _get_version(self._server_config)
-        if version >= Version('6.1') and version < Version('6.2'):
-            # We cannot call `self.update_json([])`, as an ID might not be
-            # present on self. However, `attrs` is guaranteed to have an ID.
-            attrs2 = HostGroup(self._server_config, id=attrs['id']).update_json([])
-            for attr in ('content_source_id', 'content_view_id', 'lifecycle_environment_id'):
-                attrs[attr] = attrs2.get(attr)
+
         return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
@@ -3614,11 +3562,6 @@ class HostPackage(Entity):
     """A representation of a Host Package entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        if _get_version(server_config) < Version('6.2'):
-            raise NotImplementedError(
-                'Your current version of Satellite does not support '
-                'HostPackage entity. Please, use SystemPackage entity instead.'
-            )
         _check_for_value('host', kwargs)
         self._fields = {
             'groups': entity_fields.ListField(),
@@ -3628,7 +3571,6 @@ class HostPackage(Entity):
         super().__init__(server_config, **kwargs)
         self._meta = {
             'api_path': f'{self.host.path()}/packages',
-            'server_modes': ('sat'),
         }
 
 
@@ -3636,11 +3578,6 @@ class HostSubscription(Entity):
     """A representation of a Host Subscription entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        if _get_version(server_config) < Version('6.2'):
-            raise NotImplementedError(
-                'Your current version of Satellite does not support'
-                'HostSubscription entity. Please, use System entity instead.'
-            )
         _check_for_value('host', kwargs)
         self._fields = {
             'content_label': entity_fields.StringField(),
@@ -3651,7 +3588,6 @@ class HostSubscription(Entity):
         super().__init__(server_config, **kwargs)
         self._meta = {
             'api_path': f'{self.host.path()}/subscriptions',
-            'server_modes': ('sat'),
         }
 
     def path(self, which=None):
@@ -3790,7 +3726,7 @@ class Host(
             'uuid': entity_fields.StringField(),
         }
         self._owner_type = None  # actual ``owner_type`` value
-        self._meta = {'api_path': 'api/v2/hosts', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/hosts'}
         super().__init__(server_config, **kwargs)
 
         # See https://github.com/SatelliteQE/nailgun/issues/258
@@ -3905,14 +3841,11 @@ class Host(
         if not hasattr(self, 'architecture'):
             self.architecture = Architecture(self._server_config).create(True)
         if not hasattr(self, 'ptable'):
-            if _get_version(self._server_config) >= Version('6.2'):
-                self.ptable = PartitionTable(
-                    self._server_config,
-                    location=[self.location],
-                    organization=[self.organization],
-                ).create(True)
-            else:
-                self.ptable = PartitionTable(self._server_config).create(True)
+            self.ptable = PartitionTable(
+                self._server_config,
+                location=[self.location],
+                organization=[self.organization],
+            ).create(True)
         if not hasattr(self, 'operatingsystem'):
             self.operatingsystem = OperatingSystem(
                 self._server_config,
@@ -4585,7 +4518,6 @@ class Image(
         super().__init__(server_config, **kwargs)
         self._meta = {
             "api_path": f'{self.compute_resource.path("self")}/images',
-            "server_modes": ("sat"),
         }
 
     def create_payload(self):
@@ -4685,7 +4617,6 @@ class Interface(
         super().__init__(server_config, **kwargs)
         self._meta = {
             'api_path': f'{self.host.path()}/interfaces',
-            'server_modes': ('sat'),
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -4771,21 +4702,8 @@ class LifecycleEnvironment(
         }
         self._meta = {
             'api_path': 'katello/api/v2/environments',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
-
-    def create_payload(self):
-        """Rename the payload key "prior_id" to "prior".
-
-        For more information, see `Bugzilla #1238757
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1238757>`_.
-
-        """
-        payload = super().create_payload()
-        if _get_version(self._server_config) < Version('6.1') and 'prior_id' in payload:
-            payload['prior'] = payload.pop('prior_id')
-        return payload
 
     def create_missing(self):
         """Automatically populate additional instance attributes.
@@ -4840,7 +4758,7 @@ class HTTPProxy(
             'organization': entity_fields.OneToManyField(Organization),
             'location': entity_fields.OneToManyField(Location),
         }
-        self._meta = {'api_path': 'api/v2/http_proxies', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/http_proxies'}
         super().__init__(server_config, **kwargs)
 
     def update_payload(self, fields=None):
@@ -4896,7 +4814,7 @@ class Location(
             'subnet': entity_fields.OneToManyField(Subnet),
             'user': entity_fields.OneToManyField(User),
         }
-        self._meta = {'api_path': 'api/v2/locations', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/locations'}
         super().__init__(server_config, **kwargs)
 
     def create_payload(self):
@@ -4972,7 +4890,7 @@ class Media(
             'location': entity_fields.OneToManyField(Location),
             'os_family': entity_fields.StringField(choices=_OPERATING_SYSTEMS),
         }
-        self._meta = {'api_path': 'api/v2/media', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/media'}
         super().__init__(server_config, **kwargs)
 
     def create_payload(self):
@@ -5037,7 +4955,7 @@ class Model(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, Entit
             ),
             'vendor_class': entity_fields.StringField(),
         }
-        self._meta = {'api_path': 'api/v2/models', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/models'}
         super().__init__(server_config, **kwargs)
 
 
@@ -5090,7 +5008,6 @@ class OperatingSystem(
         }
         self._meta = {
             'api_path': 'api/v2/operatingsystems',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -5132,7 +5049,6 @@ class OperatingSystemParameter(Entity, EntityCreateMixin, EntityDeleteMixin, Ent
         super().__init__(server_config, **kwargs)
         self._meta = {
             "api_path": f'{self.operatingsystem.path("self")}/parameters',
-            "server_modes": ("sat"),
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -5194,16 +5110,15 @@ class Organization(
             'title': entity_fields.StringField(),
             'user': entity_fields.OneToManyField(User),
         }
-        if _get_version(server_config) >= Version('6.1.1'):  # default: True
-            self._fields.update(
-                {
-                    'default_content_view': entity_fields.OneToOneField(ContentView),
-                    'library': entity_fields.OneToOneField(LifecycleEnvironment),
-                }
-            )
+
+        self._fields.update(
+            {
+                'default_content_view': entity_fields.OneToOneField(ContentView),
+                'library': entity_fields.OneToOneField(LifecycleEnvironment),
+            }
+        )
         self._meta = {
             'api_path': 'katello/api/v2/organizations',
-            'server_modes': ('sat', 'sam'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -5330,7 +5245,6 @@ class OSDefaultTemplate(
         super().__init__(server_config, **kwargs)
         self._meta = {
             "api_path": f'{self.operatingsystem.path("self")}/os_default_templates',
-            "server_modes": ("sat"),
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -5385,7 +5299,6 @@ class OverrideValue(
             )
         self._meta = {
             'api_path': f'{partial_path}/override_values',
-            'server_modes': ('sat'),
         }
 
     def create_payload(self):
@@ -5465,7 +5378,6 @@ class Parameter(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, E
         self._parent_id = getattr(self, self._parent_type).id
         self._meta = {
             'api_path': f'api/v2/{self._parent_type}s/{self._parent_id}/parameters',
-            'server_modes': ('sat'),
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -5493,7 +5405,6 @@ class Permission(Entity, EntityReadMixin, EntitySearchMixin):
         }
         self._meta = {
             'api_path': 'api/v2/permissions',
-            'server_modes': ('sat', 'sam'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -5504,7 +5415,6 @@ class Ping(Entity, EntitySearchMixin):
     def __init__(self, server_config=None, **kwargs):
         self._meta = {
             'api_path': 'katello/api/v2/ping',
-            'server_modes': ('sat', 'sam'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -5533,7 +5443,6 @@ class Product(
         }
         self._meta = {
             'api_path': 'katello/api/v2/products',
-            'server_modes': ('sat', 'sam'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -5566,9 +5475,6 @@ class Product(
         """
         if attrs is None:
             attrs = self.read_json()
-        if _get_version(self._server_config) < Version('6.1'):
-            org = _get_org(self._server_config, attrs['organization']['label'])
-            attrs['organization'] = org.get_values()
         if ignore is None:
             ignore = set()
         ignore.add('sync_plan')
@@ -5779,14 +5685,8 @@ class PartitionTable(
             'organization': entity_fields.OneToManyField(Organization),
             'os_family': entity_fields.StringField(choices=_OPERATING_SYSTEMS),
         }
-        self._meta = {'api_path': 'api/v2/ptables', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/ptables'}
         super().__init__(server_config, **kwargs)
-        # The following fields were added in Satellite 6.2, removing them if we
-        # have previous version of Satellite
-        if _get_version(self._server_config) < Version('6.2'):
-            # pragma: no cover
-            self._fields.pop('location')
-            self._fields.pop('organization')
 
 
 class PuppetClass(
@@ -5809,7 +5709,6 @@ class PuppetClass(
         }
         self._meta = {
             'api_path': 'api/v2/puppetclasses',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -5987,7 +5886,7 @@ class CompliancePolicies(
             'location': entity_fields.OneToManyField(Location),
             'organization': entity_fields.OneToManyField(Organization),
         }
-        self._meta = {'api_path': 'api/v2/compliance/policies', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/compliance/policies'}
         super().__init__(server_config, **kwargs)
 
     def update(self, fields=None):
@@ -6027,7 +5926,7 @@ class Realm(
                 required=True,
             ),
         }
-        self._meta = {'api_path': 'api/v2/realms', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/realms'}
         super().__init__(server_config, **kwargs)
 
     def create(self, create_missing=None):
@@ -6055,7 +5954,7 @@ class RecurringLogic(Entity, EntityReadMixin):
             'task': entity_fields.OneToManyField(ForemanTask),
             'task_group_id': entity_fields.IntegerField(),
         }
-        self._meta = {'api_path': 'foreman_tasks/api/recurring_logics', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'foreman_tasks/api/recurring_logics'}
         super().__init__(server_config, **kwargs)
 
     def cancel(self, synchronous=True, timeout=None, **kwargs):
@@ -6101,7 +6000,7 @@ class Report(Entity):
             'logs': entity_fields.ListField(),
             'reported_at': entity_fields.DateTimeField(required=True),
         }
-        self._meta = {'api_path': 'api/v2/reports', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/reports'}
         super().__init__(server_config, **kwargs)
 
 
@@ -6160,20 +6059,10 @@ class Repository(
             ),
             'http_proxy_id': entity_fields.IntegerField(),
         }
-        if _get_version(server_config) < Version('6.1'):
-            # Adjust for Satellite 6.0
-            del self._fields['docker_upstream_name']
-            del self._fields['upstream_username']
-            del self._fields['upstream_password']
-            self._fields['content_type'].choices = tuple(
-                set(self._fields['content_type'].choices) - {'docker'}
-            )
-            del self._fields['checksum_type']
         if self._fields['content_type'].choices == 'yum':
             self._fields['download_policy'].required = True
         self._meta = {
             'api_path': 'katello/api/v2/repositories',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -6628,7 +6517,6 @@ class RHCIDeployment(
         }
         self._meta = {
             'api_path': 'fusor/api/v21/deployments',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -6703,7 +6591,6 @@ class RoleLDAPGroups(Entity):
         }
         self._meta = {
             'api_path': 'katello/api/v2/roles/:role_id/ldap_groups',
-            'server_modes': ('sat', 'sam'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -6732,7 +6619,6 @@ class Role(
         }
         self._meta = {
             'api_path': 'api/v2/roles',
-            'server_modes': ('sat', 'sam'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -6797,7 +6683,6 @@ class Setting(Entity, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin):
         }
         self._meta = {
             'api_path': 'api/v2/settings',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -6831,7 +6716,6 @@ class SmartProxy(
         }
         self._meta = {
             'api_path': 'api/v2/smart_proxies',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -6952,7 +6836,6 @@ class SmartClassParameters(Entity, EntityReadMixin, EntitySearchMixin, EntityUpd
         }
         self._meta = {
             'api_path': 'api/v2/smart_class_parameters',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -6993,7 +6876,6 @@ class SmartVariable(
         }
         self._meta = {
             'api_path': 'api/v2/smart_variables',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -7051,7 +6933,6 @@ class Snapshot(
         super().__init__(server_config, **kwargs)
         self._meta = {
             'api_path': f'{self.host.path("self")}/snapshots',
-            'server_modes': ('sat'),
         }
 
     def path(self, which=None):
@@ -7177,7 +7058,6 @@ class Status(Entity):
     def __init__(self, server_config=None, **kwargs):
         self._meta = {
             'api_path': 'katello/api/v2/status',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -7236,7 +7116,7 @@ class Subnet(
             'tftp': entity_fields.OneToOneField(SmartProxy),
             'vlanid': entity_fields.StringField(),
         }
-        self._meta = {'api_path': 'api/v2/subnets', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/subnets'}
         super().__init__(server_config, **kwargs)
 
     def create_payload(self):
@@ -7300,7 +7180,6 @@ class Subscription(Entity, EntityReadMixin, EntitySearchMixin):
         }
         self._meta = {
             'api_path': 'katello/api/v2/subscriptions',
-            'server_modes': ('sat', 'sam'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -7597,117 +7476,6 @@ class SyncPlan(
         return data
 
 
-class SystemPackage(Entity):
-    """A representation of a System Package entity."""
-
-    def __init__(self, server_config=None, **kwargs):
-        if _get_version(server_config) >= Version('6.2'):
-            raise DeprecationWarning(
-                'SystemPackage entity was removed in Satellite 6.2. Please, '
-                'use HostPackage entity instead.'
-            )
-        self._fields = {
-            'groups': entity_fields.ListField(),
-            'packages': entity_fields.ListField(),
-            'system': entity_fields.OneToOneField(System, required=True),
-        }
-        self._meta = {
-            'api_path': 'katello/api/v2/systems/:system_id/packages',
-            'server_modes': ('sat'),
-        }
-        super().__init__(server_config, **kwargs)
-
-
-class System(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, EntitySearchMixin):
-    """A representation of a System entity."""
-
-    def __init__(self, server_config=None, **kwargs):
-        if _get_version(server_config) >= Version('6.2'):
-            raise DeprecationWarning(
-                'System entity was removed in Satellite 6.2. Please, use Host entity instead.'
-            )
-        self._fields = {
-            'content_view': entity_fields.OneToOneField(ContentView),
-            'description': entity_fields.StringField(),
-            'environment': entity_fields.OneToOneField(LifecycleEnvironment),
-            'facts': entity_fields.DictField(
-                default={'uname.machine': 'unknown'},
-                required=True,
-            ),
-            'host_collection': entity_fields.OneToManyField(HostCollection),
-            'installed_products': entity_fields.ListField(),
-            'last_checkin': entity_fields.DateTimeField(),
-            'location': entity_fields.StringField(),
-            'name': entity_fields.StringField(
-                required=True, str_type='alpha', length=(6, 12), unique=True
-            ),
-            'organization': entity_fields.OneToOneField(
-                Organization,
-                required=True,
-            ),
-            'release_ver': entity_fields.StringField(),
-            'service_level': entity_fields.StringField(),
-            'uuid': entity_fields.StringField(),
-            # The type() builtin is still available within instance methods,
-            # class methods, static methods, inner classes, and so on. However,
-            # type() is *not* available at the current level of lexical scoping
-            # after this point.
-            'type': entity_fields.StringField(default='system', required=True),
-        }
-        self._meta = {
-            'api_path': 'katello/api/v2/systems',
-            'server_modes': ('sat', 'sam'),
-        }
-        super().__init__(server_config, **kwargs)
-
-    def path(self, which=None):
-        """Extend ``nailgun.entity_mixins.Entity.path``.
-
-        This method contains a workaround for `Bugzilla #1202917`_.
-
-        Most entities are uniquely identified by an ID. ``System`` is a bit
-        different: it has both an ID and a UUID, and the UUID is used to
-        uniquely identify a ``System``.
-
-        Return a path in the format ``katello/api/v2/systems/<uuid>`` if a UUID
-        is available and:
-
-        * ``which is None``, or
-        * ``which == 'this'``.
-
-        .. _Bugzilla #1202917:
-            https://bugzilla.redhat.com/show_bug.cgi?id=1202917
-
-        Finally, return a path in the form
-        ``katello/api/v2/systems/<uuid>/subscriptions`` if ``'subscriptions'``
-        is passed in.
-
-        """
-        if which == "subscriptions":
-            return f'{super().path("base")}/{self.uuid}/{which}'
-        if hasattr(self, "uuid") and (which is None or which == "self"):
-            return f'{super().path(which="base")}/{self.uuid}'
-        return super().path(which)
-
-    def read(self, entity=None, attrs=None, ignore=None, params=None):
-        """Fetch as many attributes as possible for this entity.
-
-        Do not read the ``facts``, ``organization`` or ``type`` attributes.
-        For more information, see `Bugzilla #1202917
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1202917>`_.
-
-        """
-        if attrs is None:
-            attrs = self.read_json()
-        attrs['last_checkin'] = attrs.pop('checkin_time')
-        attrs['host_collections'] = attrs.pop('hostCollections')
-        attrs['installed_products'] = attrs.pop('installedProducts')
-        if ignore is None:
-            ignore = set()
-        ignore.update(['facts', 'organization', 'type'])
-        return super().read(entity, attrs, ignore, params)
-
-
 class TailoringFile(
     Entity,
     EntityCreateMixin,
@@ -7732,7 +7500,7 @@ class TailoringFile(
         if 'scap_file' in kwargs:
             with open(kwargs['scap_file']) as input_file:
                 kwargs['scap_file'] = input_file.read()
-        self._meta = {'api_path': 'api/v2/compliance/tailoring_files', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/compliance/tailoring_files'}
         super().__init__(server_config, **kwargs)
 
     def create(self, create_missing=None):
@@ -7775,7 +7543,6 @@ class Template(Entity):
     def __init__(self, server_config=None, **kwargs):
         self._meta = {
             'api_path': 'api/v2/templates',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -7845,7 +7612,6 @@ class TemplateCombination(Entity, EntityDeleteMixin, EntityReadMixin):
         }
         self._meta = {
             'api_path': 'api/v2/template_combinations',
-            'server_modes': 'sat',
         }
         super().__init__(server_config, **kwargs)
 
@@ -7864,7 +7630,6 @@ class TemplateKind(Entity, EntityReadMixin, EntitySearchMixin):
         self._meta = {
             'api_path': 'api/v2/template_kinds',
             'num_created_by_default': 8,
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -7889,7 +7654,7 @@ class UserGroup(
             'user': entity_fields.OneToManyField(User),
             'usergroup': entity_fields.OneToManyField(UserGroup),
         }
-        self._meta = {'api_path': 'api/v2/usergroups', 'server_modes': ('sat')}
+        self._meta = {'api_path': 'api/v2/usergroups'}
         super().__init__(server_config, **kwargs)
 
     def create_payload(self):
@@ -7988,7 +7753,6 @@ class User(
         }
         self._meta = {
             'api_path': 'api/v2/users',
-            'server_modes': ('sat', 'sam'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -8066,7 +7830,6 @@ class VirtWhoConfig(
         }
         self._meta = {
             'api_path': 'foreman_virt_who_configure/api/v2/configs',
-            'server_modes': ('sat', 'sam'),
         }
         super().__init__(server_config, **kwargs)
 
@@ -8185,7 +7948,6 @@ class ScapContents(
                 kwargs['scap_file'] = input_file.read()
         self._meta = {
             'api_path': 'api/compliance/scap_contents',
-            'server_modes': ('sat'),
         }
         super().__init__(server_config, **kwargs)
 

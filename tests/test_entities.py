@@ -9,6 +9,7 @@ from http.client import NO_CONTENT
 from unittest import mock
 from unittest import TestCase
 
+from fauxfactory import gen_alpha
 from fauxfactory import gen_integer
 from fauxfactory import gen_string
 
@@ -77,7 +78,6 @@ class InitTestCase(TestCase):
     def setUpClass(cls):
         """Set a server configuration at ``cls.cfg``."""
         cls.cfg = config.ServerConfig('http://example.com')
-        cls.cfg_610 = config.ServerConfig('http://example.com', version='6.1.0')
 
     def test_init_succeeds(self):
         """Instantiate every entity.
@@ -174,8 +174,6 @@ class InitTestCase(TestCase):
                 entities.Status,
                 entities.Subnet,
                 entities.Subscription,
-                # entities.System,  # see below
-                # entities.SystemPackage,  # see below
                 entities.TailoringFile,
                 entities.TemplateCombination,
                 entities.Template,
@@ -222,17 +220,6 @@ class InitTestCase(TestCase):
         for entity, params in entities_:
             with self.subTest(entity):
                 self.assertIsInstance(entity(self.cfg, **params), entity)
-        # Deprecated entities
-        deprecated_entities = [
-            (entity, {})
-            for entity in (
-                entities.System,
-                entities.SystemPackage,
-            )
-        ]
-        for entity, params in deprecated_entities:
-            with self.subTest(entity):
-                self.assertIsInstance(entity(self.cfg_610, **params), entity)
 
     def test_required_params(self):
         """Instantiate entities that require extra parameters.
@@ -269,7 +256,6 @@ class PathTestCase(TestCase):
     def setUp(self):
         """Set ``self.cfg`` and ``self.id_``."""
         self.cfg = config.ServerConfig('http://example.com')
-        self.cfg_610 = config.ServerConfig('http://example.com', version='6.1.0')
         self.id_ = gen_integer(min_value=1)
 
     def test_nowhich(self):
@@ -304,11 +290,6 @@ class PathTestCase(TestCase):
             with self.subTest((entity, path)):
                 self.assertIn(path, entity(self.cfg).path())
                 self.assertIn(f'{path}/{self.id_}', entity(self.cfg, id=self.id_).path())
-        # Deprecated entities
-        for entity, path in ((entities.System, '/systems'),):
-            with self.subTest((entity, path)):
-                self.assertIn(path, entity(self.cfg_610).path())
-                self.assertIn(f'{path}/{self.id_}', entity(self.cfg_610, id=self.id_).path())
 
     def test_id_and_which(self):
         """Execute ``entity(id=…).path(which=…)``."""
@@ -439,11 +420,6 @@ class PathTestCase(TestCase):
             with self.subTest((entity, which)):
                 with self.assertRaises(NoSuchPathError):
                     entity(self.cfg).path(which=which)
-        # Deprecated entities
-        for entity, which in ((entities.System, 'self'),):
-            with self.subTest((entity, which)):
-                with self.assertRaises(NoSuchPathError):
-                    entity(self.cfg_610).path(which=which)
 
     def test_arfreport(self):
         """Test :meth:`nailgun.entities.ArfReport.path`.
@@ -562,32 +538,6 @@ class PathTestCase(TestCase):
             self.assertIn(f'organizations/1/sync_plans/2/{which}', path)
             self.assertRegex(path, fr'{which}$')
 
-    def test_system(self):
-        """Test :meth:`nailgun.entities.System.path`.
-
-        Assert that the following return appropriate paths:
-
-        * ``System().path()``
-        * ``System().path('base')``
-        * ``System(uuid=…).path()``
-        * ``System(uuid=…).path('self')``
-        * ``System(uuid=…).path('subscriptions')``
-
-        """
-        system = entities.System(self.cfg_610)
-        for path in (system.path(), system.path('base')):
-            self.assertIn('/systems', path)
-            self.assertRegex(path, r'systems$')
-
-        system = entities.System(self.cfg_610, uuid=self.id_)
-        for path in (system.path(), system.path('self')):
-            self.assertIn(f'/systems/{self.id_}', path)
-            self.assertRegex(path, fr'{self.id_}$')
-
-        path = system.path('subscriptions')
-        self.assertIn(f'/systems/{self.id_}/subscriptions', path)
-        self.assertRegex(path, r'subscriptions$')
-
     def test_subscription(self):
         """Test :meth:`nailgun.entities.Subscription.path`.
 
@@ -698,7 +648,6 @@ class CreatePayloadTestCase(TestCase):
     def setUpClass(cls):
         """Set a server configuration at ``cls.cfg``."""
         cls.cfg = config.ServerConfig('http://example.com')
-        cls.cfg_610 = config.ServerConfig('http://example.com', version='6.1.0')
 
     def test_no_attributes(self):
         """Instantiate an entity and call ``create_payload`` on it."""
@@ -767,12 +716,23 @@ class CreatePayloadTestCase(TestCase):
 
     def test_host_collection(self):
         """Create a :class:`nailgun.entities.HostCollection`."""
-        payload = entities.HostCollection(
-            self.cfg_610,
-            system=[1],
-        ).create_payload()
-        self.assertNotIn('system_ids', payload)
-        self.assertIn('system_uuids', payload)
+        HOST_ID = 1
+        ORG_ID = 1
+        entity_kwargs = {
+            'name': gen_alpha(),
+            'description': gen_alpha(),
+            'max_hosts': gen_integer(min_value=1, max_value=10),
+            'unlimited_hosts': False,
+            'organization': entities.Organization(self.cfg, id=ORG_ID),
+            'host': [entities.Host(self.cfg, id=HOST_ID)],
+        }
+        host_collection = entities.HostCollection(self.cfg, **entity_kwargs)
+        payload = host_collection.create_payload()
+        # host and organization are translated for payload
+        entity_kwargs.pop('organization')
+        entity_kwargs.pop('host')
+        entity_kwargs.update({'organization_id': ORG_ID, 'host_ids': [HOST_ID]})
+        self.assertDictEqual(entity_kwargs, payload)
 
     def test_content_view_filter_rule(self):
         """Create a :class:`nailgun.entities.ContentViewFilterRule`."""
@@ -1178,7 +1138,6 @@ class ReadTestCase(TestCase):
     def setUp(self):
         """Set a server configuration at ``self.cfg``."""
         self.cfg = config.ServerConfig('http://example.com')
-        self.cfg_610 = config.ServerConfig('http://example.com', version='6.1.0')
 
     def test_entity_arg(self):
         """Call ``read`` on entities that require parameters for instantiation.
@@ -1250,14 +1209,6 @@ class ReadTestCase(TestCase):
                         entity(self.cfg).read()
                         self.assertEqual(read_json.call_count, 1)
                         self.assertEqual(read.call_count, 1)
-        # Deprecated entities
-        for entity in (entities.System,):
-            with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
-                with mock.patch.object(EntityReadMixin, 'read') as read:
-                    with self.subTest():
-                        entity(self.cfg_610).read()
-                        self.assertEqual(read_json.call_count, 1)
-                        self.assertEqual(read.call_count, 1)
 
     def test_attrs_arg_v2(self):
         """Ensure ``read``, ``read_json`` and ``client.put`` are called once.
@@ -1300,19 +1251,6 @@ class ReadTestCase(TestCase):
                 entities.Host(self.cfg),
                 {'parameters': None},
                 {'host_parameters_attributes': None},
-            ),
-            (
-                entities.System(self.cfg_610),
-                {
-                    'checkin_time': None,
-                    'hostCollections': None,
-                    'installedProducts': None,
-                },
-                {
-                    'last_checkin': None,
-                    'host_collections': None,
-                    'installed_products': None,
-                },
             ),
             (
                 entities.Filter(self.cfg),
@@ -1936,7 +1874,6 @@ class UpdatePayloadTestCase(TestCase):
     def setUpClass(cls):
         """Set a server configuration at ``cls.cfg``."""
         cls.cfg = config.ServerConfig('http://example.com')
-        cls.cfg_610 = config.ServerConfig('http://example.com', version='6.1.0')
 
     def test_generic(self):
         """Instantiate a variety of entities and call ``update_payload``."""
@@ -2895,87 +2832,37 @@ class HostGroupTestCase(TestCase):
         self.entity = entities.HostGroup(config.ServerConfig('some url'))
         self.read_json_pacther = mock.patch.object(self.entity, 'read_json')
         self.read_pacther = mock.patch.object(EntityReadMixin, 'read')
-        self.update_json_patcher = mock.patch.object(entities.HostGroup, 'update_json')
 
-    def test_read_sat61z(self):
+    def test_read(self):
         """Ensure ``read``, ``read_json`` and ``update_json`` are called once.
 
         This test is only appropriate for entities that override the ``read``
         method in order to fiddle with the ``attrs`` argument.
         """
-        for version in ('6.1', '6.1.0', '6.1.8'):
-            read_json = self.read_json_pacther.start()
-            read = self.read_pacther.start()
-            update_json = self.update_json_patcher.start()
-            with self.subTest(version=version):
-                self.entity._server_config.version = entities.Version(version)
-                read_json.return_value = {
-                    'ancestry': None,
-                    'id': 641212,  # random
-                    'parameters': None,
-                }
-                update_json.return_value = {
-                    'content_source_id': None,
-                    'content_view_id': None,
-                    'lifecycle_environment_id': None,
-                }
-                self.entity.read()
-                for meth in (read_json, update_json, read):
-                    self.assertEqual(meth.call_count, 1)
-                self.assertEqual(
-                    read.call_args[0][1],
-                    {
-                        'content_source_id': None,
-                        'content_view_id': None,
-                        'id': 641212,
-                        'lifecycle_environment_id': None,
-                        'group_parameters_attributes': None,
-                        'parent_id': None,
-                    },
-                )
-            self.read_json_pacther.stop()
-            self.read_pacther.stop()
-            self.update_json_patcher.stop()
-
-    def test_read_sat62z(self):
-        """Ensure ``read`` and ``read_json`` are called once. And
-        ``update_json`` are not called.
-
-        This test is only appropriate for entities that override the ``read``
-        method in order to fiddle with the ``attrs`` argument.
-        """
-        for version in ('6.2', '6.2.0', '6.2.8'):
-            read_json = self.read_json_pacther.start()
-            read = self.read_pacther.start()
-            update_json = self.update_json_patcher.start()
-            read_json.return_value = {
-                'ancestry': None,
-                'id': 641212,  # random
-                'content_source_id': None,
-                'content_view_id': None,
-                'lifecycle_environment_id': None,
-                'parameters': None,
-            }
-            with self.subTest(version=version):
-                self.entity._server_config.version = entities.Version(version)
-                self.entity.read()
-                for meth in (read_json, read):
-                    self.assertEqual(meth.call_count, 1)
-                self.assertEqual(update_json.call_count, 0)
-                self.assertEqual(
-                    read.call_args[0][1],
-                    {
-                        'content_source_id': None,
-                        'content_view_id': None,
-                        'id': 641212,
-                        'lifecycle_environment_id': None,
-                        'parent_id': None,
-                        'group_parameters_attributes': None,
-                    },
-                )
-            self.read_json_pacther.stop()
-            self.read_pacther.stop()
-            self.update_json_patcher.stop()
+        read_json = self.read_json_pacther.start()
+        read = self.read_pacther.start()
+        read_json.return_value = {
+            'ancestry': None,
+            'id': 641212,  # random
+            'parameters': None,
+        }
+        self.entity.read()
+        self.assertEqual(read.call_count, 1)
+        self.assertEqual(read_json.call_count, 1)
+        self.assertDictEqual(
+            read.call_args[0][1],  # attrs for EntityReadMixin.read call
+            {
+                'id': 641212,
+                'group_parameters_attributes': None,
+                'parent_id': None,
+            },
+        )
+        self.assertSetEqual(
+            read.call_args[0][2],  # ignore for EntityReadMixin.read call
+            {'compute_resource', 'kickstart_repository', 'root_pass'},
+        )
+        self.read_json_pacther.stop()
+        self.read_pacther.stop()
 
     def test_delete_puppetclass(self):
         """Check that helper method is sane.
@@ -3657,9 +3544,7 @@ class VersionTestCase(TestCase):
     def setUpClass(cls):
         """Create several server configs with different versions."""
         super().setUpClass()
-        cls.cfg_608 = config.ServerConfig('bogus url', version='6.0.8')
-        cls.cfg_610 = config.ServerConfig('bogus url', version='6.1.0')
-        cls.cfg_620 = config.ServerConfig('bogus url', version='6.2.0')
+        cls.cfg = config.ServerConfig('bogus url')
 
     def test_missing_org_id(self):
         """Test methods for which no organization ID is returned.
@@ -3674,101 +3559,17 @@ class VersionTestCase(TestCase):
 
         """
         for entity in (entities.ContentView, entities.Product):
-            # Version 6.0.8
-            label = gen_integer()  # unrealistic value
-            with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
-                read_json.return_value = {'organization': {'label': label}}
-                with mock.patch.object(entities, '_get_org') as helper:
+            with self.subTest(entity):
+                label = gen_alpha()
+                with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
+                    read_json.return_value = {'organization': {'label': label}}
                     with mock.patch.object(EntityReadMixin, 'read') as read:
-                        entity(self.cfg_608).read()
-            self.assertEqual(read_json.call_count, 1)
-            self.assertEqual(helper.call_count, 1)
-            self.assertEqual(read.call_count, 1)
-            self.assertEqual(helper.call_args[0], (self.cfg_608, label))
-
-            # Version 6.1.0
-            with mock.patch.object(EntityReadMixin, 'read_json'):
-                with mock.patch.object(EntityReadMixin, 'read') as read:
-                    entity(self.cfg_610).read()
-            self.assertTrue(
-                read.call_args[0][2] is None or 'organization' not in read.call_args[0][2]
-            )
-
-    def test_lifecycle_environment(self):
-        """Create a :class:`nailgun.entities.LifecycleEnvironment`.
-
-        Assert that
-        :meth:`nailgun.entities.LifecycleEnvironment.create_payload` returns a
-        dict having a ``prior`` key in Satellite 6.0.8 and ``prior_id`` in
-        Satellite 6.1.0.
-
-        """
-        payload = entities.LifecycleEnvironment(
-            self.cfg_608,
-            prior=1,
-        ).create_payload()
-        self.assertNotIn('prior_id', payload)
-        self.assertIn('prior', payload)
-
-        payload = entities.LifecycleEnvironment(
-            self.cfg_610,
-            prior=1,
-        ).create_payload()
-        self.assertNotIn('prior', payload)
-        self.assertIn('prior_id', payload)
-
-    def test_repository_fields(self):
-        """Check :class:`nailgun.entities.Repository`'s fields.
-
-        Assert that ``Repository`` has fields named "docker_upstream_name" and
-        "checksum_type", and that "docker" is a choice for the "content_type"
-        field starting with version 6.1.
-
-        """
-        repo_608 = entities.Repository(self.cfg_608)
-        repo_610 = entities.Repository(self.cfg_610)
-        for field_name in ('docker_upstream_name', 'checksum_type'):
-            self.assertNotIn(field_name, repo_608.get_fields())
-            self.assertIn(field_name, repo_610.get_fields())
-        self.assertNotIn('docker', repo_608.get_fields()['content_type'].choices)
-        self.assertIn('docker', repo_610.get_fields()['content_type'].choices)
-
-    def test_hostpackage(self):
-        """Attempt to create a :class:`nailgun.entities.HostPackage` for the
-        Satellite 6.1.
-
-        Assert that ``HostPackage`` raises ``NotImplementedError`` exception.
-        """
-        with self.assertRaises(NotImplementedError):
-            entities.HostPackage(self.cfg_610, host=1)
-
-    def test_hostsubscription(self):
-        """Attempt to create a :class:`nailgun.entities.HostSubscription` for
-        the Satellite 6.1.
-
-        Assert that ``HostSubscription`` raises ``NotImplementedError``
-        exception.
-        """
-        with self.assertRaises(NotImplementedError):
-            entities.HostSubscription(self.cfg_610, host=1)
-
-    def test_system(self):
-        """Attempt to create a :class:`nailgun.entities.System` for the
-        Satellite 6.2.
-
-        Assert that ``System`` raises ``DeprecationWarning`` exception.
-        """
-        with self.assertRaises(DeprecationWarning):
-            entities.System(self.cfg_620)
-
-    def test_systempackage(self):
-        """Attempt to create a :class:`nailgun.entities.SystemPackage` for the
-        Satellite 6.1.
-
-        Assert that ``SystemPackage`` raises ``DeprecationWarning`` exception.
-        """
-        with self.assertRaises(DeprecationWarning):
-            entities.SystemPackage(self.cfg_620)
+                        entity(self.cfg).read()
+                self.assertEqual(read_json.call_count, 1)
+                self.assertEqual(read.call_count, 1)
+                self.assertTrue(
+                    read.call_args[0][2] is None or 'organization' not in read.call_args[0][2]
+                )
 
 
 class JsonSerializableTestCase(TestCase):
