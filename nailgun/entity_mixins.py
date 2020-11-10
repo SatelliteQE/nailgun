@@ -4,7 +4,7 @@ import http.client as http_client
 import json as std_json
 import threading
 import time
-from collections import Iterable
+from collections.abc import Iterable
 from datetime import date
 from datetime import datetime
 from urllib.parse import urljoin
