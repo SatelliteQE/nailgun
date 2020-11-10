@@ -25,7 +25,7 @@ REQUIREMENTS = [
     'pyxdg',
     'requests>=2.7',
     'blinker_herald',
-    'fauxfactory'
+    'fauxfactory',
 ]
 
 setup(

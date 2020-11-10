@@ -110,8 +110,7 @@ def _handle_response(response, server_config, synchronous=False, timeout=None):
     """
     response.raise_for_status()
     if synchronous is True and response.status_code == ACCEPTED:
-        return ForemanTask(
-            server_config, id=response.json()['id']).poll(timeout=timeout)
+        return ForemanTask(server_config, id=response.json()['id']).poll(timeout=timeout)
     if response.status_code == NO_CONTENT:
         return
     if 'application/json' in response.headers.get('content-type', '').lower():
@@ -162,8 +161,10 @@ def _get_org(server_config, label):
     """
     organizations = Organization(server_config).search(query={'search': f'label={label}'})
     if len(organizations) != 1:
-        raise APIResponseError(f'Could not find exactly one organization with label "{label}". '
-                               f'Actual search results: {organizations}')
+        raise APIResponseError(
+            f'Could not find exactly one organization with label "{label}". '
+            f'Actual search results: {organizations}'
+        )
     return organizations[0].read()
 
 
@@ -189,12 +190,13 @@ def _get_version(server_config):
 
 
 class ActivationKey(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Activation Key entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -206,10 +208,7 @@ class ActivationKey(
             'host_collection': entity_fields.OneToManyField(HostCollection),
             'max_hosts': entity_fields.IntegerField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -222,7 +221,7 @@ class ActivationKey(
             'api_path': 'katello/api/v2/activation_keys',
             'server_modes': ('sat', 'sam'),
         }
-        super(ActivationKey, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -248,19 +247,17 @@ class ActivationKey(
 
         """
         if which in (
-                'add_subscriptions',
-                'content_override',
-                'copy',
-                'host_collections',
-                'product_content',
-                'releases',
-                'remove_subscriptions',
-                'subscriptions'):
-            return '{0}/{1}'.format(
-                super(ActivationKey, self).path(which='self'),
-                which
-            )
-        return super(ActivationKey, self).path(which)
+            'add_subscriptions',
+            'content_override',
+            'copy',
+            'host_collections',
+            'product_content',
+            'releases',
+            'remove_subscriptions',
+            'subscriptions',
+        ):
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def add_host_collection(self, synchronous=True, **kwargs):
         """Helper for associating host collection with activation key.
@@ -402,21 +399,19 @@ class ActivationKey(
 
 
 class Architecture(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Architecture entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
         }
@@ -424,7 +419,7 @@ class Architecture(
             'api_path': 'api/v2/architectures',
             'server_modes': ('sat'),
         }
-        super(Architecture, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -433,7 +428,7 @@ class Architecture(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {'architecture': super(Architecture, self).create_payload()}
+        return {'architecture': super().create_payload()}
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -446,11 +441,7 @@ class Architecture(
         return self.read()
 
 
-class ArfReport(
-        Entity,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin):
+class ArfReport(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearchMixin):
     """A representation of a Arf Report entity.
 
     # Read Arf report
@@ -467,12 +458,12 @@ class ArfReport(
             'organization': entity_fields.OneToManyField(Organization),
             'host': entity_fields.OneToOneField(Host),
             'openscap_proxy': entity_fields.OneToOneField(Capsule),
-            'policy': entity_fields.OneToOneField(CompliancePolicies)
+            'policy': entity_fields.OneToOneField(CompliancePolicies),
         }
         self._meta = {
             'api_path': 'api/compliance/arf_reports',
         }
-        super(ArfReport, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -484,12 +475,9 @@ class ArfReport(
         Otherwise, call ``super``.
 
         """
-        if which in ('download_html',):
-            return '{0}/{1}'.format(
-                super(ArfReport, self).path(which='self'),
-                which
-            )
-        return super(ArfReport, self).path(which)
+        if which in ("download_html",):
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def download_html(self, synchronous=True, **kwargs):
         """Download ARF report in HTML
@@ -531,16 +519,17 @@ class Audit(Entity, EntityReadMixin, EntitySearchMixin):
             'api_path': 'api/v2/audits',
             'server_modes': ('sat'),
         }
-        super(Audit, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class AuthSourceLDAP(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntityUpdateMixin,
-        EntitySearchMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntityUpdateMixin,
+    EntitySearchMixin,
+):
     """A representation of a AuthSourceLDAP entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -555,17 +544,14 @@ class AuthSourceLDAP(
                 length=(1, 60),
             ),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(1, 60),
-                unique=True
+                required=True, str_type='alpha', length=(1, 60), unique=True
             ),
             'onthefly_register': entity_fields.BooleanField(),
             'port': entity_fields.IntegerField(),
             'server_type': entity_fields.StringField(
-                choices=('active_directory', 'free_ipa', 'posix')),
+                choices=('active_directory', 'free_ipa', 'posix')
+            ),
             'tls': entity_fields.BooleanField(),
-
             # required if onthefly_register is true,
             'account_password': entity_fields.StringField(),
             'attr_firstname': entity_fields.StringField(),
@@ -579,7 +565,7 @@ class AuthSourceLDAP(
             'api_path': 'api/v2/auth_source_ldaps',
             'server_modes': ('sat'),
         }
-        super(AuthSourceLDAP, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_missing(self):
         """Possibly set several extra instance attributes.
@@ -594,14 +580,15 @@ class AuthSourceLDAP(
         * attr_mail
 
         """
-        super(AuthSourceLDAP, self).create_missing()
+        super().create_missing()
         if getattr(self, 'onthefly_register', False) is True:
             for field in (
-                    'account_password',
-                    'attr_firstname',
-                    'attr_lastname',
-                    'attr_login',
-                    'attr_mail'):
+                'account_password',
+                'attr_firstname',
+                'attr_lastname',
+                'attr_login',
+                'attr_mail',
+            ):
                 if not hasattr(self, field):
                     setattr(self, field, self._fields[field].gen_value())
 
@@ -617,32 +604,30 @@ class AuthSourceLDAP(
         if ignore is None:
             ignore = set()
         ignore.add('account_password')
-        return super(AuthSourceLDAP, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
 class Bookmark(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Bookmark entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'controller': entity_fields.StringField(required=True),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'public': entity_fields.BooleanField(),
             'query': entity_fields.StringField(required=True),
         }
         self._meta = {'api_path': 'api/v2/bookmarks', 'server_modes': ('sat')}
-        super(Bookmark, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
@@ -664,7 +649,7 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
             'api_path': 'katello/api/capsules',
             'server_modes': ('sat'),
         }
-        super(Capsule, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def content_add_lifecycle_environment(self, synchronous=True, **kwargs):
         """Helper to associate lifecycle environment with capsule
@@ -679,8 +664,7 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
         """
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
-        response = client.post(
-            self.path('content_lifecycle_environments'), **kwargs)
+        response = client.post(self.path('content_lifecycle_environments'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
     def content_lifecycle_environments(self, synchronous=True, **kwargs):
@@ -697,8 +681,7 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
         """
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(
-            self.path('content_lifecycle_environments'), **kwargs)
+        response = client.get(self.path('content_lifecycle_environments'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
     def content_sync(self, synchronous=True, **kwargs):
@@ -747,21 +730,19 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
         ``super`` is called otherwise.
 
         """
-        if which and which.startswith('content_'):
-            return '{0}/content/{1}'.format(
-                super(Capsule, self).path(which='self'),
-                which.split('content_')[1]
-            )
-        return super(Capsule, self).path(which)
+        if which and which.startswith("content_"):
+            return f'{super().path(which="self")}/content/{which.split("content_")[1]}'
+        return super().path(which)
 
 
 class CommonParameter(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Common Parameter entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -773,15 +754,12 @@ class CommonParameter(
             'api_path': 'api/v2/common_parameters',
             'server_modes': ('sat'),
         }
-        super(CommonParameter, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class ComputeAttribute(
-        Entity,
-        EntityCreateMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity, EntityCreateMixin, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin
+):
     """A representation of a Compute Attribute entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -801,25 +779,23 @@ class ComputeAttribute(
             'api_path': 'api/v2/compute_attributes',
             'server_modes': ('sat'),
         }
-        super(ComputeAttribute, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class ComputeProfile(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Compute Profile entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'compute_attribute': entity_fields.OneToManyField(ComputeAttribute),
         }
@@ -827,16 +803,17 @@ class ComputeProfile(
             'api_path': 'api/v2/compute_profiles',
             'server_modes': ('sat'),
         }
-        super(ComputeProfile, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class AbstractComputeResource(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Compute Resource entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -860,7 +837,7 @@ class AbstractComputeResource(
                 required=True,
                 str_type='alphanumeric',  # cannot contain whitespace
                 length=(6, 12),
-                unique=True
+                unique=True,
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'provider': entity_fields.StringField(
@@ -884,7 +861,7 @@ class AbstractComputeResource(
             'api_path': 'api/v2/compute_resources',
             'server_modes': ('sat'),
         }
-        super(AbstractComputeResource, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -907,16 +884,15 @@ class AbstractComputeResource(
 
         """
         if which in (
-                'available_images',
-                'available_zones',
-                'available_flavors',
-                'available_networks',
-                'images',
-                'associate'):
-            return '{0}/{1}'.format(
-                super(AbstractComputeResource, self).path(which='self'),
-                which)
-        return super(AbstractComputeResource, self).path(which)
+            'available_images',
+            'available_zones',
+            'available_flavors',
+            'available_networks',
+            'images',
+            'associate',
+        ):
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -925,21 +901,11 @@ class AbstractComputeResource(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {
-            'compute_resource': super(
-                AbstractComputeResource,
-                self
-            ).create_payload()
-        }
+        return {'compute_resource': super().create_payload()}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {
-            'compute_resource': super(
-                AbstractComputeResource,
-                self
-            ).update_payload(fields)
-        }
+        return {'compute_resource': super().update_payload(fields)}
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -1052,32 +1018,30 @@ class AbstractComputeResource(
 
 
 class DiscoveredHost(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Foreman Discovered Host entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'ip': entity_fields.IPAddressField(required=True),
             'mac': entity_fields.MACAddressField(required=True),
             'hostgroup': entity_fields.OneToOneField(HostGroup),
-            'root_pass': entity_fields.StringField()
+            'root_pass': entity_fields.StringField(),
         }
         self._meta = {
             'api_path': '/api/v2/discovered_hosts',
             'server_modes': ('sat'),
         }
-        super(DiscoveredHost, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -1094,14 +1058,17 @@ class DiscoveredHost(
         ``super`` is called otherwise.
 
         """
-        if which in ('auto_provision', 'auto_provision_all', 'facts', 'refresh_facts', 'reboot',
-                     'reboot_all'):
+        if which in (
+            'auto_provision',
+            'auto_provision_all',
+            'facts',
+            'refresh_facts',
+            'reboot',
+            'reboot_all',
+        ):
             prefix = 'base' if which in ['auto_provision_all', 'facts', 'reboot_all'] else 'self'
-            return '{0}/{1}'.format(
-                super(DiscoveredHost, self).path(which=prefix),
-                which
-            )
-        return super(DiscoveredHost, self).path(which)
+            return f'{super().path(which=prefix)}/{which}'
+        return super().path(which)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -1110,18 +1077,11 @@ class DiscoveredHost(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {
-            'discovered_host': super(DiscoveredHost, self).create_payload()
-        }
+        return {'discovered_host': super().create_payload()}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {
-            'discovered_host': super(
-                DiscoveredHost,
-                self
-            ).update_payload(fields)
-        }
+        return {'discovered_host': super().update_payload(fields)}
 
     def facts(self, synchronous=True, **kwargs):
         """Helper to update facts for discovered host, and create the host.
@@ -1165,7 +1125,7 @@ class DiscoveredHost(
         ignore.add('mac')
         ignore.add('root_pass')
         ignore.add('hostgroup')
-        return super(DiscoveredHost, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def reboot(self, synchronous=True, **kwargs):
         """Helper to reboot the discovered host
@@ -1234,12 +1194,13 @@ class DiscoveredHost(
 
 
 class DiscoveryRule(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Foreman Discovery Rule entity.
 
     .. NOTE:: The ``search_`` field is named as such due to a naming conflict
@@ -1255,10 +1216,7 @@ class DiscoveryRule(
             'location': entity_fields.OneToManyField(Location),
             'max_count': entity_fields.IntegerField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'priority': entity_fields.IntegerField(),
@@ -1268,7 +1226,7 @@ class DiscoveryRule(
             'api_path': '/api/v2/discovery_rules',
             'server_modes': ('sat'),
         }
-        super(DiscoveryRule, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -1279,7 +1237,7 @@ class DiscoveryRule(
         In addition, rename the ``search_`` field to ``search``.
 
         """
-        payload = super(DiscoveryRule, self).create_payload()
+        payload = super().create_payload()
         if 'search_' in payload:
             payload['search'] = payload.pop('search_')
         return {'discovery_rule': payload}
@@ -1314,11 +1272,10 @@ class DiscoveryRule(
         if attr not in ignore:
             # We cannot call `self.update_json([])`, as an ID might not be
             # present on self. However, `attrs` is guaranteed to have an ID.
-            attrs[attr] = DiscoveryRule(
-                self._server_config,
-                id=attrs['id'],
-            ).update_json([])[attr]
-        return super(DiscoveryRule, self).read(entity, attrs, ignore, params)
+            attrs[attr] = DiscoveryRule(self._server_config, id=attrs['id'],).update_json(
+                []
+            )[attr]
+        return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -1332,33 +1289,31 @@ class DiscoveryRule(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        payload = super(DiscoveryRule, self).update_payload(fields)
+        payload = super().update_payload(fields)
         if 'search_' in payload:
             payload['search'] = payload.pop('search_')
         return {'discovery_rule': payload}
 
 
 class ExternalUserGroup(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityUpdateMixin,
-        EntityReadMixin):
+    Entity, EntityCreateMixin, EntityDeleteMixin, EntityUpdateMixin, EntityReadMixin
+):
     """A representation of a External Usergroup entity.
 
-   ``usergroup`` must be passed in when this entity is instantiated.
+    ``usergroup`` must be passed in when this entity is instantiated.
 
-   :raises: ``TypeError`` if ``usergroup`` is not passed in.
+    :raises: ``TypeError`` if ``usergroup`` is not passed in.
 
-    # Create external usergroup
-    ExternalUserGroup(name='foobargroup',usergroup=usergroup,auth_source=auth).create()
-    # Read external usergroup
-    ExternalUserGroup(id=<id>, usergroup=usergroup).read()
-    # Delete external usergroup
-    ExternalUserGroup(id=<id>, usergroup=usergroup).delete()
-    # Refresh external usergroup
-    ExternalUserGroup(id=<id>, usergroup=usergroup).refresh()
+     # Create external usergroup
+     ExternalUserGroup(name='foobargroup',usergroup=usergroup,auth_source=auth).create()
+     # Read external usergroup
+     ExternalUserGroup(id=<id>, usergroup=usergroup).read()
+     # Delete external usergroup
+     ExternalUserGroup(id=<id>, usergroup=usergroup).delete()
+     # Refresh external usergroup
+     ExternalUserGroup(id=<id>, usergroup=usergroup).refresh()
     """
+
     def __init__(self, server_config=None, **kwargs):
         _check_for_value('usergroup', kwargs)
         self._fields = {
@@ -1367,16 +1322,15 @@ class ExternalUserGroup(
                 UserGroup,
                 required=True,
             ),
-            'auth_source': entity_fields.OneToOneField(AuthSourceLDAP, required=True)
+            'auth_source': entity_fields.OneToOneField(AuthSourceLDAP, required=True),
         }
-        super(ExternalUserGroup, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {
-            'api_path': '{0}/external_usergroups'.format(self.usergroup.path()),
+            'api_path': f'{self.usergroup.path()}/external_usergroups',
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
-        """Ignore usergroup from read and alter auth_source_ldap with auth_source
-        """
+        """Ignore usergroup from read and alter auth_source_ldap with auth_source"""
         if entity is None:
             entity = type(self)(
                 self._server_config,
@@ -1388,7 +1342,7 @@ class ExternalUserGroup(
         if attrs is None:
             attrs = self.read_json()
         attrs['auth_source'] = attrs.pop('auth_source_ldap')
-        return super(ExternalUserGroup, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -1398,12 +1352,9 @@ class ExternalUserGroup(
         refresh
             /api/usergroups/:usergroup_id/external_usergroups/:id/refresh
         """
-        if which == 'refresh':
-            return '{0}/{1}'.format(
-                super(ExternalUserGroup, self).path(which='self'),
-                which
-            )
-        return super(ExternalUserGroup, self).path(which)
+        if which == "refresh":
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def refresh(self, synchronous=True, **kwargs):
         """Refresh external usergroup.
@@ -1438,7 +1389,7 @@ class KatelloStatus(Entity, EntityReadMixin):
             'server_modes': ('sat'),
             'read_type': 'base',
         }
-        super(KatelloStatus, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class LibvirtComputeResource(AbstractComputeResource):
@@ -1452,15 +1403,14 @@ class LibvirtComputeResource(AbstractComputeResource):
             ),
             'set_console_password': entity_fields.BooleanField(),
         }
-        super(LibvirtComputeResource, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._fields['provider'].default = 'Libvirt'
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'Libvirt'
 
 
 class OVirtComputeResource(AbstractComputeResource):
-    """A representation for compute resources with Ovirt provider
-    """
+    """A representation for compute resources with Ovirt provider"""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
@@ -1470,24 +1420,21 @@ class OVirtComputeResource(AbstractComputeResource):
             'datacenter': entity_fields.StringField(),
             'ovirt_quota': entity_fields.StringField(),
         }
-        super(OVirtComputeResource, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._fields['provider'].default = 'Ovirt'
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'OVirt'
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
-        """Make sure, ``password`` is in the ignore list for read
-        """
+        """Make sure, ``password`` is in the ignore list for read"""
         if ignore is None:
             ignore = set()
         ignore.add('password')
-        return super(OVirtComputeResource, self).read(
-            entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
 class VMWareComputeResource(AbstractComputeResource):
-    """A representation for compute resources with Vmware provider
-    """
+    """A representation for compute resources with Vmware provider"""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
@@ -1496,19 +1443,17 @@ class VMWareComputeResource(AbstractComputeResource):
             'set_console_password': entity_fields.BooleanField(),
             'user': entity_fields.StringField(),
         }
-        super(VMWareComputeResource, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._fields['provider'].default = 'Vmware'
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'VMware'
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
-        """Make sure, ``password`` is in the ignore list for read
-        """
+        """Make sure, ``password`` is in the ignore list for read"""
         if ignore is None:
             ignore = set()
         ignore.add('password')
-        return super(VMWareComputeResource, self).read(
-            entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
 class GCEComputeResource(AbstractComputeResource):
@@ -1519,17 +1464,16 @@ class GCEComputeResource(AbstractComputeResource):
             'email': entity_fields.StringField(required=True),
             'key_path': entity_fields.StringField(required=True),
             'project': entity_fields.StringField(required=True),
-            'zone': entity_fields.StringField()
+            'zone': entity_fields.StringField(),
         }
-        super(GCEComputeResource, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._fields['provider'].default = 'GCE'
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'GCE'
 
 
 class AzureRMComputeResource(AbstractComputeResource):
-    """A representation for compute resources with AzureRM provider
-    """
+    """A representation for compute resources with AzureRM provider"""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
@@ -1539,7 +1483,7 @@ class AzureRMComputeResource(AbstractComputeResource):
             'secret_key': entity_fields.StringField(required=True),
             'region': entity_fields.StringField(required=True),
         }
-        super(AzureRMComputeResource, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         # Remove 'url' field as not required for AzureRM
         del self._fields['url']
         self._fields['provider'].default = 'AzureRm'
@@ -1547,36 +1491,29 @@ class AzureRMComputeResource(AbstractComputeResource):
         self._fields['provider_friendly_name'].default = 'Azure Resource Manager'
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
-        """Make sure, ``secret_key`` is in the ignore list for read
-        """
+        """Make sure, ``secret_key`` is in the ignore list for read"""
         if ignore is None:
             ignore = set()
         ignore.add('secret_key')
-        return super(AzureRMComputeResource, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
 class ConfigGroup(
-        Entity,
-        EntityCreateMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity, EntityCreateMixin, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin
+):
     """A representation of a Config Group entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
         }
         self._meta = {
             'api_path': 'api/v2/config_groups',
             'server_modes': ('sat'),
         }
-        super(ConfigGroup, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class TemplateInput(
@@ -1585,9 +1522,10 @@ class TemplateInput(
     EntityDeleteMixin,
     EntityReadMixin,
     EntitySearchMixin,
-    EntityUpdateMixin
+    EntityUpdateMixin,
 ):
     """A representation of a Template Input entity."""
+
     def __init__(self, server_config=None, **kwargs):
         _check_for_value('template', kwargs)
         self._fields = {
@@ -1601,15 +1539,13 @@ class TemplateInput(
             'puppet_parameter_name': entity_fields.StringField(),
             'required': entity_fields.BooleanField(),
             # There is no Template base class yet
-            'template': entity_fields.OneToOneField(
-                JobTemplate, required=True),
+            'template': entity_fields.OneToOneField(JobTemplate, required=True),
             'variable_name': entity_fields.StringField(),
         }
-        super(TemplateInput, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {
-            'api_path': '/api/v2/templates/{0}/template_inputs'
-            .format(self.template.id),
-            'server_modes': ('sat')
+            'api_path': f'/api/v2/templates/{self.template.id}/template_inputs',
+            'server_modes': ('sat'),
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -1621,15 +1557,12 @@ class TemplateInput(
         if ignore is None:
             ignore = set()
         ignore.add('advanced')
-        return super(TemplateInput, self).read(entity=entity, attrs=attrs,
-                                               ignore=ignore, params=params)
+        return super().read(entity=entity, attrs=attrs, ignore=ignore, params=params)
 
 
-class JobInvocation(
-        Entity,
-        EntityReadMixin,
-        EntitySearchMixin):
+class JobInvocation(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of a Job invocation entity."""
+
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'description': entity_fields.StringField(),
@@ -1647,10 +1580,8 @@ class JobInvocation(
             'template_invocations': entity_fields.ListField(),
             'total': entity_fields.IntegerField(),
         }
-        self._meta = {
-            'api_path': 'api/job_invocations',
-            'server_modes': ('sat')}
-        super(JobInvocation, self).__init__(server_config, **kwargs)
+        self._meta = {'api_path': 'api/job_invocations', 'server_modes': ('sat')}
+        super().__init__(server_config, **kwargs)
 
     def run(self, synchronous=True, **kwargs):
         """Helper to run existing job template
@@ -1692,7 +1623,8 @@ class JobInvocation(
         response.raise_for_status()
         if synchronous is True:
             return ForemanTask(
-                server_config=self._server_config, id=response.json()['task']['id']).poll()
+                server_config=self._server_config, id=response.json()['task']['id']
+            ).poll()
         return response.json()
 
 
@@ -1702,9 +1634,10 @@ class JobTemplate(
     EntityDeleteMixin,
     EntityReadMixin,
     EntitySearchMixin,
-    EntityUpdateMixin
+    EntityUpdateMixin,
 ):
     """A representation of a Job Template entity."""
+
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'audit_comment': entity_fields.StringField(),
@@ -1720,15 +1653,13 @@ class JobTemplate(
             'template': entity_fields.StringField(),
             'template_inputs': entity_fields.OneToManyField(TemplateInput),
         }
-        self._meta = {
-            'api_path': 'api/v2/job_templates',
-            'server_modes': ('sat')}
-        super(JobTemplate, self).__init__(server_config, **kwargs)
+        self._meta = {'api_path': 'api/v2/job_templates', 'server_modes': ('sat')}
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict."""
 
-        payload = super(JobTemplate, self).create_payload()
+        payload = super().create_payload()
         effective_user = payload.pop('effective_user', None)
         if effective_user:
             payload['ssh'] = {'effective_user': effective_user}
@@ -1737,7 +1668,7 @@ class JobTemplate(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        payload = super(JobTemplate, self).update_payload(fields)
+        payload = super().update_payload(fields)
         effective_user = payload.pop('effective_user', None)
         if effective_user:
             payload['ssh'] = {'effective_user': effective_user}
@@ -1745,33 +1676,34 @@ class JobTemplate(
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Ignore the template inputs when initially reading the job template.
-            Look up each TemplateInput entity separately
-            and afterwords add them to the JobTemplate entity."""
+        Look up each TemplateInput entity separately
+        and afterwords add them to the JobTemplate entity."""
         if attrs is None:
             attrs = self.read_json(params=params)
         if ignore is None:
             ignore = set()
         ignore.add('template_inputs')
-        entity = super(JobTemplate, self).read(entity=entity, attrs=attrs,
-                                               ignore=ignore, params=params)
+        entity = super().read(entity=entity, attrs=attrs, ignore=ignore, params=params)
         referenced_entities = [
-            TemplateInput(entity._server_config, id=entity_id,
-                          template=JobTemplate(entity._server_config,
-                                               id=entity.id))
-            for entity_id
-            in _get_entity_ids('template_inputs', attrs)
+            TemplateInput(
+                entity._server_config,
+                id=entity_id,
+                template=JobTemplate(entity._server_config, id=entity.id),
+            )
+            for entity_id in _get_entity_ids('template_inputs', attrs)
         ]
         setattr(entity, 'template_inputs', referenced_entities)
         return entity
 
 
 class ProvisioningTemplate(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Provisioning Template entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -1779,10 +1711,7 @@ class ProvisioningTemplate(
             'audit_comment': entity_fields.StringField(),
             'locked': entity_fields.BooleanField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
             'organization': entity_fields.OneToManyField(Organization),
@@ -1796,7 +1725,7 @@ class ProvisioningTemplate(
             'api_path': 'api/v2/provisioning_templates',
             'server_modes': ('sat'),
         }
-        super(ProvisioningTemplate, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_missing(self):
         """Customize the process of auto-generating instance attributes.
@@ -1807,9 +1736,8 @@ class ProvisioningTemplate(
         * the ``template_kind`` instance attribute is unset.
 
         """
-        super(ProvisioningTemplate, self).create_missing()
-        if (getattr(self, 'snippet', None) is False and
-                not hasattr(self, 'template_kind')):
+        super().create_missing()
+        if getattr(self, 'snippet', None) is False and not hasattr(self, 'template_kind'):
             self.template_kind = TemplateKind(self._server_config, id=1)
 
     def create_payload(self):
@@ -1819,18 +1747,16 @@ class ProvisioningTemplate(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        payload = super(ProvisioningTemplate, self).create_payload()
+        payload = super().create_payload()
         if 'template_combinations' in payload:
-            payload['template_combinations_attributes'] = payload.pop(
-                'template_combinations')
+            payload['template_combinations_attributes'] = payload.pop('template_combinations')
         return {'provisioning_template': payload}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        payload = super(ProvisioningTemplate, self).update_payload(fields)
+        payload = super().update_payload(fields)
         if 'template_combinations' in payload:
-            payload['template_combinations_attributes'] = payload.pop(
-                'template_combinations')
+            payload['template_combinations_attributes'] = payload.pop('template_combinations')
         return {'provisioning_template': payload}
 
     def path(self, which=None):
@@ -1848,13 +1774,10 @@ class ProvisioningTemplate(
         ``super`` is called otherwise.
 
         """
-        if which in ('build_pxe_default', 'clone', 'revision'):
-            prefix = 'self' if which == 'clone' else 'base'
-            return '{0}/{1}'.format(
-                super(ProvisioningTemplate, self).path(prefix),
-                which
-            )
-        return super(ProvisioningTemplate, self).path(which)
+        if which in ("build_pxe_default", "clone", "revision"):
+            prefix = "self" if which == "clone" else "base"
+            return f"{super().path(prefix)}/{which}"
+        return super().path(which)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
@@ -1870,7 +1793,7 @@ class ProvisioningTemplate(
         if ignore is None:
             ignore = set()
         ignore.add('audit_comment')
-        return super(ProvisioningTemplate, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def build_pxe_default(self, synchronous=True, **kwargs):
         """Helper to build pxe default template.
@@ -1906,21 +1829,19 @@ class ProvisioningTemplate(
 
 
 class ReportTemplate(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Report Template entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'location': entity_fields.OneToManyField(Location),
@@ -1932,7 +1853,7 @@ class ReportTemplate(
             'api_path': 'api/v2/report_templates',
             'server_modes': ('sat'),
         }
-        super(ReportTemplate, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -1941,18 +1862,16 @@ class ReportTemplate(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        payload = super(ReportTemplate, self).create_payload()
+        payload = super().create_payload()
         if 'template_combinations' in payload:
-            payload['template_combinations_attributes'] = payload.pop(
-                'template_combinations')
+            payload['template_combinations_attributes'] = payload.pop('template_combinations')
         return {'report_template': payload}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        payload = super(ReportTemplate, self).update_payload(fields)
+        payload = super().update_payload(fields)
         if 'template_combinations' in payload:
-            payload['template_combinations_attributes'] = payload.pop(
-                'template_combinations')
+            payload['template_combinations_attributes'] = payload.pop('template_combinations')
         return {'report_template': payload}
 
     def path(self, which=None):
@@ -1969,13 +1888,10 @@ class ReportTemplate(
         ``super`` is called otherwise.
 
         """
-        if which in ('clone', 'generate', 'schedule_report', 'report_data'):
-            prefix = 'self'
-            return '{0}/{1}'.format(
-                super(ReportTemplate, self).path(prefix),
-                which
-            )
-        return super(ReportTemplate, self).path(which)
+        if which in ("clone", "generate", "schedule_report", "report_data"):
+            prefix = "self"
+            return f"{super().path(prefix)}/{which}"
+        return super().path(which)
 
     def clone(self, synchronous=True, **kwargs):
         """Helper to clone an existing report template
@@ -2047,12 +1963,13 @@ class ReportTemplate(
 
 
 class ContentCredential(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Content Credential entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2060,10 +1977,7 @@ class ContentCredential(
         self._fields = {
             'content': entity_fields.StringField(required=True),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -2079,15 +1993,12 @@ class ContentCredential(
             'api_path': 'katello/api/v2/content_credentials',
             'server_modes': ('sat'),
         }
-        super(ContentCredential, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class ContentUpload(
-        Entity,
-        EntityCreateMixin,
-        EntityReadMixin,
-        EntityUpdateMixin,
-        EntityDeleteMixin):
+    Entity, EntityCreateMixin, EntityReadMixin, EntityUpdateMixin, EntityDeleteMixin
+):
     """A representation of a Content Upload entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2097,13 +2008,13 @@ class ContentUpload(
             'repository': entity_fields.OneToOneField(
                 Repository,
                 required=True,
-            )
+            ),
         }
-        super(ContentUpload, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         # a ContentUpload does not have an id field, only an upload_id
         self._fields.pop('id')
         self._meta = {
-            'api_path': '{0}/content_uploads'.format(self.repository.path()),
+            'api_path': f'{self.repository.path()}/content_uploads',
             'server_modes': ('sat'),
         }
 
@@ -2132,7 +2043,7 @@ class ContentUpload(
         if ignore is None:
             ignore = set()
         ignore.add('repository')
-        return super(ContentUpload, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None, **kwargs):
         """Update the current entity.
@@ -2152,22 +2063,14 @@ class ContentUpload(
         headers = kwargs.pop('headers', {})
         headers['content-type'] = 'multipart/form-data'
         kwargs['headers'] = headers
-        return client.put(
-            self.path('self'),
-            fields,
-            **kwargs
-        )
+        return client.put(self.path('self'), fields, **kwargs)
 
     def path(self, which=None):
-        """Extend ``nailgun.entity_mixins.Entity.path``.
-        """
-        base = urljoin(
-            self._server_config.url + '/',
-            self._meta['api_path']
-        )
+        """Extend ``nailgun.entity_mixins.Entity.path``."""
+        base = urljoin(f'{self._server_config.url}/', self._meta['api_path'])
         if (which == 'self' or which is None) and hasattr(self, 'upload_id'):
-            return urljoin(base + '/', str(self.upload_id))
-        return super(ContentUpload, self).path(which)
+            return urljoin(f'{base}/', str(self.upload_id))
+        return super().path(which)
 
     def upload(self, filepath, content_type=None, filename=None):
         """Upload content.
@@ -2200,8 +2103,7 @@ class ContentUpload(
             with open(filepath, 'rb') as contentfile:
                 chunk = contentfile.read(content_chunk_size)
                 while len(chunk) > 0:
-                    data = {'offset': offset,
-                            'content': chunk}
+                    data = {'offset': offset, 'content': chunk}
                     content_upload.update(data)
 
                     offset += len(chunk)
@@ -2214,8 +2116,14 @@ class ContentUpload(
                 size = len(contents)
                 checksum.update(contents)
 
-            uploads = [{'id': content_upload.upload_id, 'name': filename,
-                        'size': size, 'checksum': checksum.hexdigest()}]
+            uploads = [
+                {
+                    'id': content_upload.upload_id,
+                    'name': filename,
+                    'size': size,
+                    'checksum': checksum.hexdigest(),
+                }
+            ]
             json = self.repository.import_uploads(uploads=uploads, content_type=content_type)
         finally:
             content_upload.delete()
@@ -2223,11 +2131,7 @@ class ContentUpload(
         return json
 
 
-class ContentViewVersion(
-        Entity,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin):
+class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearchMixin):
     """A representation of a Content View Version non-entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2249,10 +2153,7 @@ class ContentViewVersion(
             'api_path': 'katello/api/v2/content_view_versions',
             'server_modes': ('sat'),
         }
-        super(ContentViewVersion, self).__init__(
-            server_config,
-            **kwargs
-        )
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -2267,13 +2168,10 @@ class ContentViewVersion(
         ``super`` is called otherwise.
 
         """
-        if which in ('incremental_update', 'promote'):
-            prefix = 'base' if which == 'incremental_update' else 'self'
-            return '{0}/{1}'.format(
-                super(ContentViewVersion, self).path(prefix),
-                which
-            )
-        return super(ContentViewVersion, self).path(which)
+        if which in ("incremental_update", "promote"):
+            prefix = "base" if which == "incremental_update" else "self"
+            return f"{super().path(prefix)}/{which}"
+        return super().path(which)
 
     def incremental_update(self, synchronous=True, **kwargs):
         """Helper for incrementally updating a content view version.
@@ -2311,20 +2209,20 @@ class ContentViewVersion(
 
 
 class ContentViewFilterRule(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Content View Filter Rule entity."""
 
     def __init__(self, server_config=None, **kwargs):
         _check_for_value('content_view_filter', kwargs)
         self._fields = {
             'content_view_filter': entity_fields.OneToOneField(
-                AbstractContentViewFilter,
-                required=True
+                AbstractContentViewFilter, required=True
             ),
             'date_type': entity_fields.StringField(
                 choices=('issued', 'updated'),
@@ -2333,11 +2231,7 @@ class ContentViewFilterRule(
             'errata': entity_fields.OneToOneField(Errata),
             'max_version': entity_fields.StringField(),
             'min_version': entity_fields.StringField(),
-            'name': entity_fields.StringField(
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
-            ),
+            'name': entity_fields.StringField(str_type='alpha', length=(6, 12), unique=True),
             'start_date': entity_fields.DateField(),
             'types': entity_fields.ListField(),
             'version': entity_fields.StringField(),
@@ -2345,12 +2239,10 @@ class ContentViewFilterRule(
             'architecture': entity_fields.StringField(),
             'module_stream': entity_fields.OneToManyField(ModuleStream),
         }
-        super(ContentViewFilterRule, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {
-            'server_modes': ('sat'),
-            'api_path': '{0}/rules'.format(
-                self.content_view_filter.path('self')
-            )
+            "server_modes": ("sat"),
+            "api_path": f'{self.content_view_filter.path("self")}/rules',
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -2376,17 +2268,14 @@ class ContentViewFilterRule(
         if ignore is None:
             ignore = set()
         ignore.add('content_view_filter')
-        ignore.update([
-            field_name
-            for field_name in entity.get_fields().keys()
-            if field_name not in attrs
-        ])
-        return super(ContentViewFilterRule, self).read(
-            entity, attrs, ignore, params)
+        ignore.update(
+            [field_name for field_name in entity.get_fields().keys() if field_name not in attrs]
+        )
+        return super().read(entity, attrs, ignore, params)
 
     def create_payload(self):
         """Reset ``errata_id`` from DB ID to ``errata_id``."""
-        payload = super(ContentViewFilterRule, self).create_payload()
+        payload = super().create_payload()
         if 'errata_id' in payload:
             if not hasattr(self.errata, 'errata_id'):
                 self.errata = self.errata.read()
@@ -2395,7 +2284,7 @@ class ContentViewFilterRule(
 
     def update_payload(self, fields=None):
         """Reset ``errata_id`` from DB ID to ``errata_id``."""
-        payload = super(ContentViewFilterRule, self).update_payload(fields)
+        payload = super().update_payload(fields)
         if 'errata_id' in payload:
             if not hasattr(self.errata, 'errata_id'):
                 self.errata = self.errata.read()
@@ -2404,8 +2293,7 @@ class ContentViewFilterRule(
 
     def search_payload(self, fields=None, query=None):
         """Reset ``errata_id`` from DB ID to ``errata_id``."""
-        payload = super(ContentViewFilterRule, self).search_payload(
-            fields, query)
+        payload = super().search_payload(fields, query)
         if 'errata_id' in payload:
             if not hasattr(self.errata, 'errata_id'):
                 self.errata = self.errata.read()
@@ -2414,21 +2302,19 @@ class ContentViewFilterRule(
 
 
 class AbstractContentViewFilter(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Content View Filter entity."""
 
     def __init__(self, server_config=None, **kwargs):
         # The `fields={…}; fields.update(…)` idiom lets subclasses add fields.
         fields = {
-            'content_view': entity_fields.OneToOneField(
-                ContentView,
-                required=True
-            ),
+            'content_view': entity_fields.OneToOneField(ContentView, required=True),
             'description': entity_fields.StringField(),
             'type': entity_fields.StringField(
                 choices=('erratum', 'package_group', 'rpm', 'modulemd', 'docker'),
@@ -2436,10 +2322,7 @@ class AbstractContentViewFilter(
             ),
             'inclusion': entity_fields.BooleanField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'repository': entity_fields.OneToManyField(Repository),
         }
@@ -2449,17 +2332,14 @@ class AbstractContentViewFilter(
             'api_path': 'katello/api/v2/content_view_filters',
             'server_modes': ('sat'),
         }
-        super(AbstractContentViewFilter, self).__init__(
-            server_config,
-            **kwargs
-        )
+        super().__init__(server_config, **kwargs)
 
 
 class ErratumContentViewFilter(AbstractContentViewFilter):
     """A representation of a Content View Filter of type "erratum"."""
 
     def __init__(self, server_config=None, **kwargs):
-        super(ErratumContentViewFilter, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._fields['type'].default = 'erratum'
 
 
@@ -2467,7 +2347,7 @@ class ModuleStreamContentViewFilter(AbstractContentViewFilter):
     """A representation of a Content View Filter of type "modulemd"."""
 
     def __init__(self, server_config=None, **kwargs):
-        super(ModuleStreamContentViewFilter, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._fields['type'].default = 'modulemd'
 
 
@@ -2475,10 +2355,7 @@ class PackageGroupContentViewFilter(AbstractContentViewFilter):
     """A representation of a Content View Filter of type "package_group"."""
 
     def __init__(self, server_config=None, **kwargs):
-        super(PackageGroupContentViewFilter, self).__init__(
-            server_config,
-            **kwargs
-        )
+        super().__init__(server_config, **kwargs)
         self._fields['type'].default = 'package_group'
 
 
@@ -2488,7 +2365,7 @@ class RPMContentViewFilter(AbstractContentViewFilter):
     def __init__(self, server_config=None, **kwargs):
         # Add the `original_packages` field to what's provided by parent class.
         self._fields = {'original_packages': entity_fields.BooleanField()}
-        super(RPMContentViewFilter, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._fields['type'].default = 'rpm'
 
 
@@ -2496,12 +2373,11 @@ class DockerContentViewFilter(AbstractContentViewFilter):
     """A representation of a Content View Filter of type "docker"."""
 
     def __init__(self, server_config=None, **kwargs):
-        super(DockerContentViewFilter, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._fields['type'].default = 'docker'
 
 
-class ContentViewPuppetModule(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+class ContentViewPuppetModule(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a Content View Puppet Module entity.
 
     ``content_view`` must be passed in when this entity is instantiated.
@@ -2518,19 +2394,12 @@ class ContentViewPuppetModule(
                 ContentView,
                 required=True,
             ),
-            'name': entity_fields.StringField(
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
-
-            ),
+            'name': entity_fields.StringField(str_type='alpha', length=(6, 12), unique=True),
         }
-        super(ContentViewPuppetModule, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {
-            'server_modes': ('sat'),
-            'api_path': '{0}/content_view_puppet_modules'.format(
-                self.content_view.path('self')
-            )
+            "server_modes": ("sat"),
+            "api_path": f'{self.content_view.path("self")}/content_view_puppet_modules',
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -2559,17 +2428,17 @@ class ContentViewPuppetModule(
         if ignore is None:
             ignore = set()
         ignore.add('content_view')
-        return super(ContentViewPuppetModule, self).read(
-            entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
 class ContentView(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Content View entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2584,10 +2453,7 @@ class ContentView(
             'label': entity_fields.StringField(unique=True),
             'last_published': entity_fields.StringField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'next_version': entity_fields.IntegerField(),
             'organization': entity_fields.OneToOneField(
@@ -2603,7 +2469,7 @@ class ContentView(
             'api_path': 'katello/api/v2/content_views',
             'server_modes': ('sat'),
         }
-        super(ContentView, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Fetch an attribute missing from the server's response.
@@ -2624,7 +2490,7 @@ class ContentView(
         if ignore is None:
             ignore = set()
         ignore.add('content_view_component')
-        result = super(ContentView, self).read(entity, attrs, ignore, params)
+        result = super().read(entity, attrs, ignore, params)
         if 'content_view_components' in attrs and attrs['content_view_components']:
             result.content_view_component = [
                 ContentViewComponent(
@@ -2688,17 +2554,15 @@ class ContentView(
 
         """
         if which in (
-                'available_puppet_module_names',
-                'available_puppet_modules',
-                'content_view_puppet_modules',
-                'content_view_versions',
-                'copy',
-                'publish'):
-            return '{0}/{1}'.format(
-                super(ContentView, self).path(which='self'),
-                which
-            )
-        return super(ContentView, self).path(which)
+            'available_puppet_module_names',
+            'available_puppet_modules',
+            'content_view_puppet_modules',
+            'content_view_versions',
+            'copy',
+            'publish',
+        ):
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def publish(self, synchronous=True, **kwargs):
         """Helper for publishing an existing content view.
@@ -2775,16 +2639,13 @@ class ContentView(
         else:
             environment_id = environment
         response = client.delete(
-            '{0}/environments/{1}'.format(self.path(), environment_id),
-            **self._server_config.get_client_kwargs()
+            f'{self.path()}/environments/{environment_id}',
+            **self._server_config.get_client_kwargs(),
         )
         return _handle_response(response, self._server_config, synchronous)
 
 
-class ContentViewComponent(
-        Entity,
-        EntityReadMixin,
-        EntityUpdateMixin):
+class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
     """A representation of a Content View Components entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2795,9 +2656,9 @@ class ContentViewComponent(
             'content_view_version': entity_fields.OneToOneField(ContentViewVersion),
             'latest': entity_fields.BooleanField(),
         }
-        super(ContentViewComponent, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {
-            'api_path': '{0}/content_view_components'.format(self.composite_content_view.path()),
+            'api_path': f'{self.composite_content_view.path()}/content_view_components',
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -2817,7 +2678,7 @@ class ContentViewComponent(
             )
 
         ignore.add('composite_content_view')
-        return super(ContentViewComponent, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -2831,15 +2692,10 @@ class ContentViewComponent(
         Otherwise, call ``super``.
 
         """
-        if which in (
-                'add',
-                'remove'):
-            return '{0}/{1}'.format(
-                super(ContentViewComponent, self).path(which='base'),
-                which
-            )
+        if which in ("add", "remove"):
+            return f'{super().path(which="base")}/{which}'
 
-        return super(ContentViewComponent, self).path(which)
+        return super().path(which)
 
     def add(self, synchronous=True, **kwargs):
         """Add provided Content View Component.
@@ -2887,12 +2743,13 @@ class ContentViewComponent(
 
 
 class Domain(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Domain entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2902,15 +2759,12 @@ class Domain(
             'fullname': entity_fields.StringField(),
             'location': entity_fields.OneToManyField(Location),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
         }
         self._meta = {'api_path': 'api/v2/domains', 'server_modes': ('sat')}
-        super(Domain, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_missing(self):
         """Customize the process of auto-generating instance attributes.
@@ -2922,7 +2776,7 @@ class Domain(
         """
         if not hasattr(self, 'name'):
             self.name = gen_alphanumeric().lower()
-        super(Domain, self).create_missing()
+        super().create_missing()
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -2931,7 +2785,7 @@ class Domain(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {'domain': super(Domain, self).create_payload()}
+        return {'domain': super().create_payload()}
 
     def create(self, create_missing=None):
         """Manually fetch a complete set of attributes for this entity.
@@ -2955,7 +2809,7 @@ class Domain(
         if attrs is None:
             attrs = self.read_json()
         attrs['domain_parameters_attributes'] = attrs.pop('parameters')
-        return super(Domain, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -2969,16 +2823,17 @@ class Domain(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {'domain': super(Domain, self).update_payload(fields)}
+        return {'domain': super().update_payload(fields)}
 
 
 class Environment(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Environment entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -2988,7 +2843,7 @@ class Environment(
                 required=True,
                 str_type='alphanumeric',  # cannot contain whitespace
                 length=(6, 12),
-                unique=True
+                unique=True,
             ),
             'organization': entity_fields.OneToManyField(Organization),
         }
@@ -2996,7 +2851,7 @@ class Environment(
             'api_path': 'api/v2/environments',
             'server_modes': ('sat'),
         }
-        super(Environment, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -3005,7 +2860,7 @@ class Environment(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {'environment': super(Environment, self).create_payload()}
+        return {'environment': super().create_payload()}
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -3019,12 +2874,7 @@ class Environment(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {
-            'environment': super(
-                Environment,
-                self
-            ).update_payload(fields)
-        }
+        return {'environment': super().update_payload(fields)}
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -3036,12 +2886,9 @@ class Environment(
         Otherwise, call ``super``.
 
         """
-        if which in ('smart_class_parameters',):
-            return '{0}/{1}'.format(
-                super(Environment, self).path(which='self'),
-                which
-            )
-        return super(Environment, self).path(which)
+        if which in ("smart_class_parameters",):
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def list_scparams(self, synchronous=True, **kwargs):
         """List all smart class parameters
@@ -3063,13 +2910,12 @@ class Environment(
 
 class Errata(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of an Errata entity."""
+
     # You cannot create an errata. Errata are a read-only entity.
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'content_view_version': entity_fields.OneToOneField(
-                ContentViewVersion
-            ),
+            'content_view_version': entity_fields.OneToOneField(ContentViewVersion),
             'errata_id': entity_fields.StringField(),
             'cves': entity_fields.DictField(),
             'description': entity_fields.StringField(),
@@ -3089,11 +2935,8 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
             ),
             'updated': entity_fields.DateField(),
         }
-        self._meta = {
-            'api_path': '/katello/api/v2/errata',
-            'server_modes': ('sat')
-        }
-        super(Errata, self).__init__(server_config, **kwargs)
+        self._meta = {'api_path': '/katello/api/v2/errata', 'server_modes': ('sat')}
+        super().__init__(server_config, **kwargs)
 
     def compare(self, synchronous=True, **kwargs):
         """Compare errata from different content view versions
@@ -3123,9 +2966,9 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
         Otherwise, call ``super``.
 
         """
-        if which in ('compare',):
-            return '{0}/{1}'.format(super(Errata, self).path('base'), which)
-        return super(Errata, self).path(which)
+        if which in ("compare",):
+            return f'{super().path(which="base")}/{which}'
+        return super().path(which)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Following fields are only accessible for filtering search results
@@ -3137,7 +2980,7 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
         ignore.add('content_view_version')
         ignore.add('environment')
         ignore.add('repository')
-        return super(Errata, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
 class File(Entity, EntityReadMixin, EntitySearchMixin):
@@ -3152,16 +2995,17 @@ class File(Entity, EntityReadMixin, EntitySearchMixin):
             'repository': entity_fields.OneToOneField(Repository),
         }
         self._meta = {'api_path': 'katello/api/v2/files'}
-        super(File, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class Filter(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Filter entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -3175,7 +3019,7 @@ class Filter(
             'unlimited': entity_fields.BooleanField(),
         }
         self._meta = {'api_path': 'api/v2/filters', 'server_modes': ('sat')}
-        super(Filter, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -3184,24 +3028,24 @@ class Filter(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {'filter': super(Filter, self).create_payload()}
+        return {'filter': super().create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
-        """Deal with different named data returned from the server
-        """
+        """Deal with different named data returned from the server"""
         if attrs is None:
             attrs = self.read_json()
         attrs['override'] = attrs.pop('override?')
         attrs['unlimited'] = attrs.pop('unlimited?')
-        return super(Filter, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {'filter': super(Filter, self).update_payload(fields)}
+        return {'filter': super().update_payload(fields)}
 
 
 class ForemanStatus(Entity, EntityReadMixin):
     """A representation of the Foreman Status entity."""
+
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'result': entity_fields.StringField(),
@@ -3214,7 +3058,7 @@ class ForemanStatus(Entity, EntityReadMixin):
             'server_modes': ('sat'),
             'read_type': 'base',
         }
-        super(ForemanStatus, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
@@ -3239,7 +3083,7 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
             'api_path': 'foreman_tasks/api/tasks',
             'server_modes': ('sat'),
         }
-        super(ForemanTask, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -3256,12 +3100,9 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
         Otherwise, call ``super``.
 
         """
-        if which in ('bulk_resume', 'bulk_search', 'summary'):
-            return '{0}/{1}'.format(
-                super(ForemanTask, self).path('base'),
-                which
-            )
-        return super(ForemanTask, self).path(which)
+        if which in ("bulk_resume", "bulk_search", "summary"):
+            return f'{super().path(which="base")}/{which}'
+        return super().path(which)
 
     def poll(self, poll_rate=None, timeout=None):
         """Return the status of a task or timeout.
@@ -3288,12 +3129,7 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
         """
         # See nailgun.entity_mixins._poll_task for an explanation of why a
         # private method is called.
-        return _poll_task(
-            self.id,
-            self._server_config,
-            poll_rate,
-            timeout
-        )
+        return _poll_task(self.id, self._server_config, poll_rate, timeout)
 
     def summary(self, synchronous=True, **kwargs):
         """Helper to view a summary of tasks.
@@ -3317,7 +3153,7 @@ class GPGKey(ContentCredential):
     """A representation of a GPG Key entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        super(GPGKey, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class HostCollectionErrata(Entity):
@@ -3334,7 +3170,7 @@ class HostCollectionErrata(Entity):
             ),
             'server_modes': ('sat'),
         }
-        super(HostCollectionErrata, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class HostCollectionPackage(Entity):
@@ -3352,30 +3188,33 @@ class HostCollectionPackage(Entity):
             ),
             'server_modes': ('sat'),
         }
-        super(HostCollectionPackage, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class HostCollection(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Host Collection entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        self._updatable_fields = ['name', 'description', 'host_ids',
-                                  'max_hosts', 'unlimited_hosts']
+        self._updatable_fields = [
+            'name',
+            'description',
+            'host_ids',
+            'max_hosts',
+            'unlimited_hosts',
+        ]
         self._fields = {
             'description': entity_fields.StringField(),
             'host': entity_fields.OneToManyField(Host),
             'max_hosts': entity_fields.IntegerField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -3388,8 +3227,7 @@ class HostCollection(
         # older version of Satellite
         if _get_version(server_config) < Version('6.2'):
             self._fields['max_content_hosts'] = self._fields.pop('max_hosts')
-            self._fields['unlimited_content_hosts'] = self._fields.pop(
-                'unlimited_hosts')
+            self._fields['unlimited_content_hosts'] = self._fields.pop('unlimited_hosts')
             self._fields['system'] = entity_fields.OneToManyField(System)
             self._fields.pop('host')
 
@@ -3397,11 +3235,11 @@ class HostCollection(
             'api_path': 'katello/api/v2/host_collections',
             'server_modes': ('sat', 'sam'),
         }
-        super(HostCollection, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Rename ``system_ids`` to ``system_uuids``."""
-        payload = super(HostCollection, self).create_payload()
+        payload = super().create_payload()
         if 'system_ids' in payload:
             payload['system_uuids'] = payload.pop('system_ids')
         return payload
@@ -3420,12 +3258,13 @@ class HostCollection(
 
 
 class HostGroup(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Host Group entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -3439,16 +3278,12 @@ class HostGroup(
             'compute_profile': entity_fields.OneToOneField(ComputeProfile),
             'environment': entity_fields.OneToOneField(Environment),
             'kickstart_repository': entity_fields.OneToOneField(Repository),
-            'lifecycle_environment': entity_fields.OneToOneField(
-                LifecycleEnvironment),
+            'lifecycle_environment': entity_fields.OneToOneField(LifecycleEnvironment),
             'location': entity_fields.OneToManyField(Location),
             'medium': entity_fields.OneToOneField(Media),
             'root_pass': entity_fields.StringField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'operatingsystem': entity_fields.OneToOneField(OperatingSystem),
             'organization': entity_fields.OneToManyField(Organization),
@@ -3459,13 +3294,14 @@ class HostGroup(
             'group_parameters_attributes': entity_fields.ListField(),
         }
         if _get_version(server_config) >= Version('6.1'):
-            self._fields.update({
-                'content_view': entity_fields.OneToOneField(ContentView),
-                'lifecycle_environment': entity_fields.OneToOneField(
-                    LifecycleEnvironment),
-            })
+            self._fields.update(
+                {
+                    'content_view': entity_fields.OneToOneField(ContentView),
+                    'lifecycle_environment': entity_fields.OneToOneField(LifecycleEnvironment),
+                }
+            )
         self._meta = {'api_path': 'api/v2/hostgroups', 'server_modes': ('sat')}
-        super(HostGroup, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
@@ -3486,7 +3322,7 @@ class HostGroup(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {'hostgroup': super(HostGroup, self).create_payload()}
+        return {'hostgroup': super().create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Deal with several bugs.
@@ -3515,15 +3351,10 @@ class HostGroup(
         if version >= Version('6.1') and version < Version('6.2'):
             # We cannot call `self.update_json([])`, as an ID might not be
             # present on self. However, `attrs` is guaranteed to have an ID.
-            attrs2 = HostGroup(
-                self._server_config,
-                id=attrs['id']
-            ).update_json([])
-            for attr in ('content_source_id',
-                         'content_view_id',
-                         'lifecycle_environment_id'):
+            attrs2 = HostGroup(self._server_config, id=attrs['id']).update_json([])
+            for attr in ('content_source_id', 'content_view_id', 'lifecycle_environment_id'):
                 attrs[attr] = attrs2.get(attr)
-        return super(HostGroup, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
         """Deal with several bugs.
@@ -3541,7 +3372,7 @@ class HostGroup(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {'hostgroup': super(HostGroup, self).update_payload(fields)}
+        return {'hostgroup': super().update_payload(fields)}
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -3562,17 +3393,14 @@ class HostGroup(
 
         """
         if which in (
-                'clone',
-                'puppetclass_ids',
-                'rebuild_config',
-                'smart_class_parameters',
-                'smart_variables'
+            'clone',
+            'puppetclass_ids',
+            'rebuild_config',
+            'smart_class_parameters',
+            'smart_variables',
         ):
-            return '{0}/{1}'.format(
-                super(HostGroup, self).path(which='self'),
-                which
-            )
-        return super(HostGroup, self).path(which)
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def add_puppetclass(self, synchronous=True, **kwargs):
         """Add a Puppet class to host group
@@ -3614,12 +3442,8 @@ class HostGroup(
         """
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
-        path = "{0}/{1}".format(
-            self.path('puppetclass_ids'),
-            kwargs['data'].pop('puppetclass_id')
-        )
-        return _handle_response(
-            client.delete(path, **kwargs), self._server_config, synchronous)
+        path = f'{self.path("puppetclass_ids")}/{kwargs["data"].pop("puppetclass_id")}'
+        return _handle_response(client.delete(path, **kwargs), self._server_config, synchronous)
 
     def list_scparams(self, synchronous=True, **kwargs):
         """List all smart class parameters
@@ -3703,9 +3527,9 @@ class HostPackage(Entity):
             'host': entity_fields.OneToOneField(Host, required=True),
             'packages': entity_fields.ListField(),
         }
-        super(HostPackage, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {
-            'api_path': '{0}/packages'.format(self.host.path()),
+            'api_path': f'{self.host.path()}/packages',
             'server_modes': ('sat'),
         }
 
@@ -3726,9 +3550,9 @@ class HostSubscription(Entity):
             'subscriptions': entity_fields.DictField(),
             'value': entity_fields.StringField(),
         }
-        super(HostSubscription, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {
-            'api_path': '{0}/subscriptions'.format(self.host.path()),
+            'api_path': f'{self.host.path()}/subscriptions',
             'server_modes': ('sat'),
         }
 
@@ -3745,14 +3569,9 @@ class HostSubscription(Entity):
         ``super`` is called otherwise.
 
         """
-        if which in (
-                'add_subscriptions',
-                'remove_subscriptions'):
-            return '{0}/{1}'.format(
-                super(HostSubscription, self).path(which='base'),
-                which
-            )
-        return super(HostSubscription, self).path(which)
+        if which in ('add_subscriptions', 'remove_subscriptions'):
+            return f'{super().path(which="base")}/{which}'
+        return super().path(which)
 
     def subscriptions(self, synchronous=True, **kwargs):
         """Helper for getting subscriptions from host
@@ -3807,12 +3626,13 @@ class HostSubscription(Entity):
 
 
 class Host(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntityUpdateMixin,
-        EntitySearchMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntityUpdateMixin,
+    EntitySearchMixin,
+):
     """A representation of a Host entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -3825,8 +3645,7 @@ class Host(
             'comment': entity_fields.StringField(),
             'compute_attributes': entity_fields.DictField(),
             'compute_profile': entity_fields.OneToOneField(ComputeProfile),
-            'compute_resource': entity_fields.OneToOneField(
-                AbstractComputeResource),
+            'compute_resource': entity_fields.OneToOneField(AbstractComputeResource),
             'content_facet_attributes': entity_fields.DictField(),
             'domain': entity_fields.OneToOneField(Domain),
             'enabled': entity_fields.BooleanField(),
@@ -3843,10 +3662,7 @@ class Host(
             'medium': entity_fields.OneToOneField(Media),
             'model': entity_fields.OneToOneField(Model),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'operatingsystem': entity_fields.OneToOneField(OperatingSystem),
             'organization': entity_fields.OneToOneField(
@@ -3863,8 +3679,7 @@ class Host(
             'puppetclass': entity_fields.OneToManyField(PuppetClass),
             'puppet_proxy': entity_fields.OneToOneField(SmartProxy),
             'realm': entity_fields.OneToOneField(Realm),
-            'root_pass': entity_fields.StringField(
-                length=(8, 30), str_type='alpha'),
+            'root_pass': entity_fields.StringField(length=(8, 30), str_type='alpha'),
             'subnet': entity_fields.OneToOneField(Subnet),
             'traces_status': entity_fields.IntegerField(min_val=-1, max_val=2),
             'traces_status_label': entity_fields.StringField(),
@@ -3872,11 +3687,14 @@ class Host(
         }
         self._owner_type = None  # actual ``owner_type`` value
         self._meta = {'api_path': 'api/v2/hosts', 'server_modes': ('sat')}
-        super(Host, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
         # See https://github.com/SatelliteQE/nailgun/issues/258
-        if (hasattr(self, 'owner') and hasattr(self.owner, 'id') and
-                isinstance(self.owner.id, Entity)):
+        if (
+            hasattr(self, 'owner')
+            and hasattr(self.owner, 'id')
+            and isinstance(self.owner.id, Entity)
+        ):
             self.owner = self.owner.id
 
     @property
@@ -3899,21 +3717,19 @@ class Host(
             if hasattr(self, 'owner'):
                 self.owner = User(
                     self._server_config,
-                    id=self.owner.id if isinstance(self.owner, Entity)
-                    else self.owner
+                    id=self.owner.id if isinstance(self.owner, Entity) else self.owner,
                 )
         elif value == 'Usergroup':
             self._fields['owner'] = entity_fields.OneToOneField(UserGroup)
             if hasattr(self, 'owner'):
                 self.owner = UserGroup(
                     self._server_config,
-                    id=self.owner.id if isinstance(self.owner, Entity)
-                    else self.owner
+                    id=self.owner.id if isinstance(self.owner, Entity) else self.owner,
                 )
 
     def get_values(self):
         """Correctly set the ``owner_type`` attribute."""
-        attrs = super(Host, self).get_values()
+        attrs = super().get_values()
         if '_owner_type' in attrs and attrs['_owner_type'] is not None:
             attrs['owner_type'] = attrs.pop('_owner_type')
         else:
@@ -3943,7 +3759,7 @@ class Host(
         initialized and not read, and therefore contains only `id` field)
         perform additional read request.
         """
-        super(Host, self).create_missing()
+        super().create_missing()
         # See: https://bugzilla.redhat.com/show_bug.cgi?id=1227854
         self.name = self.name.lower()
         if not hasattr(self, 'mac'):
@@ -3961,12 +3777,10 @@ class Host(
         else:
             if not hasattr(self.domain, 'organization'):
                 self.domain = self.domain.read()
-            if self.location.id not in [
-                    loc.id for loc in self.domain.location]:
+            if self.location.id not in [loc.id for loc in self.domain.location]:
                 self.domain.location.append(self.location)
                 self.domain.update(['location'])
-            if self.organization.id not in [
-                    org.id for org in self.domain.organization]:
+            if self.organization.id not in [org.id for org in self.domain.organization]:
                 self.domain.organization.append(self.organization)
                 self.domain.update(['organization'])
         if not hasattr(self, 'environment'):
@@ -3978,12 +3792,10 @@ class Host(
         else:
             if not hasattr(self.environment, 'organization'):
                 self.environment = self.environment.read()
-            if int(self.location.id) not in [
-                    loc.id for loc in self.environment.location]:
+            if int(self.location.id) not in [loc.id for loc in self.environment.location]:
                 self.environment.location.append(self.location)
                 self.environment.update(['location'])
-            if int(self.organization.id) not in [
-                    org.id for org in self.environment.organization]:
+            if int(self.organization.id) not in [org.id for org in self.environment.organization]:
                 self.environment.organization.append(self.organization)
                 self.environment.update(['organization'])
         if not hasattr(self, 'architecture'):
@@ -4006,12 +3818,10 @@ class Host(
         else:
             if not hasattr(self.operatingsystem, 'architecture'):
                 self.operatingsystem = self.operatingsystem.read()
-            if self.architecture.id not in [
-                    arch.id for arch in self.operatingsystem.architecture]:
+            if self.architecture.id not in [arch.id for arch in self.operatingsystem.architecture]:
                 self.operatingsystem.architecture.append(self.architecture)
                 self.operatingsystem.update(['architecture'])
-            if self.ptable.id not in [
-                    ptable.id for ptable in self.operatingsystem.ptable]:
+            if self.ptable.id not in [ptable.id for ptable in self.operatingsystem.ptable]:
                 self.operatingsystem.ptable.append(self.ptable)
                 self.operatingsystem.update(['ptable'])
         if not hasattr(self, 'medium'):
@@ -4025,16 +3835,14 @@ class Host(
             if not hasattr(self.medium, 'organization'):
                 self.medium = self.medium.read()
             if self.operatingsystem.id not in [
-                    operatingsystem.id for operatingsystem in
-                    self.medium.operatingsystem]:
+                operatingsystem.id for operatingsystem in self.medium.operatingsystem
+            ]:
                 self.medium.operatingsystem.append(self.operatingsystem)
                 self.medium.update(['operatingsystem'])
-            if self.location.id not in [
-                    loc.id for loc in self.medium.location]:
+            if self.location.id not in [loc.id for loc in self.medium.location]:
                 self.medium.location.append(self.location)
                 self.medium.update(['location'])
-            if self.organization.id not in [
-                    org.id for org in self.medium.organization]:
+            if self.organization.id not in [org.id for org in self.medium.organization]:
                 self.medium.organization.append(self.organization)
                 self.medium.update(['organization'])
 
@@ -4045,7 +3853,7 @@ class Host(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {'host': super(Host, self).create_payload()}
+        return {'host': super().create_payload()}
 
     def create(self, create_missing=None):
         """Manually fetch a complete set of attributes for this entity.
@@ -4368,7 +4176,7 @@ class Host(
         # host id is required for interface initialization
         ignore.add('interface')
         ignore.add('build_status_label')
-        result = super(Host, self).read(entity, attrs, ignore, params)
+        result = super().read(entity, attrs, ignore, params)
         if attrs.get('image_id'):
             result.image = Image(
                 server_config=self._server_config,
@@ -4405,7 +4213,7 @@ class Host(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {'host': super(Host, self).update_payload(fields)}
+        return {'host': super().update_payload(fields)}
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -4434,39 +4242,35 @@ class Host(
 
         """
         if which in (
-                'disassociate',
-                'enc',
-                'errata',
-                'errata/apply',
-                'errata/applicability',
-                'facts',
-                'packages',
-                'power',
-                'puppetclass_ids',
-                'smart_class_parameters',
-                'smart_variables',
-                'module_streams',
-                'disassociate',
-                'traces',
-                'traces/resolve',
+            'disassociate',
+            'enc',
+            'errata',
+            'errata/apply',
+            'errata/applicability',
+            'facts',
+            'packages',
+            'power',
+            'puppetclass_ids',
+            'smart_class_parameters',
+            'smart_variables',
+            'module_streams',
+            'disassociate',
+            'traces',
+            'traces/resolve',
         ):
-            return '{0}/{1}'.format(
-                super(Host, self).path(which='self'),
-                which
-            )
-        elif which in ('bulk/install_content', 'bulk/add_subscriptions',
-                       'bulk/remove_subscriptions', 'bulk/available_incremental_updates',
-                       'bulk/traces', 'bulk/resolve_traces'):
-            return '{0}/{1}'.format(
-                super(Host, self).path(which='base'),
-                which
-            )
+            return f'{super().path(which="self")}/{which}'
+        elif which in (
+            'bulk/install_content',
+            'bulk/add_subscriptions',
+            'bulk/remove_subscriptions',
+            'bulk / available_incremental_updates',
+            'bulk/traces',
+            'bulk/resolve_traces',
+        ):
+            return f'{super().path(which="base")}/{which}'
         elif which in ('upload_facts',):
-            return '{0}/{1}'.format(
-                super(Host, self).path(which='base'),
-                'facts'
-            )
-        return super(Host, self).path(which)
+            return f'{super().path(which="base")}/facts'
+        return super().path(which)
 
     def add_puppetclass(self, synchronous=True, **kwargs):
         """Add a Puppet class to host
@@ -4508,12 +4312,8 @@ class Host(
         """
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
-        path = "{0}/{1}".format(
-            self.path('puppetclass_ids'),
-            kwargs['data'].pop('puppetclass_id')
-        )
-        return _handle_response(
-            client.delete(path, **kwargs), self._server_config, synchronous)
+        path = f'{self.path("puppetclass_ids")}/{kwargs["data"].pop("puppetclass_id")}'
+        return _handle_response(client.delete(path, **kwargs), self._server_config, synchronous)
 
     def list_scparams(self, synchronous=True, **kwargs):
         """List all smart class parameters
@@ -4588,8 +4388,7 @@ class Host(
                     server_config=self._server_config,
                     id=image,
                     compute_resource=AbstractComputeResource(
-                        server_config=self._server_config,
-                        id=result.get('compute_resource')
+                        server_config=self._server_config, id=result.get('compute_resource')
                     ),
                 )
             entities.append(entity)
@@ -4613,53 +4412,43 @@ class Host(
 
 
 class Image(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Image entity."""
 
     def __init__(self, server_config=None, **kwargs):
         _check_for_value('compute_resource', kwargs)
         self._fields = {
-            'architecture': entity_fields.OneToOneField(
-                Architecture,
-                required=True
-            ),
+            'architecture': entity_fields.OneToOneField(Architecture, required=True),
             'compute_resource': entity_fields.OneToOneField(
-                AbstractComputeResource,
-                required=True
+                AbstractComputeResource, required=True
             ),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
-            'operatingsystem': entity_fields.OneToOneField(
-                OperatingSystem,
-                required=True
-            ),
+            'operatingsystem': entity_fields.OneToOneField(OperatingSystem, required=True),
             'user_data': entity_fields.BooleanField(),
             'username': entity_fields.StringField(required=True),
             'uuid': entity_fields.StringField(required=True),
         }
-        super(Image, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {
-            'api_path': '{0}/images'.format(
-                self.compute_resource.path('self')),
-            'server_modes': ('sat'),
+            "api_path": f'{self.compute_resource.path("self")}/images',
+            "server_modes": ("sat"),
         }
 
     def create_payload(self):
         """Wrap submitted data within an extra dict."""
-        return {'image': super(Image, self).create_payload()}
+        return {'image': super().create_payload()}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {'image': super(Image, self).update_payload(fields)}
+        return {'image': super().update_payload(fields)}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
@@ -4688,16 +4477,17 @@ class Image(
             ignore = set()
         ignore.add('compute_resource')
         ignore.add('user_data')
-        return super(Image, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
 class Interface(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Interface entity.
 
     ``host`` must be passed in when this entity is instantiated.
@@ -4719,9 +4509,15 @@ class Interface(
             'mac': entity_fields.MACAddressField(required=True),
             'managed': entity_fields.BooleanField(),
             'mode': entity_fields.StringField(  # for 'bond' type
-                choices=('802.3ad', 'active-backup', 'balance-alb',
-                         'balance-rr', 'balance-tlb', 'balance-xor',
-                         'broadcast')
+                choices=(
+                    '802.3ad',
+                    'active-backup',
+                    'balance-alb',
+                    'balance-rr',
+                    'balance-tlb',
+                    'balance-xor',
+                    'broadcast',
+                )
             ),
             'name': entity_fields.StringField(
                 required=True,
@@ -4735,16 +4531,14 @@ class Interface(
             'subnet': entity_fields.OneToOneField(Subnet),
             'tag': entity_fields.StringField(),  # for 'virtual' type
             'type': entity_fields.StringField(
-                choices=('interface', 'bmc', 'bond', 'bridge'),
-                default='interface',
-                required=True),
-
+                choices=('interface', 'bmc', 'bond', 'bridge'), default='interface', required=True
+            ),
             'virtual': entity_fields.BooleanField(),
             'username': entity_fields.StringField(),  # for 'bmc' type
         }
-        super(Interface, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {
-            'api_path': '{}/interfaces'.format(self.host.path()),
+            'api_path': f'{self.host.path()}/interfaces',
             'server_modes': ('sat'),
         }
 
@@ -4792,7 +4586,7 @@ class Interface(
             ignore.add('tag')
         if attrs['type'] != 'bridge' and attrs['type'] != 'bond':
             ignore.add('attached_devices')
-        return super(Interface, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def search_normalize(self, results):
         """Append host id to search results to be able to initialize found
@@ -4800,16 +4594,17 @@ class Interface(
         """
         for interface in results:
             interface['host_id'] = self.host.id
-        return super(Interface, self).search_normalize(results)
+        return super().search_normalize(results)
 
 
 class LifecycleEnvironment(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Lifecycle Environment entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -4818,10 +4613,7 @@ class LifecycleEnvironment(
             'description': entity_fields.StringField(),
             'label': entity_fields.StringField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -4835,7 +4627,7 @@ class LifecycleEnvironment(
             'api_path': 'katello/api/v2/environments',
             'server_modes': ('sat'),
         }
-        super(LifecycleEnvironment, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Rename the payload key "prior_id" to "prior".
@@ -4844,9 +4636,8 @@ class LifecycleEnvironment(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1238757>`_.
 
         """
-        payload = super(LifecycleEnvironment, self).create_payload()
-        if (_get_version(self._server_config) < Version('6.1') and
-                'prior_id' in payload):
+        payload = super().create_payload()
+        if _get_version(self._server_config) < Version('6.1') and 'prior_id' in payload:
             payload['prior'] = payload.pop('prior_id')
         return payload
 
@@ -4871,9 +4662,8 @@ class LifecycleEnvironment(
         """
         # We call `super` first b/c it populates `self.organization`, and we
         # need that field to perform a search a little later.
-        super(LifecycleEnvironment, self).create_missing()
-        if (self.name != 'Library' and
-                not hasattr(self, 'prior')):
+        super().create_missing()
+        if self.name != 'Library' and not hasattr(self, 'prior'):
             results = self.search({'organization'}, {'name': 'Library'})
             if len(results) != 1:
                 raise APIResponseError(
@@ -4884,21 +4674,19 @@ class LifecycleEnvironment(
 
 
 class HTTPProxy(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a HTTP Proxy entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'url': entity_fields.URLField(required=True),
             'username': entity_fields.StringField(),
@@ -4907,18 +4695,18 @@ class HTTPProxy(
             'location': entity_fields.OneToManyField(Location),
         }
         self._meta = {'api_path': 'api/v2/http_proxies', 'server_modes': ('sat')}
-        super(HTTPProxy, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {'http_proxy': super(HTTPProxy, self).update_payload(fields)}
+        return {'http_proxy': super().update_payload(fields)}
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
         For more information, see `Bugzilla #1151220
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
         """
-        return {'http_proxy': super(HTTPProxy, self).create_payload()}
+        return {'http_proxy': super().create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Make sure, password, organization and location is in the ignore list for read.
@@ -4930,44 +4718,40 @@ class HTTPProxy(
         ignore.add('password')
         ignore.add('organization')
         ignore.add('location')
-        return super(HTTPProxy, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
 class Location(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Location entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'compute_resource': entity_fields.OneToManyField(
-                AbstractComputeResource),
+            'compute_resource': entity_fields.OneToManyField(AbstractComputeResource),
             'description': entity_fields.StringField(),
             'domain': entity_fields.OneToManyField(Domain),
             'environment': entity_fields.OneToManyField(Environment),
             'hostgroup': entity_fields.OneToManyField(HostGroup),
             'medium': entity_fields.OneToManyField(Media),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'parent': entity_fields.OneToOneField(Location),
-            'provisioning_template': entity_fields.OneToManyField(
-                ProvisioningTemplate),
+            'provisioning_template': entity_fields.OneToManyField(ProvisioningTemplate),
             'realm': entity_fields.OneToManyField(Realm),
             'smart_proxy': entity_fields.OneToManyField(SmartProxy),
             'subnet': entity_fields.OneToManyField(Subnet),
             'user': entity_fields.OneToManyField(User),
         }
         self._meta = {'api_path': 'api/v2/locations', 'server_modes': ('sat')}
-        super(Location, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -4976,9 +4760,7 @@ class Location(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {
-            'location': super(Location, self).create_payload()
-        }
+        return {'location': super().create_payload()}
 
     def create(self, create_missing=None):
         """Manually fetch a complete set of attributes for this entity.
@@ -5000,7 +4782,7 @@ class Location(
         if ignore is None:
             ignore = set()
         ignore.add('realm')
-        return super(Location, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -5015,18 +4797,17 @@ class Location(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {
-            'location': super(Location, self).update_payload(fields)
-        }
+        return {'location': super().update_payload(fields)}
 
 
 class Media(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Media entity.
 
     .. NOTE:: The ``path_`` field is named as such due to a naming conflict
@@ -5038,10 +4819,7 @@ class Media(
         self._fields = {
             'path_': entity_fields.URLField(required=True),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'operatingsystem': entity_fields.OneToManyField(OperatingSystem),
             'organization': entity_fields.OneToManyField(Organization),
@@ -5049,7 +4827,7 @@ class Media(
             'os_family': entity_fields.StringField(choices=_OPERATING_SYSTEMS),
         }
         self._meta = {'api_path': 'api/v2/media', 'server_modes': ('sat')}
-        super(Media, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict and rename ``path_``.
@@ -5058,7 +4836,7 @@ class Media(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        payload = super(Media, self).create_payload()
+        payload = super().create_payload()
         if 'path_' in payload:
             payload['path'] = payload.pop('path_')
         return {'medium': payload}
@@ -5080,7 +4858,7 @@ class Media(
         if attrs is None:
             attrs = self.read_json()
         attrs['path_'] = attrs.pop('path')
-        return super(Media, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -5095,14 +4873,13 @@ class Media(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        payload = super(Media, self).update_payload(fields)
+        payload = super().update_payload(fields)
         if 'path_' in payload:
             payload['path'] = payload.pop('path_')
         return {'medium': payload}
 
 
-class Model(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, EntityUpdateMixin):
+class Model(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, EntityUpdateMixin):
     """A representation of a Model entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -5110,24 +4887,22 @@ class Model(
             'hardware_model': entity_fields.StringField(),
             'info': entity_fields.StringField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'vendor_class': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'api/v2/models', 'server_modes': ('sat')}
-        super(Model, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class OperatingSystem(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Operating System entity.
 
     ``major`` is listed as a string field in the API docs, but only numeric
@@ -5156,14 +4931,10 @@ class OperatingSystem(
                 str_type='numeric',
             ),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'ptable': entity_fields.OneToManyField(PartitionTable),
-            'provisioning_template': entity_fields.OneToManyField(
-                ProvisioningTemplate),
+            'provisioning_template': entity_fields.OneToManyField(ProvisioningTemplate),
             'release_name': entity_fields.StringField(),
             'password_hash': entity_fields.StringField(
                 choices=('MD5', 'SHA256', 'SHA512'),
@@ -5175,7 +4946,7 @@ class OperatingSystem(
             'api_path': 'api/v2/operatingsystems',
             'server_modes': ('sat'),
         }
-        super(OperatingSystem, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -5184,22 +4955,14 @@ class OperatingSystem(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {
-            'operatingsystem': super(OperatingSystem, self).create_payload()
-        }
+        return {'operatingsystem': super().create_payload()}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {
-            'operatingsystem': super(
-                OperatingSystem,
-                self
-            ).update_payload(fields)
-        }
+        return {'operatingsystem': super().update_payload(fields)}
 
 
-class OperatingSystemParameter(
-        Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
+class OperatingSystemParameter(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
     """A representation of a parameter for an operating system.
 
     ``organization`` must be passed in when this entity is instantiated.
@@ -5212,10 +4975,7 @@ class OperatingSystemParameter(
         _check_for_value('operatingsystem', kwargs)
         self._fields = {
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'operatingsystem': entity_fields.OneToOneField(
                 OperatingSystem,
@@ -5223,12 +4983,10 @@ class OperatingSystemParameter(
             ),
             'value': entity_fields.StringField(required=True),
         }
-        super(OperatingSystemParameter, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {
-            'api_path': '{0}/parameters'.format(
-                self.operatingsystem.path('self')
-            ),
-            'server_modes': ('sat'),
+            "api_path": f'{self.operatingsystem.path("self")}/parameters',
+            "server_modes": ("sat"),
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -5257,28 +5015,22 @@ class OperatingSystemParameter(
         if ignore is None:
             ignore = set()
         ignore.add('operatingsystem')
-        return super(OperatingSystemParameter, self).read(
-            entity,
-            attrs,
-            ignore,
-            params
-        )
+        return super().read(entity, attrs, ignore, params)
 
 
 class Organization(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of an Organization entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'compute_resource': entity_fields.OneToManyField(
-                AbstractComputeResource
-            ),
+            'compute_resource': entity_fields.OneToManyField(AbstractComputeResource),
             'description': entity_fields.StringField(),
             'domain': entity_fields.OneToManyField(Domain),
             'environment': entity_fields.OneToManyField(Environment),
@@ -5286,13 +5038,9 @@ class Organization(
             'label': entity_fields.StringField(str_type='alpha'),
             'medium': entity_fields.OneToManyField(Media),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
-            'provisioning_template': entity_fields.OneToManyField(
-                ProvisioningTemplate),
+            'provisioning_template': entity_fields.OneToManyField(ProvisioningTemplate),
             'realm': entity_fields.OneToManyField(Realm),
             'redhat_repository_url': entity_fields.URLField(),
             'smart_proxy': entity_fields.OneToManyField(SmartProxy),
@@ -5301,17 +5049,17 @@ class Organization(
             'user': entity_fields.OneToManyField(User),
         }
         if _get_version(server_config) >= Version('6.1.1'):  # default: True
-            self._fields.update({
-                'default_content_view': entity_fields.OneToOneField(
-                    ContentView
-                ),
-                'library': entity_fields.OneToOneField(LifecycleEnvironment),
-            })
+            self._fields.update(
+                {
+                    'default_content_view': entity_fields.OneToOneField(ContentView),
+                    'library': entity_fields.OneToOneField(LifecycleEnvironment),
+                }
+            )
         self._meta = {
             'api_path': 'katello/api/v2/organizations',
             'server_modes': ('sat', 'sam'),
         }
-        super(Organization, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -5335,19 +5083,16 @@ class Organization(
 
         """
         if which in (
-                'download_debug_certificate',
-                'subscriptions',
-                'subscriptions/delete_manifest',
-                'subscriptions/manifest_history',
-                'subscriptions/refresh_manifest',
-                'subscriptions/upload',
-                'sync_plans',
+            'download_debug_certificate',
+            'subscriptions',
+            'subscriptions/delete_manifest',
+            'subscriptions/manifest_history',
+            'subscriptions/refresh_manifest',
+            'subscriptions/upload',
+            'sync_plans',
         ):
-            return '{0}/{1}'.format(
-                super(Organization, self).path(which='self'),
-                which
-            )
-        return super(Organization, self).path(which)
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
@@ -5372,7 +5117,7 @@ class Organization(
         if ignore is None:
             ignore = set()
         ignore.add('realm')
-        return super(Organization, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -5389,7 +5134,7 @@ class Organization(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        org_payload = super(Organization, self).update_payload(fields)
+        org_payload = super().update_payload(fields)
         payload = {'organization': org_payload}
         if 'redhat_repository_url' in org_payload:
             rh_repo_url = org_payload.pop('redhat_repository_url')
@@ -5410,18 +5155,18 @@ class Organization(
         """
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(
-            self.path('download_debug_certificate'), **kwargs)
+        response = client.get(self.path('download_debug_certificate'), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
 
 class OSDefaultTemplate(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a OS Default Template entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -5431,16 +5176,13 @@ class OSDefaultTemplate(
                 OperatingSystem,
                 required=True,
             ),
-            'provisioning_template': entity_fields.OneToOneField(
-                ProvisioningTemplate),
+            'provisioning_template': entity_fields.OneToOneField(ProvisioningTemplate),
             'template_kind': entity_fields.OneToOneField(TemplateKind),
         }
-        super(OSDefaultTemplate, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {
-            'api_path': '{0}/os_default_templates'.format(
-                self.operatingsystem.path('self')
-            ),
-            'server_modes': ('sat'),
+            "api_path": f'{self.operatingsystem.path("self")}/os_default_templates',
+            "server_modes": ("sat"),
         }
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -5456,8 +5198,7 @@ class OSDefaultTemplate(
         if ignore is None:
             ignore = set()
         ignore.add('operatingsystem')
-        return super(OSDefaultTemplate, self).read(
-            entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def update_payload(self, fields=None):
         """Wrap payload in ``os_default_template``
@@ -5465,28 +5206,24 @@ class OSDefaultTemplate(
 
         .. _Redmine #21169: http://projects.theforeman.org/issues/21169
         """
-        payload = super(OSDefaultTemplate, self).update_payload(fields)
+        payload = super().update_payload(fields)
         return {'os_default_template': payload}
 
 
 class OverrideValue(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntityUpdateMixin):
+    Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, EntityUpdateMixin
+):
     """A representation of a Override Value entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'match': entity_fields.StringField(required=True),
             'value': entity_fields.StringField(required=True),
-            'smart_class_parameter': entity_fields.OneToOneField(
-                SmartClassParameters),
+            'smart_class_parameter': entity_fields.OneToOneField(SmartClassParameters),
             'smart_variable': entity_fields.OneToOneField(SmartVariable),
             'omit': entity_fields.BooleanField(),
         }
-        super(OverrideValue, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         # Create an override value for a specific smart class parameter
         if hasattr(self, 'smart_class_parameter'):
             partial_path = self.smart_class_parameter.path('self')
@@ -5499,13 +5236,13 @@ class OverrideValue(
                 '"smart_class_parameter", "smart_variable"'
             )
         self._meta = {
-            'api_path': '{0}/override_values'.format(partial_path),
+            'api_path': f'{partial_path}/override_values',
             'server_modes': ('sat'),
         }
 
     def create_payload(self):
         """Remove ``smart_class_parameter_id`` or ``smart_variable_id``"""
-        payload = super(OverrideValue, self).create_payload()
+        payload = super().create_payload()
         if hasattr(self, 'smart_class_parameter'):
             del payload['smart_class_parameter_id']
         if hasattr(self, 'smart_variable'):
@@ -5546,15 +5283,10 @@ class OverrideValue(
         if ignore is None:
             ignore = set()
         ignore.update(['smart_class_parameter', 'smart_variable'])
-        return super(OverrideValue, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
-class Parameter(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntityUpdateMixin):
+class Parameter(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, EntityUpdateMixin):
     """A representation of a Parameter entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -5577,16 +5309,14 @@ class Parameter(
             'subnet': entity_fields.OneToOneField(Subnet),
         }
         self._fields.update(self._path_fields)
-        super(Parameter, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         if not any(getattr(self, attr, None) for attr in self._path_fields):
             raise TypeError(f'Must provide value for any of "{self._path_fields.keys()}" fields.')
 
-        self._parent_type = next(
-            attr for attr in self._path_fields if getattr(self, attr, None))
+        self._parent_type = next(attr for attr in self._path_fields if getattr(self, attr, None))
         self._parent_id = getattr(self, self._parent_type).id
         self._meta = {
-            'api_path': 'api/v2/{}s/{}/parameters'.format(
-                self._parent_type, self._parent_id),
+            'api_path': f'api/v2/{self._parent_type}s/{self._parent_id}/parameters',
             'server_modes': ('sat'),
         }
 
@@ -5595,15 +5325,12 @@ class Parameter(
         and are only added to entity to be able to use proper path.
         """
         if entity is None:
-            entity = type(self)(
-                self._server_config,
-                **{self._parent_type: self._parent_id}
-            )
+            entity = type(self)(self._server_config, **{self._parent_type: self._parent_id})
         if ignore is None:
             ignore = set()
         for field_name in self._path_fields:
             ignore.add(field_name)
-        return super(Parameter, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
 class Permission(Entity, EntityReadMixin, EntitySearchMixin):
@@ -5612,10 +5339,7 @@ class Permission(Entity, EntityReadMixin, EntitySearchMixin):
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'resource_type': entity_fields.StringField(required=True),
         }
@@ -5623,7 +5347,7 @@ class Permission(Entity, EntityReadMixin, EntitySearchMixin):
             'api_path': 'api/v2/permissions',
             'server_modes': ('sat', 'sam'),
         }
-        super(Permission, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class Ping(Entity, EntitySearchMixin):
@@ -5634,16 +5358,17 @@ class Ping(Entity, EntitySearchMixin):
             'api_path': 'katello/api/v2/ping',
             'server_modes': ('sat', 'sam'),
         }
-        super(Ping, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class Product(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Product entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -5652,15 +5377,9 @@ class Product(
             'gpg_key': entity_fields.OneToOneField(ContentCredential),
             'label': entity_fields.StringField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
-            'organization': entity_fields.OneToOneField(
-                Organization,
-                required=True
-            ),
+            'organization': entity_fields.OneToOneField(Organization, required=True),
             'repository': entity_fields.OneToManyField(Repository),
             'sync_plan': entity_fields.OneToOneField(SyncPlan),
         }
@@ -5668,7 +5387,7 @@ class Product(
             'api_path': 'katello/api/v2/products',
             'server_modes': ('sat', 'sam'),
         }
-        super(Product, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -5681,12 +5400,9 @@ class Product(
         ``super`` is called otherwise.
 
         """
-        if which == 'sync':
-            return '{0}/{1}'.format(
-                super(Product, self).path(which='self'),
-                which,
-            )
-        return super(Product, self).path(which)
+        if which == "sync":
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Fetch an attribute missing from the server's response.
@@ -5708,7 +5424,7 @@ class Product(
         if ignore is None:
             ignore = set()
         ignore.add('sync_plan')
-        result = super(Product, self).read(entity, attrs, ignore, params)
+        result = super().read(entity, attrs, ignore, params)
         if 'sync_plan' in attrs:
             sync_plan_id = attrs.get('sync_plan_id')
             if sync_plan_id is None:
@@ -5750,8 +5466,7 @@ class Product(
                     server_config=self._server_config,
                     id=sync_plan,
                     organization=Organization(
-                        server_config=self._server_config,
-                        id=result.get('organization')
+                        server_config=self._server_config, id=result.get('organization')
                     ),
                 )
             entities.append(entity)
@@ -5784,7 +5499,7 @@ class ProductBulkAction(Entity):
         self._meta = {
             'api_path': '/katello/api/products/bulk',
         }
-        super(ProductBulkAction, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -5803,17 +5518,9 @@ class ProductBulkAction(Entity):
         ``super`` is called otherwise.
 
         """
-        if which in (
-                'destroy',
-                'sync',
-                'sync_plan',
-                'http_proxy'
-        ):
-            return '{0}/{1}'.format(
-                super(ProductBulkAction, self).path('base'),
-                which
-            )
-        return super(ProductBulkAction, self).path(which)
+        if which in ("destroy", "sync", "sync_plan", "http_proxy"):
+            return f'{super().path(which="base")}/{which}'
+        return super().path(which)
 
     def destroy(self, synchronous=True, **kwargs):
         """Helper to destroy one or more products.
@@ -5885,12 +5592,13 @@ class ProductBulkAction(Entity):
 
 
 class PartitionTable(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Partition Table entity.
 
     Currently a Partition Table with one character in name cannot be created.
@@ -5908,16 +5616,13 @@ class PartitionTable(
             'location': entity_fields.OneToManyField(Location),
             'locked': entity_fields.BooleanField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(4, 30),
-                unique=True
+                required=True, str_type='alpha', length=(4, 30), unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'os_family': entity_fields.StringField(choices=_OPERATING_SYSTEMS),
         }
         self._meta = {'api_path': 'api/v2/ptables', 'server_modes': ('sat')}
-        super(PartitionTable, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         # The following fields were added in Satellite 6.2, removing them if we
         # have previous version of Satellite
         if _get_version(self._server_config) < Version('6.2'):
@@ -5927,22 +5632,20 @@ class PartitionTable(
 
 
 class PuppetClass(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntityUpdateMixin,
-        EntitySearchMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntityUpdateMixin,
+    EntitySearchMixin,
+):
     """A representation of a Puppet Class entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._updatable_fields = ['name']
         self._fields = {
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'hostgroup': entity_fields.OneToManyField(HostGroup),
         }
@@ -5950,7 +5653,7 @@ class PuppetClass(
             'api_path': 'api/v2/puppetclasses',
             'server_modes': ('sat'),
         }
-        super(PuppetClass, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def search_normalize(self, results):
         """Flattens results.
@@ -5964,7 +5667,7 @@ class PuppetClass(
         for key in results.keys():
             for item in results[key]:
                 flattened_results.append(item)
-        return super(PuppetClass, self).search_normalize(flattened_results)
+        return super().search_normalize(flattened_results)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -5976,12 +5679,9 @@ class PuppetClass(
         Otherwise, call ``super``.
 
         """
-        if which in ('smart_class_parameters', 'smart_variables'):
-            return '{0}/{1}'.format(
-                super(PuppetClass, self).path(which='self'),
-                which
-            )
-        return super(PuppetClass, self).path(which)
+        if which in ("smart_class_parameters", "smart_variables"):
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def list_scparams(self, synchronous=True, **kwargs):
         """List of smart class parameters for a specific Puppet class
@@ -6029,7 +5729,7 @@ class PackageGroup(Entity, EntityReadMixin, EntitySearchMixin):
             'uuid': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'katello/api/v2/package_groups'}
-        super(PackageGroup, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class Package(Entity, EntityReadMixin, EntitySearchMixin):
@@ -6052,7 +5752,7 @@ class Package(Entity, EntityReadMixin, EntitySearchMixin):
             'version': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'katello/api/v2/packages'}
-        super(Package, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class ModuleStream(Entity, EntityReadMixin, EntitySearchMixin):
@@ -6071,7 +5771,7 @@ class ModuleStream(Entity, EntityReadMixin, EntitySearchMixin):
             'module_spec': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'katello/api/v2/module_streams'}
-        super(ModuleStream, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
@@ -6084,11 +5784,7 @@ class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
             'dependencies': entity_fields.ListField(),
             'description': entity_fields.StringField(),
             'license': entity_fields.StringField(),
-            'name': entity_fields.StringField(
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
-            ),
+            'name': entity_fields.StringField(str_type='alpha', length=(6, 12), unique=True),
             'project_page': entity_fields.URLField(),
             'repository': entity_fields.OneToManyField(Repository),
             'source': entity_fields.URLField(),
@@ -6096,25 +5792,23 @@ class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
             'version': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'katello/api/v2/puppet_modules'}
-        super(PuppetModule, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class CompliancePolicies(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Policy entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(4, 30),
-                unique=True
+                required=True, str_type='alpha', length=(4, 30), unique=True
             ),
             'description': entity_fields.StringField(),
             'scap_content_id': entity_fields.IntegerField(required=True),
@@ -6127,16 +5821,12 @@ class CompliancePolicies(
             'host': entity_fields.OneToManyField(Host),
             'tailoring_file_id': entity_fields.IntegerField(),
             'tailoring_file_profile_id': entity_fields.IntegerField(),
-            'deploy_by': entity_fields.StringField(
-                choices=('puppet', 'ansible', 'manual')),
+            'deploy_by': entity_fields.StringField(choices=('puppet', 'ansible', 'manual')),
             'location': entity_fields.OneToManyField(Location),
             'organization': entity_fields.OneToManyField(Organization),
         }
-        self._meta = {
-            'api_path': 'api/v2/compliance/policies',
-            'server_modes': ('sat')
-        }
-        super(CompliancePolicies, self).__init__(server_config, **kwargs)
+        self._meta = {'api_path': 'api/v2/compliance/policies', 'server_modes': ('sat')}
+        super().__init__(server_config, **kwargs)
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -6150,22 +5840,20 @@ class CompliancePolicies(
 
 
 class Realm(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Realm entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'location': entity_fields.OneToManyField(Location),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'realm_proxy': entity_fields.OneToOneField(
@@ -6178,7 +5866,7 @@ class Realm(
             ),
         }
         self._meta = {'api_path': 'api/v2/realms', 'server_modes': ('sat')}
-        super(Realm, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
@@ -6204,12 +5892,9 @@ class RecurringLogic(Entity, EntityReadMixin):
             'state': entity_fields.StringField(),
             'task': entity_fields.OneToManyField(ForemanTask),
             'task_group_id': entity_fields.IntegerField(),
-
         }
-        self._meta = {
-            'api_path': 'foreman_tasks/api/recurring_logics',
-            'server_modes': ('sat')}
-        super(RecurringLogic, self).__init__(server_config, **kwargs)
+        self._meta = {'api_path': 'foreman_tasks/api/recurring_logics', 'server_modes': ('sat')}
+        super().__init__(server_config, **kwargs)
 
     def cancel(self, synchronous=True, **kwargs):
         """Helper for canceling a recurring logic
@@ -6238,12 +5923,9 @@ class RecurringLogic(Entity, EntityReadMixin):
         Otherwise, call ``super``.
 
         """
-        if which in ('cancel',):
-            return '{0}/{1}'.format(
-                super(RecurringLogic, self).path(which='self'),
-                which
-            )
-        return super(RecurringLogic, self).path(which)
+        if which in ("cancel",):
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
 
 class Report(Entity):
@@ -6256,16 +5938,17 @@ class Report(Entity):
             'reported_at': entity_fields.DateTimeField(required=True),
         }
         self._meta = {'api_path': 'api/v2/reports', 'server_modes': ('sat')}
-        super(Report, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class Repository(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Repository entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -6283,9 +5966,7 @@ class Repository(
             'container_repository_name': entity_fields.StringField(),
             # Just setting `str_type='alpha'` will fail with this error:
             # {"docker_upstream_name":["must be a valid docker name"]}}
-            'docker_upstream_name': entity_fields.StringField(
-                default='busybox'
-            ),
+            'docker_upstream_name': entity_fields.StringField(default='busybox'),
             'docker_tags_whitelist': entity_fields.ListField(),
             'download_policy': entity_fields.StringField(
                 choices=('background', 'immediate', 'on_demand'),
@@ -6298,10 +5979,7 @@ class Repository(
             'last_sync': entity_fields.OneToOneField(ForemanTask),
             'mirror_on_sync': entity_fields.BooleanField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'organization': entity_fields.OneToOneField(Organization),
             'product': entity_fields.OneToOneField(Product, required=True),
@@ -6314,10 +5992,7 @@ class Repository(
             'upstream_password': entity_fields.StringField(),
             'verify_ssl_on_sync': entity_fields.BooleanField(),
             'http_proxy_policy': entity_fields.StringField(
-                choices=(
-                    'global_default_http_proxy',
-                    'none',
-                    'use_selected_http_proxy')
+                choices=('global_default_http_proxy', 'none', 'use_selected_http_proxy')
             ),
             'http_proxy_id': entity_fields.IntegerField(),
         }
@@ -6326,9 +6001,9 @@ class Repository(
             del self._fields['docker_upstream_name']
             del self._fields['upstream_username']
             del self._fields['upstream_password']
-            self._fields['content_type'].choices = (tuple(
-                set(self._fields['content_type'].choices) - set(['docker'])
-            ))
+            self._fields['content_type'].choices = tuple(
+                set(self._fields['content_type'].choices) - {'docker'}
+            )
             del self._fields['checksum_type']
         if self._fields['content_type'].choices == 'yum':
             self._fields['download_policy'].required = True
@@ -6336,7 +6011,7 @@ class Repository(
             'api_path': 'katello/api/v2/repositories',
             'server_modes': ('sat'),
         }
-        super(Repository, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -6366,20 +6041,18 @@ class Repository(
 
         """
         if which in (
-                'errata',
-                'files',
-                'packages',
-                'module_streams',
-                'puppet_modules',
-                'remove_content',
-                'sync',
-                'import_uploads',
-                'upload_content'):
-            return '{0}/{1}'.format(
-                super(Repository, self).path(which='self'),
-                which
-            )
-        return super(Repository, self).path(which)
+            'errata',
+            'files',
+            'packages',
+            'module_streams',
+            'puppet_modules',
+            'remove_content',
+            'sync',
+            'import_uploads',
+            'upload_content',
+        ):
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Ignore ``organization`` field as it's never returned by the server
@@ -6391,7 +6064,7 @@ class Repository(
             ignore = set()
         ignore.add('organization')
         ignore.add('upstream_password')
-        return super(Repository, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def create_missing(self):
         """Conditionally mark ``docker_upstream_name`` as required.
@@ -6402,7 +6075,7 @@ class Repository(
         """
         if getattr(self, 'content_type', '') == 'docker':
             self._fields['docker_upstream_name'].required = True
-        super(Repository, self).create_missing()
+        super().create_missing()
 
     def errata(self, synchronous=True, **kwargs):
         """List errata inside repository.
@@ -6479,8 +6152,9 @@ class Repository(
             )
         return json
 
-    def import_uploads(self, content_type=None, uploads=None, upload_ids=None, synchronous=True,
-                       **kwargs):
+    def import_uploads(
+        self, content_type=None, uploads=None, upload_ids=None, synchronous=True, **kwargs
+    ):
         """Import uploads into a repository
 
         It expects either a list of uploads or upload_ids (but not both).
@@ -6531,7 +6205,7 @@ class Repository(
         return _handle_response(response, self._server_config, synchronous)
 
     def puppet_modules(self, synchronous=True, **kwargs):
-        """"List puppet modules associated with repository
+        """List puppet modules associated with repository
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
@@ -6599,10 +6273,7 @@ class Repository(
         return _handle_response(response, self._server_config, synchronous)
 
 
-class RepositorySet(
-        Entity,
-        EntityReadMixin,
-        EntitySearchMixin):
+class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
     """ A representation of a Repository Set entity"""
 
     def __init__(self, server_config=None, **kwargs):
@@ -6611,10 +6282,7 @@ class RepositorySet(
             'gpgUrl': entity_fields.URLField(required=True),
             'label': entity_fields.StringField(required=True),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -6629,7 +6297,7 @@ class RepositorySet(
             ),
             'vendor': entity_fields.StringField(required=True),
         }
-        super(RepositorySet, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {
             'api_path': 'katello/api/v2/repository_sets',
         }
@@ -6712,15 +6380,12 @@ class RepositorySet(
 
         """
         if which in (
-                'available_repositories',
-                'enable',
-                'disable',
+            'available_repositories',
+            'enable',
+            'disable',
         ):
-            return '{0}/{1}'.format(
-                super(RepositorySet, self).path(which='self'),
-                which
-            )
-        return super(RepositorySet, self).path(which)
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
@@ -6746,23 +6411,19 @@ class RepositorySet(
             )
         if ignore is None:
             ignore = set()
-        return super(RepositorySet, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
 class RHCIDeployment(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntityUpdateMixin):
+    Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, EntityUpdateMixin
+):
     """A representation of a RHCI deployment entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'deploy_rhev': entity_fields.BooleanField(required=True),
             'lifecycle_environment': entity_fields.OneToOneField(
-                LifecycleEnvironment,
-                required=True
+                LifecycleEnvironment, required=True
             ),
             'name': entity_fields.StringField(required=True, unique=True),
             'organization': entity_fields.OneToOneField(
@@ -6780,7 +6441,7 @@ class RHCIDeployment(
             'api_path': 'fusor/api/v21/deployments',
             'server_modes': ('sat'),
         }
-        super(RHCIDeployment, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Normalize the data returned by the server.
@@ -6805,7 +6466,7 @@ class RHCIDeployment(
         if ignore is None:
             ignore = set()
         ignore.add('rhev_engine_host')
-        return super(RHCIDeployment, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -6818,12 +6479,9 @@ class RHCIDeployment(
         ``super`` is called otherwise.
 
         """
-        if which == 'deploy':
-            return '{0}/{1}'.format(
-                super(RHCIDeployment, self).path(which='self'),
-                which
-            )
-        return super(RHCIDeployment, self).path(which)
+        if which == "deploy":
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def deploy(self, synchronous=True, **kwargs):
         """Kickoff the RHCI deployment.
@@ -6849,26 +6507,24 @@ class RoleLDAPGroups(Entity):
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
         }
         self._meta = {
             'api_path': 'katello/api/v2/roles/:role_id/ldap_groups',
             'server_modes': ('sat', 'sam'),
         }
-        super(RoleLDAPGroups, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class Role(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Role entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -6879,7 +6535,7 @@ class Role(
                 required=True,
                 str_type='alphanumeric',
                 length=(2, 30),  # min length is 2 and max length is arbitrary
-                unique=True
+                unique=True,
             ),
             'organization': entity_fields.OneToManyField(Organization),
         }
@@ -6887,7 +6543,7 @@ class Role(
             'api_path': 'api/v2/roles',
             'server_modes': ('sat', 'sam'),
         }
-        super(Role, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -6896,11 +6552,11 @@ class Role(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {'role': super(Role, self).create_payload()}
+        return {'role': super().create_payload()}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {'role': super(Role, self).update_payload(fields)}
+        return {'role': super().update_payload(fields)}
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -6912,12 +6568,9 @@ class Role(
         Otherwise, call ``super``.
 
         """
-        if which == 'clone':
-            return '{0}/{1}'.format(
-                super(Role, self).path(which='self'),
-                which
-            )
-        return super(Role, self).path(which)
+        if which == "clone":
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def clone(self, synchronous=True, **kwargs):
         """Helper to clone an existing Role
@@ -6953,20 +6606,21 @@ class Setting(Entity, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin):
             'api_path': 'api/v2/settings',
             'server_modes': ('sat'),
         }
-        super(Setting, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {'setting': super(Setting, self).update_payload(fields)}
+        return {'setting': super().update_payload(fields)}
 
 
 class SmartProxy(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Smart Proxy entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -6976,10 +6630,7 @@ class SmartProxy(
                 default='on_demand',
             ),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'url': entity_fields.URLField(required=True),
             'location': entity_fields.OneToManyField(Location),
@@ -6989,7 +6640,7 @@ class SmartProxy(
             'api_path': 'api/v2/smart_proxies',
             'server_modes': ('sat'),
         }
-        super(SmartProxy, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -7001,12 +6652,9 @@ class SmartProxy(
         Otherwise, call ``super``.
 
         """
-        if which in ('refresh',):
-            return '{0}/{1}'.format(
-                super(SmartProxy, self).path(which='self'),
-                which
-            )
-        return super(SmartProxy, self).path(which)
+        if which in ("refresh",):
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def refresh(self, synchronous=True, **kwargs):
         """Refresh Capsule features
@@ -7049,8 +6697,7 @@ class SmartProxy(
             path = f'{self.path()}/environments/{environment_id}/import_puppetclasses'
         else:
             path = f'{self.path()}/import_puppetclasses'
-        return _handle_response(
-            client.post(path, **kwargs), self._server_config, synchronous)
+        return _handle_response(client.post(path, **kwargs), self._server_config, synchronous)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Ignore ``download_policy`` field as it's never returned by the
@@ -7062,7 +6709,7 @@ class SmartProxy(
         if ignore is None:
             ignore = set()
         ignore.add('download_policy')
-        return super(SmartProxy, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -7076,16 +6723,10 @@ class SmartProxy(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {
-            'smart_proxy': super(SmartProxy, self).update_payload(fields)
-        }
+        return {'smart_proxy': super().update_payload(fields)}
 
 
-class SmartClassParameters(
-        Entity,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+class SmartClassParameters(Entity, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin):
     """A representation of a Smart Class Parameters."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -7097,44 +6738,41 @@ class SmartClassParameters(
             'hidden_value': entity_fields.BooleanField(),
             'hidden_value?': entity_fields.BooleanField(),
             'omit': entity_fields.BooleanField(),
-            'validator_type': entity_fields.StringField(
-                choices=('regexp', 'list')
-            ),
+            'validator_type': entity_fields.StringField(choices=('regexp', 'list')),
             'validator_rule': entity_fields.StringField(),
             'parameter': entity_fields.StringField(),
             'parameter_type': entity_fields.StringField(
-                choices=('string', 'boolean', 'integer', 'real',
-                         'array', 'hash', 'yaml', 'json')
+                choices=('string', 'boolean', 'integer', 'real', 'array', 'hash', 'yaml', 'json')
             ),
             'required': entity_fields.BooleanField(),
             'merge_overrides': entity_fields.BooleanField(),
             'merge_default': entity_fields.BooleanField(),
             'avoid_duplicates': entity_fields.BooleanField(),
             'override_value_order': entity_fields.StringField(),
-            'override_values': entity_fields.DictField()
+            'override_values': entity_fields.DictField(),
         }
         self._meta = {
             'api_path': 'api/v2/smart_class_parameters',
             'server_modes': ('sat'),
         }
-        super(SmartClassParameters, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Do not read the ``hidden_value`` attribute."""
         if ignore is None:
             ignore = set()
         ignore.add('hidden_value')
-        return super(SmartClassParameters, self).read(
-            entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
 class SmartVariable(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Smart Variable entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -7158,49 +6796,47 @@ class SmartVariable(
             'api_path': 'api/v2/smart_variables',
             'server_modes': ('sat'),
         }
-        super(SmartVariable, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Do not read the ``hidden_value`` attribute."""
         if ignore is None:
             ignore = set()
         ignore.add('hidden_value')
-        return super(SmartVariable, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict."""
-        return {'smart_variable': super(SmartVariable, self).create_payload()}
+        return {'smart_variable': super().create_payload()}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {
-            'smart_variable':
-                super(SmartVariable, self).update_payload(fields)
-        }
+        return {'smart_variable': super().update_payload(fields)}
 
 
 class Snapshot(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Snapshot entity.
-       Foreman_snapshot as mentioned in the plugin:
-       https://github.com/ATIX-AG/foreman_snapshot_management
-       # Read Snapshot
-       Snapshot(host=<host_id>, id=<snapshot_id>).read()
-       # Search Snapshots
-       Snapshot(host=<host_id>).search()
-       # Create Snapshot
-       Snapshot(host=<host_id>, name=<snapshot_name>).create()
-       # Update Snapshot
-       Snapshot(host=<host_id>, id=<snapshot_id>, description=<snapshot_description>).update()
-       # Revert Snapshot
-       Snapshot(host=<host_id>, id=<snapshot_id>).revert()
-       # Delete Snapshot
-       Snapshot(host=<host_id>, id=<snapshot_id>).delete()
+    Foreman_snapshot as mentioned in the plugin:
+    https://github.com/ATIX-AG/foreman_snapshot_management
+    # Read Snapshot
+    Snapshot(host=<host_id>, id=<snapshot_id>).read()
+    # Search Snapshots
+    Snapshot(host=<host_id>).search()
+    # Create Snapshot
+    Snapshot(host=<host_id>, name=<snapshot_name>).create()
+    # Update Snapshot
+    Snapshot(host=<host_id>, id=<snapshot_id>, description=<snapshot_description>).update()
+    # Revert Snapshot
+    Snapshot(host=<host_id>, id=<snapshot_id>).revert()
+    # Delete Snapshot
+    Snapshot(host=<host_id>, id=<snapshot_id>).delete()
     """
 
     def __init__(self, server_config=None, **kwargs):
@@ -7213,7 +6849,7 @@ class Snapshot(
                 required=True,
             ),
         }
-        super(Snapshot, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {
             'api_path': f'{self.host.path("self")}/snapshots',
             'server_modes': ('sat'),
@@ -7224,9 +6860,9 @@ class Snapshot(
         revert
         /api/v2/hosts/<host-id>/snapshots/<snapshot-id>/revert
         """
-        if which == 'revert':
-            return '{0}/{1}'.format(super(Snapshot, self).path(which='self'), which)
-        return super(Snapshot, self).path(which)
+        if which == "revert":
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Provide a default value for ``entity``.
@@ -7254,7 +6890,7 @@ class Snapshot(
         if ignore is None:
             ignore = set()
         ignore.add('host')
-        return super(Snapshot, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def search_normalize(self, results):
         """Append host id to search results to be able to initialize found
@@ -7263,10 +6899,10 @@ class Snapshot(
 
         for snapshot in results:
             snapshot['host_id'] = self.host.id
-        return super(Snapshot, self).search_normalize(results)
+        return super().search_normalize(results)
 
     def revert(self, **kwargs):
-        """ Rollbacks the Snapshot
+        """Rollbacks the Snapshot
 
         Makes HTTP PUT call to revert the snapshot.
         """
@@ -7276,12 +6912,7 @@ class Snapshot(
         return _handle_response(response, self._server_config)
 
 
-class SSHKey(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin):
+class SSHKey(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, EntitySearchMixin):
     """A representation of a SSH Key entity.
 
     ``user`` must be passed in when this entity is instantiated.
@@ -7298,18 +6929,11 @@ class SSHKey(
                 required=True,
             ),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
-            'key': entity_fields.StringField(
-                required=True,
-                str_type='alphanumeric',
-                unique=True
-            )
+            'key': entity_fields.StringField(required=True, str_type='alphanumeric', unique=True),
         }
-        super(SSHKey, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {'api_path': f'{self.user.path()}/ssh_keys'}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -7337,7 +6961,7 @@ class SSHKey(
         if ignore is None:
             ignore = set()
         ignore.add('user')
-        return super(SSHKey, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def search_normalize(self, results):
         """Append user id to search results to be able to initialize found
@@ -7345,7 +6969,7 @@ class SSHKey(
         """
         for sshkey in results:
             sshkey['user_id'] = self.user.id
-        return super(SSHKey, self).search_normalize(results)
+        return super().search_normalize(results)
 
 
 class Status(Entity):
@@ -7356,22 +6980,26 @@ class Status(Entity):
             'api_path': 'katello/api/v2/status',
             'server_modes': ('sat'),
         }
-        super(Status, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class Subnet(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Subnet entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'boot_mode': entity_fields.StringField(
-                choices=('Static', 'DHCP',),
+                choices=(
+                    'Static',
+                    'DHCP',
+                ),
                 default='DHCP',
             ),
             'cidr': entity_fields.IntegerField(),
@@ -7394,10 +7022,7 @@ class Subnet(
             'mask': entity_fields.NetmaskField(required=True),
             'mtu': entity_fields.IntegerField(min_val=68, max_val=4294967295),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'network': entity_fields.IPAddressField(required=True),
             'network_type': entity_fields.StringField(
@@ -7405,8 +7030,7 @@ class Subnet(
                 default='IPv4',
             ),
             'organization': entity_fields.OneToManyField(Organization),
-            'remote_execution_proxy':
-                entity_fields.OneToManyField(SmartProxy),
+            'remote_execution_proxy': entity_fields.OneToManyField(SmartProxy),
             'subnet_parameters_attributes': entity_fields.ListField(),
             'template': entity_fields.OneToOneField(SmartProxy),
             'to': entity_fields.IPAddressField(),
@@ -7414,7 +7038,7 @@ class Subnet(
             'vlanid': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'api/v2/subnets', 'server_modes': ('sat')}
-        super(Subnet, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -7425,7 +7049,7 @@ class Subnet(
         In addition, rename the ``from_`` field to ``from``.
 
         """
-        payload = super(Subnet, self).create_payload()
+        payload = super().create_payload()
         if 'from_' in payload:
             payload['from'] = payload.pop('from_')
         return {'subnet': payload}
@@ -7452,20 +7076,17 @@ class Subnet(
             ignore.add('subnet_parameters_attributes')
         ignore.add('discovery')
         ignore.add('remote_execution_proxy')
-        return super(Subnet, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        payload = super(Subnet, self).update_payload(fields)
+        payload = super().update_payload(fields)
         if 'from_' in payload:
             payload['from'] = payload.pop('from_')
         return {'subnet': payload}
 
 
-class Subscription(
-        Entity,
-        EntityReadMixin,
-        EntitySearchMixin):
+class Subscription(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of a Subscription entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -7482,7 +7103,7 @@ class Subscription(
             'api_path': 'katello/api/v2/subscriptions',
             'server_modes': ('sat', 'sam'),
         }
-        super(Subscription, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -7499,14 +7120,10 @@ class Subscription(
             /katello/api/v2/organizations/:organization_id/subscriptions/upload
 
         """
-        if which in (
-                'delete_manifest',
-                'manifest_history',
-                'refresh_manifest',
-                'upload'):
+        if which in ('delete_manifest', 'manifest_history', 'refresh_manifest', 'upload'):
             _check_for_value('organization', self.get_values())
             return self.organization.path(f'subscriptions/{which}')
-        return super(Subscription, self).path(which)
+        return super().path(which)
 
     def _org_path(self, which, payload):
         """A helper method for generating paths with organization IDs in them.
@@ -7536,10 +7153,7 @@ class Subscription(
         """
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
-        response = client.post(
-            self._org_path('delete_manifest', kwargs['data']),
-            **kwargs
-        )
+        response = client.post(self._org_path('delete_manifest', kwargs['data']), **kwargs)
         return _handle_response(
             response,
             self._server_config,
@@ -7561,10 +7175,7 @@ class Subscription(
         """
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(
-            self._org_path('manifest_history', kwargs['data']),
-            **kwargs
-        )
+        response = client.get(self._org_path('manifest_history', kwargs['data']), **kwargs)
         return _handle_response(response, self._server_config, synchronous)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -7575,7 +7186,7 @@ class Subscription(
         if ignore is None:
             ignore = set()
         ignore.add('organization')
-        return super(Subscription, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def refresh_manifest(self, synchronous=True, **kwargs):
         """Refresh previously imported manifest for Red Hat provider.
@@ -7591,10 +7202,7 @@ class Subscription(
         """
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
-        response = client.put(
-            self._org_path('refresh_manifest', kwargs['data']),
-            **kwargs
-        )
+        response = client.put(self._org_path('refresh_manifest', kwargs['data']), **kwargs)
         return _handle_response(
             response,
             self._server_config,
@@ -7621,10 +7229,7 @@ class Subscription(
         """
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
-        response = client.post(
-            self._org_path('upload', kwargs['data']),
-            **kwargs
-        )
+        response = client.post(self._org_path('upload', kwargs['data']), **kwargs)
         # Setting custom timeout as manifest upload can take enormously huge
         # amount of time. See BZ#1339696 for more details
         return _handle_response(
@@ -7636,12 +7241,13 @@ class Subscription(
 
 
 class SyncPlan(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Sync Plan entity.
 
     ``organization`` must be passed in when this entity is instantiated.
@@ -7661,23 +7267,18 @@ class SyncPlan(
                 required=True,
             ),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
-            'cron_expression': entity_fields.StringField(
-                str_type='alpha'
-            ),
+            'cron_expression': entity_fields.StringField(str_type='alpha'),
             'organization': entity_fields.OneToOneField(
                 Organization,
                 required=True,
             ),
             'product': entity_fields.OneToManyField(Product),
             'sync_date': entity_fields.DateTimeField(required=True),
-            'foreman_tasks_recurring_logic': entity_fields.OneToOneField(RecurringLogic)
+            'foreman_tasks_recurring_logic': entity_fields.OneToOneField(RecurringLogic),
         }
-        super(SyncPlan, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
         self._meta = {'api_path': f'{self.organization.path()}/sync_plans'}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -7705,7 +7306,7 @@ class SyncPlan(
         if ignore is None:
             ignore = set()
         ignore.add('organization')
-        return super(SyncPlan, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def create_payload(self):
         """Convert ``sync_date`` to a string.
@@ -7715,7 +7316,7 @@ class SyncPlan(
         ``create_payload`` is a string.
 
         """
-        data = super(SyncPlan, self).create_payload()
+        data = super().create_payload()
         if isinstance(data.get('sync_date'), datetime):
             data['sync_date'] = data['sync_date'].strftime('%Y-%m-%d %H:%M:%S')
         return data
@@ -7731,12 +7332,9 @@ class SyncPlan(
             /katello/api/v2/organizations/:organization_id/sync_plans/:sync_plan_id/remove_products
 
         """
-        if which in ('add_products', 'remove_products'):
-            return '{0}/{1}'.format(
-                super(SyncPlan, self).path(which='self'),
-                which
-            )
-        return super(SyncPlan, self).path(which)
+        if which in ("add_products", "remove_products"):
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def add_products(self, synchronous=True, **kwargs):
         """Add products to this sync plan.
@@ -7782,7 +7380,7 @@ class SyncPlan(
 
     def update_payload(self, fields=None):
         """Convert ``sync_date`` to a string if datetime object provided."""
-        data = super(SyncPlan, self).update_payload(fields)
+        data = super().update_payload(fields)
         if isinstance(data.get('sync_date'), datetime):
             data['sync_date'] = data['sync_date'].strftime('%Y-%m-%d %H:%M:%S')
         return data
@@ -7806,22 +7404,16 @@ class SystemPackage(Entity):
             'api_path': 'katello/api/v2/systems/:system_id/packages',
             'server_modes': ('sat'),
         }
-        super(SystemPackage, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
-class System(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin):
+class System(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, EntitySearchMixin):
     """A representation of a System entity."""
 
     def __init__(self, server_config=None, **kwargs):
         if _get_version(server_config) >= Version('6.2'):
             raise DeprecationWarning(
-                'System entity was removed in Satellite 6.2. Please, use Host '
-                'entity instead.'
+                'System entity was removed in Satellite 6.2. Please, use Host entity instead.'
             )
         self._fields = {
             'content_view': entity_fields.OneToOneField(ContentView),
@@ -7836,10 +7428,7 @@ class System(
             'last_checkin': entity_fields.DateTimeField(),
             'location': entity_fields.StringField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -7848,7 +7437,6 @@ class System(
             'release_ver': entity_fields.StringField(),
             'service_level': entity_fields.StringField(),
             'uuid': entity_fields.StringField(),
-
             # The type() builtin is still available within instance methods,
             # class methods, static methods, inner classes, and so on. However,
             # type() is *not* available at the current level of lexical scoping
@@ -7859,7 +7447,7 @@ class System(
             'api_path': 'katello/api/v2/systems',
             'server_modes': ('sat', 'sam'),
         }
-        super(System, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -7884,18 +7472,11 @@ class System(
         is passed in.
 
         """
-        if which == 'subscriptions':
-            return '{0}/{1}/{2}'.format(
-                super(System, self).path('base'),
-                self.uuid,
-                which,
-            )
-        if hasattr(self, 'uuid') and (which is None or which == 'self'):
-            return '{0}/{1}'.format(
-                super(System, self).path('base'),
-                self.uuid
-            )
-        return super(System, self).path(which)
+        if which == "subscriptions":
+            return f'{super().path("base")}/{self.uuid}/{which}'
+        if hasattr(self, "uuid") and (which is None or which == "self"):
+            return f'{super().path(which="base")}/{self.uuid}'
+        return super().path(which)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Fetch as many attributes as possible for this entity.
@@ -7913,25 +7494,23 @@ class System(
         if ignore is None:
             ignore = set()
         ignore.update(['facts', 'organization', 'type'])
-        return super(System, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
 class TailoringFile(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a Tailoring File entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(4, 30),
-                unique=True
+                required=True, str_type='alpha', length=(4, 30), unique=True
             ),
             'scap_file': entity_fields.StringField(),
             'original_filename': entity_fields.StringField(),
@@ -7942,11 +7521,8 @@ class TailoringFile(
         if 'scap_file' in kwargs:
             with open(kwargs['scap_file']) as input_file:
                 kwargs['scap_file'] = input_file.read()
-        self._meta = {
-            'api_path': 'api/v2/compliance/tailoring_files',
-            'server_modes': ('sat')
-        }
-        super(TailoringFile, self).__init__(server_config, **kwargs)
+        self._meta = {'api_path': 'api/v2/compliance/tailoring_files', 'server_modes': ('sat')}
+        super().__init__(server_config, **kwargs)
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
@@ -7962,15 +7538,14 @@ class TailoringFile(
 
     def create_payload(self, **kwargs):
         """Wrap submitted data within an extra dict."""
-        return {'tailoring_file': super(TailoringFile, self).create_payload()}
+        return {'tailoring_file': super().create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
-        """Ignore ``scap_file`` field.
-        """
+        """Ignore ``scap_file`` field."""
         if ignore is None:
             ignore = set()
         ignore.update(['scap_file'])
-        return super(TailoringFile, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -7991,7 +7566,7 @@ class Template(Entity):
             'api_path': 'api/v2/templates',
             'server_modes': ('sat'),
         }
-        super(Template, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -8005,9 +7580,8 @@ class Template(Entity):
 
         """
         if which:
-            return '{0}/{1}'.format(
-                super(Template, self).path(which='base'), which)
-        return super(Template, self).path(which)
+            return f'{super().path(which="base")}/{which}'
+        return super().path(which)
 
     def imports(self, synchronous=True, **kwargs):
         """Helper to import templates
@@ -8058,7 +7632,7 @@ class TemplateCombination(Entity, EntityDeleteMixin, EntityReadMixin):
             'api_path': 'api/v2/template_combinations',
             'server_modes': 'sat',
         }
-        super(TemplateCombination, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class TemplateKind(Entity, EntityReadMixin, EntitySearchMixin):
@@ -8077,33 +7651,31 @@ class TemplateKind(Entity, EntityReadMixin, EntitySearchMixin):
             'num_created_by_default': 8,
             'server_modes': ('sat'),
         }
-        super(TemplateKind, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
 
 class UserGroup(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a User Group entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'admin': entity_fields.BooleanField(),
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'role': entity_fields.OneToManyField(Role),
             'user': entity_fields.OneToManyField(User),
             'usergroup': entity_fields.OneToManyField(UserGroup),
         }
         self._meta = {'api_path': 'api/v2/usergroups', 'server_modes': ('sat')}
-        super(UserGroup, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -8112,7 +7684,7 @@ class UserGroup(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {'usergroup': super(UserGroup, self).create_payload()}
+        return {'usergroup': super().create_payload()}
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict.
@@ -8121,7 +7693,7 @@ class UserGroup(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {'usergroup': super(UserGroup, self).update_payload(fields)}
+        return {'usergroup': super().update_payload(fields)}
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
@@ -8151,23 +7723,20 @@ class UserGroup(
         if ignore is None:
             ignore = set()
         if 'admin' not in attrs and 'admin' not in ignore:
-            response = client.put(
-                self.path('self'),
-                {},
-                **self._server_config.get_client_kwargs()
-            )
+            response = client.put(self.path('self'), {}, **self._server_config.get_client_kwargs())
             response.raise_for_status()
             attrs['admin'] = response.json()['admin']
-        return super(UserGroup, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
 
 class User(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a User entity.
 
     The LDAP authentication source with an ID of 1 is internal. It is nearly
@@ -8206,7 +7775,7 @@ class User(
             'api_path': 'api/v2/users',
             'server_modes': ('sat', 'sam'),
         }
-        super(User, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -8215,18 +7784,18 @@ class User(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
 
         """
-        return {'user': super(User, self).create_payload()}
+        return {'user': super().create_payload()}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Do not read the ``password`` argument."""
         if ignore is None:
             ignore = set()
         ignore.add('password')
-        return super(User, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {'user': super(User, self).update_payload(fields)}
+        return {'user': super().update_payload(fields)}
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -8240,12 +7809,13 @@ class User(
 
 
 class VirtWhoConfig(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a VirtWho Config entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -8255,18 +7825,22 @@ class VirtWhoConfig(
             'exclude_host_parents': entity_fields.StringField(),
             'filter_host_parents': entity_fields.StringField(),
             'filtering_mode': entity_fields.IntegerField(
-                choices=[0, 1, 2], default=0, required=True),
+                choices=[0, 1, 2], default=0, required=True
+            ),
             'hypervisor_id': entity_fields.StringField(
-                choices=['hostname', 'uuid', 'hwuuid'],
-                default='hostname', required=True),
+                choices=['hostname', 'uuid', 'hwuuid'], default='hostname', required=True
+            ),
             'hypervisor_password': entity_fields.StringField(),
             'hypervisor_server': entity_fields.StringField(required=True),
             'hypervisor_type': entity_fields.StringField(
                 choices=['esx', 'rhevm', 'hyperv', 'xen', 'libvirt', 'kubevirt'],
-                default='libvirt', required=True),
+                default='libvirt',
+                required=True,
+            ),
             'hypervisor_username': entity_fields.StringField(required=True),
             'interval': entity_fields.IntegerField(
-                choices=[60, 120, 240, 480, 720, 1440, 2880, 4320], default=120, required=True),
+                choices=[60, 120, 240, 480, 720, 1440, 2880, 4320], default=120, required=True
+            ),
             'name': entity_fields.StringField(required=True),
             'no_proxy': entity_fields.StringField(),
             'organization_id': entity_fields.IntegerField(),
@@ -8279,7 +7853,7 @@ class VirtWhoConfig(
             'api_path': 'foreman_virt_who_configure/api/v2/configs',
             'server_modes': ('sat', 'sam'),
         }
-        super(VirtWhoConfig, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -8295,31 +7869,28 @@ class VirtWhoConfig(
         ``super`` is called otherwise.
 
         """
-        if which and which in ('deploy_script'):
-            return '{0}/{1}'.format(
-                super(VirtWhoConfig, self).path(which='self'), which)
-        if which and which in ('configs'):
-            return '{0}/{1}/{2}/{3}'.format(
-                self._server_config.url,
-                'foreman_virt_who_configure/api/v2/organizations',
-                self.read().organization_id,
-                which
+        if which and which in ("deploy_script"):
+            return f'{super().path(which="self")}/{which}'
+        if which and which in ("configs"):
+            return (
+                f'{self._server_config.url}/'
+                f'foreman_virt_who_configure/api/v2/organizations/'
+                f'{self.read().organization_id}/'
+                f'{which}'
             )
-        return super(VirtWhoConfig, self).path(which)
+        return super().path(which)
 
     def create_payload(self):
         """
         Wraps config in extra dict
         """
-        return {'foreman_virt_who_configure_config': super(VirtWhoConfig, self).create_payload()}
+        return {'foreman_virt_who_configure_config': super().create_payload()}
 
     def update_payload(self, fields=None):
         """
         Wraps config in extra dict
         """
-        return {
-            'foreman_virt_who_configure_config': super(VirtWhoConfig, self).update_payload(fields)
-        }
+        return {'foreman_virt_who_configure_config': super().update_payload(fields)}
 
     def deploy_script(self, synchronous=True, **kwargs):
         """Helper for Config's deploy_script method.
@@ -8346,7 +7917,7 @@ class VirtWhoConfig(
         if not ignore:
             ignore = set()
         ignore.add('hypervisor_password')
-        return super(VirtWhoConfig, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def get_organization_configs(self, synchronous=True, **kwargs):
         """
@@ -8369,12 +7940,13 @@ class VirtWhoConfig(
 
 
 class ScapContents(
-        Entity,
-        EntityCreateMixin,
-        EntityDeleteMixin,
-        EntityReadMixin,
-        EntitySearchMixin,
-        EntityUpdateMixin):
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of a ScapContents entity."""
 
     def __init__(self, server_config=None, **kwargs):
@@ -8393,7 +7965,7 @@ class ScapContents(
             'api_path': 'api/compliance/scap_contents',
             'server_modes': ('sat'),
         }
-        super(ScapContents, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
@@ -8414,7 +7986,7 @@ class ScapContents(
         if ignore is None:
             ignore = set()
         ignore.add('scap_file')
-        return super(ScapContents, self).read(entity, attrs, ignore, params)
+        return super().read(entity, attrs, ignore, params)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -8426,16 +7998,12 @@ class ScapContents(
         Otherwise, call ``super``.
 
         """
-        if which in ('xml',):
-            return '{0}/{1}'.format(
-                super(ScapContents, self).path(which='self'),
-                which
-            )
-        return super(ScapContents, self).path(which)
+        if which in ("xml",):
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
 
     def update(self, fields=None):
-        """Fetch a complete set of attributes for this entity.
-        """
+        """Fetch a complete set of attributes for this entity."""
         self.update_json(fields)
         return self.read()
 
@@ -8473,4 +8041,4 @@ class Srpms(Entity, EntityReadMixin, EntitySearchMixin):
             'version': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'katello/api/v2/srpms'}
-        super(Srpms, self).__init__(server_config, **kwargs)
+        super().__init__(server_config, **kwargs)

@@ -1,8 +1,8 @@
 """Unit tests for :mod:`nailgun.client`."""
 import inspect
+from unittest import mock
 from unittest import TestCase
 
-import mock
 import requests
 from fauxfactory import gen_alpha
 
@@ -15,17 +15,19 @@ class ContentTypeIsJsonTestCase(TestCase):
     def test_true(self):
         """Assert ``True`` is returned when content-type is JSON."""
         for kwargs in (
-                {'headers': {'content-type': 'application/json'}},
-                {'headers': {'content-type': 'appLICatiON/JSoN'}},
-                {'headers': {'content-type': 'APPLICATION/JSON'}}):
+            {'headers': {'content-type': 'application/json'}},
+            {'headers': {'content-type': 'appLICatiON/JSoN'}},
+            {'headers': {'content-type': 'APPLICATION/JSON'}},
+        ):
             self.assertTrue(client._content_type_is_json(kwargs))
 
     def test_false(self):
         """Assert ``True`` is returned when content-type is not JSON."""
         for kwargs in (
-                {'headers': {'content-type': ''}},
-                {'headers': {'content-type': 'application-json'}},
-                {'headers': {'content-type': 'application/pson'}}):
+            {'headers': {'content-type': ''}},
+            {'headers': {'content-type': 'application-json'}},
+            {'headers': {'content-type': 'application/pson'}},
+        ):
             self.assertFalse(client._content_type_is_json(kwargs))
 
     def test_false_with_no_headers(self):
@@ -87,29 +89,20 @@ class ClientTestCase(TestCase):
             with mock.patch.object(requests, meth) as requests_meth:
                 # Does the wrapper function return whatever requests returns?
                 requests_meth.return_value = self.mock_response
-                self.assertIs(
-                    getattr(client, meth)(self.bogus_url),
-                    self.mock_response
-                )
+                self.assertIs(getattr(client, meth)(self.bogus_url), self.mock_response)
 
                 # Did the wrapper function pass the correct params to requests?
                 if meth in ('delete', 'head'):
                     requests_meth.assert_called_once_with(
-                        self.bogus_url,
-                        headers={'content-type': 'application/json'}
+                        self.bogus_url, headers={'content-type': 'application/json'}
                     )
                 elif meth in ('get', 'patch', 'put'):
                     requests_meth.assert_called_once_with(
-                        self.bogus_url,
-                        None,
-                        headers={'content-type': 'application/json'}
+                        self.bogus_url, None, headers={'content-type': 'application/json'}
                     )
                 else:  # meth is 'post'
                     requests_meth.assert_called_once_with(
-                        self.bogus_url,
-                        None,
-                        None,
-                        headers={'content-type': 'application/json'}
+                        self.bogus_url, None, None, headers={'content-type': 'application/json'}
                     )
 
     def test_client_request(self):
@@ -126,9 +119,7 @@ class ClientTestCase(TestCase):
                 self.mock_response,
             )
             requests_request.assert_called_once_with(
-                'foo',
-                self.bogus_url,
-                headers={'content-type': 'application/json'}
+                'foo', self.bogus_url, headers={'content-type': 'application/json'}
             )
 
     def test_identical_args(self):
@@ -140,6 +131,6 @@ class ClientTestCase(TestCase):
         """
         for meth in ('delete', 'get', 'head', 'patch', 'post', 'put'):
             self.assertEqual(
-                inspect.getargspec(getattr(client, meth)),
-                inspect.getargspec(getattr(requests, meth)),
+                inspect.signature(getattr(client, meth)),
+                inspect.signature(getattr(requests, meth)),
             )

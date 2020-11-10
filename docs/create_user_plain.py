@@ -10,8 +10,6 @@ like so::
     ./create_user_plain.py  # copy this script to the current directory
 
 """
-from __future__ import print_function
-
 import json
 from pprint import pprint
 
@@ -22,24 +20,24 @@ def main():
     """Create an identical user account on a pair of satellites."""
     server_configs = (
         {'url': url, 'auth': ('admin', 'changeme'), 'verify': False}
-        for url
-        in ('https://sat1.example.com', 'https://sat2.example.com')
+        for url in ('https://sat1.example.com', 'https://sat2.example.com')
     )
     for server_config in server_configs:
         response = requests.post(
-            server_config['url'] + '/api/v2/users',
-            json.dumps({
-                'user': {
-                    'auth_source_id': 1,
-                    'login': 'Alice',
-                    'mail': 'alice@example.com',
-                    'organization_ids': [get_organization_id(
-                        server_config,
-                        'Default_Organization'
-                    )],
-                    'password': 'hackme',
+            f'{server_config["url"]}/api/v2/users',
+            json.dumps(
+                {
+                    'user': {
+                        'auth_source_id': 1,
+                        'login': 'Alice',
+                        'mail': 'alice@example.com',
+                        'organization_ids': [
+                            get_organization_id(server_config, 'Default_Organization')
+                        ],
+                        'password': 'hackme',
+                    }
                 }
-            }),
+            ),
             auth=server_config['auth'],
             headers={'content-type': 'application/json'},
             verify=server_config['verify'],
@@ -59,18 +57,18 @@ def get_organization_id(server_config, label):
 
     """
     response = requests.get(
-        server_config['url'] + '/katello/api/v2/organizations',
-        data=json.dumps({'search': 'label={}'.format(label)}),
-        auth=server_config['auth'],
-        headers={'content-type': 'application/json'},
-        verify=server_config['verify'],
+        f'{server_config["url"]}/katello/api/v2/organizations',
+        data=json.dumps({"search": f"label={label}"}),
+        auth=server_config["auth"],
+        headers={"content-type": "application/json"},
+        verify=server_config["verify"],
     )
     response.raise_for_status()
     decoded = response.json()
     if decoded['subtotal'] != 1:
         print(
-            'Expected to find one organization, but instead found {0}. Search '
-            'results: {1}'.format(decoded['subtotal'], decoded['results'])
+            f'Expected to find one organization, but instead found {decoded["subtotal"]}. '
+            f'Search results: {decoded["results"]}'
         )
         exit(1)
     return decoded['results'][0]['id']
