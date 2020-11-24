@@ -24,8 +24,16 @@ from nailgun.entity_mixins import NoSuchPathError
 _BUILTIN_OPEN = 'builtins.open'
 # For inspection comparison, a tuple matching the expected func arg spec
 # https://docs.python.org/3/library/inspect.html#inspect.getfullargspec
-EXPECTED_ARGSPEC = (['self', 'synchronous'], None, 'kwargs', (True,), [], None, {})
-
+EXPECTED_ARGSPEC = (['self', 'synchronous', 'timeout'], None, 'kwargs', (True, None), [], None, {})
+EXPECTED_ARGSPEC_TIMEOUT = (
+    ['self', 'synchronous', 'timeout'],
+    None,
+    'kwargs',
+    (True, 1500),
+    [],
+    None,
+    {},
+)
 # The size of this file is a direct reflection of the size of module
 # `nailgun.entities` and the Satellite API.
 
@@ -3398,7 +3406,10 @@ class SubscriptionTestCase(TestCase):
         )
         for method, request in methods_requests:
             with self.subTest((method, request)):
-                self.assertEqual(inspect.getfullargspec(method), EXPECTED_ARGSPEC)
+                expected = EXPECTED_ARGSPEC_TIMEOUT
+                if request == "get":
+                    expected = EXPECTED_ARGSPEC
+                self.assertEqual(inspect.getfullargspec(method), expected)
                 kwargs = {'data': gen_integer()}
                 with mock.patch.object(entities, '_handle_response') as handlr:
                     with mock.patch.object(client, request) as client_request:
