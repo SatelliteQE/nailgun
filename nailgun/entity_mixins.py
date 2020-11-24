@@ -622,7 +622,7 @@ class EntityDeleteMixin:
         """
         return client.delete(self.path(which='self'), **self._server_config.get_client_kwargs())
 
-    def delete(self, synchronous=True):
+    def delete(self, synchronous=True, timeout=None):
         """Delete the current entity.
 
         Call :meth:`delete_raw` and check for an HTTP 4XX or 5XX response.
@@ -648,12 +648,13 @@ class EntityDeleteMixin:
         response.raise_for_status()
 
         if synchronous is True and response.status_code == http_client.ACCEPTED:
-            return _poll_task(response.json()['id'], self._server_config)
+            return _poll_task(response.json()['id'], self._server_config, timeout=timeout)
         elif response.status_code == http_client.NO_CONTENT or (
             response.status_code == http_client.OK
             and hasattr(response, 'content')
             and not response.content.strip()
         ):
+
             # "The server successfully processed the request, but is not
             # returning any content. Usually used as a response to a successful
             # delete request."

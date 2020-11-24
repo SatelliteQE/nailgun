@@ -259,12 +259,14 @@ class ActivationKey(
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
-    def add_host_collection(self, synchronous=True, **kwargs):
+    def add_host_collection(self, synchronous=True, timeout=None, **kwargs):
         """Helper for associating host collection with activation key.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -274,14 +276,16 @@ class ActivationKey(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('host_collections'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def add_subscriptions(self, synchronous=True, **kwargs):
+    def add_subscriptions(self, synchronous=True, timeout=None, **kwargs):
         """Helper for adding subscriptions to activation key.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -291,14 +295,16 @@ class ActivationKey(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('add_subscriptions'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def copy(self, synchronous=True, **kwargs):
+    def copy(self, synchronous=True, timeout=None, **kwargs):
         """Copy provided activation key.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -310,14 +316,16 @@ class ActivationKey(
             kwargs['data']['id'] = self.id
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('copy'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def remove_subscriptions(self, synchronous=True, **kwargs):
+    def remove_subscriptions(self, synchronous=True, timeout=None, **kwargs):
         """Helper for removing subscriptions from an activation key.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -327,14 +335,16 @@ class ActivationKey(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('remove_subscriptions'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def subscriptions(self, synchronous=True, **kwargs):
+    def subscriptions(self, synchronous=True, timeout=None, **kwargs):
         """Helper for retrieving subscriptions on an activation key.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -344,14 +354,16 @@ class ActivationKey(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('subscriptions'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def content_override(self, synchronous=True, **kwargs):
+    def content_override(self, synchronous=True, timeout=None, **kwargs):
         """Override the content of an activation key.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -361,14 +373,16 @@ class ActivationKey(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('content_override'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def product_content(self, synchronous=True, **kwargs):
+    def product_content(self, synchronous=True, timeout=None, **kwargs):
         """Helper for showing content available for activation key.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -378,14 +392,16 @@ class ActivationKey(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('product_content'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def remove_host_collection(self, synchronous=True, **kwargs):
+    def remove_host_collection(self, synchronous=True, timeout=None, **kwargs):
         """Helper for disassociating host collection from the activation key.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -395,7 +411,7 @@ class ActivationKey(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('host_collections'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class Architecture(
@@ -479,12 +495,14 @@ class ArfReport(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearchMixin):
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
-    def download_html(self, synchronous=True, **kwargs):
+    def download_html(self, synchronous=True, timeout=None, **kwargs):
         """Download ARF report in HTML
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -494,7 +512,7 @@ class ArfReport(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearchMixin):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('download_html'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class Audit(Entity, EntityReadMixin, EntitySearchMixin):
@@ -651,12 +669,14 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
         }
         super().__init__(server_config, **kwargs)
 
-    def content_add_lifecycle_environment(self, synchronous=True, **kwargs):
+    def content_add_lifecycle_environment(self, synchronous=True, timeout=None, **kwargs):
         """Helper to associate lifecycle environment with capsule
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -665,15 +685,17 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('content_lifecycle_environments'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def content_lifecycle_environments(self, synchronous=True, **kwargs):
+    def content_lifecycle_environments(self, synchronous=True, timeout=None, **kwargs):
         """Helper to get all the lifecycle environments, associated with
         capsule
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -682,14 +704,16 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('content_lifecycle_environments'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def content_sync(self, synchronous=True, **kwargs):
+    def content_sync(self, synchronous=True, timeout=None, **kwargs):
         """Helper to sync content on a capsule
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -698,14 +722,16 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('content_sync'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def content_get_sync(self, synchronous=True, **kwargs):
+    def content_get_sync(self, synchronous=True, timeout=None, **kwargs):
         """Helper to get content sync status on capsule
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -714,7 +740,7 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('content_sync'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -917,12 +943,14 @@ class AbstractComputeResource(
         self.update_json(fields)
         return self.read()
 
-    def available_images(self, synchronous=True, **kwargs):
+    def available_images(self, synchronous=True, timeout=None, **kwargs):
         """Get images available to be added to the compute resource
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -932,14 +960,16 @@ class AbstractComputeResource(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('available_images'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def available_zones(self, synchronous=True, **kwargs):
+    def available_zones(self, synchronous=True, timeout=None, **kwargs):
         """Get images available to be added to the compute resource
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -949,14 +979,16 @@ class AbstractComputeResource(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('available_zones'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def available_flavors(self, synchronous=True, **kwargs):
+    def available_flavors(self, synchronous=True, timeout=None, **kwargs):
         """Get flavors available to be added to the compute resource
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -966,14 +998,16 @@ class AbstractComputeResource(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('available_zones'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def available_networks(self, synchronous=True, **kwargs):
+    def available_networks(self, synchronous=True, timeout=None, **kwargs):
         """Get networks available to be selected for host provisioning
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -983,14 +1017,16 @@ class AbstractComputeResource(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('available_networks'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def images(self, synchronous=True, **kwargs):
+    def images(self, synchronous=True, timeout=None, **kwargs):
         """Get images created in a compute resource
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -1000,9 +1036,9 @@ class AbstractComputeResource(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('images'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def associate(self, synchronous=True, **kwargs):
+    def associate(self, synchronous=True, timeout=None, **kwargs):
         """Associate the host
 
         :param kwargs: Arguments to pass to requests.
@@ -1014,7 +1050,7 @@ class AbstractComputeResource(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('associate'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class DiscoveredHost(
@@ -1083,12 +1119,14 @@ class DiscoveredHost(
         """Wrap submitted data within an extra dict."""
         return {'discovered_host': super().update_payload(fields)}
 
-    def facts(self, synchronous=True, **kwargs):
+    def facts(self, synchronous=True, timeout=None, **kwargs):
         """Helper to update facts for discovered host, and create the host.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -1098,14 +1136,16 @@ class DiscoveredHost(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('facts'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def refresh_facts(self, synchronous=True, **kwargs):
+    def refresh_facts(self, synchronous=True, timeout=None, **kwargs):
         """Helper to refresh facts for discovered host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -1115,7 +1155,7 @@ class DiscoveredHost(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('refresh_facts'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Make sure, ``ip, mac, root_pass and hostgroup`` are in the ignore list for read"""
@@ -1127,12 +1167,14 @@ class DiscoveredHost(
         ignore.add('hostgroup')
         return super().read(entity, attrs, ignore, params)
 
-    def reboot(self, synchronous=True, **kwargs):
+    def reboot(self, synchronous=True, timeout=None, **kwargs):
         """Helper to reboot the discovered host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -1142,14 +1184,16 @@ class DiscoveredHost(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('reboot'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def reboot_all(self, synchronous=True, **kwargs):
+    def reboot_all(self, synchronous=True, timeout=None, **kwargs):
         """Helper for rebooting all discovered hosts
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -1158,14 +1202,16 @@ class DiscoveredHost(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('reboot_all'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def auto_provision(self, synchronous=True, **kwargs):
+    def auto_provision(self, synchronous=True, timeout=None, **kwargs):
         """Helper for auto-provisioning of the discovered host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -1174,14 +1220,16 @@ class DiscoveredHost(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('auto_provision'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def auto_provision_all(self, synchronous=True, **kwargs):
+    def auto_provision_all(self, synchronous=True, timeout=None, **kwargs):
         """Helper for auto-provisioning of all discovered hosts
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -1190,7 +1238,7 @@ class DiscoveredHost(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('auto_provision_all'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class DiscoveryRule(
@@ -1356,12 +1404,14 @@ class ExternalUserGroup(
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
-    def refresh(self, synchronous=True, **kwargs):
+    def refresh(self, synchronous=True, timeout=None, **kwargs):
         """Refresh external usergroup.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
 
         :param kwargs: Arguments to pass to requests.
 
@@ -1373,7 +1423,7 @@ class ExternalUserGroup(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('refresh'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class KatelloStatus(Entity, EntityReadMixin):
@@ -1795,12 +1845,14 @@ class ProvisioningTemplate(
         ignore.add('audit_comment')
         return super().read(entity, attrs, ignore, params)
 
-    def build_pxe_default(self, synchronous=True, **kwargs):
+    def build_pxe_default(self, synchronous=True, timeout=None, **kwargs):
         """Helper to build pxe default template.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -1809,14 +1861,16 @@ class ProvisioningTemplate(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('build_pxe_default'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def clone(self, synchronous=True, **kwargs):
+    def clone(self, synchronous=True, timeout=None, **kwargs):
         """Helper to clone an existing provision template
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -1825,7 +1879,7 @@ class ProvisioningTemplate(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('clone'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class ReportTemplate(
@@ -1893,12 +1947,14 @@ class ReportTemplate(
             return f"{super().path(prefix)}/{which}"
         return super().path(which)
 
-    def clone(self, synchronous=True, **kwargs):
+    def clone(self, synchronous=True, timeout=None, **kwargs):
         """Helper to clone an existing report template
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -1907,14 +1963,16 @@ class ReportTemplate(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('clone'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def generate(self, synchronous=True, **kwargs):
+    def generate(self, synchronous=True, timeout=None, **kwargs):
         """Helper to generate an existing report template
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -1923,14 +1981,16 @@ class ReportTemplate(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('generate'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def schedule_report(self, synchronous=True, **kwargs):
+    def schedule_report(self, synchronous=True, timeout=None, **kwargs):
         """Helper to schedule an existing report template
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -1939,14 +1999,16 @@ class ReportTemplate(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('schedule_report'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def report_data(self, synchronous=True, **kwargs):
+    def report_data(self, synchronous=True, timeout=None, **kwargs):
         """Helper to call report_data on an existing scheduled report
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -1959,7 +2021,7 @@ class ReportTemplate(
         if job_id:
             temp_path = f'{temp_path}/{job_id}'
         response = client.get(temp_path, **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class ContentCredential(
@@ -2173,12 +2235,14 @@ class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearc
             return f"{super().path(prefix)}/{which}"
         return super().path(which)
 
-    def incremental_update(self, synchronous=True, **kwargs):
+    def incremental_update(self, synchronous=True, timeout=None, **kwargs):
         """Helper for incrementally updating a content view version.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -2188,14 +2252,16 @@ class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearc
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('incremental_update'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def promote(self, synchronous=True, **kwargs):
+    def promote(self, synchronous=True, timeout=None, **kwargs):
         """Helper for promoting an existing published content view.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -2205,7 +2271,7 @@ class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearc
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('promote'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class ContentViewFilterRule(
@@ -2564,12 +2630,14 @@ class ContentView(
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
-    def publish(self, synchronous=True, **kwargs):
+    def publish(self, synchronous=True, timeout=None, **kwargs):
         """Helper for publishing an existing content view.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -2581,14 +2649,16 @@ class ContentView(
             kwargs['data']['id'] = self.id
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('publish'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def available_puppet_modules(self, synchronous=True, **kwargs):
+    def available_puppet_modules(self, synchronous=True, timeout=None, **kwargs):
         """Get puppet modules available to be added to the content view.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -2598,14 +2668,16 @@ class ContentView(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('available_puppet_modules'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def copy(self, synchronous=True, **kwargs):
+    def copy(self, synchronous=True, timeout=None, **kwargs):
         """Clone provided content view.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -2617,9 +2689,9 @@ class ContentView(
             kwargs['data']['id'] = self.id
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('copy'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def delete_from_environment(self, environment, synchronous=True):
+    def delete_from_environment(self, environment, synchronous=True, timeout=None):
         """Delete this content view version from an environment.
 
         This method acts much like
@@ -2642,7 +2714,7 @@ class ContentView(
             f'{self.path()}/environments/{environment_id}',
             **self._server_config.get_client_kwargs(),
         )
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
@@ -2697,12 +2769,14 @@ class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
 
         return super().path(which)
 
-    def add(self, synchronous=True, **kwargs):
+    def add(self, synchronous=True, timeout=None, **kwargs):
         """Add provided Content View Component.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -2717,14 +2791,16 @@ class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
             kwargs['data']['components'] = [_payload(self.get_fields(), self.get_values())]
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('add'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def remove(self, synchronous=True, **kwargs):
+    def remove(self, synchronous=True, timeout=None, **kwargs):
         """remove provided Content View Component.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -2739,7 +2815,7 @@ class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
             kwargs['data']['component_ids'] = [self.id]
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('remove'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class Domain(
@@ -2890,12 +2966,14 @@ class Environment(
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
-    def list_scparams(self, synchronous=True, **kwargs):
+    def list_scparams(self, synchronous=True, timeout=None, **kwargs):
         """List all smart class parameters
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -2905,7 +2983,7 @@ class Environment(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_class_parameters'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class Errata(Entity, EntityReadMixin, EntitySearchMixin):
@@ -2938,12 +3016,14 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
         self._meta = {'api_path': '/katello/api/v2/errata', 'server_modes': ('sat')}
         super().__init__(server_config, **kwargs)
 
-    def compare(self, synchronous=True, **kwargs):
+    def compare(self, synchronous=True, timeout=None, **kwargs):
         """Compare errata from different content view versions
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -2953,7 +3033,7 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('compare'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -3131,12 +3211,14 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
         # private method is called.
         return _poll_task(self.id, self._server_config, poll_rate, timeout)
 
-    def summary(self, synchronous=True, **kwargs):
+    def summary(self, synchronous=True, timeout=None, **kwargs):
         """Helper to view a summary of tasks.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3146,7 +3228,7 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('summary'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class GPGKey(ContentCredential):
@@ -3402,7 +3484,7 @@ class HostGroup(
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
-    def add_puppetclass(self, synchronous=True, **kwargs):
+    def add_puppetclass(self, synchronous=True, timeout=None, **kwargs):
         """Add a Puppet class to host group
 
         Here is an example of how to use this method::
@@ -3411,6 +3493,8 @@ class HostGroup(
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3420,9 +3504,9 @@ class HostGroup(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('puppetclass_ids'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def delete_puppetclass(self, synchronous=True, **kwargs):
+    def delete_puppetclass(self, synchronous=True, timeout=None, **kwargs):
         """Remove a Puppet class from host group
 
         Here is an example of how to use this method::
@@ -3434,6 +3518,8 @@ class HostGroup(
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3443,14 +3529,18 @@ class HostGroup(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         path = f'{self.path("puppetclass_ids")}/{kwargs["data"].pop("puppetclass_id")}'
-        return _handle_response(client.delete(path, **kwargs), self._server_config, synchronous)
+        return _handle_response(
+            client.delete(path, **kwargs), self._server_config, synchronous, timeout
+        )
 
-    def list_scparams(self, synchronous=True, **kwargs):
+    def list_scparams(self, synchronous=True, timeout=None, **kwargs):
         """List all smart class parameters
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3460,14 +3550,16 @@ class HostGroup(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_class_parameters'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def list_smart_variables(self, synchronous=True, **kwargs):
+    def list_smart_variables(self, synchronous=True, timeout=None, **kwargs):
         """List all smart variables
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3477,14 +3569,16 @@ class HostGroup(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_variables'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def clone(self, synchronous=True, **kwargs):
+    def clone(self, synchronous=True, timeout=None, **kwargs):
         """Helper to clone an existing host group
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3493,14 +3587,16 @@ class HostGroup(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('clone'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def rebuild_config(self, synchronous=True, **kwargs):
+    def rebuild_config(self, synchronous=True, timeout=None, **kwargs):
         """Helper to 'Rebuild orchestration config' of an existing host group
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3509,7 +3605,7 @@ class HostGroup(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('rebuild_config'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class HostPackage(Entity):
@@ -3573,12 +3669,14 @@ class HostSubscription(Entity):
             return f'{super().path(which="base")}/{which}'
         return super().path(which)
 
-    def subscriptions(self, synchronous=True, **kwargs):
+    def subscriptions(self, synchronous=True, timeout=None, **kwargs):
         """Helper for getting subscriptions from host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3588,14 +3686,16 @@ class HostSubscription(Entity):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('base'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def add_subscriptions(self, synchronous=True, **kwargs):
+    def add_subscriptions(self, synchronous=True, timeout=None, **kwargs):
         """Helper for adding subscriptions to host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3605,14 +3705,16 @@ class HostSubscription(Entity):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('add_subscriptions'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def remove_subscriptions(self, synchronous=True, **kwargs):
+    def remove_subscriptions(self, synchronous=True, timeout=None, **kwargs):
         """Helper for removing subscriptions from host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3622,7 +3724,7 @@ class HostSubscription(Entity):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('remove_subscriptions'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class Host(
@@ -3866,12 +3968,14 @@ class Host(
             id=self.create_json(create_missing)['id'],
         ).read()
 
-    def enc(self, synchronous=True, **kwargs):
+    def enc(self, synchronous=True, timeout=None, **kwargs):
         """Return external node classifier (ENC) information
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3880,14 +3984,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('enc'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def errata(self, synchronous=True, **kwargs):
+    def errata(self, synchronous=True, timeout=None, **kwargs):
         """List errata available for the host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3897,14 +4003,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('errata'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def traces(self, synchronous=True, **kwargs):
+    def traces(self, synchronous=True, timeout=None, **kwargs):
         """List services that need restarting for the host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3913,14 +4021,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('traces'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def bulk_traces(self, synchronous=True, **kwargs):
+    def bulk_traces(self, synchronous=True, timeout=None, **kwargs):
         """List services that need restarting for the specified set of hosts
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3929,14 +4039,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('bulk/traces'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def resolve_traces(self, synchronous=True, **kwargs):
+    def resolve_traces(self, synchronous=True, timeout=None, **kwargs):
         """Resolve traces for the host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3945,14 +4057,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('traces/resolve'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def bulk_resolve_traces(self, synchronous=True, **kwargs):
+    def bulk_resolve_traces(self, synchronous=True, timeout=None, **kwargs):
         """Resolve traces for the specified set of hosts
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3961,14 +4075,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('bulk/resolve_traces'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def packages(self, synchronous=True, **kwargs):
+    def packages(self, synchronous=True, timeout=None, **kwargs):
         """List packages installed on the host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3977,14 +4093,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('packages'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def module_streams(self, synchronous=True, **kwargs):
+    def module_streams(self, synchronous=True, timeout=None, **kwargs):
         """List module_streams available for the host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -3994,14 +4112,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('module_streams'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def errata_applicability(self, synchronous=True, **kwargs):
+    def errata_applicability(self, synchronous=True, timeout=None, **kwargs):
         """Force regenerate errata applicability
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -4011,14 +4131,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('errata/applicability'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def errata_apply(self, synchronous=True, **kwargs):
+    def errata_apply(self, synchronous=True, timeout=None, **kwargs):
         """Schedule errata for installation
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -4028,14 +4150,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('errata/apply'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def install_content(self, synchronous=True, **kwargs):
+    def install_content(self, synchronous=True, timeout=None, **kwargs):
         """Install content on one or more hosts
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -4045,14 +4169,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('bulk/install_content'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def bulk_add_subscriptions(self, synchronous=True, **kwargs):
+    def bulk_add_subscriptions(self, synchronous=True, timeout=None, **kwargs):
         """Add subscriptions to one or more hosts
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -4062,14 +4188,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('bulk/add_subscriptions'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def bulk_remove_subscriptions(self, synchronous=True, **kwargs):
+    def bulk_remove_subscriptions(self, synchronous=True, timeout=None, **kwargs):
         """Remove subscriptions from one or more hosts
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -4079,14 +4207,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('bulk/remove_subscriptions'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def bulk_available_incremental_updates(self, synchronous=True, **kwargs):
+    def bulk_available_incremental_updates(self, synchronous=True, timeout=None, **kwargs):
         """Get available_incremental_updates for one or more hosts
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -4096,14 +4226,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('bulk/available_incremental_updates'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def get_facts(self, synchronous=True, **kwargs):
+    def get_facts(self, synchronous=True, timeout=None, **kwargs):
         """List all fact values of a given host
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -4113,14 +4245,16 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('facts'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def upload_facts(self, synchronous=True, **kwargs):
+    def upload_facts(self, synchronous=True, timeout=None, **kwargs):
         """Upload facts for a host, creating the host if required
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -4130,7 +4264,7 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('upload_facts'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Deal with oddly named and structured data returned by the server.
@@ -4272,7 +4406,7 @@ class Host(
             return f'{super().path(which="base")}/facts'
         return super().path(which)
 
-    def add_puppetclass(self, synchronous=True, **kwargs):
+    def add_puppetclass(self, synchronous=True, timeout=None, **kwargs):
         """Add a Puppet class to host
 
         Here is an example of how to use this method::
@@ -4281,6 +4415,8 @@ class Host(
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -4290,9 +4426,9 @@ class Host(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('puppetclass_ids'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def delete_puppetclass(self, synchronous=True, **kwargs):
+    def delete_puppetclass(self, synchronous=True, timeout=None, **kwargs):
         """Remove a Puppet class from host
 
         Here is an example of how to use this method::
@@ -4304,6 +4440,8 @@ class Host(
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -4313,14 +4451,18 @@ class Host(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         path = f'{self.path("puppetclass_ids")}/{kwargs["data"].pop("puppetclass_id")}'
-        return _handle_response(client.delete(path, **kwargs), self._server_config, synchronous)
+        return _handle_response(
+            client.delete(path, **kwargs), self._server_config, synchronous, timeout
+        )
 
-    def list_scparams(self, synchronous=True, **kwargs):
+    def list_scparams(self, synchronous=True, timeout=None, **kwargs):
         """List all smart class parameters
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -4330,14 +4472,16 @@ class Host(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_class_parameters'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def list_smart_variables(self, synchronous=True, **kwargs):
+    def list_smart_variables(self, synchronous=True, timeout=None, **kwargs):
         """List all smart variables
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -4347,9 +4491,9 @@ class Host(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_variables'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def power(self, synchronous=True, **kwargs):
+    def power(self, synchronous=True, timeout=None, **kwargs):
         """Power the host off or on
 
         :param kwargs: Arguments to pass to requests.
@@ -4361,7 +4505,7 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('power'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
     def search(self, fields=None, query=None, filters=None):
         """Search for entities.
@@ -4396,7 +4540,7 @@ class Host(
             entities = self.search_filter(entities, filters)
         return entities
 
-    def disassociate(self, synchronous=True, **kwargs):
+    def disassociate(self, synchronous=True, timeout=None, **kwargs):
         """Disassociate the host
 
         :param kwargs: Arguments to pass to requests.
@@ -4408,7 +4552,7 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('disassociate'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class Image(
@@ -5141,12 +5285,14 @@ class Organization(
             payload['redhat_repository_url'] = rh_repo_url
         return payload
 
-    def download_debug_certificate(self, synchronous=True, **kwargs):
+    def download_debug_certificate(self, synchronous=True, timeout=None, **kwargs):
         """Get debug certificate for particular organization.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -5156,7 +5302,7 @@ class Organization(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('download_debug_certificate'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class OSDefaultTemplate(
@@ -5474,12 +5620,14 @@ class Product(
             entities = self.search_filter(entities, filters)
         return entities
 
-    def sync(self, synchronous=True, **kwargs):
+    def sync(self, synchronous=True, timeout=None, **kwargs):
         """Synchronize :class:`repositories <Repository>` in this product.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -5489,7 +5637,7 @@ class Product(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('sync'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class ProductBulkAction(Entity):
@@ -5522,12 +5670,14 @@ class ProductBulkAction(Entity):
             return f'{super().path(which="base")}/{which}'
         return super().path(which)
 
-    def destroy(self, synchronous=True, **kwargs):
+    def destroy(self, synchronous=True, timeout=None, **kwargs):
         """Helper to destroy one or more products.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -5537,14 +5687,16 @@ class ProductBulkAction(Entity):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('destroy'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def sync(self, synchronous=True, **kwargs):
+    def sync(self, synchronous=True, timeout=None, **kwargs):
         """Helper to sync one or more products.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -5554,14 +5706,16 @@ class ProductBulkAction(Entity):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('sync'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def http_proxy(self, synchronous=True, **kwargs):
+    def http_proxy(self, synchronous=True, timeout=None, **kwargs):
         """Helper to update the http proxy configuration on the repositories of one or more products.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -5571,14 +5725,16 @@ class ProductBulkAction(Entity):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('http_proxy'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def sync_plan(self, synchronous=True, **kwargs):
+    def sync_plan(self, synchronous=True, timeout=None, **kwargs):
         """Helper to sync one or more products.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -5588,7 +5744,7 @@ class ProductBulkAction(Entity):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('sync_plan'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class PartitionTable(
@@ -5683,12 +5839,14 @@ class PuppetClass(
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
-    def list_scparams(self, synchronous=True, **kwargs):
+    def list_scparams(self, synchronous=True, timeout=None, **kwargs):
         """List of smart class parameters for a specific Puppet class
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -5698,14 +5856,16 @@ class PuppetClass(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_class_parameters'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def list_smart_variables(self, synchronous=True, **kwargs):
+    def list_smart_variables(self, synchronous=True, timeout=None, **kwargs):
         """List all smart variables
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -5715,7 +5875,7 @@ class PuppetClass(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_variables'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class PackageGroup(Entity, EntityReadMixin, EntitySearchMixin):
@@ -5896,12 +6056,14 @@ class RecurringLogic(Entity, EntityReadMixin):
         self._meta = {'api_path': 'foreman_tasks/api/recurring_logics', 'server_modes': ('sat')}
         super().__init__(server_config, **kwargs)
 
-    def cancel(self, synchronous=True, **kwargs):
+    def cancel(self, synchronous=True, timeout=None, **kwargs):
         """Helper for canceling a recurring logic
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -5911,7 +6073,7 @@ class RecurringLogic(Entity, EntityReadMixin):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('cancel'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.RecurringLogic.path``.
@@ -6077,12 +6239,14 @@ class Repository(
             self._fields['docker_upstream_name'].required = True
         super().create_missing()
 
-    def errata(self, synchronous=True, **kwargs):
+    def errata(self, synchronous=True, timeout=None, **kwargs):
         """List errata inside repository.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6092,14 +6256,16 @@ class Repository(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('errata'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def sync(self, synchronous=True, **kwargs):
+    def sync(self, synchronous=True, timeout=None, **kwargs):
         """Helper for syncing an existing repository.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6109,9 +6275,9 @@ class Repository(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('sync'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def upload_content(self, synchronous=True, **kwargs):
+    def upload_content(self, synchronous=True, timeout=None, **kwargs):
         """Upload a file or files to the current repository.
 
         Here is an example of how to upload content::
@@ -6128,6 +6294,8 @@ class Repository(
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6144,7 +6312,7 @@ class Repository(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('upload_content'), **kwargs)
-        json = _handle_response(response, self._server_config, synchronous)
+        json = _handle_response(response, self._server_config, synchronous, timeout)
         if json['status'] != 'success':
             raise APIResponseError(
                 f'Received error when uploading file {kwargs.get("files")} '
@@ -6153,7 +6321,13 @@ class Repository(
         return json
 
     def import_uploads(
-        self, content_type=None, uploads=None, upload_ids=None, synchronous=True, **kwargs
+        self,
+        content_type=None,
+        uploads=None,
+        upload_ids=None,
+        synchronous=True,
+        timeout=None,
+        **kwargs,
     ):
         """Import uploads into a repository
 
@@ -6166,6 +6340,8 @@ class Repository(
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6179,10 +6355,10 @@ class Repository(
         elif upload_ids:
             data = {'upload_ids': upload_ids, 'content_type': content_type}
         response = client.put(self.path('import_uploads'), data, **kwargs)
-        json = _handle_response(response, self._server_config, synchronous)
+        json = _handle_response(response, self._server_config, synchronous, timeout)
         return json
 
-    def remove_content(self, synchronous=True, **kwargs):
+    def remove_content(self, synchronous=True, timeout=None, **kwargs):
         """Remove content from a repository
 
         It expects packages/puppet modules/docker manifests ids sent as data.
@@ -6193,6 +6369,8 @@ class Repository(
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6202,14 +6380,16 @@ class Repository(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('remove_content'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def puppet_modules(self, synchronous=True, **kwargs):
+    def puppet_modules(self, synchronous=True, timeout=None, **kwargs):
         """List puppet modules associated with repository
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6219,14 +6399,16 @@ class Repository(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('puppet_modules'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def packages(self, synchronous=True, **kwargs):
+    def packages(self, synchronous=True, timeout=None, **kwargs):
         """List packages associated with repository
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6236,14 +6418,16 @@ class Repository(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('packages'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def module_streams(self, synchronous=True, **kwargs):
+    def module_streams(self, synchronous=True, timeout=None, **kwargs):
         """List module_streams associated with repository
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6253,14 +6437,16 @@ class Repository(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('module_streams'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def files(self, synchronous=True, **kwargs):
+    def files(self, synchronous=True, timeout=None, **kwargs):
         """List files associated with repository
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6270,7 +6456,7 @@ class Repository(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('files'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
@@ -6305,9 +6491,6 @@ class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
     def available_repositories(self, **kwargs):
         """Lists available repositories for the repository set
 
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6322,7 +6505,7 @@ class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
         response = client.get(self.path('available_repositories'), **kwargs)
         return _handle_response(response, self._server_config)
 
-    def enable(self, synchronous=True, **kwargs):
+    def enable(self, synchronous=True, timeout=None, **kwargs):
         """Enables the RedHat Repository
 
         RedHat Repos needs to be enabled first, so that we can sync it.
@@ -6330,6 +6513,8 @@ class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6342,14 +6527,16 @@ class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('enable'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def disable(self, synchronous=True, **kwargs):
+    def disable(self, synchronous=True, timeout=None, **kwargs):
         """Disables the RedHat Repository
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6362,7 +6549,7 @@ class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('disable'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -6483,12 +6670,14 @@ class RHCIDeployment(
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
-    def deploy(self, synchronous=True, **kwargs):
+    def deploy(self, synchronous=True, timeout=None, **kwargs):
         """Kickoff the RHCI deployment.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6498,7 +6687,7 @@ class RHCIDeployment(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('deploy'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class RoleLDAPGroups(Entity):
@@ -6572,12 +6761,14 @@ class Role(
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
-    def clone(self, synchronous=True, **kwargs):
+    def clone(self, synchronous=True, timeout=None, **kwargs):
         """Helper to clone an existing Role
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6586,7 +6777,7 @@ class Role(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('clone'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class Setting(Entity, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin):
@@ -6656,12 +6847,14 @@ class SmartProxy(
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
-    def refresh(self, synchronous=True, **kwargs):
+    def refresh(self, synchronous=True, timeout=None, **kwargs):
         """Refresh Capsule features
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6671,14 +6864,16 @@ class SmartProxy(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('refresh'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def import_puppetclasses(self, synchronous=True, **kwargs):
+    def import_puppetclasses(self, synchronous=True, timeout=None, **kwargs):
         """Import puppet classes from puppet Capsule.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -6697,7 +6892,9 @@ class SmartProxy(
             path = f'{self.path()}/environments/{environment_id}/import_puppetclasses'
         else:
             path = f'{self.path()}/import_puppetclasses'
-        return _handle_response(client.post(path, **kwargs), self._server_config, synchronous)
+        return _handle_response(
+            client.post(path, **kwargs), self._server_config, synchronous, timeout
+        )
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Ignore ``download_policy`` field as it's never returned by the
@@ -7139,12 +7336,14 @@ class Subscription(Entity, EntityReadMixin, EntitySearchMixin):
             organization=payload['organization_id'],
         ).path(which)
 
-    def delete_manifest(self, synchronous=True, **kwargs):
+    def delete_manifest(self, synchronous=True, timeout=1500, **kwargs):
         """Delete manifest from Red Hat provider.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -7158,15 +7357,17 @@ class Subscription(Entity, EntityReadMixin, EntitySearchMixin):
             response,
             self._server_config,
             synchronous,
-            timeout=1500,
+            timeout=timeout,
         )
 
-    def manifest_history(self, synchronous=True, **kwargs):
+    def manifest_history(self, synchronous=True, timeout=None, **kwargs):
         """Obtain manifest history for subscriptions.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -7176,7 +7377,7 @@ class Subscription(Entity, EntityReadMixin, EntitySearchMixin):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self._org_path('manifest_history', kwargs['data']), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Ignore ``organization`` field as it's never returned by the server
@@ -7188,12 +7389,14 @@ class Subscription(Entity, EntityReadMixin, EntitySearchMixin):
         ignore.add('organization')
         return super().read(entity, attrs, ignore, params)
 
-    def refresh_manifest(self, synchronous=True, **kwargs):
+    def refresh_manifest(self, synchronous=True, timeout=1500, **kwargs):
         """Refresh previously imported manifest for Red Hat provider.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -7207,10 +7410,10 @@ class Subscription(Entity, EntityReadMixin, EntitySearchMixin):
             response,
             self._server_config,
             synchronous,
-            timeout=1500,
+            timeout=timeout,
         )
 
-    def upload(self, synchronous=True, **kwargs):
+    def upload(self, synchronous=True, timeout=1500, **kwargs):
         """Upload a subscription manifest.
 
         Here is an example of how to use this method::
@@ -7221,6 +7424,8 @@ class Subscription(Entity, EntityReadMixin, EntitySearchMixin):
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -7236,7 +7441,7 @@ class Subscription(Entity, EntityReadMixin, EntitySearchMixin):
             response,
             self._server_config,
             synchronous,
-            timeout=1500,
+            timeout=timeout,
         )
 
 
@@ -7336,7 +7541,7 @@ class SyncPlan(
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
-    def add_products(self, synchronous=True, **kwargs):
+    def add_products(self, synchronous=True, timeout=None, **kwargs):
         """Add products to this sync plan.
 
         .. NOTE:: The ``synchronous`` argument has no effect in certain
@@ -7346,6 +7551,8 @@ class SyncPlan(
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -7355,9 +7562,9 @@ class SyncPlan(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('add_products'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def remove_products(self, synchronous=True, **kwargs):
+    def remove_products(self, synchronous=True, timeout=None, **kwargs):
         """Remove products from this sync plan.
 
         .. NOTE:: The ``synchronous`` argument has no effect in certain
@@ -7367,6 +7574,8 @@ class SyncPlan(
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -7376,7 +7585,7 @@ class SyncPlan(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('remove_products'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
     def update_payload(self, fields=None):
         """Convert ``sync_date`` to a string if datetime object provided."""
@@ -7583,12 +7792,14 @@ class Template(Entity):
             return f'{super().path(which="base")}/{which}'
         return super().path(which)
 
-    def imports(self, synchronous=True, **kwargs):
+    def imports(self, synchronous=True, timeout=None, **kwargs):
         """Helper to import templates
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -7597,14 +7808,16 @@ class Template(Entity):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('import'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def exports(self, synchronous=True, **kwargs):
+    def exports(self, synchronous=True, timeout=None, **kwargs):
         """Helper to export templates
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -7613,7 +7826,7 @@ class Template(Entity):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('export'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class TemplateCombination(Entity, EntityDeleteMixin, EntityReadMixin):
@@ -7892,12 +8105,14 @@ class VirtWhoConfig(
         """
         return {'foreman_virt_who_configure_config': super().update_payload(fields)}
 
-    def deploy_script(self, synchronous=True, **kwargs):
+    def deploy_script(self, synchronous=True, timeout=None, **kwargs):
         """Helper for Config's deploy_script method.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -7907,7 +8122,7 @@ class VirtWhoConfig(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('deploy_script'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """
@@ -7919,7 +8134,7 @@ class VirtWhoConfig(
         ignore.add('hypervisor_password')
         return super().read(entity, attrs, ignore, params)
 
-    def get_organization_configs(self, synchronous=True, **kwargs):
+    def get_organization_configs(self, synchronous=True, timeout=None, **kwargs):
         """
         Unusually, the ``/foreman_virt_who_configure/api/v2/organizations/
         :organization_id/configs`` path is totally unsupported.
@@ -7928,6 +8143,8 @@ class VirtWhoConfig(
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -7936,7 +8153,7 @@ class VirtWhoConfig(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('configs'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class ScapContents(
@@ -8007,12 +8224,14 @@ class ScapContents(
         self.update_json(fields)
         return self.read()
 
-    def xml(self, synchronous=True, **kwargs):
+    def xml(self, synchronous=True, timeout=None, **kwargs):
         """Download an SCAP content as XML
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
             ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
         :returns: The server's response, with all JSON decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
@@ -8022,7 +8241,7 @@ class ScapContents(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('xml'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class Srpms(Entity, EntityReadMixin, EntitySearchMixin):

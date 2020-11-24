@@ -228,6 +228,15 @@ class PollTaskTestCase(TestCase):
                         entity_mixins._poll_task(gen_integer(), self.cfg),
                     )
 
+    def test__poll_task_timeout(self):
+        """What happens when a foreman task timesout?
+        Assert that the task is still running.
+        """
+        with self.assertRaises(entity_mixins.TaskTimedOutError):
+            with mock.patch.object(client, 'get') as get:
+                get.return_value.json.return_value = {'state': 'running', 'result': 'pending'}
+                entity_mixins._poll_task(gen_integer(), self.cfg, timeout=1)
+
 
 # 3. Tests for public methods. ------------------------------------------- {{{1
 
