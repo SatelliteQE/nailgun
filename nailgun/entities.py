@@ -2413,6 +2413,8 @@ class ModuleStreamContentViewFilter(AbstractContentViewFilter):
     """A representation of a Content View Filter of type "modulemd"."""
 
     def __init__(self, server_config=None, **kwargs):
+        # Add the `original_module_streams` field to what's provided by parent class.
+        self._fields = {'original_module_streams': entity_fields.BooleanField()}
         super().__init__(server_config, **kwargs)
         self._fields['type'].default = 'modulemd'
 
