@@ -3205,6 +3205,7 @@ class HostCollection(
         self._updatable_fields = [
             'name',
             'description',
+            'host',
             'host_ids',
             'max_hosts',
             'unlimited_hosts',
