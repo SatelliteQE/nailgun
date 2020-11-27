@@ -7917,6 +7917,7 @@ class VirtWhoConfig(
         if not ignore:
             ignore = set()
         ignore.add('hypervisor_password')
+        ignore.add('proxy')
         return super().read(entity, attrs, ignore, params)
 
     def get_organization_configs(self, synchronous=True, **kwargs):
