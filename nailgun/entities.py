@@ -4263,7 +4263,7 @@ class Host(
             'bulk/install_content',
             'bulk/add_subscriptions',
             'bulk/remove_subscriptions',
-            'bulk / available_incremental_updates',
+            'bulk/available_incremental_updates',
             'bulk/traces',
             'bulk/resolve_traces',
         ):
