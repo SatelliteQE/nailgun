@@ -758,7 +758,12 @@ class EntityReadMixin:
 
         """
         if entity is None:
-            entity = type(self)(self._server_config)
+            try:
+                entity = type(self)(self._server_config)
+            except TypeError:
+                # in the event that an entity's init is overwritten
+                # with a positional server_config
+                entity = type(self)()
         if attrs is None:
             attrs = self.read_json(params=params)
         if ignore is None:
