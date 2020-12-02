@@ -3212,6 +3212,7 @@ class HostCollection(
         self._fields = {
             'description': entity_fields.StringField(),
             'host': entity_fields.OneToManyField(Host),
+            'host_ids': entity_fields.ListField(),
             'max_hosts': entity_fields.IntegerField(),
             'name': entity_fields.StringField(
                 required=True, str_type='alpha', length=(6, 12), unique=True
