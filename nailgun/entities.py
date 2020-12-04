@@ -7917,6 +7917,9 @@ class VirtWhoConfig(
         if not ignore:
             ignore = set()
         ignore.add('hypervisor_password')
+        # Related BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1902199
+        # This is temporary and need to be removed once related BZ is fixed.
+        ignore.add('proxy')
         return super().read(entity, attrs, ignore, params)
 
     def get_organization_configs(self, synchronous=True, **kwargs):

@@ -1340,7 +1340,7 @@ class ReadTestCase(TestCase):
             (entities.User, {'password'}),
             (entities.ScapContents, {'scap_file'}),
             (entities.TailoringFile, {'scap_file'}),
-            (entities.VirtWhoConfig, {'hypervisor_password'}),
+            (entities.VirtWhoConfig, {'hypervisor_password', 'proxy'}),
             (entities.VMWareComputeResource, {'password'}),
             (entities.DiscoveredHost, {'ip', 'mac', 'root_pass', 'hostgroup'}),
         ):
