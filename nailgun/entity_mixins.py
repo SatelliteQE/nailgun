@@ -378,7 +378,8 @@ class Entity:
         # Check that a valid set of field values has been passed in.
         if not set(kwargs.keys()).issubset(self._fields.keys()):
             raise NoSuchFieldError(
-                f'Valid fields are {self._fields.keys()}, but received {kwargs.keys()} instead.'
+                f'Valid fields are {list(self._fields.keys())}, invalid field(s) passed '
+                f'to entity: {set(kwargs.keys()).difference(set(self._fields.keys()))}'
             )
 
         # Iterate through the values passed in and assign them as instance
