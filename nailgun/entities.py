@@ -6686,6 +6686,16 @@ class Setting(Entity, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin):
         }
         super().__init__(server_config, **kwargs)
 
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Override :meth:`nailgun.entity_mixins.EntityReadMixin.read` to ignore
+        the ``created_at and updated_at``
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('created_at')
+        ignore.add('updated_at')
+        return super().read(entity, attrs, ignore, params)
+
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
         return {'setting': super().update_payload(fields)}
