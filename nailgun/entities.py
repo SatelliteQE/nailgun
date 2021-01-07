@@ -7806,6 +7806,8 @@ class VirtWhoConfig(
             'filtering_mode': entity_fields.IntegerField(
                 choices=[0, 1, 2], default=0, required=True
             ),
+            'http_proxy': entity_fields.OneToOneField(HTTPProxy),
+            'http_proxy_id': entity_fields.IntegerField(),
             'hypervisor_id': entity_fields.StringField(
                 choices=['hostname', 'uuid', 'hwuuid'], default='hostname', required=True
             ),
@@ -7823,7 +7825,6 @@ class VirtWhoConfig(
             'name': entity_fields.StringField(required=True),
             'no_proxy': entity_fields.StringField(),
             'organization_id': entity_fields.IntegerField(),
-            'proxy': entity_fields.StringField(),
             'satellite_url': entity_fields.StringField(required=True),
             'status': entity_fields.StringField(),
             'whitelist': entity_fields.StringField(),
@@ -7897,9 +7898,7 @@ class VirtWhoConfig(
         if not ignore:
             ignore = set()
         ignore.add('hypervisor_password')
-        # Related BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1902199
-        # This is temporary and need to be removed once related BZ is fixed.
-        ignore.add('proxy')
+        ignore.add('http_proxy_id')
         return super().read(entity, attrs, ignore, params)
 
     def get_organization_configs(self, synchronous=True, timeout=None, **kwargs):
