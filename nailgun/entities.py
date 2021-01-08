@@ -7854,7 +7854,7 @@ class VirtWhoConfig(
             return (
                 f'{self._server_config.url}/'
                 f'foreman_virt_who_configure/api/v2/organizations/'
-                f'{self.read().organization_id}/'
+                f"{self.read(ignore={'http_proxy'}).organization_id}/"
                 f'{which}'
             )
         return super().path(which)
