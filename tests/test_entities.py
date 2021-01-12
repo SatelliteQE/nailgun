@@ -1286,7 +1286,7 @@ class ReadTestCase(TestCase):
             (entities.User, {'password'}),
             (entities.ScapContents, {'scap_file'}),
             (entities.TailoringFile, {'scap_file'}),
-            (entities.VirtWhoConfig, {'hypervisor_password', 'proxy'}),
+            (entities.VirtWhoConfig, {'hypervisor_password', 'http_proxy_id'}),
             (entities.VMWareComputeResource, {'password'}),
             (entities.DiscoveredHost, {'ip', 'mac', 'root_pass', 'hostgroup'}),
         ):
@@ -3678,7 +3678,6 @@ class VirtWhoConfigTestCase(TestCase):
             organization_id=org.id,
             filtering_mode=1,
             whitelist='*.example.com',
-            proxy='proxy.example.com',
             no_proxy='*.proxy-bypass.example.com',
             satellite_url=self.server,
             hypervisor_type='libvirt',
@@ -3701,7 +3700,6 @@ class VirtWhoConfigTestCase(TestCase):
                 'name': 'vhtest1',
                 'no_proxy': '*.proxy-bypass.example.com',
                 'organization_id': 2,
-                'proxy': 'proxy.example.com',
                 'satellite_url': self.server,
                 'whitelist': '*.example.com',
             }
@@ -3716,7 +3714,6 @@ class VirtWhoConfigTestCase(TestCase):
             organization_id=org.id,
             filtering_mode=1,
             whitelist='*.example.com',
-            proxy='proxy.example.com',
             no_proxy='*.proxy-bypass.example.com',
             satellite_url=self.server,
             hypervisor_type='libvirt',
