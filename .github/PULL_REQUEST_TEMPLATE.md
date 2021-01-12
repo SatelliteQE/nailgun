@@ -4,7 +4,7 @@ Describe in detail the changes made, and any potential impacts to callers.
 
 ##### Upstream API documentation, plugin, or feature links
 
-Link to any relevant upstream API documentation that relates to the content of the PR
+Link to any relevant upstream API documentation that relates to the content of the PR.
 
 ##### Functional demonstration
 
