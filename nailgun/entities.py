@@ -3694,9 +3694,11 @@ class Host(
             'domain': entity_fields.OneToOneField(Domain),
             'enabled': entity_fields.BooleanField(),
             'environment': entity_fields.OneToOneField(Environment),
+            'excluded': entity_fields.ListField(),
             'hostgroup': entity_fields.OneToOneField(HostGroup),
             'host_parameters_attributes': entity_fields.ListField(),
             'image': entity_fields.OneToOneField(Image),
+            'included': entity_fields.ListField(),
             'interface': entity_fields.OneToManyField(Interface),
             'interfaces_attributes': entity_fields.DictField(),
             'ip': entity_fields.StringField(),
@@ -4016,6 +4018,24 @@ class Host(
         response = client.put(self.path('bulk/resolve_traces'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
+    def bulk_destroy(self, synchronous=True, timeout=None, **kwargs):
+        """Destroy the set of hosts
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('bulk/destroy'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
     def packages(self, synchronous=True, timeout=None, **kwargs):
         """List packages installed on the host
 
@@ -4239,6 +4259,8 @@ class Host(
         ignore.add('compute_attributes')
         ignore.add('interfaces_attributes')
         ignore.add('root_pass')
+        ignore.add('included')
+        ignore.add('excluded')
         # Image entity requires compute_resource_id to initialize as it is
         # part of its path. The thing is that entity_mixins.read() initializes
         # entities by id only.
@@ -4339,6 +4361,7 @@ class Host(
             'bulk/available_incremental_updates',
             'bulk/traces',
             'bulk/resolve_traces',
+            'bulk/destroy',
         ):
             return f'{super().path(which="base")}/{which}'
         elif which in ('upload_facts',):
