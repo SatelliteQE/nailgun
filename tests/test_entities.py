@@ -2155,6 +2155,7 @@ class GenericTestCase(TestCase):
             (entities.Host(**generic).upload_facts, 'post'),
             (entities.Host(**generic).traces, 'get'),
             (entities.Host(**generic).resolve_traces, 'put'),
+            (entities.Host(**generic).bulk_destroy, 'put'),
             (entities.Host(**generic).bulk_traces, 'post'),
             (entities.Host(**generic).bulk_resolve_traces, 'put'),
             (entities.HostGroup(**generic).add_puppetclass, 'post'),
