@@ -5136,6 +5136,7 @@ class Organization(
             'subnet': entity_fields.OneToManyField(Subnet),
             'title': entity_fields.StringField(),
             'user': entity_fields.OneToManyField(User),
+            'simple_content_access': entity_fields.BooleanField(),
         }
 
         self._fields.update(
