@@ -2193,7 +2193,6 @@ class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearc
             'minor': entity_fields.IntegerField(),
             'module_stream_count': entity_fields.IntegerField(),
             'package_count': entity_fields.IntegerField(),
-            'puppet_module': entity_fields.OneToManyField(PuppetModule),
             'repository': entity_fields.OneToManyField(Repository),
             'version': entity_fields.StringField(),
         }
@@ -2510,7 +2509,6 @@ class ContentView(
                 Organization,
                 required=True,
             ),
-            'puppet_module': entity_fields.OneToManyField(PuppetModule),
             'repository': entity_fields.OneToManyField(Repository),
             'solve_dependencies': entity_fields.BooleanField(),
             'version': entity_fields.OneToManyField(ContentViewVersion),
