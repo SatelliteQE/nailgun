@@ -90,7 +90,6 @@ class InitTestCase(TestCase):
             (entity, {})
             for entity in (
                 # entities.ContentViewFilterRule,  # see below
-                # entities.ContentViewPuppetModule,  # see below
                 # entities.OperatingSystemParameter,  # see below
                 # entities.SyncPlan,  # see below
                 entities.AbstractComputeResource,
@@ -155,7 +154,6 @@ class InitTestCase(TestCase):
                 entities.Product,
                 entities.ProductBulkAction,
                 entities.PuppetClass,
-                entities.PuppetModule,
                 entities.RPMContentViewFilter,
                 entities.Realm,
                 entities.RecurringLogic,
@@ -193,7 +191,6 @@ class InitTestCase(TestCase):
                 (entities.ContentUpload, {'repository': 1}),
                 (entities.ContentViewComponent, {'composite_content_view': 1}),
                 (entities.ContentViewFilterRule, {'content_view_filter': 1}),
-                (entities.ContentViewPuppetModule, {'content_view': 1}),
                 (entities.ExternalUserGroup, {'usergroup': 1}),
                 (entities.HostPackage, {'host': 1}),
                 (entities.HostSubscription, {'host': 1}),
@@ -231,7 +228,6 @@ class InitTestCase(TestCase):
         for entity in (
             entities.ContentViewComponent,
             entities.ContentViewFilterRule,
-            entities.ContentViewPuppetModule,
             entities.ExternalUserGroup,
             entities.HostPackage,
             entities.HostSubscription,
@@ -311,8 +307,6 @@ class PathTestCase(TestCase):
             (entities.ProvisioningTemplate, 'clone'),
             (entities.ReportTemplate, 'clone'),
             (entities.Role, 'clone'),
-            (entities.ContentView, 'available_puppet_module_names'),
-            (entities.ContentView, 'content_view_puppet_modules'),
             (entities.ContentView, 'content_view_versions'),
             (entities.ContentView, 'copy'),
             (entities.ContentView, 'publish'),
@@ -346,7 +340,6 @@ class PathTestCase(TestCase):
             (entities.PuppetClass, 'smart_class_parameters'),
             (entities.Repository, 'errata'),
             (entities.Repository, 'packages'),
-            (entities.Repository, 'puppet_modules'),
             (entities.Repository, 'remove_content'),
             (entities.Repository, 'sync'),
             (entities.Repository, 'upload_content'),
@@ -393,8 +386,6 @@ class PathTestCase(TestCase):
         """
         for entity, which in (
             (entities.ActivationKey, 'releases'),
-            (entities.ContentView, 'available_puppet_module_names'),
-            (entities.ContentView, 'content_view_puppet_modules'),
             (entities.ContentView, 'content_view_versions'),
             (entities.ContentView, 'publish'),
             (entities.ContentViewVersion, 'promote'),
@@ -1156,7 +1147,6 @@ class ReadTestCase(TestCase):
                 content_view_filter=2,
             ),
             entities.ContentViewComponent(self.cfg, composite_content_view=2, content_view=1),
-            entities.ContentViewPuppetModule(self.cfg, content_view=2),
             entities.ExternalUserGroup(self.cfg, usergroup=1),
             entities.Interface(self.cfg, host=2),
             entities.Image(self.cfg, compute_resource=1),
@@ -2128,7 +2118,6 @@ class GenericTestCase(TestCase):
             (entities.ProvisioningTemplate(**generic).build_pxe_default, 'post'),
             (entities.ProvisioningTemplate(**generic).clone, 'post'),
             (entities.ReportTemplate(**generic).clone, 'post'),
-            (entities.ContentView(**generic).available_puppet_modules, 'get'),
             (entities.ContentView(**generic).copy, 'post'),
             (entities.ContentView(**generic).publish, 'post'),
             (entities.ContentViewVersion(**generic).incremental_update, 'post'),
@@ -2176,7 +2165,6 @@ class GenericTestCase(TestCase):
             (entities.Repository(**generic).errata, 'get'),
             (entities.Repository(**generic).packages, 'get'),
             (entities.Repository(**generic).module_streams, 'get'),
-            (entities.Repository(**generic).puppet_modules, 'get'),
             (entities.Repository(**generic).remove_content, 'put'),
             (entities.Repository(**generic).sync, 'post'),
             (entities.ScapContents(**generic).xml, 'get'),
@@ -2491,12 +2479,6 @@ class ContentViewTestCase(TestCase):
             "name": "my CV",
             "next_version": "3.0",
             "organization_id": 1,
-            "puppet_modules": [
-                {
-                    "name": "katello-katello",
-                    "id": 1,
-                }
-            ],
             "repositories": [
                 {
                     "name": "my_tst_repo",
