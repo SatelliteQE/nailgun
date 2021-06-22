@@ -126,15 +126,13 @@ def _check_for_value(field_name, field_values):
 
     An entity may use this function in its ``__init__`` method to ensure that a
     parameter required for object instantiation has been passed in. For
-    example, in :class:`nailgun.entities.ContentViewPuppetModule`:
+    example, in :class:`nailgun.entities.HostPackage`:
 
     >>> def __init__(self, server_config=None, **kwargs):
-    >>>     _check_for_value('content_view', kwargs)
+    >>>     _check_for_value('host', kwargs)
     >>>     # …
     >>>     self._meta = {
-    >>>         'api_path': '{0}/content_view_puppet_modules'.format(
-    >>>             self.content_view.path('self')
-    >>>         )
+    >>>         'api_path': f'{self.host.path()}/packages',
     >>>     }
 
     :param field_name: A string. A key with this name must be present in
@@ -2427,59 +2425,6 @@ class DockerContentViewFilter(AbstractContentViewFilter):
         self._fields['type'].default = 'docker'
 
 
-class ContentViewPuppetModule(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin):
-    """A representation of a Content View Puppet Module entity.
-
-    ``content_view`` must be passed in when this entity is instantiated.
-
-    :raises: ``TypeError`` if ``content_view`` is not passed in.
-
-    """
-
-    def __init__(self, server_config=None, **kwargs):
-        _check_for_value('content_view', kwargs)
-        self._fields = {
-            'author': entity_fields.StringField(),
-            'content_view': entity_fields.OneToOneField(
-                ContentView,
-                required=True,
-            ),
-            'name': entity_fields.StringField(str_type='alpha', length=(6, 12), unique=True),
-        }
-        super().__init__(server_config, **kwargs)
-        self._meta = {
-            "api_path": f'{self.content_view.path("self")}/content_view_puppet_modules',
-        }
-
-    def read(self, entity=None, attrs=None, ignore=None, params=None):
-        """Provide a default value for ``entity``.
-
-        By default, ``nailgun.entity_mixins.EntityReadMixin.read provides a
-        default value for ``entity`` like so::
-
-            entity = type(self)()
-
-        However, :class:`ContentViewPuppetModule` requires that an
-        ``content_view`` be provided, so this technique will not work. Do
-        this instead::
-
-            entity = type(self)(content_view=self.content_view.id)
-
-        """
-        # read() should not change the state of the object it's called on, but
-        # super() alters the attributes of any entity passed in. Creating a new
-        # object and passing it to super() lets this one avoid changing state.
-        if entity is None:
-            entity = type(self)(
-                self._server_config,
-                content_view=self.content_view,
-            )
-        if ignore is None:
-            ignore = set()
-        ignore.add('content_view')
-        return super().read(entity, attrs, ignore, params)
-
-
 class ContentView(
     Entity,
     EntityCreateMixin,
@@ -2582,22 +2527,15 @@ class ContentView(
 
         The format of the returned path depends on the value of ``which``:
 
-        content_view_puppet_modules
-            /content_views/<id>/content_view_puppet_modules
         content_view_versions
             /content_views/<id>/content_view_versions
         publish
             /content_views/<id>/publish
-        available_puppet_module_names
-            /content_views/<id>/available_puppet_module_names
 
         ``super`` is called otherwise.
 
         """
         if which in (
-            'available_puppet_module_names',
-            'available_puppet_modules',
-            'content_view_puppet_modules',
             'content_view_versions',
             'copy',
             'publish',
@@ -2624,25 +2562,6 @@ class ContentView(
             kwargs['data']['id'] = self.id
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('publish'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-    def available_puppet_modules(self, synchronous=True, timeout=None, **kwargs):
-        """Get puppet modules available to be added to the content view.
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('available_puppet_modules'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def copy(self, synchronous=True, timeout=None, **kwargs):
@@ -5861,27 +5780,6 @@ class ModuleStream(Entity, EntityReadMixin, EntitySearchMixin):
         super().__init__(server_config, **kwargs)
 
 
-class PuppetModule(Entity, EntityReadMixin, EntitySearchMixin):
-    """A representation of a Puppet Module entity."""
-
-    def __init__(self, server_config=None, **kwargs):
-        self._fields = {
-            'author': entity_fields.StringField(),
-            'checksums': entity_fields.ListField(),
-            'dependencies': entity_fields.ListField(),
-            'description': entity_fields.StringField(),
-            'license': entity_fields.StringField(),
-            'name': entity_fields.StringField(str_type='alpha', length=(6, 12), unique=True),
-            'project_page': entity_fields.URLField(),
-            'repository': entity_fields.OneToManyField(Repository),
-            'source': entity_fields.URLField(),
-            'summary': entity_fields.StringField(),
-            'version': entity_fields.StringField(),
-        }
-        self._meta = {'api_path': 'katello/api/v2/puppet_modules'}
-        super().__init__(server_config, **kwargs)
-
-
 class CompliancePolicies(
     Entity,
     EntityCreateMixin,
@@ -6105,8 +6003,6 @@ class Repository(
             /repositories/<id>/packages
         module_streams
             /repositories/<id>/module_streams
-        puppet_modules
-            /repositories/<id>/puppet_modules
         remove_content
             /repositories/<id>/remove_content
         sync
@@ -6124,7 +6020,6 @@ class Repository(
             'files',
             'packages',
             'module_streams',
-            'puppet_modules',
             'remove_content',
             'sync',
             'import_uploads',
@@ -6251,7 +6146,7 @@ class Repository(
         It expects either a list of uploads or upload_ids (but not both).
 
         :param content_type: content type (‘deb’, ‘docker_manifest’, ‘file’, ‘ostree’,
-                ‘puppet_module’, ‘rpm’, ‘srpm’)
+                ‘rpm’, ‘srpm’)
         :param uploads: Array of uploads to be imported
         :param upload_ids: Array of upload ids to be imported
         :param synchronous: What should happen if the server returns an HTTP
@@ -6278,7 +6173,7 @@ class Repository(
     def remove_content(self, synchronous=True, timeout=None, **kwargs):
         """Remove content from a repository
 
-        It expects packages/puppet modules/docker manifests ids sent as data.
+        It expects content/packages/docker manifests ids sent as data.
         Here is an example of how to use this method::
 
             repository.remove_content(data={'ids': [package.id]})
@@ -6297,25 +6192,6 @@ class Repository(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('remove_content'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-    def puppet_modules(self, synchronous=True, timeout=None, **kwargs):
-        """List puppet modules associated with repository
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('puppet_modules'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def packages(self, synchronous=True, timeout=None, **kwargs):
