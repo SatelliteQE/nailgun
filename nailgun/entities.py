@@ -2507,7 +2507,12 @@ class ContentView(
             content_view_components = result.get('content_view_component')
             if content_view_components is not None:
                 del result['content_view_component']
-            entity = type(self)(self._server_config, **result)
+            try:
+                entity = type(self)(self._server_config, **result)
+            except TypeError:
+                # in the event that an entity's init is overwritten
+                # with a positional server_config
+                entity = type(self)(**result)
             if content_view_components:
                 entity.content_view_component = [
                     ContentViewComponent(
@@ -4405,7 +4410,12 @@ class Host(
             image = result.get('image')
             if image is not None:
                 del result['image']
-            entity = type(self)(self._server_config, **result)
+            try:
+                entity = type(self)(self._server_config, **result)
+            except TypeError:
+                # in the event that an entity's init is overwritten
+                # with a positional server_config
+                entity = type(self)(**result)
             if image:
                 entity.image = Image(
                     server_config=self._server_config,
@@ -5330,7 +5340,12 @@ class Parameter(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, E
         and are only added to entity to be able to use proper path.
         """
         if entity is None:
-            entity = type(self)(self._server_config, **{self._parent_type: self._parent_id})
+            try:
+                entity = type(self)(self._server_config, **{self._parent_type: self._parent_id})
+            except TypeError:
+                # in the event that an entity's init is overwritten
+                # with a positional server_config
+                entity = type(self)(**{self._parent_type: self._parent_id})
         if ignore is None:
             ignore = set()
         for field_name in self._path_fields:
@@ -5459,7 +5474,12 @@ class Product(
             sync_plan = result.get('sync_plan')
             if sync_plan is not None:
                 del result['sync_plan']
-            entity = type(self)(self._server_config, **result)
+            try:
+                entity = type(self)(self._server_config, **result)
+            except TypeError:
+                # in the event that an entity's init is overwritten
+                # with a positional server_config
+                entity = type(self)(**result)
             if sync_plan:
                 entity.sync_plan = SyncPlan(
                     server_config=self._server_config,
