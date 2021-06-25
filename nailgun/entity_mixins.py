@@ -1343,7 +1343,15 @@ class EntitySearchMixin:
         #
         results = self.search_json(fields, query)['results']
         results = self.search_normalize(results)
-        entities = [type(self)(self._server_config, **result) for result in results]
+        entities = []
+        for result in results:
+            try:
+                entity = type(self)(self._server_config, **result)
+            except TypeError:
+                # in the event that an entity's init is overwritten
+                # with a positional server_config
+                entity = type(self)(**result)
+            entities.append(entity)
         if filters is not None:
             entities = self.search_filter(entities, filters)
         return entities
