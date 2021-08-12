@@ -5156,7 +5156,7 @@ class Organization(
             }
         )
         self._meta = {
-            'api_path': 'katello/api/v2/organizations',
+            'api_path': 'katello/api/organizations',
         }
         super().__init__(server_config, **kwargs)
 
@@ -5167,6 +5167,12 @@ class Organization(
 
         download_debug_certificate
             /organizations/<id>/download_debug_certificate
+        simple_content_access/enable
+            /organizations/<id>/simple_content_access/enable
+        simple_content_access/disable
+            /organizations/<id>/simple_content_access/disable
+        simple_content_access/eligible
+            /organizations/<id>/simple_content_access/eligible
         subscriptions
             /organizations/<id>/subscriptions
         subscriptions/upload
@@ -5183,6 +5189,9 @@ class Organization(
         """
         if which in (
             'download_debug_certificate',
+            'simple_content_access/enable',
+            'simple_content_access/disable',
+            'simple_content_access/eligible',
             'subscriptions',
             'subscriptions/delete_manifest',
             'subscriptions/manifest_history',
@@ -5257,6 +5266,60 @@ class Organization(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('download_debug_certificate'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def sca_enable(self, synchronous=True, timeout=None, **kwargs):
+        """Enable simple content access mode for particular organization.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('simple_content_access/enable'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def sca_disable(self, synchronous=True, timeout=None, **kwargs):
+        """Disable simple content access mode for particular organization.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('simple_content_access/disable'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def sca_eligible(self, synchronous=True, timeout=None, **kwargs):
+        """Determine if the organization is eligible for simple content access mode.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('simple_content_access/eligible'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
