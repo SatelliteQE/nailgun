@@ -8023,3 +8023,89 @@ class Srpms(Entity, EntityReadMixin, EntitySearchMixin):
         }
         self._meta = {'api_path': 'katello/api/v2/srpms'}
         super().__init__(server_config, **kwargs)
+
+
+class RHCloud(Entity):
+    """A representation of a RHCloud Inventory entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'organization_id': entity_fields.IntegerField(),
+            'location_id': entity_fields.IntegerField(),
+        }
+        self._meta = {
+            'api_path': f'/api/v2/organizations/{kwargs.get("organization_id")}/rh_cloud',
+        }
+        super().__init__(server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        report
+            /api/organizations/:organization_id/rh_cloud/report
+
+        inventory_sync
+            /api/organizations/:organization_id/rh_cloud/inventory_sync
+
+        Otherwise, call ``super``.
+
+        """
+        if which in ('report', 'inventory_sync'):
+            return f'{super().path(which="base")}/{which}'
+        return super().path(which)
+
+    def download_report(self, destination, **kwargs):
+        """Download RHCloud Inventory report.
+
+        :param destination: File path where report will be saved.
+            e.g. robottelo_tmp_dir.joinpath(f'report_{gen_alphanumeric()}.tar.xz')
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('report'), **kwargs)
+        with open(destination, 'wb') as tarfile:
+            tarfile.write(response.content)
+
+    def generate_report(self, synchronous=True, timeout=None, **kwargs):
+        """Start RHCloud Inventory report generation process
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('report'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def inventory_sync(self, synchronous=True, timeout=None, **kwargs):
+        """Start inventory synchronization
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('inventory_sync'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
