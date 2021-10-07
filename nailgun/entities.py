@@ -2056,6 +2056,7 @@ class ContentUpload(
                 Repository,
                 required=True,
             ),
+            'size': entity_fields.IntegerField(required=True, min_val=2097152),
         }
         super().__init__(server_config, **kwargs)
         # a ContentUpload does not have an id field, only an upload_id
@@ -2089,6 +2090,7 @@ class ContentUpload(
         if ignore is None:
             ignore = set()
         ignore.add('repository')
+        ignore.add('size')
         return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None, **kwargs):
@@ -2149,7 +2151,7 @@ class ContentUpload(
             with open(filepath, 'rb') as contentfile:
                 chunk = contentfile.read(content_chunk_size)
                 while len(chunk) > 0:
-                    data = {'offset': offset, 'content': chunk}
+                    data = {'offset': offset, 'content': chunk, 'size': content_chunk_size}
                     content_upload.update(data)
 
                     offset += len(chunk)
