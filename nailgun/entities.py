@@ -110,7 +110,10 @@ def _handle_response(response, server_config, synchronous=False, timeout=None):
     """
     response.raise_for_status()
     if synchronous is True and response.status_code == ACCEPTED:
-        return ForemanTask(server_config, id=response.json()['id']).poll(timeout=timeout)
+        response_json = response.json()
+        id = response_json['id'] if isinstance(response_json, dict) else response_json[0]['id']
+        return ForemanTask(
+            server_config, id=id).poll(timeout=timeout)
     if response.status_code == NO_CONTENT:
         return
     if 'application/json' in response.headers.get('content-type', '').lower():
