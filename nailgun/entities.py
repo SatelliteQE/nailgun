@@ -5377,6 +5377,7 @@ class Parameter(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, E
             ),
             'priority': entity_fields.IntegerField(),
             'value': entity_fields.StringField(required=True),
+            'parameter_type': entity_fields.StringField(required=True),
         }
         self._path_fields = {
             'domain': entity_fields.OneToOneField(Domain),
