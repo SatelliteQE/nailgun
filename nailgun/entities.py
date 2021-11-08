@@ -5100,6 +5100,10 @@ class Organization(
             /organizations/<id>/subscriptions/refresh_manifest
         sync_plans
             /organizations/<id>/sync_plans
+        rh_cloud/report
+           /organizations/<id>/report
+        rh_cloud/inventory_sync
+           /organizations/<id>/inventory_sync
 
         Otherwise, call ``super``.
 
@@ -5117,6 +5121,12 @@ class Organization(
             'sync_plans',
         ):
             return f'{super().path(which="self")}/{which}'
+
+        # Foreman Base Endpoints
+        if which in ('rh_cloud/report', 'rh_cloud/inventory_sync'):
+            self._meta = {'api_path': 'api/organizations'}
+            return f'{super().path(which="self")}/{which}'
+
         return super().path(which)
 
     def create(self, create_missing=None):
@@ -5237,6 +5247,61 @@ class Organization(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('simple_content_access/eligible'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def rh_cloud_download_report(self, destination, **kwargs):
+        """Download RHCloud Inventory report.
+
+        :param destination: File path where report will be saved.
+            e.g. robottelo_tmp_dir.joinpath(f'report_{gen_alphanumeric()}.tar.xz')
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('rh_cloud/report'), **kwargs)
+        with open(destination, 'wb') as tarfile:
+            tarfile.write(response.content)
+
+    def rh_cloud_generate_report(self, synchronous=True, timeout=None, **kwargs):
+        """Start RHCloud Inventory report generation process
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('rh_cloud/report'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def rh_cloud_inventory_sync(self, synchronous=True, timeout=None, **kwargs):
+        """Start inventory synchronization
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('rh_cloud/inventory_sync'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
