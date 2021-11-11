@@ -1,11 +1,18 @@
 NailGun
 =======
 
-.. image:: https://coveralls.io/repos/SatelliteQE/nailgun/badge.svg
-   :target: https://coveralls.io/r/SatelliteQE/nailgun
+.. image:: https://codecov.io/gh/SatelliteQE/nailgun/branch/master/graph/badge.svg
+  :target: https://app.codecov.io/gh/SatelliteQE/nailgun
 
-.. image:: https://travis-ci.org/SatelliteQE/nailgun.svg?branch=master
-    :target: https://travis-ci.org/SatelliteQE/nailgun
+.. image:: https://img.shields.io/pypi/pyversions/nailgun.svg
+  :target: https://pypi.org/project/nailgun/
+
+.. image:: https://img.shields.io/pypi/l/nailgun.svg
+  :target: https://pypi.org/project/nailgun
+
+.. image:: https://github.com/SatelliteQE/nailgun/workflows/update_nailgun_package_to_PyPI/badge.svg
+   :alt: Build PyPI status on GitHub Actions
+   :target: https://github.com/SatelliteQE/nailgun/actions
 
 .. image:: https://readthedocs.org/projects/nailgun/badge/?version=latest
     :target: https://nailgun.readthedocs.io/en/latest/?badge=latest
