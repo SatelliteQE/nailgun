@@ -6130,6 +6130,9 @@ class Repository(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'ansible_collection_auth_url': entity_fields.StringField(),
+            'ansible_collection_auth_token': entity_fields.StringField(),
+            'ansible_collection_requirements': entity_fields.StringField(),
             'backend_identifier': entity_fields.StringField(),
             'checksum_type': entity_fields.StringField(
                 choices=('sha1', 'sha256'),
