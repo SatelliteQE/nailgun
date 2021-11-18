@@ -6064,6 +6064,47 @@ class RecurringLogic(Entity, EntityReadMixin):
         return super().path(which)
 
 
+class RegistrationCommand(Entity, EntityCreateMixin, EntityReadMixin):
+    """A representation of a Role entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'organization': entity_fields.OneToOneField(Organization, required=True),
+            'activation_keys': entity_fields.OneToManyField(ActivationKey, required=True),
+            'location': entity_fields.OneToOneField(Location, required=True),
+            'insecure': entity_fields.BooleanField(default=True, required=True),
+            'setup_remote_execution': entity_fields.BooleanField(default=True),
+            'setup_insights': entity_fields.BooleanField(default=False),
+            'jwt_expiration': entity_fields.IntegerField(default=4),
+            'packages': entity_fields.ListField(default=[]),
+            'repo': entity_fields.StringField(default=''),
+            'repo_gpg_key_url': entity_fields.URLField(default=''),
+            'update_packages': entity_fields.BooleanField(default=False),
+            'lifecycle_environment': entity_fields.OneToOneField(LifecycleEnvironment),
+        }
+
+        self._meta = {'api_path': '/api/registration_commands'}
+        super().__init__(server_config, **kwargs)
+
+    def create_payload(self):
+        """Wrap submitted data within an extra dict. In addition,
+        rename the ``activation_keys_ids`` field to ``activation_keys``.
+
+        """
+        payload = super().create_payload()
+        if 'activation_keys_ids' in payload:
+            payload['activation_keys'] = payload.pop('activation_keys_ids')
+        return payload
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Override :meth:`nailgun.entity_mixins.EntityReadMixin.read` to ignore
+        all the fields and returns 'registration_command' output in dict
+        """
+        if attrs is None:
+            attrs = self.read_json()
+        return attrs
+
+
 class Report(Entity):
     """A representation of a Report entity."""
 
