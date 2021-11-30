@@ -2048,6 +2048,8 @@ class ContentUpload(
 ):
     """A representation of a Content Upload entity."""
 
+    content_chunk_size = 2 * 1024 * 1024
+
     def __init__(self, server_config=None, **kwargs):
         _check_for_value('repository', kwargs)
         self._fields = {
@@ -2056,6 +2058,7 @@ class ContentUpload(
                 Repository,
                 required=True,
             ),
+            'size': entity_fields.IntegerField(required=True, min_val=self.content_chunk_size),
         }
         super().__init__(server_config, **kwargs)
         # a ContentUpload does not have an id field, only an upload_id
@@ -2089,6 +2092,7 @@ class ContentUpload(
         if ignore is None:
             ignore = set()
         ignore.add('repository')
+        ignore.add('size')
         return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None, **kwargs):
@@ -2144,16 +2148,15 @@ class ContentUpload(
 
         try:
             offset = 0
-            content_chunk_size = 2 * 1024 * 1024
 
             with open(filepath, 'rb') as contentfile:
-                chunk = contentfile.read(content_chunk_size)
+                chunk = contentfile.read(self.content_chunk_size)
                 while len(chunk) > 0:
-                    data = {'offset': offset, 'content': chunk}
+                    data = {'offset': offset, 'content': chunk, 'size': self.content_chunk_size}
                     content_upload.update(data)
 
                     offset += len(chunk)
-                    chunk = contentfile.read(content_chunk_size)
+                    chunk = contentfile.read(self.content_chunk_size)
 
             size = 0
             checksum = hashlib.sha256()
