@@ -2090,7 +2090,7 @@ class ContentUpload(
         if ignore is None:
             ignore = set()
         ignore.add('repository')
-        ignore.add('size') 
+        ignore.add('size')
         return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None, **kwargs):
