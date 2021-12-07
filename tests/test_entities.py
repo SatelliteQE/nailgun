@@ -181,6 +181,8 @@ class InitTestCase(TestCase):
                 entities.UserGroup,
                 entities.VirtWhoConfig,
                 entities.VMWareComputeResource,
+                entities.Webhook,
+                entities.WebhookTemplate,
             )
         ]
         entities_.extend(
@@ -284,6 +286,8 @@ class PathTestCase(TestCase):
             (entities.Subscription, '/subscriptions'),
             (entities.ScapContents, '/scap_contents'),
             (entities.VirtWhoConfig, '/foreman_virt_who_configure/api/v2/configs'),
+            (entities.Webhook, '/webhooks'),
+            (entities.WebhookTemplate, '/webhook_templates'),
         ):
             with self.subTest((entity, path)):
                 self.assertIn(path, entity(self.cfg).path())
@@ -678,6 +682,7 @@ class CreatePayloadTestCase(TestCase):
                 entities.User,
                 entities.UserGroup,
                 entities.VirtWhoConfig,
+                entities.Webhook,
             )
         ]
         entities_.extend(

@@ -8150,70 +8150,74 @@ class Webhook(
                 required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'enabled': entity_fields.BooleanField(),
-            'event': entity_fields.StringField(required=True,
-                                               choices=[
-                                                   "actions.katello.content_view.promote_succeeded",
-                                                   "actions.katello.content_view.publish_succeeded",
-                                                   "actions.katello.repository.sync_succeeded",
-                                                   "actions.remote_execution.run_host_job_ansible_configure_cloud_connector_succeeded",
-                                                   "actions.remote_execution.run_host_job_ansible_enable_web_console_succeeded",
-                                                   "actions.remote_execution.run_host_job_ansible_run_capsule_upgrade_succeeded",
-                                                   "actions.remote_execution.run_host_job_ansible_run_host_succeeded",
-                                                   "actions.remote_execution.run_host_job_ansible_run_insights_plan_succeeded",
-                                                   "actions.remote_execution.run_host_job_ansible_run_playbook_succeeded",
-                                                   "actions.remote_execution.run_host_job_foreman_openscap_run_oval_scans_succeeded",
-                                                   "actions.remote_execution.run_host_job_foreman_openscap_run_scans_succeeded",
-                                                   "actions.remote_execution.run_host_job_katello_errata_install_succeeded",
-                                                   "actions.remote_execution.run_host_job_katello_group_install_succeeded",
-                                                   "actions.remote_execution.run_host_job_katello_group_remove_succeeded",
-                                                   "actions.remote_execution.run_host_job_katello_group_update_succeeded",
-                                                   "actions.remote_execution.run_host_job_katello_module_stream_action_succeeded",
-                                                   "actions.remote_execution.run_host_job_katello_package_install_succeeded",
-                                                   "actions.remote_execution.run_host_job_katello_package_remove_succeeded",
-                                                   "actions.remote_execution.run_host_job_katello_package_update_succeeded",
-                                                   "actions.remote_execution.run_host_job_katello_service_restart_succeeded",
-                                                   "actions.remote_execution.run_host_job_puppet_run_host_succeeded",
-                                                   "actions.remote_execution.run_host_job_rh_cloud_remediate_hosts_succeeded",
-                                                   "actions.remote_execution.run_host_job_succeeded",
-                                                   "build_entered",
-                                                   "build_exited",
-                                                   "content_view_created",
-                                                   "content_view_destroyed",
-                                                   "content_view_updated",
-                                                   "domain_created",
-                                                   "domain_destroyed",
-                                                   "domain_updated",
-                                                   "host_created",
-                                                   "host_destroyed",
-                                                   "host_updated",
-                                                   "hostgroup_created",
-                                                   "hostgroup_destroyed",
-                                                   "hostgroup_updated",
-                                                   "model_created",
-                                                   "model_destroyed",
-                                                   "model_updated",
-                                                   "status_changed",
-                                                   "subnet_created",
-                                                   "subnet_destroyed",
-                                                   "subnet_updated",
-                                                   "user_created",
-                                                   "user_destroyed",
-                                                   "user_updated",
-                                               ]),
+            'event': entity_fields.StringField(
+                required=True,
+                choices=[
+                    "actions.katello.content_view.promote_succeeded",
+                    "actions.katello.content_view.publish_succeeded",
+                    "actions.katello.repository.sync_succeeded",
+                    "actions.remote_execution.run_host_job_ansible_configure_cloud_connector_succeeded",  # noqa 501
+                    "actions.remote_execution.run_host_job_ansible_enable_web_console_succeeded",
+                    "actions.remote_execution.run_host_job_ansible_run_capsule_upgrade_succeeded",
+                    "actions.remote_execution.run_host_job_ansible_run_host_succeeded",
+                    "actions.remote_execution.run_host_job_ansible_run_insights_plan_succeeded",
+                    "actions.remote_execution.run_host_job_ansible_run_playbook_succeeded",
+                    "actions.remote_execution.run_host_job_foreman_openscap_run_oval_scans_succeeded",  # noqa 501
+                    "actions.remote_execution.run_host_job_foreman_openscap_run_scans_succeeded",
+                    "actions.remote_execution.run_host_job_katello_errata_install_succeeded",
+                    "actions.remote_execution.run_host_job_katello_group_install_succeeded",
+                    "actions.remote_execution.run_host_job_katello_group_remove_succeeded",
+                    "actions.remote_execution.run_host_job_katello_group_update_succeeded",
+                    "actions.remote_execution.run_host_job_katello_module_stream_action_succeeded",
+                    "actions.remote_execution.run_host_job_katello_package_install_succeeded",
+                    "actions.remote_execution.run_host_job_katello_package_remove_succeeded",
+                    "actions.remote_execution.run_host_job_katello_package_update_succeeded",
+                    "actions.remote_execution.run_host_job_katello_service_restart_succeeded",
+                    "actions.remote_execution.run_host_job_puppet_run_host_succeeded",
+                    "actions.remote_execution.run_host_job_rh_cloud_remediate_hosts_succeeded",
+                    "actions.remote_execution.run_host_job_succeeded",
+                    "build_entered",
+                    "build_exited",
+                    "content_view_created",
+                    "content_view_destroyed",
+                    "content_view_updated",
+                    "domain_created",
+                    "domain_destroyed",
+                    "domain_updated",
+                    "host_created",
+                    "host_destroyed",
+                    "host_updated",
+                    "hostgroup_created",
+                    "hostgroup_destroyed",
+                    "hostgroup_updated",
+                    "model_created",
+                    "model_destroyed",
+                    "model_updated",
+                    "status_changed",
+                    "subnet_created",
+                    "subnet_destroyed",
+                    "subnet_updated",
+                    "user_created",
+                    "user_destroyed",
+                    "user_updated",
+                ],
+            ),
             'http_content_type': entity_fields.StringField(),
-            'http_method': entity_fields.StringField(choices=[
-                "POST",
-                "GET",
-                "PUT",
-                "DELETE",
-                "PATCH",
-            ]),
+            'http_method': entity_fields.StringField(
+                choices=[
+                    "POST",
+                    "GET",
+                    "PUT",
+                    "DELETE",
+                    "PATCH",
+                ]
+            ),
             'password': entity_fields.StringField(),
             'proxy_authorization': entity_fields.BooleanField(),
             'target_url': entity_fields.URLField(required=True),
             'user': entity_fields.StringField(),
             'verify_ssl': entity_fields.BooleanField(),
-            'webhook_template': entity_fields.OneToOneField(WebhookTemplate)
+            'webhook_template': entity_fields.OneToOneField(WebhookTemplate),
         }
         self._meta = {
             'api_path': 'api/webhooks',
@@ -8221,9 +8225,11 @@ class Webhook(
         super().__init__(server_config, **kwargs)
 
     def create(self, create_missing=None):
-        original_return =  super().create(create_missing)
+        original_return = super().create(create_missing)
         webhook_template_id = original_return.webhook_template.id
-        original_return.webhook_template = WebhookTemplate(self._server_config, id=webhook_template_id).read()
+        original_return.webhook_template = WebhookTemplate(
+            self._server_config, id=webhook_template_id
+        ).read()
         return original_return
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -8245,24 +8251,17 @@ class WebhookTemplate(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(
-                required=True,
-                str_type='alpha',
-                length=(6, 12),
-                unique=True
+                required=True, str_type='alpha', length=(6, 12), unique=True
             ),
-            'template': entity_fields.StringField(
-                required=True
-            ),
+            'template': entity_fields.StringField(required=True),
             'default': entity_fields.BooleanField(),
             'snippet': entity_fields.BooleanField(),
             'locked': entity_fields.BooleanField(),
             'description': entity_fields.StringField(),
             'location': entity_fields.OneToManyField(Location),
-            'organization': entity_fields.OneToManyField(Organization)
+            'organization': entity_fields.OneToManyField(Organization),
         }
-        self._meta = {
-            'api_path': 'api/webhook_templates'
-        }
+        self._meta = {'api_path': 'api/webhook_templates'}
         super().__init__(server_config, **kwargs)
 
     def create(self, create_missing=None):
