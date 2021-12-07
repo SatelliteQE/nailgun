@@ -8225,6 +8225,9 @@ class Webhook(
         super().__init__(server_config, **kwargs)
 
     def create(self, create_missing=None):
+        """
+        Create WebhookTemplate properly when creating a parent Webhook instance
+        """
         original_return = super().create(create_missing)
         webhook_template_id = original_return.webhook_template.id
         original_return.webhook_template = WebhookTemplate(
@@ -8233,6 +8236,7 @@ class Webhook(
         return original_return
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Ignore auth properties on read"""
         if ignore is None:
             ignore = set()
         ignore.add('password')
@@ -8248,6 +8252,8 @@ class WebhookTemplate(
     EntitySearchMixin,
     EntityUpdateMixin,
 ):
+    """A representation of a WebhookTemplate entity."""
+
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'name': entity_fields.StringField(
@@ -8265,6 +8271,9 @@ class WebhookTemplate(
         super().__init__(server_config, **kwargs)
 
     def create(self, create_missing=None):
+        """
+        Create WebhookTemplate properly when creating a parent Webhook instance
+        """
         return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
