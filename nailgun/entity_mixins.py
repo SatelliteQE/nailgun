@@ -2,6 +2,7 @@
 import _thread as thread
 import http.client as http_client
 import json as std_json
+import logging
 import threading
 import time
 from collections.abc import Iterable
@@ -18,6 +19,8 @@ from nailgun.entity_fields import IntegerField
 from nailgun.entity_fields import ListField
 from nailgun.entity_fields import OneToManyField
 from nailgun.entity_fields import OneToOneField
+
+logger = logging.getLogger(__name__)
 
 # This module contains very extensive docstrings, so this module is easier to
 # understand than its size suggests. That said, it could be useful to split
@@ -248,11 +251,12 @@ def _get_entity_id(field_name, attrs):
     if field_name_id in attrs:
         return attrs[field_name_id]
     else:
-        raise MissingValueError(
+        logger.warning(
             f'Cannot find a value for the "{field_name}" field. '
             f'Searched for keys named {field_name}, {field_name_id},'
             f' but available keys are {attrs.keys()}.'
         )
+        return None
 
 
 def _get_entity_ids(field_name, attrs):
@@ -281,11 +285,12 @@ def _get_entity_ids(field_name, attrs):
     elif plural_field_name in attrs:
         return [entity['id'] for entity in attrs[plural_field_name]]
     else:
-        raise MissingValueError(
+        logger.warning(
             f'Cannot find a value for the "{field_name}" field. '
             f'Searched for keys named {field_name_ids}, {field_name}, {plural_field_name} '
             f'but available keys are {attrs.keys()}.'
         )
+        return None
 
 
 # -----------------------------------------------------------------------------
@@ -797,10 +802,13 @@ class EntityReadMixin:
                     )
                 setattr(entity, field_name, referenced_entity)
             elif isinstance(field, OneToManyField):
-                referenced_entities = [
-                    field.entity(self._server_config, id=entity_id)
-                    for entity_id in _get_entity_ids(field_name, attrs)
-                ]
+                ent_ids = _get_entity_ids(field_name, attrs)
+                if ent_ids:
+                    referenced_entities = [
+                        field.entity(self._server_config, id=entity_id) for entity_id in ent_ids
+                    ]
+                else:
+                    referenced_entities = []
                 setattr(entity, field_name, referenced_entities)
             else:
                 setattr(entity, field_name, attrs[field_name])
