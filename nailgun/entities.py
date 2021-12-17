@@ -1539,7 +1539,12 @@ class AzureRMComputeResource(AbstractComputeResource):
 
 
 class ConfigGroup(
-    Entity, EntityCreateMixin, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin
+    Entity,
+    EntityCreateMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+    EntityDeleteMixin,
 ):
     """A representation of a Config Group entity."""
 
@@ -1550,7 +1555,7 @@ class ConfigGroup(
             ),
         }
         self._meta = {
-            'api_path': 'api/v2/config_groups',
+            'api_path': 'foreman_puppet/api/config_groups',
         }
         super().__init__(server_config, **kwargs)
 
@@ -2826,7 +2831,7 @@ class Environment(
             'organization': entity_fields.OneToManyField(Organization),
         }
         self._meta = {
-            'api_path': 'api/v2/environments',
+            'api_path': 'foreman_puppet/api/environments',
         }
         super().__init__(server_config, **kwargs)
 
@@ -2858,7 +2863,7 @@ class Environment(
         The format of the returned path depends on the value of ``which``:
 
         smart_class_parameters
-            /api/environments/:environment_id/smart_class_parameters
+            /foreman_puppet/api/environments/:environment_id/smart_class_parameters
 
         Otherwise, call ``super``.
 
@@ -5805,7 +5810,7 @@ class PuppetClass(
             'hostgroup': entity_fields.OneToManyField(HostGroup),
         }
         self._meta = {
-            'api_path': 'api/v2/puppetclasses',
+            'api_path': 'foreman_puppet/api/puppetclasses',
         }
         super().__init__(server_config, **kwargs)
 
@@ -5828,7 +5833,7 @@ class PuppetClass(
         The format of the returned path depends on the value of ``which``:
 
         smart_class_parameters
-            /api/puppetclasses/:puppetclass_id/smart_class_parameters
+            /foreman_puppet/api/puppetclasses/:puppetclass_id/smart_class_parameters
 
         Otherwise, call ``super``.
 
@@ -6943,7 +6948,7 @@ class SmartClassParameters(Entity, EntityReadMixin, EntitySearchMixin, EntityUpd
             'override_values': entity_fields.DictField(),
         }
         self._meta = {
-            'api_path': 'api/v2/smart_class_parameters',
+            'api_path': 'foreman_puppet/api/smart_class_parameters',
         }
         super().__init__(server_config, **kwargs)
 
