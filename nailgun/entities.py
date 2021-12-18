@@ -7201,6 +7201,7 @@ class Subnet(
             'domain': entity_fields.OneToManyField(Domain),
             'from_': entity_fields.IPAddressField(),
             'gateway': entity_fields.StringField(),
+            'httpboot': entity_fields.OneToOneField(SmartProxy),
             'ipam': entity_fields.StringField(
                 choices=('DHCP', 'Internal DB'),
                 default='DHCP',
