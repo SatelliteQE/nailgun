@@ -3239,10 +3239,12 @@ class HostGroup(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'architecture': entity_fields.OneToOneField(Architecture),
+            'description': entity_fields.StringField(),
             'domain': entity_fields.OneToOneField(Domain),
             'puppet_proxy': entity_fields.OneToOneField(SmartProxy),
             'puppet_ca_proxy': entity_fields.OneToOneField(SmartProxy),
             'content_source': entity_fields.OneToOneField(SmartProxy),
+            'content_view': entity_fields.OneToOneField(ContentView),
             'compute_resource': entity_fields.OneToOneField(AbstractComputeResource),
             'compute_profile': entity_fields.OneToOneField(ComputeProfile),
             'environment': entity_fields.OneToOneField(Environment),
@@ -3258,6 +3260,25 @@ class HostGroup(
             'organization': entity_fields.OneToManyField(Organization),
             'parent': entity_fields.OneToOneField(HostGroup),
             'ptable': entity_fields.OneToOneField(PartitionTable),
+            'pxe_loader': entity_fields.StringField(
+                choices=(
+                    'PXELinux BIOS',
+                    'PXELinux UEFI',
+                    'Grub UEFI',
+                    'Grub2 BIOS'
+                    'Grub2 ELF'
+                    'Grub2 UEFI'
+                    'Grub2 UEFI SecureBoot'
+                    'Grub2 UEFI HTTP'
+                    'Grub2 UEFI HTTPS'
+                    'Grub2 UEFI HTTPS SecureBoot'
+                    'iPXE Embedded'
+                    'iPXE UEFI HTTP'
+                    'iPXE Chain BIOS'
+                    'iPXE Chain UEFI',
+                ),
+                default='PXELinux BIOS',
+            ),
             'realm': entity_fields.OneToOneField(Realm),
             'subnet': entity_fields.OneToOneField(Subnet),
             'group_parameters_attributes': entity_fields.ListField(),
