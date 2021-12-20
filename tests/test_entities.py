@@ -167,7 +167,6 @@ class InitTestCase(TestCase):
                 entities.Setting,
                 entities.SmartClassParameters,
                 entities.SmartProxy,
-                entities.SmartVariable,
                 # entities.Snapshot,  # see below
                 entities.Srpms,
                 entities.Status,
@@ -200,7 +199,6 @@ class InitTestCase(TestCase):
                 (entities.OperatingSystemParameter, {'operatingsystem': 1}),
                 (entities.OSDefaultTemplate, {'operatingsystem': 1}),
                 (entities.OverrideValue, {'smart_class_parameter': 1}),
-                (entities.OverrideValue, {'smart_variable': 1}),
                 (entities.Parameter, {'domain': 1}),
                 (entities.Parameter, {'host': 1}),
                 (entities.Parameter, {'hostgroup': 1}),
@@ -325,12 +323,10 @@ class PathTestCase(TestCase):
             (entities.Host, 'packages'),
             (entities.Host, 'puppetclass_ids'),
             (entities.Host, 'smart_class_parameters'),
-            (entities.Host, 'smart_variables'),
             (entities.HostGroup, 'clone'),
             (entities.HostGroup, 'puppetclass_ids'),
             (entities.HostGroup, 'rebuild_config'),
             (entities.HostGroup, 'smart_class_parameters'),
-            (entities.HostGroup, 'smart_variables'),
             (entities.Organization, 'download_debug_certificate'),
             (entities.Organization, 'subscriptions'),
             (entities.Organization, 'subscriptions/delete_manifest'),
@@ -672,7 +668,6 @@ class CreatePayloadTestCase(TestCase):
                 entities.OperatingSystem,
                 entities.Role,
                 entities.ScapContents,
-                entities.SmartVariable,
                 entities.Subnet,
                 entities.TailoringFile,
                 entities.User,
@@ -803,11 +798,6 @@ class CreatePayloadTestCase(TestCase):
             smart_class_parameter=1,
         ).create_payload()
         self.assertNotIn('smart_class_parameter_id', payload)
-        payload = entities.OverrideValue(
-            self.cfg,
-            smart_variable=1,
-        ).create_payload()
-        self.assertNotIn('smart_variable_id', payload)
 
     def test_job_template(self):
         """Create a :class:`nailgun.entities.JobTemplate`."""
@@ -1159,7 +1149,6 @@ class ReadTestCase(TestCase):
             entities.OperatingSystemParameter(self.cfg, operatingsystem=2),
             entities.OSDefaultTemplate(self.cfg, operatingsystem=2),
             entities.OverrideValue(self.cfg, smart_class_parameter=2),
-            entities.OverrideValue(self.cfg, smart_variable=2),
             entities.Parameter(self.cfg, domain=2),
             entities.Parameter(self.cfg, host=2),
             entities.Parameter(self.cfg, hostgroup=2),
@@ -1272,7 +1261,6 @@ class ReadTestCase(TestCase):
             (entities.OVirtComputeResource, {'password'}),
             (entities.SmartProxy, {'download_policy'}),
             (entities.SmartClassParameters, {'hidden_value'}),
-            (entities.SmartVariable, {'hidden_value'}),
             (
                 entities.Subnet,
                 {'discovery', 'remote_execution_proxy', 'subnet_parameters_attributes'},
@@ -1892,7 +1880,6 @@ class UpdatePayloadTestCase(TestCase):
             (entities.Role, {'role': {}}),
             (entities.Setting, {'setting': {}}),
             (entities.SmartProxy, {'smart_proxy': {}}),
-            (entities.SmartVariable, {'smart_variable': {}}),
             (entities.Subnet, {'subnet': {}}),
             (entities.User, {'user': {}}),
             (entities.UserGroup, {'usergroup': {}}),
@@ -2143,7 +2130,6 @@ class GenericTestCase(TestCase):
             (entities.Host(**generic).get_facts, 'get'),
             (entities.Host(**generic).install_content, 'put'),
             (entities.Host(**generic).list_scparams, 'get'),
-            (entities.Host(**generic).list_smart_variables, 'get'),
             (entities.Host(**generic).module_streams, 'get'),
             (entities.Host(**generic).packages, 'get'),
             (entities.Host(**generic).power, 'put'),
@@ -2156,7 +2142,6 @@ class GenericTestCase(TestCase):
             (entities.HostGroup(**generic).add_puppetclass, 'post'),
             (entities.HostGroup(**generic).clone, 'post'),
             (entities.HostGroup(**generic).list_scparams, 'get'),
-            (entities.HostGroup(**generic).list_smart_variables, 'get'),
             (entities.HostSubscription(**hostsubscription).add_subscriptions, 'put'),
             (entities.HostSubscription(**hostsubscription).remove_subscriptions, 'put'),
             (entities.Product(**generic).sync, 'post'),
@@ -2165,7 +2150,6 @@ class GenericTestCase(TestCase):
             (entities.ProductBulkAction(**generic).http_proxy, 'put'),
             (entities.ProductBulkAction(**generic).sync_plan, 'put'),
             (entities.PuppetClass(**generic).list_scparams, 'get'),
-            (entities.PuppetClass(**generic).list_smart_variables, 'get'),
             (entities.RHCIDeployment(**generic).deploy, 'put'),
             (entities.RecurringLogic(**generic).cancel, 'post'),
             (entities.Repository(**generic).errata, 'get'),
