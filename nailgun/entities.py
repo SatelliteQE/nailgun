@@ -5073,7 +5073,6 @@ class Organization(
             'compute_resource': entity_fields.OneToManyField(AbstractComputeResource),
             'description': entity_fields.StringField(),
             'domain': entity_fields.OneToManyField(Domain),
-            'environment': entity_fields.OneToManyField(Environment),
             'hostgroup': entity_fields.OneToManyField(HostGroup),
             'label': entity_fields.StringField(str_type='alpha'),
             'medium': entity_fields.OneToManyField(Media),
