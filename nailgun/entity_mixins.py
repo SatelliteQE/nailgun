@@ -62,6 +62,14 @@ class TaskFailedError(Exception):
         self.task_id = task_id
 
 
+def _feature_list(server_config, smart_proxy_id=1):
+    """Get list of features enabled on capsule"""
+    path = f'{server_config.url}/api/v2/smart_proxies/{smart_proxy_id}'
+    response = client.get(path, **server_config.get_client_kwargs())
+    response.raise_for_status()
+    return [feature['name'] for feature in response.json()['features']]
+
+
 def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
     """Implement :meth:`nailgun.entities.ForemanTask.poll`.
 
@@ -782,7 +790,8 @@ class EntityReadMixin:
             attrs = self.read_json(params=params)
         if ignore is None:
             ignore = set()
-
+        if 'Puppet' not in _feature_list(self._server_config):
+            ignore.add('environment')
         for field_name, field in entity.get_fields().items():
             if field_name in ignore:
                 continue
