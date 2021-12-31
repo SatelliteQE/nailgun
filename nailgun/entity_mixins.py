@@ -782,6 +782,7 @@ class EntityReadMixin:
             attrs = self.read_json(params=params)
         if ignore is None:
             ignore = set()
+
         for field_name, field in entity.get_fields().items():
             if field_name == 'environment':
                 if field.entity.__name__ == 'Environment':
