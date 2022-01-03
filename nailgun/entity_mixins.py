@@ -418,7 +418,7 @@ class Entity:
                 # follows the "ask forgiveness" principle. However, a TypeError
                 # could be raised for any number of reasons. For example,
                 # `field_value` could have a faulty __iter__ implementation.
-                if not isinstance(field_value, Iterable):
+                if field_value and not isinstance(field_value, Iterable):
                     raise BadValueError(
                         f'An inappropriate value was assigned to the "{field_name}" '
                         'field. An iterable of entities and/or entity IDs '
