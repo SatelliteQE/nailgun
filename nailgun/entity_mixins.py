@@ -698,6 +698,9 @@ class EntityReadMixin:
 
     """
 
+    ignore_fields = ['environment']
+    ignore_entities = ['Environment']
+
     def read_raw(self, params=None):
         """Get information about the current entity.
 
@@ -784,9 +787,8 @@ class EntityReadMixin:
             ignore = set()
 
         for field_name, field in entity.get_fields().items():
-            if field_name == 'environment':
-                if field.entity.__name__ == 'Environment':
-                    continue
+            if field_name in self.ignore_fields and field.entity.__name__ in self.ignore_entities:
+                continue
             if field_name in ignore:
                 continue
             if isinstance(field, OneToOneField):
