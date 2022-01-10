@@ -698,8 +698,8 @@ class EntityReadMixin:
 
     """
 
-    ignore_fields = ['environment']
-    ignore_entities = ['Environment']
+    ignore_fields = ['environment', 'smart_class_parameter', 'puppetclass']
+    ignore_entities = ['Environment', 'SmartClassParameters', 'PuppetClass']
 
     def read_raw(self, params=None):
         """Get information about the current entity.

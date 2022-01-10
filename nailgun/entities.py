@@ -187,6 +187,14 @@ def _get_version(server_config):
     return getattr(server_config, 'version', Version('1!0'))
 
 
+def _feature_list(server_config, smart_proxy_id=1):
+    """Get list of features enabled on capsule"""
+    path = f'{server_config.url}/api/v2/smart_proxies/{smart_proxy_id}'
+    response = client.get(path, **server_config.get_client_kwargs())
+    response.raise_for_status()
+    return [feature['name'] for feature in response.json()['features']]
+
+
 class ActivationKey(
     Entity,
     EntityCreateMixin,
@@ -3758,21 +3766,22 @@ class Host(
             if self.organization.id not in [org.id for org in self.domain.organization]:
                 self.domain.organization.append(self.organization)
                 self.domain.update(['organization'])
-        if not hasattr(self, 'environment'):
-            self.environment = Environment(
-                self._server_config,
-                location=[self.location],
-                organization=[self.organization],
-            ).create(True)
-        else:
-            if not hasattr(self.environment, 'organization'):
-                self.environment = self.environment.read()
-            if int(self.location.id) not in [loc.id for loc in self.environment.location]:
-                self.environment.location.append(self.location)
-                self.environment.update(['location'])
-            if int(self.organization.id) not in [org.id for org in self.environment.organization]:
-                self.environment.organization.append(self.organization)
-                self.environment.update(['organization'])
+        if 'Puppet' in _feature_list(self._server_config):
+            if not hasattr(self, 'environment'):
+                self.environment = Environment(
+                    self._server_config,
+                    location=[self.location],
+                    organization=[self.organization],
+                ).create(True)
+            else:
+                if not hasattr(self.environment, 'organization'):
+                    self.environment = self.environment.read()
+                if int(self.location.id) not in [loc.id for loc in self.environment.location]:
+                    self.environment.location.append(self.location)
+                    self.environment.update(['location'])
+                if int(self.organization.id) not in [org.id for org in self.environment.organization]:
+                    self.environment.organization.append(self.organization)
+                    self.environment.update(['organization'])
         if not hasattr(self, 'architecture'):
             self.architecture = Architecture(self._server_config).create(True)
         if not hasattr(self, 'ptable'):
