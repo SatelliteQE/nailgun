@@ -23,6 +23,7 @@ workings of entity classes.
 import hashlib
 import os.path
 from datetime import datetime
+from functools import lru_cache
 from http.client import ACCEPTED
 from http.client import NO_CONTENT
 from urllib.parse import urljoin  # noqa:F0401,E0611
@@ -185,6 +186,13 @@ def _get_version(server_config):
 
     """
     return getattr(server_config, 'version', Version('1!0'))
+
+
+@lru_cache()
+def _feature_list(server_config, smart_proxy_id=1):
+    """Get list of features enabled on capsule"""
+    smart_proxy = SmartProxy(server_config, id=smart_proxy_id).read_json()
+    return [feature['name'] for feature in smart_proxy['features']]
 
 
 class ActivationKey(
@@ -3775,21 +3783,24 @@ class Host(
             if self.organization.id not in [org.id for org in self.domain.organization]:
                 self.domain.organization.append(self.organization)
                 self.domain.update(['organization'])
-        if not hasattr(self, 'environment'):
-            self.environment = Environment(
-                self._server_config,
-                location=[self.location],
-                organization=[self.organization],
-            ).create(True)
-        else:
-            if not hasattr(self.environment, 'organization'):
-                self.environment = self.environment.read()
-            if int(self.location.id) not in [loc.id for loc in self.environment.location]:
-                self.environment.location.append(self.location)
-                self.environment.update(['location'])
-            if int(self.organization.id) not in [org.id for org in self.environment.organization]:
-                self.environment.organization.append(self.organization)
-                self.environment.update(['organization'])
+        if 'Puppet' in _feature_list(self._server_config):
+            if not hasattr(self, 'environment'):
+                self.environment = Environment(
+                    self._server_config,
+                    location=[self.location],
+                    organization=[self.organization],
+                ).create(True)
+            else:
+                if not hasattr(self.environment, 'organization'):
+                    self.environment = self.environment.read()
+                if int(self.location.id) not in [loc.id for loc in self.environment.location]:
+                    self.environment.location.append(self.location)
+                    self.environment.update(['location'])
+                if int(self.organization.id) not in [
+                    org.id for org in self.environment.organization
+                ]:
+                    self.environment.organization.append(self.organization)
+                    self.environment.update(['organization'])
         if not hasattr(self, 'architecture'):
             self.architecture = Architecture(self._server_config).create(True)
         if not hasattr(self, 'ptable'):
@@ -4217,6 +4228,8 @@ class Host(
         # host id is required for interface initialization
         ignore.add('interface')
         ignore.add('build_status_label')
+        if 'Puppet' not in _feature_list(self._server_config):
+            ignore.add('puppetclass')
         result = super().read(entity, attrs, ignore, params)
         if attrs.get('image_id'):
             result.image = Image(

@@ -974,10 +974,11 @@ class CreateMissingTestCase(TestCase):
     def test_host_v1(self):
         """Test ``Host()``."""
         entity = entities.Host(self.cfg)
-        with mock.patch.object(EntityCreateMixin, 'create_json'):
-            with mock.patch.object(EntityReadMixin, 'read_json'):
-                with mock.patch.object(EntityReadMixin, 'read'):
-                    entity.create_missing()
+        with mock.patch.object(entities, '_feature_list', return_value={'Puppet'}):
+            with mock.patch.object(EntityCreateMixin, 'create_json'):
+                with mock.patch.object(EntityReadMixin, 'read_json'):
+                    with mock.patch.object(EntityReadMixin, 'read'):
+                        entity.create_missing()
         self.assertEqual(
             set(entity.get_values().keys()),
             _get_required_field_names(entity).union(
@@ -1041,11 +1042,12 @@ class CreateMissingTestCase(TestCase):
             organization=org,
             ptable=ptable,
         )
-        with mock.patch.object(EntityCreateMixin, 'create_json'):
-            with mock.patch.object(EntityReadMixin, 'read_json'):
-                with mock.patch.object(EntityUpdateMixin, 'update_json'):
-                    with mock.patch.object(EntityReadMixin, 'read'):
-                        entity.create_missing()
+        with mock.patch.object(entities, '_feature_list', return_value={'Puppet'}):
+            with mock.patch.object(EntityCreateMixin, 'create_json'):
+                with mock.patch.object(EntityReadMixin, 'read_json'):
+                    with mock.patch.object(EntityUpdateMixin, 'update_json'):
+                        with mock.patch.object(EntityReadMixin, 'read'):
+                            entity.create_missing()
         for subentity in domain, env, media:
             self.assertIn(loc.id, [loc_.id for loc_ in subentity.location])
             self.assertIn(org.id, [org_.id for org_ in subentity.organization])
@@ -1201,10 +1203,11 @@ class ReadTestCase(TestCase):
         ):
             with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
                 with mock.patch.object(EntityReadMixin, 'read') as read:
-                    with self.subTest():
-                        entity(self.cfg).read()
-                        self.assertEqual(read_json.call_count, 1)
-                        self.assertEqual(read.call_count, 1)
+                    with mock.patch.object(entities, '_feature_list', return_value={'Puppet'}):
+                        with self.subTest():
+                            entity(self.cfg).read()
+                            self.assertEqual(read_json.call_count, 1)
+                            self.assertEqual(read.call_count, 1)
 
     def test_attrs_arg_v2(self):
         """Ensure ``read``, ``read_json`` and ``client.put`` are called once.
@@ -1257,7 +1260,8 @@ class ReadTestCase(TestCase):
         for entity, attrs_before, attrs_after in test_data:
             with self.subTest(entity):
                 with mock.patch.object(EntityReadMixin, 'read') as read:
-                    entity.read(attrs=attrs_before)
+                    with mock.patch.object(entities, '_feature_list', return_value={'Puppet'}):
+                        entity.read(attrs=attrs_before)
                 self.assertEqual(read.call_args[0][1], attrs_after)
 
     def test_ignore_arg_v1(self):
@@ -1290,7 +1294,12 @@ class ReadTestCase(TestCase):
                 with mock.patch.object(EntityReadMixin, 'read') as read, mock.patch.object(
                     EntityReadMixin, 'read_json'
                 ):
-                    entity(self.cfg).read()
+                    with mock.patch.object(
+                        entities,
+                        '_feature_list',
+                        return_value={'Puppet'},
+                    ):
+                        entity(self.cfg).read()
                 # `call_args` is a two-tuple of (positional, keyword) args.
                 self.assertEqual(ignored_attrs, read.call_args[0][2])
 
@@ -1448,7 +1457,12 @@ class ReadTestCase(TestCase):
                     'parameters': None,
                 },
             ):
-                host = entities.Host(self.cfg, id=2).read()
+                with mock.patch.object(
+                    entities,
+                    '_feature_list',
+                    return_value={'Puppet'},
+                ):
+                    host = entities.Host(self.cfg, id=2).read()
         self.assertTrue(hasattr(host, 'interface'))
         self.assertTrue(isinstance(host.interface, list))
         for interface in host.interface:
@@ -1722,24 +1736,25 @@ class SearchNormalizeTestCase(TestCase):
         host = entities.Host(self.cfg, id=1)
         with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
             with mock.patch.object(EntityReadMixin, 'read') as read:
-                # Image was set
-                read_json.return_value = {
-                    'image_id': 1,
-                    'compute_resource_id': 1,
-                    'parameters': {},
-                }
-                read.return_value = host
-                host = host.read()
-                self.assertTrue(hasattr(host, 'image'))
-                self.assertEqual(host.image.id, image.id)
-                # Image wasn't set
-                read_json.return_value = {
-                    'parameters': {},
-                }
-                read.return_value = host
-                host = host.read()
-                self.assertTrue(hasattr(host, 'image'))
-                self.assertIsNone(host.image)
+                with mock.patch.object(entities, '_feature_list', return_value={'Puppet'}):
+                    # Image was set
+                    read_json.return_value = {
+                        'image_id': 1,
+                        'compute_resource_id': 1,
+                        'parameters': {},
+                    }
+                    read.return_value = host
+                    host = host.read()
+                    self.assertTrue(hasattr(host, 'image'))
+                    self.assertEqual(host.image.id, image.id)
+                    # Image wasn't set
+                    read_json.return_value = {
+                        'parameters': {},
+                    }
+                    read.return_value = host
+                    host = host.read()
+                    self.assertTrue(hasattr(host, 'image'))
+                    self.assertIsNone(host.image)
 
 
 class UpdateTestCase(TestCase):
@@ -2994,14 +3009,15 @@ class HostTestCase(TestCase):
         ``content_facet_attributes`` attribute is not returned for host
         """
         with mock.patch.object(EntityReadMixin, 'read') as read:
-            entities.Host(self.cfg).read(
-                attrs={
-                    'parameters': None,
-                    'puppetclasses': None,
-                }
-            )
-            self.assertNotIn('content_facet_attributes', read.call_args[0][1])
-            self.assertIn('content_facet_attributes', read.call_args[0][2])
+            with mock.patch.object(entities, '_feature_list', return_value={'Puppet'}):
+                entities.Host(self.cfg).read(
+                    attrs={
+                        'parameters': None,
+                        'puppetclasses': None,
+                    }
+                )
+                self.assertNotIn('content_facet_attributes', read.call_args[0][1])
+                self.assertIn('content_facet_attributes', read.call_args[0][2])
 
     def test_delete_puppetclass(self):
         """Check that helper method is sane.
