@@ -3779,7 +3779,9 @@ class Host(
                 if int(self.location.id) not in [loc.id for loc in self.environment.location]:
                     self.environment.location.append(self.location)
                     self.environment.update(['location'])
-                if int(self.organization.id) not in [org.id for org in self.environment.organization]:
+                if int(self.organization.id) not in [
+                    org.id for org in self.environment.organization
+                ]:
                     self.environment.organization.append(self.organization)
                     self.environment.update(['organization'])
         if not hasattr(self, 'architecture'):
@@ -4209,6 +4211,8 @@ class Host(
         # host id is required for interface initialization
         ignore.add('interface')
         ignore.add('build_status_label')
+        if 'Puppet' not in _feature_list(self._server_config):
+            ignore.add('puppetclass')
         result = super().read(entity, attrs, ignore, params)
         if attrs.get('image_id'):
             result.image = Image(
