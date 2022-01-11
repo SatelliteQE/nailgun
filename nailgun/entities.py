@@ -3373,8 +3373,6 @@ class HostGroup(
             /api/hostgroups/:hostgroup_id/rebuild_config
         smart_class_parameters
             /api/hostgroups/:hostgroup_id/smart_class_parameters
-        smart_class_variables
-            /api/hostgroups/:hostgroup_id/smart_variables
 
         Otherwise, call ``super``.
 
@@ -3384,7 +3382,6 @@ class HostGroup(
             'puppetclass_ids',
             'rebuild_config',
             'smart_class_parameters',
-            'smart_variables',
         ):
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
@@ -3455,25 +3452,6 @@ class HostGroup(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_class_parameters'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-    def list_smart_variables(self, synchronous=True, timeout=None, **kwargs):
-        """List all smart variables
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('smart_variables'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def clone(self, synchronous=True, timeout=None, **kwargs):
@@ -4277,8 +4255,6 @@ class Host(
             /api/hosts/:host_id/puppetclass_ids
         smart_class_parameters
             /api/hosts/:host_id/smart_class_parameters
-        smart_variables
-            /api/hosts/:host_id/smart_class_variables
         module_streams
             /api/hosts/:host_id/module_streams
         disassociate
@@ -4298,7 +4274,6 @@ class Host(
             'power',
             'puppetclass_ids',
             'smart_class_parameters',
-            'smart_variables',
             'module_streams',
             'disassociate',
             'traces',
@@ -4385,25 +4360,6 @@ class Host(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_class_parameters'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-    def list_smart_variables(self, synchronous=True, timeout=None, **kwargs):
-        """List all smart variables
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('smart_variables'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def power(self, synchronous=True, timeout=None, **kwargs):
@@ -5394,32 +5350,26 @@ class OverrideValue(
             'match': entity_fields.StringField(required=True),
             'value': entity_fields.StringField(required=True),
             'smart_class_parameter': entity_fields.OneToOneField(SmartClassParameters),
-            'smart_variable': entity_fields.OneToOneField(SmartVariable),
             'omit': entity_fields.BooleanField(),
         }
         super().__init__(server_config, **kwargs)
         # Create an override value for a specific smart class parameter
         if hasattr(self, 'smart_class_parameter'):
             partial_path = self.smart_class_parameter.path('self')
-        # Create an override value for a specific smart_variable
-        elif hasattr(self, 'smart_variable'):
-            partial_path = self.smart_variable.path('self')
         else:
             raise TypeError(
                 'A value must be provided for one of the following fields: '
-                '"smart_class_parameter", "smart_variable"'
+                '"smart_class_parameter"'
             )
         self._meta = {
             'api_path': f'{partial_path}/override_values',
         }
 
     def create_payload(self):
-        """Remove ``smart_class_parameter_id`` or ``smart_variable_id``"""
+        """Remove ``smart_class_parameter_id``"""
         payload = super().create_payload()
         if hasattr(self, 'smart_class_parameter'):
             del payload['smart_class_parameter_id']
-        if hasattr(self, 'smart_variable'):
-            del payload['smart_variable_id']
         return payload
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -5431,12 +5381,11 @@ class OverrideValue(
             entity = type(self)()
 
         However, :class:`OverrideValue` requires that an
-        ``smart_class_parameter`` or ``smart_varaiable`` be provided, so this
+        ``smart_class_parameter`` be provided, so this
         technique will not work. Do this instead::
 
             entity = type(self)(
                 smart_class_parameter=self.smart_class_parameter)
-            entity = type(self)(smart_variable=self.smart_variable)
 
         """
         # read() should not change the state of the object it's called on, but
@@ -5448,14 +5397,9 @@ class OverrideValue(
                     self._server_config,
                     smart_class_parameter=self.smart_class_parameter,
                 )
-            elif hasattr(self, 'smart_variable'):
-                entity = type(self)(
-                    self._server_config,
-                    smart_variable=self.smart_variable,
-                )
         if ignore is None:
             ignore = set()
-        ignore.update(['smart_class_parameter', 'smart_variable'])
+        ignore.update(['smart_class_parameter'])
         return super().read(entity, attrs, ignore, params)
 
 
@@ -5859,7 +5803,7 @@ class PuppetClass(
         Otherwise, call ``super``.
 
         """
-        if which in ("smart_class_parameters", "smart_variables"):
+        if which in ("smart_class_parameters",):
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
@@ -5880,25 +5824,6 @@ class PuppetClass(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('smart_class_parameters'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-    def list_smart_variables(self, synchronous=True, timeout=None, **kwargs):
-        """List all smart variables
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('smart_variables'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
@@ -6979,54 +6904,6 @@ class SmartClassParameters(Entity, EntityReadMixin, EntitySearchMixin, EntityUpd
             ignore = set()
         ignore.add('hidden_value')
         return super().read(entity, attrs, ignore, params)
-
-
-class SmartVariable(
-    Entity,
-    EntityCreateMixin,
-    EntityDeleteMixin,
-    EntityReadMixin,
-    EntitySearchMixin,
-    EntityUpdateMixin,
-):
-    """A representation of a Smart Variable entity."""
-
-    def __init__(self, server_config=None, **kwargs):
-        self._fields = {
-            'default_value': entity_fields.StringField(),
-            'description': entity_fields.StringField(),
-            'puppetclass': entity_fields.OneToOneField(PuppetClass),
-            'validator_rule': entity_fields.StringField(),
-            'validator_type': entity_fields.StringField(),
-            'variable': entity_fields.StringField(required=True),
-            'variable_type': entity_fields.StringField(),
-            'hidden_value': entity_fields.BooleanField(),
-            'hidden_value?': entity_fields.BooleanField(),
-            'merge_overrides': entity_fields.BooleanField(),
-            'merge_default': entity_fields.BooleanField(),
-            'avoid_duplicates': entity_fields.BooleanField(),
-            'override_value_order': entity_fields.StringField(),
-            'override_values': entity_fields.DictField(),
-        }
-        self._meta = {
-            'api_path': 'api/v2/smart_variables',
-        }
-        super().__init__(server_config, **kwargs)
-
-    def read(self, entity=None, attrs=None, ignore=None, params=None):
-        """Do not read the ``hidden_value`` attribute."""
-        if ignore is None:
-            ignore = set()
-        ignore.add('hidden_value')
-        return super().read(entity, attrs, ignore, params)
-
-    def create_payload(self):
-        """Wrap submitted data within an extra dict."""
-        return {'smart_variable': super().create_payload()}
-
-    def update_payload(self, fields=None):
-        """Wrap submitted data within an extra dict."""
-        return {'smart_variable': super().update_payload(fields)}
 
 
 class Snapshot(
