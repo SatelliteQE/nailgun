@@ -189,10 +189,8 @@ def _get_version(server_config):
 
 def _feature_list(server_config, smart_proxy_id=1):
     """Get list of features enabled on capsule"""
-    path = f'{server_config.url}/api/v2/smart_proxies/{smart_proxy_id}'
-    response = client.get(path, **server_config.get_client_kwargs())
-    response.raise_for_status()
-    return [feature['name'] for feature in response.json()['features']]
+    smart_proxy = SmartProxy(server_config, id=smart_proxy_id).read_json()
+    return [feature['name'] for feature in smart_proxy['features']]
 
 
 class ActivationKey(
