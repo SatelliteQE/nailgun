@@ -23,6 +23,7 @@ workings of entity classes.
 import hashlib
 import os.path
 from datetime import datetime
+from functools import lru_cache
 from http.client import ACCEPTED
 from http.client import NO_CONTENT
 from urllib.parse import urljoin  # noqa:F0401,E0611
@@ -187,6 +188,7 @@ def _get_version(server_config):
     return getattr(server_config, 'version', Version('1!0'))
 
 
+@lru_cache()
 def _feature_list(server_config, smart_proxy_id=1):
     """Get list of features enabled on capsule"""
     smart_proxy = SmartProxy(server_config, id=smart_proxy_id).read_json()
