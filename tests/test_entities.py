@@ -2313,6 +2313,34 @@ class ForemanTaskTestCase(TestCase):
                     kwargs.get('timeout', None),
                 )
 
+    def test_bulk_resume(self):
+        """Call :meth:`nailgun.entities.ForemanTask.bulk_resume`."""
+        for kwargs in (
+            {},
+            {'task_ids': self.foreman_task.id},
+            {'search': gen_string('alpha')},
+            {'task_ids': self.foreman_task.id, 'search': gen_string('alpha')},
+        ):
+            with self.subTest(kwargs):
+                with mock.patch.object(client, 'post') as post:
+                    self.foreman_task.bulk_resume(**kwargs)
+                    self.assertEqual(post.call_count, 1)
+                    self.assertEqual(post.mock_calls[2][1][0].ACCEPTED, 202)
+
+    def test_bulk_cancel(self):
+        """Call :meth:`nailgun.entities.ForemanTask.bulk_cancel`."""
+        for kwargs in (
+            {},
+            {'task_ids': self.foreman_task.id},
+            {'search': gen_string('alpha')},
+            {'task_ids': self.foreman_task.id, 'search': gen_string('alpha')},
+        ):
+            with self.subTest(kwargs):
+                with mock.patch.object(client, 'post') as post:
+                    self.foreman_task.bulk_cancel(**kwargs)
+                    self.assertEqual(post.call_count, 1)
+                    self.assertEqual(post.mock_calls[2][1][0].ACCEPTED, 202)
+
 
 class ContentUploadTestCase(TestCase):
     """Tests for :class:`nailgun.entities.ContentUpload`."""
