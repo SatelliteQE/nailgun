@@ -3084,6 +3084,8 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
 
         bulk_resume
             /foreman_tasks/api/tasks/bulk_resume
+        bulk_cancel
+            /foreman_tasks/api/tasks/bulk_cancel
         bulk_search
             /foreman_tasks/api/tasks/bulk_search
         summary
@@ -3092,7 +3094,7 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
         Otherwise, call ``super``.
 
         """
-        if which in ("bulk_resume", "bulk_search", "summary"):
+        if which in ("bulk_resume", "bulk_search", "summary", "bulk_cancel"):
             return f'{super().path(which="base")}/{which}'
         return super().path(which)
 
@@ -3140,6 +3142,44 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('summary'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def bulk_cancel(self, synchronous=True, timeout=None, **kwargs):
+        """Cancels the task(s).
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('bulk_cancel'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def bulk_resume(self, synchronous=True, timeout=None, **kwargs):
+        """Resumes the task(s).
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('bulk_resume'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
