@@ -6259,6 +6259,7 @@ class Repository(
             ignore = set()
         ignore.add('organization')
         ignore.add('upstream_password')
+        ignore.add('mirror_on_sync')
         return super().read(entity, attrs, ignore, params)
 
     def create_missing(self):
