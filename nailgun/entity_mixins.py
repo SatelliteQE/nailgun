@@ -247,6 +247,9 @@ def _get_entity_id(field_name, attrs):
             return attrs[field_name]['id']
     if field_name_id in attrs:
         return attrs[field_name_id]
+    elif field_name == 'environment':
+        attrs['environment'] = []
+        return attrs['environment']
     else:
         raise MissingValueError(
             f'Cannot find a value for the "{field_name}" field. '
@@ -280,6 +283,9 @@ def _get_entity_ids(field_name, attrs):
         return [entity['id'] for entity in attrs[field_name]]
     elif plural_field_name in attrs:
         return [entity['id'] for entity in attrs[plural_field_name]]
+    elif field_name == 'environment':
+        attrs['environment'] = []
+        return attrs['environment']
     else:
         raise MissingValueError(
             f'Cannot find a value for the "{field_name}" field. '
@@ -698,9 +704,6 @@ class EntityReadMixin:
 
     """
 
-    ignore_fields = ['environment']
-    ignore_entities = ['Environment']
-
     def read_raw(self, params=None):
         """Get information about the current entity.
 
@@ -787,8 +790,6 @@ class EntityReadMixin:
             ignore = set()
 
         for field_name, field in entity.get_fields().items():
-            if field_name in self.ignore_fields and field.entity.__name__ in self.ignore_entities:
-                continue
             if field_name in ignore:
                 continue
             if isinstance(field, OneToOneField):
