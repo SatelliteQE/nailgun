@@ -6181,7 +6181,10 @@ class Repository(
             'ignorable_content': entity_fields.ListField(),
             'label': entity_fields.StringField(),
             'last_sync': entity_fields.OneToOneField(ForemanTask),
-            'mirror_on_sync': entity_fields.BooleanField(),
+            'mirroring_policy': entity_fields.StringField(
+                choices=('additive', 'mirror_content_only', 'mirror_complete'),
+                default='additive',
+            ),
             'name': entity_fields.StringField(
                 required=True, str_type='alpha', length=(6, 12), unique=True
             ),
