@@ -6181,6 +6181,7 @@ class Repository(
             'ignorable_content': entity_fields.ListField(),
             'label': entity_fields.StringField(),
             'last_sync': entity_fields.OneToOneField(ForemanTask),
+            'mirror_on_sync': entity_fields.BooleanField(),
             'mirroring_policy': entity_fields.StringField(
                 choices=('additive', 'mirror_content_only', 'mirror_complete'),
                 default='additive',
@@ -6190,7 +6191,6 @@ class Repository(
             ),
             'organization': entity_fields.OneToOneField(Organization),
             'product': entity_fields.OneToOneField(Product, required=True),
-            'retain_package_versions_count': entity_fields.StringField(),
             'unprotected': entity_fields.BooleanField(),
             'url': entity_fields.URLField(
                 default=_FAKE_YUM_REPO,
