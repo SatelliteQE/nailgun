@@ -3704,6 +3704,7 @@ class Host(
             'realm': entity_fields.OneToOneField(Realm),
             'root_pass': entity_fields.StringField(length=(8, 30), str_type='alpha'),
             'subnet': entity_fields.OneToOneField(Subnet),
+            'token': entity_fields.StringField(),
             'traces_status': entity_fields.IntegerField(min_val=-1, max_val=2),
             'traces_status_label': entity_fields.StringField(),
             'uuid': entity_fields.StringField(),
