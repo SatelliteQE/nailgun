@@ -4242,6 +4242,7 @@ class Host(
         ignore.add('root_pass')
         ignore.add('included')
         ignore.add('excluded')
+        ignore.add('token')
         # Image entity requires compute_resource_id to initialize as it is
         # part of its path. The thing is that entity_mixins.read() initializes
         # entities by id only.
