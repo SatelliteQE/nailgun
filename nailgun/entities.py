@@ -4237,12 +4237,13 @@ class Host(
         if 'traces_status' not in attrs and 'traces_status_label' not in attrs:
             ignore.add('traces_status')
             ignore.add('traces_status_label')
+        if 'token' not in attrs:
+            ignore.add('token')
         ignore.add('compute_attributes')
         ignore.add('interfaces_attributes')
         ignore.add('root_pass')
         ignore.add('included')
         ignore.add('excluded')
-        ignore.add('token')
         # Image entity requires compute_resource_id to initialize as it is
         # part of its path. The thing is that entity_mixins.read() initializes
         # entities by id only.
