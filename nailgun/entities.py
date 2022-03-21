@@ -5449,10 +5449,17 @@ class OverrideValue(
         # object and passing it to super() lets this one avoid changing state.
         if entity is None:
             if hasattr(self, 'smart_class_parameter'):
-                entity = type(self)(
-                    self._server_config,
-                    smart_class_parameter=self.smart_class_parameter,
-                )
+                try:
+                    entity = type(self)(
+                        self._server_config,
+                        smart_class_parameter=self.smart_class_parameter,
+                    )
+                except TypeError:
+                    # in the event that an entity's init is overwritten
+                    # with a positional server_config
+                    entity = type(self)(
+                        smart_class_parameter=self.smart_class_parameter,
+                    )
         if ignore is None:
             ignore = set()
         ignore.update(['smart_class_parameter'])
