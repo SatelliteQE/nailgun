@@ -4542,10 +4542,17 @@ class Image(
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
         if entity is None:
-            entity = type(self)(
-                self._server_config,
-                compute_resource=self.compute_resource,
-            )
+            try:
+                entity = type(self)(
+                    self._server_config,
+                    compute_resource=self.compute_resource,
+                )
+            except TypeError:
+                # in the event that an entity's init is overwritten
+                # with a positional server_config
+                entity = type(self)(
+                    compute_resource=self.compute_resource,
+                )
         if ignore is None:
             ignore = set()
         ignore.add('compute_resource')
