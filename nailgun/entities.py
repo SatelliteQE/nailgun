@@ -73,14 +73,21 @@ _OPERATING_SYSTEMS = (
     'AIX',
     'Altlinux',
     'Archlinux',
+    'Coreos',
     'Debian',
+    'Fcos',
     'Freebsd',
     'Gentoo',
     'Junos',
+    'NXOS',
+    'Rancheros',
     'Redhat',
+    'Rhcos',
     'Solaris',
     'Suse',
+    'VRP',
     'Windows',
+    'Xenserver',
 )
 
 
