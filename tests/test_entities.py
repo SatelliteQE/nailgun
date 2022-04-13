@@ -703,7 +703,7 @@ class CreatePayloadTestCase(TestCase):
                 organization=1,
                 sync_date=datetime.now(),
             ).create_payload()['sync_date'],
-            type(''),  # different for Python 2 and 3
+            str,  # different for Python 2 and 3
         )
 
     def test_host_collection(self):
@@ -955,7 +955,7 @@ class CreateMissingTestCase(TestCase):
         self.assertTrue(entity.name.islower())
 
     def test_external_usergroup(self):
-        """Test ``ExternalUserGroup()`` """
+        """Test ``ExternalUserGroup()``"""
         entity = entities.ExternalUserGroup(self.cfg, usergroup=1)
         with mock.patch.object(EntityCreateMixin, 'create_missing'):
             entity.create_missing()
@@ -1806,7 +1806,7 @@ class UpdateTestCase(TestCase):
 
 
 class SearchPayloadTestCase(TestCase):
-    """Tests for extensions of ``search_upload``. """
+    """Tests for extensions of ``search_upload``."""
 
     @classmethod
     def setUpClass(cls):
