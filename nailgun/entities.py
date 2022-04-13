@@ -6482,7 +6482,7 @@ class Repository(
 
 
 class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
-    """ A representation of a Repository Set entity"""
+    """A representation of a Repository Set entity"""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {

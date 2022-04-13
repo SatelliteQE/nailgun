@@ -52,7 +52,7 @@ class GenValueTestCase(TestCase):
 
         """
         email = entity_fields.EmailField().gen_value()
-        self.assertIsInstance(email, type(''))
+        self.assertIsInstance(email, str)
         self.assertIn('@', email)
 
     def test_float_field(self):
@@ -123,7 +123,7 @@ class StringFieldTestCase(TestCase):
     def test_str_is_returned(self):
         """Ensure a unicode string at least 1 char long is returned."""
         string = entity_fields.StringField().gen_value()
-        self.assertIsInstance(string, type(''))
+        self.assertIsInstance(string, str)
         self.assertGreater(len(string), 0)
 
     def test_length_arg(self):
