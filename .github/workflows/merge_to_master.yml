@@ -15,8 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # python 3.6 is still used by IQE integration pipeline
-        python-version: [3.6, 3.8, '3.10']
+        python-version: [3.8, '3.10']
     steps:
       - name: Checkout Nailgun
         uses: actions/checkout@v2
