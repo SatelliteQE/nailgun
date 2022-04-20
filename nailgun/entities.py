@@ -6121,6 +6121,7 @@ class Repository(
             ),
             'full_path': entity_fields.StringField(),
             'gpg_key': entity_fields.OneToOneField(ContentCredential),
+            'ssl_ca_cert': entity_fields.OneToOneField(ContentCredential),
             'ignorable_content': entity_fields.ListField(),
             'label': entity_fields.StringField(),
             'last_sync': entity_fields.OneToOneField(ForemanTask),
