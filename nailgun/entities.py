@@ -6178,7 +6178,7 @@ class Repository(
             # Just setting `str_type='alpha'` will fail with this error:
             # {"docker_upstream_name":["must be a valid docker name"]}}
             'docker_upstream_name': entity_fields.StringField(default='busybox'),
-            'docker_tags_whitelist': entity_fields.ListField(),
+            'include_tags': entity_fields.StringField(),
             'download_policy': entity_fields.StringField(
                 choices=('background', 'immediate', 'on_demand'),
                 default='immediate',
