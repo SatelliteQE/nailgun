@@ -4622,6 +4622,7 @@ class Interface(
             ),
             'virtual': entity_fields.BooleanField(),
             'username': entity_fields.StringField(),  # for 'bmc' type
+            'execution': entity_fields.BooleanField(),
         }
         super().__init__(server_config, **kwargs)
         self._meta = {
