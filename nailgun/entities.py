@@ -7910,7 +7910,7 @@ class VirtWhoConfig(
             'hypervisor_password': entity_fields.StringField(),
             'hypervisor_server': entity_fields.StringField(required=True),
             'hypervisor_type': entity_fields.StringField(
-                choices=['esx', 'rhevm', 'hyperv', 'xen', 'libvirt', 'kubevirt'],
+                choices=['esx', 'rhevm', 'hyperv', 'xen', 'libvirt', 'kubevirt', 'ahv'],
                 default='libvirt',
                 required=True,
             ),
@@ -7924,6 +7924,7 @@ class VirtWhoConfig(
             'satellite_url': entity_fields.StringField(required=True),
             'status': entity_fields.StringField(),
             'whitelist': entity_fields.StringField(),
+            'prism_flavor': entity_fields.StringField(required=True),
         }
         self._meta = {
             'api_path': 'foreman_virt_who_configure/api/v2/configs',
