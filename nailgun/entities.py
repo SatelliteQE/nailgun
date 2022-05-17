@@ -7924,7 +7924,9 @@ class VirtWhoConfig(
             'satellite_url': entity_fields.StringField(required=True),
             'status': entity_fields.StringField(),
             'whitelist': entity_fields.StringField(),
-            'prism_flavor': entity_fields.StringField(required=True),
+            'prism_flavor': entity_fields.StringField(
+                choices=['central', 'element'], default='element', required=True
+            ),
         }
         self._meta = {
             'api_path': 'foreman_virt_who_configure/api/v2/configs',
