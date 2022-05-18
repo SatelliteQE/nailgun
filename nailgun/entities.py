@@ -7925,7 +7925,7 @@ class VirtWhoConfig(
             'status': entity_fields.StringField(),
             'whitelist': entity_fields.StringField(),
             'prism_flavor': entity_fields.StringField(
-                choices=['central', 'element'], default='element', required=True
+                choices=['central', 'element'], default='element'
             ),
         }
         self._meta = {
