@@ -7910,7 +7910,7 @@ class VirtWhoConfig(
             'hypervisor_password': entity_fields.StringField(),
             'hypervisor_server': entity_fields.StringField(required=True),
             'hypervisor_type': entity_fields.StringField(
-                choices=['esx', 'rhevm', 'hyperv', 'xen', 'libvirt', 'kubevirt', 'ahv'],
+                choices=['esx', 'hyperv', 'libvirt', 'kubevirt', 'ahv'],
                 default='libvirt',
                 required=True,
             ),
