@@ -7908,13 +7908,13 @@ class VirtWhoConfig(
                 choices=['hostname', 'uuid', 'hwuuid'], default='hostname', required=True
             ),
             'hypervisor_password': entity_fields.StringField(),
-            'hypervisor_server': entity_fields.StringField(required=True),
+            'hypervisor_server': entity_fields.StringField(),
             'hypervisor_type': entity_fields.StringField(
                 choices=['esx', 'hyperv', 'libvirt', 'kubevirt', 'ahv'],
                 default='libvirt',
                 required=True,
             ),
-            'hypervisor_username': entity_fields.StringField(required=True),
+            'hypervisor_username': entity_fields.StringField(),
             'interval': entity_fields.IntegerField(
                 choices=[60, 120, 240, 480, 720, 1440, 2880, 4320], default=120, required=True
             ),
@@ -7927,6 +7927,7 @@ class VirtWhoConfig(
             'prism_flavor': entity_fields.StringField(
                 choices=['central', 'element'], default='element'
             ),
+            'kubeconfig_path': entity_fields.StringField(),
         }
         self._meta = {
             'api_path': 'foreman_virt_who_configure/api/v2/configs',
