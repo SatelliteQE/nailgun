@@ -58,12 +58,17 @@ class Field:
     :param choices: A tuple of values that this field may be populated with.
     :param default: Entity classes that inherit from
         :class:`nailgun.entity_mixins.EntityCreateMixin` use this field.
-
+    :param unique: A boolean. Determines if the entity should be unique with its name.
+    :param parent: A boolean. Determines if the Entity is a parent entity to one_to_one
+        mapped entity
     """
 
-    def __init__(self, required=False, choices=None, default=_SENTINEL, unique=False):
+    def __init__(
+        self, required=False, choices=None, default=_SENTINEL, unique=False, parent=False
+    ):
         self.unique = unique
         self.required = required
+        self.parent = parent
         if choices is not None:
             self.choices = choices
         if default is not _SENTINEL:
