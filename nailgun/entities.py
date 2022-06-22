@@ -1375,6 +1375,7 @@ class ExternalUserGroup(
             'usergroup': entity_fields.OneToOneField(
                 UserGroup,
                 required=True,
+                parent=True,
             ),
             'auth_source': entity_fields.OneToOneField(AuthSourceLDAP, required=True),
         }
@@ -1385,8 +1386,7 @@ class ExternalUserGroup(
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Ignore usergroup from read and alter auth_source_ldap with auth_source"""
-        if entity is None:
-            entity = self.add_parent(usergroup=self.usergroup)
+        entity = entity or self.entity_with_parent()
         if ignore is None:
             ignore = set()
         ignore.add('usergroup')
@@ -1595,7 +1595,7 @@ class TemplateInput(
             'puppet_parameter_name': entity_fields.StringField(),
             'required': entity_fields.BooleanField(),
             # There is no Template base class yet
-            'template': entity_fields.OneToOneField(JobTemplate, required=True),
+            'template': entity_fields.OneToOneField(JobTemplate, required=True, parent=True),
             'variable_name': entity_fields.StringField(),
         }
         super().__init__(server_config, **kwargs)
@@ -1607,8 +1607,7 @@ class TemplateInput(
         """Create a JobTemplate object before calling read()
         ignore 'advanced'
         """
-        if entity is None:
-            entity = self.add_parent(template=self.template)
+        entity = entity or self.entity_with_parent()
         if ignore is None:
             ignore = set()
         ignore.add('advanced')
@@ -2071,10 +2070,7 @@ class ContentUpload(
         _check_for_value('repository', kwargs)
         self._fields = {
             'upload_id': entity_fields.StringField(length=36, unique=True),
-            'repository': entity_fields.OneToOneField(
-                Repository,
-                required=True,
-            ),
+            'repository': entity_fields.OneToOneField(Repository, required=True, parent=True),
             'size': entity_fields.IntegerField(required=True, min_val=self.content_chunk_size),
         }
         super().__init__(server_config, **kwargs)
@@ -2101,8 +2097,7 @@ class ContentUpload(
         # read() should not change the state of the object it's called on, but
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
-        if entity is None:
-            entity = self.add_parent(repository=self.repository)
+        entity = entity or self.entity_with_parent()
         if ignore is None:
             ignore = set()
         ignore.add('repository')
@@ -2287,7 +2282,7 @@ class ContentViewFilterRule(
         _check_for_value('content_view_filter', kwargs)
         self._fields = {
             'content_view_filter': entity_fields.OneToOneField(
-                AbstractContentViewFilter, required=True
+                AbstractContentViewFilter, required=True, parent=True
             ),
             'date_type': entity_fields.StringField(
                 choices=('issued', 'updated'),
@@ -2322,8 +2317,7 @@ class ContentViewFilterRule(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1238408>`_.
 
         """
-        if entity is None:
-            entity = self.add_parent(content_view_filter=self.content_view_filter)
+        entity = entity or self.entity_with_parent()
         if attrs is None:
             attrs = self.read_json()
         if ignore is None:
@@ -2521,12 +2515,7 @@ class ContentView(
             content_view_components = result.get('content_view_component')
             if content_view_components is not None:
                 del result['content_view_component']
-            try:
-                entity = type(self)(self._server_config, **result)
-            except TypeError:
-                # in the event that an entity's init is overwritten
-                # with a positional server_config
-                entity = type(self)(**result)
+            entity = self.entity_with_parent(**result)
             if content_view_components:
                 entity.content_view_component = [
                     ContentViewComponent(
@@ -2636,7 +2625,7 @@ class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
     def __init__(self, server_config=None, **kwargs):
         _check_for_value('composite_content_view', kwargs)
         self._fields = {
-            'composite_content_view': entity_fields.OneToOneField(ContentView),
+            'composite_content_view': entity_fields.OneToOneField(ContentView, parent=True),
             'content_view': entity_fields.OneToOneField(ContentView),
             'content_view_version': entity_fields.OneToOneField(ContentViewVersion),
             'latest': entity_fields.BooleanField(),
@@ -2656,8 +2645,7 @@ class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
             attrs = self.read_json()
         if ignore is None:
             ignore = set()
-        if entity is None:
-            entity = self.add_parent(composite_content_view=self.composite_content_view)
+        entity = entity or self.entity_with_parent()
 
         ignore.add('composite_content_view')
         return super().read(entity, attrs, ignore, params)
@@ -4446,12 +4434,7 @@ class Host(
             image = result.get('image')
             if image is not None:
                 del result['image']
-            try:
-                entity = type(self)(self._server_config, **result)
-            except TypeError:
-                # in the event that an entity's init is overwritten
-                # with a positional server_config
-                entity = type(self)(**result)
+            entity = self.entity_with_parent(**result)
             if image:
                 entity.image = Image(
                     server_config=self._server_config,
@@ -4495,7 +4478,7 @@ class Image(
         self._fields = {
             'architecture': entity_fields.OneToOneField(Architecture, required=True),
             'compute_resource': entity_fields.OneToOneField(
-                AbstractComputeResource, required=True
+                AbstractComputeResource, required=True, parent=True
             ),
             'name': entity_fields.StringField(
                 required=True, str_type='alpha', length=(6, 12), unique=True
@@ -4536,8 +4519,7 @@ class Image(
         # read() should not change the state of the object it's called on, but
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
-        if entity is None:
-            entity = self.add_parent(compute_resource=self.compute_resource)
+        entity = entity or self.entity_with_parent()
         if ignore is None:
             ignore = set()
         ignore.add('compute_resource')
@@ -4568,7 +4550,7 @@ class Interface(
             'attached_to': entity_fields.StringField(),  # for 'virtual' type
             'bond_options': entity_fields.StringField(),  # for 'bond' type
             'domain': entity_fields.OneToOneField(Domain),
-            'host': entity_fields.OneToOneField(Host, required=True),
+            'host': entity_fields.OneToOneField(Host, required=True, parent=True),
             'identifier': entity_fields.StringField(),
             'ip': entity_fields.IPAddressField(required=True),
             'mac': entity_fields.MACAddressField(required=True),
@@ -4628,8 +4610,7 @@ class Interface(
         # read() should not change the state of the object it's called on, but
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
-        if entity is None:
-            entity = self.add_parent(host=self.host)
+        entity = entity or self.entity_with_parent()
         if attrs is None:
             attrs = self.read_json()
         if ignore is None:
@@ -5026,8 +5007,7 @@ class OperatingSystemParameter(Entity, EntityCreateMixin, EntityDeleteMixin, Ent
                 required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'operatingsystem': entity_fields.OneToOneField(
-                OperatingSystem,
-                required=True,
+                OperatingSystem, required=True, parent=True
             ),
             'value': entity_fields.StringField(required=True),
         }
@@ -5054,8 +5034,7 @@ class OperatingSystemParameter(Entity, EntityCreateMixin, EntityDeleteMixin, Ent
         # read() should not change the state of the object it's called on, but
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
-        if entity is None:
-            entity = self.add_parent(operatingsystem=self.operatingsystem)
+        entity = entity or self.entity_with_parent()
         if ignore is None:
             ignore = set()
         ignore.add('operatingsystem')
@@ -5347,8 +5326,7 @@ class OSDefaultTemplate(
         _check_for_value('operatingsystem', kwargs)
         self._fields = {
             'operatingsystem': entity_fields.OneToOneField(
-                OperatingSystem,
-                required=True,
+                OperatingSystem, required=True, parent=True
             ),
             'provisioning_template': entity_fields.OneToOneField(ProvisioningTemplate),
             'template_kind': entity_fields.OneToOneField(TemplateKind),
@@ -5363,8 +5341,7 @@ class OSDefaultTemplate(
         Since operatingsystem is needed to instanciate, prepare the entity
         accordingly.
         """
-        if entity is None:
-            entity = self.add_parent(operatingsystem=self.operatingsystem)
+        entity = entity or self.entity_with_parent()
         if ignore is None:
             ignore = set()
         ignore.add('operatingsystem')
@@ -5389,7 +5366,9 @@ class OverrideValue(
         self._fields = {
             'match': entity_fields.StringField(required=True),
             'value': entity_fields.StringField(required=True),
-            'smart_class_parameter': entity_fields.OneToOneField(SmartClassParameters),
+            'smart_class_parameter': entity_fields.OneToOneField(
+                SmartClassParameters, parent=True
+            ),
             'omit': entity_fields.BooleanField(),
         }
         super().__init__(server_config, **kwargs)
@@ -5431,9 +5410,7 @@ class OverrideValue(
         # read() should not change the state of the object it's called on, but
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
-        if entity is None:
-            if hasattr(self, 'smart_class_parameter'):
-                entity = self.add_parent(smart_class_parameter=self.smart_class_parameter)
+        entity = entity or self.entity_with_parent()
         if ignore is None:
             ignore = set()
         ignore.update(['smart_class_parameter'])
@@ -5478,8 +5455,7 @@ class Parameter(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, E
         """Ignore path related fields as they're never returned by the server
         and are only added to entity to be able to use proper path.
         """
-        if entity is None:
-            entity = self.add_parent(**{self._parent_type: self._parent_id})
+        entity = entity or self.entity_with_parent(**{self._parent_type: self._parent_id})
         if ignore is None:
             ignore = set()
         for field_name in self._path_fields:
@@ -5608,12 +5584,7 @@ class Product(
             sync_plan = result.get('sync_plan')
             if sync_plan is not None:
                 del result['sync_plan']
-            try:
-                entity = type(self)(self._server_config, **result)
-            except TypeError:
-                # in the event that an entity's init is overwritten
-                # with a positional server_config
-                entity = type(self)(**result)
+            entity = self.entity_with_parent(**result)
             if sync_plan:
                 entity.sync_plan = SyncPlan(
                     server_config=self._server_config,
@@ -6452,7 +6423,7 @@ class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
                 Organization,
                 required=True,
             ),
-            'product': entity_fields.OneToOneField(Product, required=True),
+            'product': entity_fields.OneToOneField(Product, required=True, parent=True),
             'repositories': entity_fields.OneToManyField(Repository),
             'type': entity_fields.StringField(
                 choices=('kickstart', 'yum', 'file'),
@@ -6569,8 +6540,7 @@ class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
         # read() should not change the state of the object it's called on, but
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
-        if entity is None:
-            entity = self.add_parent(product=self.product)
+        entity = entity or self.entity_with_parent()
         if ignore is None:
             ignore = set()
         return super().read(entity, attrs, ignore, params)
@@ -6971,10 +6941,7 @@ class Snapshot(
         self._fields = {
             'name': entity_fields.StringField(required=True),
             'description': entity_fields.StringField(required=False),
-            'host': entity_fields.OneToOneField(
-                Host,
-                required=True,
-            ),
+            'host': entity_fields.OneToOneField(Host, required=True, parent=True),
         }
         super().__init__(server_config, **kwargs)
         self._meta = {
@@ -7008,8 +6975,7 @@ class Snapshot(
         # read() should not change the state of the object it's called on, but
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
-        if entity is None:
-            entity = self.add_parent(host=self.host)
+        entity = entity or self.entity_with_parent()
         if ignore is None:
             ignore = set()
         ignore.add('host')
@@ -7047,10 +7013,7 @@ class SSHKey(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, Enti
     def __init__(self, server_config=None, **kwargs):
         _check_for_value('user', kwargs)
         self._fields = {
-            'user': entity_fields.OneToOneField(
-                User,
-                required=True,
-            ),
+            'user': entity_fields.OneToOneField(User, required=True, parent=True),
             'name': entity_fields.StringField(
                 required=True, str_type='alpha', length=(6, 12), unique=True
             ),
@@ -7076,8 +7039,7 @@ class SSHKey(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, Enti
         # read() should not change the state of the object it's called on, but
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
-        if entity is None:
-            entity = self.add_parent(user=self.user)
+        entity = entity or self.entity_with_parent()
         if ignore is None:
             ignore = set()
         ignore.add('user')
@@ -7397,10 +7359,7 @@ class SyncPlan(
                 required=True, str_type='alpha', length=(6, 12), unique=True
             ),
             'cron_expression': entity_fields.StringField(str_type='alpha'),
-            'organization': entity_fields.OneToOneField(
-                Organization,
-                required=True,
-            ),
+            'organization': entity_fields.OneToOneField(Organization, required=True, parent=True),
             'product': entity_fields.OneToManyField(Product),
             'sync_date': entity_fields.DateTimeField(required=True),
             'foreman_tasks_recurring_logic': entity_fields.OneToOneField(RecurringLogic),
@@ -7425,8 +7384,7 @@ class SyncPlan(
         # read() should not change the state of the object it's called on, but
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
-        if entity is None:
-            entity = self.add_parent(organization=self.organization)
+        entity = entity or self.entity_with_parent()
         if ignore is None:
             ignore = set()
         ignore.add('organization')
