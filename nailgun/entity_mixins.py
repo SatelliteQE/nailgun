@@ -613,6 +613,20 @@ class Entity:
 
         return self.to_json_dict(filter_fcn) == other.to_json_dict(filter_fcn)
 
+    def add_parent(self, **parent):
+        """Returns modified entity by adding parent entity
+
+        :parent dict: The key/value pair of base entity
+        """
+        try:
+            entity = type(self)(self._server_config, **parent)
+        except TypeError:
+            # in the event that an entity's init is overwritten
+            # with a positional server_config
+            entity = type(self)(**parent)
+        return entity
+
+
 
 class EntityDeleteMixin:
     """This mixin provides the ability to delete an entity.
@@ -1434,3 +1448,18 @@ def to_json_serializable(obj):
         return obj.strftime('%Y-%m-%d')
 
     return obj
+
+
+def entity_with_parent(entity_obj, **parent):
+    """Returns modified entity from its parent entity
+
+    :entity_obj: An object of the nailgun entity
+    :parent dict: The key/value pair of base entity
+    """
+    try:
+        entity = type(entity_obj)(entity_obj._server_config, **parent)
+    except TypeError:
+        # in the event that an entity's init is overwritten
+        # with a positional server_config
+        entity = type(entity_obj)(**parent)
+    return entity
