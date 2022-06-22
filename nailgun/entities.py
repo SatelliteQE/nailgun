@@ -1386,10 +1386,7 @@ class ExternalUserGroup(
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Ignore usergroup from read and alter auth_source_ldap with auth_source"""
         if entity is None:
-            entity = type(self)(
-                self._server_config,
-                usergroup=self.usergroup,
-            )
+            entity = self.add_parent(usergroup=self.usergroup)
         if ignore is None:
             ignore = set()
         ignore.add('usergroup')
@@ -1611,7 +1608,7 @@ class TemplateInput(
         ignore 'advanced'
         """
         if entity is None:
-            entity = TemplateInput(self._server_config, template=self.template)
+            entity = self.add_parent(template=self.template)
         if ignore is None:
             ignore = set()
         ignore.add('advanced')
@@ -2105,10 +2102,7 @@ class ContentUpload(
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
         if entity is None:
-            entity = type(self)(
-                self._server_config,
-                repository=self.repository,
-            )
+            entity = self.add_parent(repository=self.repository)
         if ignore is None:
             ignore = set()
         ignore.add('repository')
@@ -2329,10 +2323,7 @@ class ContentViewFilterRule(
 
         """
         if entity is None:
-            entity = type(self)(
-                self._server_config,
-                content_view_filter=self.content_view_filter,
-            )
+            entity = self.add_parent(content_view_filter=self.content_view_filter)
         if attrs is None:
             attrs = self.read_json()
         if ignore is None:
@@ -2666,10 +2657,7 @@ class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
         if ignore is None:
             ignore = set()
         if entity is None:
-            entity = type(self)(
-                self._server_config,
-                composite_content_view=self.composite_content_view,
-            )
+            entity = self.add_parent(composite_content_view=self.composite_content_view)
 
         ignore.add('composite_content_view')
         return super().read(entity, attrs, ignore, params)
@@ -4549,17 +4537,7 @@ class Image(
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
         if entity is None:
-            try:
-                entity = type(self)(
-                    self._server_config,
-                    compute_resource=self.compute_resource,
-                )
-            except TypeError:
-                # in the event that an entity's init is overwritten
-                # with a positional server_config
-                entity = type(self)(
-                    compute_resource=self.compute_resource,
-                )
+            entity = self.add_parent(compute_resource=self.compute_resource)
         if ignore is None:
             ignore = set()
         ignore.add('compute_resource')
@@ -4651,10 +4629,7 @@ class Interface(
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
         if entity is None:
-            entity = type(self)(
-                self._server_config,
-                host=self.host,
-            )
+            entity = self.add_parent(host=self.host)
         if attrs is None:
             attrs = self.read_json()
         if ignore is None:
@@ -5080,10 +5055,7 @@ class OperatingSystemParameter(Entity, EntityCreateMixin, EntityDeleteMixin, Ent
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
         if entity is None:
-            entity = type(self)(
-                self._server_config,
-                operatingsystem=self.operatingsystem,
-            )
+            entity = self.add_parent(operatingsystem=self.operatingsystem)
         if ignore is None:
             ignore = set()
         ignore.add('operatingsystem')
@@ -5392,10 +5364,7 @@ class OSDefaultTemplate(
         accordingly.
         """
         if entity is None:
-            entity = type(self)(
-                self._server_config,
-                operatingsystem=self.operatingsystem,
-            )
+            entity = self.add_parent(operatingsystem=self.operatingsystem)
         if ignore is None:
             ignore = set()
         ignore.add('operatingsystem')
@@ -5464,17 +5433,7 @@ class OverrideValue(
         # object and passing it to super() lets this one avoid changing state.
         if entity is None:
             if hasattr(self, 'smart_class_parameter'):
-                try:
-                    entity = type(self)(
-                        self._server_config,
-                        smart_class_parameter=self.smart_class_parameter,
-                    )
-                except TypeError:
-                    # in the event that an entity's init is overwritten
-                    # with a positional server_config
-                    entity = type(self)(
-                        smart_class_parameter=self.smart_class_parameter,
-                    )
+                entity = self.add_parent(smart_class_parameter=self.smart_class_parameter)
         if ignore is None:
             ignore = set()
         ignore.update(['smart_class_parameter'])
@@ -5520,12 +5479,7 @@ class Parameter(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, E
         and are only added to entity to be able to use proper path.
         """
         if entity is None:
-            try:
-                entity = type(self)(self._server_config, **{self._parent_type: self._parent_id})
-            except TypeError:
-                # in the event that an entity's init is overwritten
-                # with a positional server_config
-                entity = type(self)(**{self._parent_type: self._parent_id})
+            entity = self.add_parent(**{self._parent_type: self._parent_id})
         if ignore is None:
             ignore = set()
         for field_name in self._path_fields:
@@ -6616,10 +6570,7 @@ class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
         if entity is None:
-            entity = type(self)(
-                self._server_config,
-                product=self.product,
-            )
+            entity = self.add_parent(product=self.product)
         if ignore is None:
             ignore = set()
         return super().read(entity, attrs, ignore, params)
@@ -7058,10 +7009,7 @@ class Snapshot(
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
         if entity is None:
-            entity = type(self)(
-                self._server_config,
-                host=self.host,
-            )
+            entity = self.add_parent(host=self.host)
         if ignore is None:
             ignore = set()
         ignore.add('host')
@@ -7129,10 +7077,7 @@ class SSHKey(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, Enti
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
         if entity is None:
-            entity = type(self)(
-                self._server_config,
-                user=self.user,
-            )
+            entity = self.add_parent(user=self.user)
         if ignore is None:
             ignore = set()
         ignore.add('user')
@@ -7481,10 +7426,7 @@ class SyncPlan(
         # super() alters the attributes of any entity passed in. Creating a new
         # object and passing it to super() lets this one avoid changing state.
         if entity is None:
-            entity = type(self)(
-                self._server_config,
-                organization=self.organization,
-            )
+            entity = self.add_parent(organization=self.organization)
         if ignore is None:
             ignore = set()
         ignore.add('organization')
