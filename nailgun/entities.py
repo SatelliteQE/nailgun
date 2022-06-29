@@ -8127,3 +8127,97 @@ class Srpms(Entity, EntityReadMixin, EntitySearchMixin):
         }
         self._meta = {'api_path': 'katello/api/v2/srpms'}
         super().__init__(server_config, **kwargs)
+
+
+class Webhooks(
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
+    """A representation of a Webhook entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(unique=True, required=True),
+            'target_url': entity_fields.URLField(required=True, scheme='http'),
+            'http_method': entity_fields.StringField(
+                choices=['POST', 'GET', 'PUT', 'DELETE', 'PATCH']
+            ),
+            'event': entity_fields.StringField(required=True),
+            'http_content_type': entity_fields.StringField(),
+            'webhook_template_id': entity_fields.StringField(
+                length=(1, 128), str_type='alphanumeric'
+            ),
+            'enabled': entity_fields.BooleanField(),
+            'verify_ssl': entity_fields.BooleanField(),
+            'ssl_ca_certs': entity_fields.StringField(),
+            'user': entity_fields.StringField(),
+            'password': entity_fields.StringField(),
+            'http_headers': entity_fields.StringField(),
+            'proxy_authorization': entity_fields.BooleanField(),
+        }
+        self._meta = {
+            'api_path': 'api/webhooks',
+        }
+        super().__init__(server_config, **kwargs)
+
+    def create(self, create_missing=None):
+        """Overrides creation of Webhooks
+        Before creating the Webhook, we want to call
+        get_events to get a valid list of events to pass
+        into our POST call.
+        """
+        self._fields['event'] = entity_fields.StringField(required=True, choices=self.get_events())
+
+        return type(self)(
+            self._server_config,
+            id=self.create_json(create_missing)['id'],
+        ).read()
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Override :meth:`nailgun.entity_mixins.EntityReadMixin.read` to ignore
+        the ``webhook_template_id``, ``password``, and ``proxy_authorization``
+        """
+        if ignore is None:
+            ignore = set()
+        ignore.add('webhook_template_id')
+        ignore.add('password')
+        ignore.add('proxy_authorization')
+        return super().read(entity, attrs, ignore, params)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        events
+            api/webhooks/events
+
+        Otherwise, call ``super``.
+
+        """
+        if which in ("events",):
+            return f'{super().path()}/{which}'
+        return super().path(which)
+
+    def get_events(self, synchronous=True, timeout=None, **kwargs):
+        """GET api/webhooks/events returns the list of all valid events
+        we can use to create a Webhook. Calling this list before our create
+        allows us to test all possible events.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('events'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)

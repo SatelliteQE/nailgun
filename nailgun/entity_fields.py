@@ -255,8 +255,15 @@ class OneToManyField(Field):
 
 
 class URLField(StringField):
-    """Field that represents an URL"""
+    """Field that represents an URL
+
+    :param str scheme: The URL scheme can be one of ['http', 'https', 'ftp']
+    """
+
+    def __init__(self, scheme=None, *args, **kwargs):
+        self.scheme = scheme
+        super().__init__(*args, **kwargs)
 
     def gen_value(self):
         """Return a value suitable for a :class:`URLField`."""
-        return gen_url(subdomain=gen_alpha())
+        return gen_url(subdomain=gen_alpha(), scheme=self.scheme)
