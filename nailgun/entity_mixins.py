@@ -46,6 +46,26 @@ DEFAULT_SERVER_CONFIG = None
 CREATE_MISSING = False
 
 
+def call_entity_method_with_timeout(entity_callable, timeout=300, **kwargs):
+    """Call Entity callable with a custom timeout
+
+    :param entity_callable, the entity method object to call
+    :param timeout: the time to wait for the method call to finish
+    :param kwargs: the kwargs to pass to the entity callable
+
+    Usage:
+        call_entity_method_with_timeout(
+            entities.Repository(id=repo_id).sync, timeout=1500)
+    """
+    global TASK_TIMEOUT
+    original_task_timeout = TASK_TIMEOUT
+    TASK_TIMEOUT = timeout
+    try:
+        entity_callable(**kwargs)
+    finally:
+        TASK_TIMEOUT = original_task_timeout
+
+
 class TaskTimedOutError(Exception):
     """Indicates that a task did not finish before the timout limit."""
 
