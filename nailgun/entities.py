@@ -5126,6 +5126,7 @@ class Organization(
             'subscriptions/refresh_manifest',
             'subscriptions/upload',
             'sync_plans',
+            'repo_discover',
         ):
             return f'{super().path(which="self")}/{which}'
 
@@ -5218,6 +5219,24 @@ class Organization(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('simple_content_access/enable'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def repo_discover(self, synchronous=True, timeout=None, **kwargs):
+        """repo discovery.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('repo_discover'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def sca_disable(self, synchronous=True, timeout=None, **kwargs):
