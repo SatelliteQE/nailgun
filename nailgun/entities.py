@@ -8140,3 +8140,67 @@ class Webhooks(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('events'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
+
+
+class AnsiblePlaybooks(Entity):
+    """A representation of Ansible Playbooks entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._meta = {
+            'api_path': '/ansible/api/ansible_playbooks',
+        }
+        super().__init__(server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        fetch
+            /ansible_playbooks/fetch
+        sync
+            /ansible_playbooks/sync
+
+        ``super`` is called otherwise.
+
+        """
+        if which in ("sync", "fetch"):
+            return f'{super().path(which="base")}/{which}'
+        return super().path(which)
+
+    def fetch(self, synchronous=True, timeout=None, **kwargs):
+        """Helper for fetching all ansible playbooks.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('fetch'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def sync(self, synchronous=True, timeout=None, **kwargs):
+        """Helper to sync ansible playbooks.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('sync'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
