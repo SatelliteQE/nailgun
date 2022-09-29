@@ -4312,11 +4312,17 @@ class Host(
             /api/hosts/:host_id/module_streams
         disassociate
             /api/hosts/:host_id/disassociate
+        assign_ansible_roles
+            /api/hosts/:host_id/assign_ansible_roles
+        ansible_roles
+            /api/hosts/:host_id/ansible_roles
 
         Otherwise, call ``super``.
 
         """
         if which in (
+            'ansible_roles',
+            'assign_ansible_roles',
             'disassociate',
             'enc',
             'errata',
@@ -4474,6 +4480,48 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('disassociate'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def assign_ansible_roles(self, synchronous=True, timeout=None, **kwargs):
+        """Add an Ansible Role to a host
+
+        Here is an example of how to use this method::
+            host.assign_ansible_roles(data={'ansible_role_ids':
+            [ansible_role_id1, ansible_role_id2]})
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('assign_ansible_roles'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def list_ansible_roles(self, synchronous=True, timeout=None, **kwargs):
+        """List all Ansible Roles assigned to a Host
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('ansible_roles'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
@@ -8220,6 +8268,51 @@ class AnsiblePlaybooks(Entity):
 
     def sync(self, synchronous=True, timeout=None, **kwargs):
         """Helper to sync ansible playbooks.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('sync'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+
+class AnsibleRoles(Entity):
+    """A representation of Ansible Roles entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._meta = {
+            'api_path': '/ansible/api/ansible_roles',
+        }
+        super().__init__(server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+        The format of the returned path depends on the value of ``which``:
+
+        sync
+            /ansible_roles/sync
+
+        ``super`` is called otherwise.
+
+        """
+        if which in ("sync"):
+            return f'{super().path(which="base")}/{which}'
+        return super().path(which)
+
+    def sync(self, synchronous=True, timeout=None, **kwargs):
+        """Helper to sync ansible roles from a proxy.
+
+        AnsibleRoles.sync(data={'proxy_id': "target_sat.ip", 'role_names': ["role_name"]})
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
