@@ -5256,6 +5256,24 @@ class Organization(
         response = client.get(self.path('simple_content_access/eligible'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
+    def subscriptions(self, synchronous=True, timeout=None, **kwargs):
+        """Helper for getting subscriptions from organization.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('subscriptions'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
     def rh_cloud_download_report(self, destination, **kwargs):
         """Download RHCloud Inventory report.
 
