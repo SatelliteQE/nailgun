@@ -1276,7 +1276,10 @@ class ReadTestCase(TestCase):
             (entities.TailoringFile, {'scap_file'}),
             (entities.VirtWhoConfig, {'hypervisor_password', 'http_proxy_id'}),
             (entities.VMWareComputeResource, {'password'}),
-            (entities.DiscoveredHost, {'ip', 'mac', 'root_pass', 'hostgroup'}),
+            (
+                entities.DiscoveredHost,
+                {'ip', 'mac', 'root_pass', 'hostgroup', 'build', 'organization', 'location'},
+            ),
         ):
             with self.subTest(entity):
                 with mock.patch.object(EntityReadMixin, 'read') as read, mock.patch.object(
