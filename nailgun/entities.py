@@ -1070,6 +1070,9 @@ class DiscoveredHost(
             'mac': entity_fields.MACAddressField(required=True),
             'hostgroup': entity_fields.OneToOneField(HostGroup),
             'root_pass': entity_fields.StringField(),
+            'build': entity_fields.BooleanField(default=False),
+            'organization': entity_fields.OneToOneField(Organization),
+            'location': entity_fields.OneToOneField(Location),
         }
         self._meta = {
             'api_path': '/api/v2/discovered_hosts',
@@ -1155,13 +1158,16 @@ class DiscoveredHost(
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
-        """Make sure, ``ip, mac, root_pass and hostgroup`` are in the ignore list for read"""
+        """Make sure, everything except `id` and `name` are in the ignore list for read"""
         if ignore is None:
             ignore = set()
         ignore.add('ip')
         ignore.add('mac')
         ignore.add('root_pass')
         ignore.add('hostgroup')
+        ignore.add('build')
+        ignore.add('organization')
+        ignore.add('location')
         return super().read(entity, attrs, ignore, params)
 
     def reboot(self, synchronous=True, timeout=None, **kwargs):
