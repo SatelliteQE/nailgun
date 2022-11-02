@@ -85,6 +85,18 @@ def _set_content_type(kwargs):
     kwargs['headers'] = headers
 
 
+def _truncate_data(data, max_len=500):
+    """Truncate data to a max length"""
+    if isinstance(data, (str, bytes)):
+        if len(data) > max_len:
+            return f"{data[:max_len - 3]}..."
+        return data
+    elif isinstance(data, dict):
+        return {key: _truncate_data(value, max_len) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [_truncate_data(item, max_len) for item in data]
+
+
 def _log_request(method, url, kwargs, data=None, params=None):
     """Log out information about the arguments given.
 
@@ -98,9 +110,9 @@ def _log_request(method, url, kwargs, data=None, params=None):
         'Making HTTP %s request to %s with %s, %s and %s.',
         method,
         url,
-        f'options {kwargs}' if len(kwargs) > 0 else 'no options',
-        f'params {params}' if params else 'no params',
-        f'data {data}' if data is not None else 'no data',
+        f'options {_truncate_data(kwargs)}' if len(kwargs) > 0 else 'no options',
+        f'params {_truncate_data(params)}' if params else 'no params',
+        f'data {_truncate_data(data)}' if data is not None else 'no data',
     )
 
 
