@@ -6,6 +6,7 @@ from unittest.mock import call
 from unittest.mock import mock_open
 from unittest.mock import patch
 
+from packaging.version import InvalidVersion
 from packaging.version import parse
 
 from nailgun.config import _get_config_file_path
@@ -19,8 +20,8 @@ CONFIGS = {
     'default': {'url': 'http://example.com'},
     'Ask Aak': {'url': 'bogus value', 'auth': ['username', 'password']},
     'Acros-Krik': {'url': 'booger', 'version': '1.2.3.4.dev5+67'},
-    'King Adas': {'url': 'burger', 'version': 'silly version'},
 }
+INVALID_CONFIG = {'url': 'burger', 'version': 'silly version'}
 CONFIGS2 = CONFIGS.copy()
 CONFIGS2.update(
     {
@@ -61,6 +62,13 @@ class BaseServerConfigTestCase(TestCase):
                 _convert_bsc_attrs(config),
                 vars(BaseServerConfig(**config)),
             )
+
+    def test_init_invalid(self):
+        """Test instantiating :class: `nailgun.config.BaseServerConfig`.
+        Assert that configs with invalid versions do not load.
+        """
+        with self.assertRaises(InvalidVersion):
+            _convert_bsc_attrs(INVALID_CONFIG)
 
     def test_get(self):
         """Test :meth:`nailgun.config.BaseServerConfig.get`.
