@@ -40,6 +40,7 @@ jobs:
           branch: ${{ matrix.label }}
           labels: |
             Auto_Cherry_Picked
+            No-CherryPick
             ${{ matrix.label }}
           assignees: ${{ env.assignee }}
 
