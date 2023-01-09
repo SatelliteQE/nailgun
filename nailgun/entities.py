@@ -1656,8 +1656,8 @@ class JobInvocation(Entity, EntityReadMixin, EntitySearchMixin):
                     job_template_id/feature,
                     targeting_type,
                     search_query/bookmark_id,
-                    inputs
                 optional:
+                    inputs,
                     description_format,
                     concurrency_control
                     scheduling,
@@ -1675,9 +1675,8 @@ class JobInvocation(Entity, EntityReadMixin, EntitySearchMixin):
                 raise KeyError('Provide either job_template_id or feature value')
             if 'search_query' not in kwargs['data'] and 'bookmark_id' not in kwargs['data']:
                 raise KeyError('Provide either search_query or bookmark_id value')
-            for param_name in ['targeting_type', 'inputs']:
-                if param_name not in kwargs['data']:
-                    raise KeyError(f'Provide {param_name} value')
+            if 'targeting_type' not in kwargs['data']:
+                raise KeyError('Provide targeting_type value')
             kwargs['data'] = {'job_invocation': kwargs['data']}
         response = client.post(self.path('base'), **kwargs)
         response.raise_for_status()
