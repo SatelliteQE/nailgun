@@ -3796,7 +3796,7 @@ class JobInvocationTestCase(TestCase):
             {'feature': 'foo', 'inputs': 'ls'},
             {'job_template_id': 1, 'search_query': 'foo'},
             {'feature': 'foo', 'bookmark_id': 1, 'inputs': 'ls'},
-            {'feature': 'foo', 'bookmark_id': 1, 'targeting_type': 'foo'},
+            {'feature': 'foo', 'job_template_id': 1, 'targeting_type': 'foo'},
         ]
         for data in data_list:
             with self.assertRaises(KeyError):
