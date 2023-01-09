@@ -1676,7 +1676,7 @@ class JobInvocation(Entity, EntityReadMixin, EntitySearchMixin):
             if 'search_query' not in kwargs['data'] and 'bookmark_id' not in kwargs['data']:
                 raise KeyError('Provide either search_query or bookmark_id value')
             if 'targeting_type' not in kwargs['data']:
-                raise KeyError('Provide targeting_type')
+                raise KeyError('Provide targeting_type value')
             kwargs['data'] = {'job_invocation': kwargs['data']}
         response = client.post(self.path('base'), **kwargs)
         response.raise_for_status()
