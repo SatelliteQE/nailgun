@@ -4321,8 +4321,8 @@ class Host(
 
         """
         if which in (
-            'ansible_roles',
             'assign_ansible_roles',
+            'list_ansible_roles',
             'disassociate',
             'enc',
             'errata',
