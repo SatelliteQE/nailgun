@@ -95,6 +95,8 @@ class InitTestCase(TestCase):
                 entities.AbstractComputeResource,
                 entities.AbstractContentViewFilter,
                 entities.ActivationKey,
+                entities.AnsibleRoles,
+                entities.AnsiblePlaybooks,
                 entities.Architecture,
                 entities.ArfReport,
                 entities.Audit,
@@ -323,6 +325,8 @@ class PathTestCase(TestCase):
             (entities.Host, 'packages'),
             (entities.Host, 'puppetclass_ids'),
             (entities.Host, 'smart_class_parameters'),
+            (entities.Host, 'list_ansible_roles'),
+            (entities.Host, 'assign_ansible_roles'),
             (entities.HostGroup, 'clone'),
             (entities.HostGroup, 'puppetclass_ids'),
             (entities.HostGroup, 'rebuild_config'),
@@ -356,6 +360,9 @@ class PathTestCase(TestCase):
     def test_noid_and_which(self):
         """Execute ``entity().path(which=…)``."""
         for entity, which in (
+            (entities.AnsibleRoles, 'sync'),
+            (entities.AnsiblePlaybooks, 'sync'),
+            (entities.AnsiblePlaybooks, 'fetch'),
             (entities.ProductBulkAction, 'destroy'),
             (entities.ProductBulkAction, 'sync'),
             (entities.ProductBulkAction, 'http_proxy'),
