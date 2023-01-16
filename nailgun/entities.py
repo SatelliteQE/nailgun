@@ -2489,6 +2489,15 @@ class ContentView(
         attrs = attrs or self.read_json()
         ignore = ignore or set()
         ignore.add('content_view_component')
+        if entity is None:
+            try:
+                entity = type(self)(self._server_config)
+            except TypeError:
+                # in the event that an entity's init is overwritten
+                # with a positional server_config
+                entity = type(self)()
+                if self._server_config:
+                    entity._server_config = self._server_config
         result = super().read(entity, attrs, ignore, params)
         if 'content_view_components' in attrs and attrs['content_view_components']:
             result.content_view_component = [
