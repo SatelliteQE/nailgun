@@ -4322,7 +4322,7 @@ class Host(
         """
         if which in (
             'assign_ansible_roles',
-            'list_ansible_roles',
+            'ansible_roles',
             'disassociate',
             'enc',
             'errata',
