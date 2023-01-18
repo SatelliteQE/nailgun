@@ -6068,18 +6068,26 @@ class RegistrationCommand(Entity, EntityCreateMixin, EntityReadMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'smart_proxy': entity_fields.OneToOneField(SmartProxy),
             'organization': entity_fields.OneToOneField(Organization, required=True),
-            'activation_keys': entity_fields.OneToManyField(ActivationKey, required=True),
             'location': entity_fields.OneToOneField(Location, required=True),
+            'lifecycle_environment': entity_fields.OneToOneField(LifecycleEnvironment),
+            'activation_key': entity_fields.OneToOneField(ActivationKey),
+            'activation_keys': entity_fields.OneToManyField(ActivationKey),
+            'operatingsystem': entity_fields.OneToOneField(OperatingSystem),
+            'hostgroup': entity_fields.OneToOneField(HostGroup),
             'insecure': entity_fields.BooleanField(default=True, required=True),
-            'setup_remote_execution': entity_fields.BooleanField(default=True),
             'setup_insights': entity_fields.BooleanField(default=False),
+            'setup_remote_execution': entity_fields.BooleanField(default=True),
+            'setup_remote_execution_pull': entity_fields.BooleanField(default=False),
+            'remote_execution_interface': entity_fields.StringField(default=''),
             'jwt_expiration': entity_fields.IntegerField(default=4),
-            'packages': entity_fields.ListField(default=[]),
             'repo': entity_fields.StringField(default=''),
             'repo_gpg_key_url': entity_fields.URLField(default=''),
+            'packages': entity_fields.ListField(default=[]),
             'update_packages': entity_fields.BooleanField(default=False),
-            'lifecycle_environment': entity_fields.OneToOneField(LifecycleEnvironment),
+            'force': entity_fields.BooleanField(default=False),
+            'ignore_subman_errors': entity_fields.BooleanField(default=False),
         }
 
         self._meta = {'api_path': '/api/registration_commands'}
@@ -6101,7 +6109,7 @@ class RegistrationCommand(Entity, EntityCreateMixin, EntityReadMixin):
         """
         if attrs is None:
             attrs = self.read_json()
-        return attrs
+        return attrs['registration_command']
 
 
 class Report(Entity):
