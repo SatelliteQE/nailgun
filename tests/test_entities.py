@@ -325,7 +325,7 @@ class PathTestCase(TestCase):
             (entities.Host, 'packages'),
             (entities.Host, 'puppetclass_ids'),
             (entities.Host, 'smart_class_parameters'),
-            (entities.Host, 'list_ansible_roles'),
+            (entities.Host, 'ansible_roles'),
             (entities.Host, 'assign_ansible_roles'),
             (entities.HostGroup, 'clone'),
             (entities.HostGroup, 'puppetclass_ids'),
