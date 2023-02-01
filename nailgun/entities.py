@@ -1519,15 +1519,20 @@ class GCEComputeResource(AbstractComputeResource):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'email': entity_fields.StringField(required=True),
             'key_path': entity_fields.StringField(required=True),
-            'project': entity_fields.StringField(required=True),
             'zone': entity_fields.StringField(),
         }
         super().__init__(server_config, **kwargs)
         self._fields['provider'].default = 'GCE'
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'GCE'
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Make sure, ``key_path`` is in the ignore list for read"""
+        if ignore is None:
+            ignore = set()
+        ignore.add('key_path')
+        return super().read(entity, attrs, ignore, params)
 
 
 class AzureRMComputeResource(AbstractComputeResource):
