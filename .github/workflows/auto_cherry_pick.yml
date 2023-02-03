@@ -14,10 +14,25 @@ env:
 
 jobs:
 
+  # Pre-Requisites for Auto Cherrypicking
+  find-the-parent-prt-comment:
+    name: Find & Save last PRT comment of Parent PR
+    runs-on: ubuntu-latest
+    outputs:
+      prt_comment: ${{steps.fc.outputs.comment-body}}
+    steps:
+      - name: Find Comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          issue-number: ${{ env.number }}
+          body-includes: "trigger: test-robottelo"
+
   # Auto CherryPicking and Failure Recording
   auto-cherry-pick:
     if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'CherryPick')
     name: Auto Cherry Pick to labeled branches
+    needs: find-the-parent-prt-comment
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -40,9 +55,31 @@ jobs:
           branch: ${{ matrix.label }}
           labels: |
             Auto_Cherry_Picked
-            No-CherryPick
             ${{ matrix.label }}
+            No-CherryPick
           assignees: ${{ env.assignee }}
+
+      - name: Add Parent PR's PRT comment to Auto_Cherry_Picked PR's
+        id: add-parent-prt-comment
+        if: ${{ always() && steps.cherrypick.outcome == 'success' }}
+        uses: mshick/add-pr-comment@v2
+        with:
+          issue: ${{ steps.cherrypick.outputs.number }}
+          message: ${{ needs.find-the-parent-prt-comment.outputs.prt_comment }}
+          repo-token: ${{ secrets.CHERRYPICK_PAT }}
+
+      - name: is autoMerging enabled for Auto CherryPicked PRs ?
+        if: ${{ always() && steps.cherrypick.outcome == 'success' && contains(github.event.pull_request.labels.*.name, 'AutoMerge_Cherry_Picked') }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.CHERRYPICK_PAT }}
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: ${{ steps.cherrypick.outputs.number }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ["AutoMerge_Cherry_Picked"]
+            })
 
       ## Failure Logging to issues and GChat Group
       - name: Create Github issue on cherrypick failure
@@ -56,7 +93,7 @@ jobs:
             #### Auto-Cherry-Pick WorkFlow Failure:
             - To Branch: ${{ matrix.label }}
             - [Failed Cherrypick Action](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            - [Parent Pull Request](https://github.com/${{ github.repository }}/pull/${{ env.number }})
+            - [Parent Pull Request](https://github.com/${{ github.repository }}/pull/${{ github.event.number }})
           labels: Failed_AutoCherryPick,${{ matrix.label }}
           assignees: ${{ env.assignee }}
       - name: Send Google Chat notification on cherrypick failure
