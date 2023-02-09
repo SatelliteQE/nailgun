@@ -82,7 +82,7 @@ class TaskFailedError(Exception):
         self.task_id = task_id
 
 
-def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
+def _poll_task(task_id, server_config, poll_rate=None, timeout=None, must_succeed=True):
     """Implement :meth:`nailgun.entities.ForemanTask.poll`.
 
     See :meth:`nailgun.entities.ForemanTask.poll` for a full description of how
@@ -130,7 +130,7 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
         timer.cancel()
 
     # Check for task success or failure.
-    if task_info['result'] != 'success':
+    if must_succeed and task_info['result'] != 'success':
         raise TaskFailedError(
             f"Task {task_id} did not succeed. Task information: {task_info}", task_id
         )
