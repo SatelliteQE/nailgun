@@ -5452,7 +5452,9 @@ class Parameter(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, E
             ),
             'priority': entity_fields.IntegerField(),
             'value': entity_fields.StringField(required=True),
-            'parameter_type': entity_fields.StringField(required=True),
+            'parameter_type': entity_fields.StringField(
+                choices=('string', 'boolean', 'integer', 'real', 'array', 'hash', 'yaml', 'json')
+            ),
         }
         self._path_fields = {
             'domain': entity_fields.OneToOneField(Domain),
