@@ -4407,7 +4407,7 @@ class Host(
         """Fetches and reads the provisioning template for given host
 
         Here is an example of how to use this method::
-            host.preview_template(data={'template_kind': 'iPXE'})
+            host.read_template(data={'template_kind': 'iPXE'})
 
         Constructs path:
            api/hosts/:id/template/:kind
