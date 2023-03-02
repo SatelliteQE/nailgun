@@ -327,6 +327,7 @@ class PathTestCase(TestCase):
             (entities.Host, 'smart_class_parameters'),
             (entities.Host, 'ansible_roles'),
             (entities.Host, 'assign_ansible_roles'),
+            (entities.Host, 'template'),
             (entities.HostGroup, 'clone'),
             (entities.HostGroup, 'puppetclass_ids'),
             (entities.HostGroup, 'rebuild_config'),
@@ -3080,6 +3081,19 @@ class HostTestCase(TestCase):
         self.assertEqual(len(put.call_args[0]), 1)  # post called with 1 positional argument
         self.assertEqual(len(put.call_args[1]), 0)  # post called with no keyword argument
         self.assertEqual(put.call_args[0][0], 'foo/api/v2/hosts/42/disassociate')
+
+    def test_read_template(self):
+        """Read a provision template"""
+        entity = entities.Host(self.cfg, id=1)
+        kwargs = {'data': {'template_kind': gen_alpha()}}
+        with mock.patch.object(entities, '_handle_response') as handler:
+            with mock.patch.object(client, 'get') as get:
+                response = entity.read_template(**kwargs)
+        self.assertEqual(get.call_count, 1)
+        self.assertEqual(len(get.call_args[0]), 1)
+        self.assertEqual(get.call_args[1], kwargs)
+        self.assertEqual(handler.call_count, 1)
+        self.assertEqual(handler.return_value, response)
 
 
 class PuppetClassTestCase(TestCase):
