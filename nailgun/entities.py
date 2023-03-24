@@ -7972,6 +7972,7 @@ class VirtWhoConfig(
                 choices=['central', 'element'], default='element'
             ),
             'kubeconfig_path': entity_fields.StringField(),
+            'ahv_internal_debug': entity_fields.BooleanField(),
         }
         self._meta = {
             'api_path': 'foreman_virt_who_configure/api/v2/configs',
