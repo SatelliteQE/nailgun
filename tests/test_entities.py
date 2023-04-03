@@ -1246,8 +1246,8 @@ class ReadTestCase(TestCase):
             ),
             (
                 entities.Host(self.cfg),
-                {'parameters': None},
-                {'host_parameters_attributes': None},
+                {'parameters': None, 'puppet_proxy': None},
+                {'host_parameters_attributes': None, 'puppet_proxy': None},
             ),
             (
                 entities.Filter(self.cfg),
@@ -1455,6 +1455,7 @@ class ReadTestCase(TestCase):
                 return_value={
                     'interfaces': [{'id': 2}, {'id': 3}],
                     'parameters': None,
+                    'puppet_proxy': None,
                 },
             ):
                 with mock.patch.object(
@@ -1742,6 +1743,7 @@ class SearchNormalizeTestCase(TestCase):
                         'image_id': 1,
                         'compute_resource_id': 1,
                         'parameters': {},
+                        'puppet_proxy': None,
                     }
                     read.return_value = host
                     host = host.read()
@@ -1750,6 +1752,7 @@ class SearchNormalizeTestCase(TestCase):
                     # Image wasn't set
                     read_json.return_value = {
                         'parameters': {},
+                        'puppet_proxy': None,
                     }
                     read.return_value = host
                     host = host.read()
@@ -3038,6 +3041,7 @@ class HostTestCase(TestCase):
                     attrs={
                         'parameters': None,
                         'puppetclasses': None,
+                        'puppet_proxy': None,
                     }
                 )
                 self.assertNotIn('content_facet_attributes', read.call_args[0][1])
