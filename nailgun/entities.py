@@ -4511,6 +4511,7 @@ class Host(
             'traces',
             'traces/resolve',
             'template',
+            'templates',
         ):
             return f'{super().path(which="self")}/{which}'
         elif which in (
@@ -4724,6 +4725,24 @@ class Host(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('ansible_roles'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def list_provisioning_templates(self, synchronous=True, timeout=None, **kwargs):
+        """List all Provisioning templates assigned to a Host
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('templates'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)['templates']
 
 
 class Image(
