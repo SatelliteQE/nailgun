@@ -430,6 +430,165 @@ class ActivationKey(
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
+class AlternateContentSource(
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
+    """A representation of an Alternate Content Source entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(
+                required=True, str_type='alpha', length=(6, 12), unique=True
+            ),
+            'content_type': entity_fields.StringField(choices=('file', 'yum'), default='yum'),
+            'alternate_content_source_type': entity_fields.StringField(
+                choices=('custom', 'simplified', 'rhui'), default='custom'
+            ),
+            'description': entity_fields.StringField(),
+            'base_url': entity_fields.URLField(),
+            'subpaths': entity_fields.ListField(),
+            'smart_proxy_ids': entity_fields.ListField(),
+            'smart_proxy_names': entity_fields.ListField(),
+            'smart_proxies': entity_fields.OneToManyField(SmartProxy),
+            'upstream_username': entity_fields.StringField(),
+            'upstream_password': entity_fields.StringField(),
+            'ssl_ca_cert_id': entity_fields.IntegerField(),
+            'ssl_ca_cert': entity_fields.OneToOneField(ContentCredential),
+            'ssl_client_cert_id': entity_fields.IntegerField(),
+            'ssl_client_cert': entity_fields.OneToOneField(ContentCredential),
+            'ssl_client_key_id': entity_fields.IntegerField(),
+            'ssl_client_key': entity_fields.OneToOneField(ContentCredential),
+            'verify_ssl': entity_fields.BooleanField(),
+            'use_http_proxies': entity_fields.BooleanField(),
+            'product_ids': entity_fields.ListField(),
+            'products': entity_fields.ListField(),
+            'last_refresh': entity_fields.DictField(),
+        }
+        self._meta = {
+            'api_path': 'katello/api/alternate_content_sources',
+        }
+        super().__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Handle read values dependencies"""
+        if attrs is None:
+            attrs = self.read_json()
+        if ignore is None:
+            ignore = set()
+
+        # fields depending on the ACS type
+        if 'base_url' not in attrs:
+            ignore.add('base_url')
+        if 'subpaths' not in attrs:
+            ignore.add('subpaths')
+        if 'products' not in attrs:
+            ignore.add('products')
+        if 'verify_ssl' not in attrs:
+            ignore.add('verify_ssl')
+        if 'ssl_ca_cert' not in attrs:
+            ignore.add('ssl_ca_cert')
+        if 'ssl_client_cert' not in attrs:
+            ignore.add('ssl_client_cert')
+        if 'ssl_client_key' not in attrs:
+            ignore.add('ssl_client_key')
+        if 'upstream_username' not in attrs:
+            ignore.add('upstream_username')
+
+        # returned in non-id fields
+        ignore.add('smart_proxy_ids')
+        ignore.add('smart_proxy_names')
+        ignore.add('product_ids')
+        ignore.add('ssl_ca_cert_id')
+        ignore.add('ssl_client_cert_id')
+        ignore.add('ssl_client_key_id')
+
+        # always missing
+        ignore.add('upstream_password')
+
+        return super().read(entity, attrs, ignore, params)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        refresh
+            /katello/api/alternate_content_sources/:id/refresh
+        bulk_refresh
+            /katello/api/alternate_content_sources/bulk/refresh
+        bulk_destroy
+            /katello/api/alternate_content_sources/bulk/destroy
+        """
+        if which == "refresh":
+            return f'{super().path(which="self")}/{which}'
+        elif which in (
+            'bulk/refresh',
+            'bulk/destroy',
+        ):
+            return f'{super().path(which="base")}/{which}'
+        return super().path(which)
+
+    def refresh(self, synchronous=True, timeout=None, **kwargs):
+        """Helper to refresh an ACS.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('refresh'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def bulk_refresh(self, synchronous=True, timeout=None, **kwargs):
+        """Refresh the set of ACSes
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('bulk/refresh'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def bulk_destroy(self, synchronous=True, timeout=None, **kwargs):
+        """Destroy the set of ACSes
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('bulk/destroy'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+
 class Architecture(
     Entity,
     EntityCreateMixin,
