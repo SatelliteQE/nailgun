@@ -95,6 +95,7 @@ class InitTestCase(TestCase):
                 entities.AbstractComputeResource,
                 entities.AbstractContentViewFilter,
                 entities.ActivationKey,
+                entities.AlternateContentSource,
                 entities.AnsibleRoles,
                 entities.AnsiblePlaybooks,
                 entities.Architecture,
@@ -305,6 +306,7 @@ class PathTestCase(TestCase):
             (entities.AbstractComputeResource, 'available_networks'),
             (entities.AbstractComputeResource, 'associate'),
             (entities.AbstractComputeResource, 'images'),
+            (entities.AlternateContentSource, 'refresh'),
             (entities.ArfReport, 'download_html'),
             (entities.ProvisioningTemplate, 'clone'),
             (entities.ReportTemplate, 'clone'),
@@ -360,6 +362,8 @@ class PathTestCase(TestCase):
     def test_noid_and_which(self):
         """Execute ``entity().path(which=…)``."""
         for entity, which in (
+            (entities.AlternateContentSource, 'bulk/refresh'),
+            (entities.AlternateContentSource, 'bulk/destroy'),
             (entities.AnsibleRoles, 'sync'),
             (entities.AnsiblePlaybooks, 'sync'),
             (entities.AnsiblePlaybooks, 'fetch'),
