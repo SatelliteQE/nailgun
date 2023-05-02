@@ -6963,6 +6963,43 @@ class RHCIDeployment(
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
+class RHCloud(Entity):
+    """A representation of a RHCloud entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'organization_id': entity_fields.IntegerField(),
+            'location_id': entity_fields.IntegerField(),
+        }
+        super().__init__(server_config, **kwargs)
+        self._meta = {'api_path': 'api/v2/rh_cloud'}
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``."""
+        if which in ("enable_connector"):
+            return f'{super().path(which="base")}/{which}'
+        return super().path(which)
+
+    def enable_connector(
+        self, location_id=None, organization_id=None, synchronous=True, timeout=None, **kwargs
+    ):
+        """Function to enable RH Cloud connector"""
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+
+        if location_id and organization_id:
+            data = {'location_id': location_id, 'organization_id': organization_id}
+        elif location_id:
+            data = {'location_id': location_id}
+        elif organization_id:
+            data = {'organization_id': organization_id}
+        else:
+            data = None
+
+        response = client.post(self.path('enable_connector'), data, **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+
 class RoleLDAPGroups(Entity):
     """A representation of a Role LDAP Groups entity."""
 
