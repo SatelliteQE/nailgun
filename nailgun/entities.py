@@ -2368,6 +2368,7 @@ class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearc
             'environment': entity_fields.OneToManyField(LifecycleEnvironment),
             'errata_counts': entity_fields.DictField(),
             'file_count': entity_fields.IntegerField(),
+            'filters_applied': entity_fields.BooleanField(),
             'major': entity_fields.IntegerField(),
             'minor': entity_fields.IntegerField(),
             'module_stream_count': entity_fields.IntegerField(),
