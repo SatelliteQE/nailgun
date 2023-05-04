@@ -6980,23 +6980,11 @@ class RHCloud(Entity):
             return f'{super().path(which="base")}/{which}'
         return super().path(which)
 
-    def enable_connector(
-        self, location_id=None, organization_id=None, synchronous=True, timeout=None, **kwargs
-    ):
+    def enable_connector(self, synchronous=True, timeout=None, **kwargs):
         """Function to enable RH Cloud connector"""
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
-
-        if location_id and organization_id:
-            data = {'location_id': location_id, 'organization_id': organization_id}
-        elif location_id:
-            data = {'location_id': location_id}
-        elif organization_id:
-            data = {'organization_id': organization_id}
-        else:
-            data = None
-
-        response = client.post(self.path('enable_connector'), data, **kwargs)
+        response = client.post(self.path('enable_connector'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
