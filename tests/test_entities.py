@@ -2193,6 +2193,7 @@ class GenericTestCase(TestCase):
             (entities.Repository(**generic).module_streams, 'get'),
             (entities.Repository(**generic).remove_content, 'put'),
             (entities.Repository(**generic).sync, 'post'),
+            (entities.RHCloud(**generic).enable_connector, 'post'),
             (entities.ScapContents(**generic).xml, 'get'),
             (entities.SmartProxy(**generic).import_puppetclasses, 'post'),
             (entities.SmartProxy(**generic).refresh, 'put'),
