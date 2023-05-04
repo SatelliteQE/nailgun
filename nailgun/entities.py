@@ -4417,7 +4417,14 @@ class Host(
         # host id is required for interface initialization
         ignore.add('interface')
         ignore.add('build_status_label')
-        if 'Puppet' not in _feature_list(self._server_config):
+        # Ignore puppetclass attribute if we are running against Puppet disabled
+        # instance. Ignore it also if the API does not return puppetclasses for
+        # the given host, but only if it does not have Puppet proxy assigned.
+        if (
+            'Puppet' not in _feature_list(self._server_config)
+            or 'puppetclasses' not in attrs
+            and not attrs['puppet_proxy']
+        ):
             ignore.add('puppetclass')
         result = super().read(entity, attrs, ignore, params)
         if attrs.get('image_id'):
