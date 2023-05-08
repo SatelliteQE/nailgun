@@ -2655,6 +2655,7 @@ class ContentView(
             'name': entity_fields.StringField(
                 required=True, str_type='alpha', length=(6, 12), unique=True
             ),
+            'needs_publish': entity_fields.BooleanField(),
             'next_version': entity_fields.IntegerField(),
             'organization': entity_fields.OneToOneField(
                 Organization,
