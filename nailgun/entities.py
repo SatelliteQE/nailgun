@@ -5006,6 +5006,7 @@ class HTTPProxy(
             'password': entity_fields.StringField(),
             'organization': entity_fields.OneToManyField(Organization),
             'location': entity_fields.OneToManyField(Location),
+            'cacert': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'api/v2/http_proxies'}
         super().__init__(server_config, **kwargs)
