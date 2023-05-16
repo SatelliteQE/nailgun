@@ -35,7 +35,6 @@ from packaging.version import Version
 from nailgun import client
 from nailgun import entity_fields
 from nailgun.entity_mixins import _get_entity_ids
-from nailgun.entity_mixins import _payload
 from nailgun.entity_mixins import _poll_task
 from nailgun.entity_mixins import Entity
 from nailgun.entity_mixins import EntityCreateMixin
@@ -2893,8 +2892,6 @@ class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
         if 'data' not in kwargs:
             # data is required
             kwargs['data'] = dict()
-        if 'component_ids' not in kwargs['data']:
-            kwargs['data']['components'] = [_payload(self.get_fields(), self.get_values())]
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('add'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
