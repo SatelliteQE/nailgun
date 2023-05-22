@@ -5032,6 +5032,7 @@ class HTTPProxy(
         ignore.add('password')
         ignore.add('organization')
         ignore.add('location')
+        ignore.add('cacert')
         return super().read(entity, attrs, ignore, params)
 
 
