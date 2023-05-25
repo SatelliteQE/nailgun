@@ -3585,11 +3585,17 @@ class HostGroup(
             /api/hostgroups/:hostgroup_id/rebuild_config
         smart_class_parameters
             /api/hostgroups/:hostgroup_id/smart_class_parameters
+        assign_ansible_roles
+            /api/hostgroups/:hostgroup_id/assign_ansible_roles
+        ansible_roles
+            /api/hostgroups/:hostgroup_id/ansible_roles
 
         Otherwise, call ``super``.
 
         """
         if which in (
+            'assign_ansible_roles',
+            'ansible_roles',
             'clone',
             'puppetclass_ids',
             'rebuild_config',
@@ -3701,6 +3707,88 @@ class HostGroup(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('rebuild_config'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def assign_ansible_roles(self, synchronous=True, timeout=None, **kwargs):
+        """Add an Ansible Role to a hostgroup
+
+        Here is an example of how to use this method::
+            hostgroup.assign_ansible_roles(data={'ansible_role_ids':
+            [ansible_role_id1, ansible_role_id2]})
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('assign_ansible_roles'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def list_ansible_roles(self, synchronous=True, timeout=None, **kwargs):
+        """List all Ansible Roles assigned to a hostgroup
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('ansible_roles'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def add_ansible_role(self, synchronous=True, timeout=None, **kwargs):
+        """Add single Ansible Role to a hostgroup
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        path = f'{self.path("ansible_roles")}/{kwargs["data"].pop("ansible_role_id")}'
+        return _handle_response(
+            client.put(path, **kwargs), self._server_config, synchronous, timeout
+        )
+
+    def remove_ansible_role(self, synchronous=True, timeout=None, **kwargs):
+        """Remove single Ansible Role assigned to a hostgroup
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        path = f'{self.path("ansible_roles")}/{kwargs["data"].pop("ansible_role_id")}'
+        return _handle_response(
+            client.delete(path, **kwargs), self._server_config, synchronous, timeout
+        )
 
 
 class HostPackage(Entity):
@@ -4726,6 +4814,46 @@ class Host(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('ansible_roles'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def add_ansible_role(self, synchronous=True, timeout=None, **kwargs):
+        """Add single Ansible Role to a host
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        path = f'{self.path("ansible_roles")}/{kwargs["data"].pop("ansible_role_id")}'
+        return _handle_response(
+            client.put(path, **kwargs), self._server_config, synchronous, timeout
+        )
+
+    def remove_ansible_role(self, synchronous=True, timeout=None, **kwargs):
+        """Remove single Ansible Role assigned to a host
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        path = f'{self.path("ansible_roles")}/{kwargs["data"].pop("ansible_role_id")}'
+        return _handle_response(
+            client.delete(path, **kwargs), self._server_config, synchronous, timeout
+        )
 
     def list_provisioning_templates(self, synchronous=True, timeout=None, **kwargs):
         """List all Provisioning templates assigned to a Host
@@ -8520,7 +8648,7 @@ class AnsiblePlaybooks(Entity):
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
-class AnsibleRoles(Entity):
+class AnsibleRoles(Entity, EntityReadMixin, EntitySearchMixin):
     """A representation of Ansible Roles entity."""
 
     def __init__(self, server_config=None, **kwargs):
