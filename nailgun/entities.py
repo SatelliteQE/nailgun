@@ -3095,7 +3095,7 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
             return f'{super().path(which="base")}/{which}'
         return super().path(which)
 
-    def poll(self, poll_rate=None, timeout=None):
+    def poll(self, poll_rate=None, timeout=None, must_succeed=True):
         """Return the status of a task or timeout.
 
         There are several API calls that trigger asynchronous tasks, such as
@@ -3109,6 +3109,8 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
             ``nailgun.entity_mixins.TASK_POLL_RATE``.
         :param timeout: Maximum number of seconds to wait until timing out.
             Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param must_succeed: Raise error when task finishes with other then success
+            result.
         :returns: Information about the asynchronous task.
         :raises: ``nailgun.entity_mixins.TaskTimedOutError`` if the task
             completes with any result other than "success".
@@ -3120,7 +3122,7 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
         """
         # See nailgun.entity_mixins._poll_task for an explanation of why a
         # private method is called.
-        return _poll_task(self.id, self._server_config, poll_rate, timeout)
+        return _poll_task(self.id, self._server_config, poll_rate, timeout, must_succeed)
 
     def summary(self, synchronous=True, timeout=None, **kwargs):
         """Helper to view a summary of tasks.
