@@ -16,4 +16,4 @@ wheel
 twine
 
 # For code coverage
-codecov==2.1.12
+codecov==2.1.13
