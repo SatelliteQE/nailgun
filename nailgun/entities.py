@@ -6968,8 +6968,8 @@ class RHCloud(Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'organization_id': entity_fields.IntegerField(),
-            'location_id': entity_fields.IntegerField(),
+            'organization': entity_fields.OneToManyField(Organization),
+            'location': entity_fields.OneToManyField(Location),
         }
         super().__init__(server_config, **kwargs)
         self._meta = {'api_path': 'api/v2/rh_cloud'}
