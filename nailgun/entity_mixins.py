@@ -1308,7 +1308,7 @@ class EntitySearchMixin:
             normalized.append(attrs)
         return normalized
 
-    def search(self, fields=None, query=None, filters=None):
+    def search(self, fields=None, query=None, filters=None, path_fields={}):
         """Search for entities.
 
         At its simplest, this method searches for all entities of a given kind.
@@ -1396,7 +1396,7 @@ class EntitySearchMixin:
             except TypeError:
                 # in the event that an entity's init is overwritten
                 # with a positional server_config
-                entity = type(self)(**result)
+                entity = type(self)(**path_fields, **result)
             entities.append(entity)
         if filters is not None:
             entities = self.search_filter(entities, filters)
