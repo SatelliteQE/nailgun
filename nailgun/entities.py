@@ -8723,9 +8723,14 @@ class TablePreferences(
         }
         self._fields.update(self._path_fields)
         self.user = kwargs.get('user')
-        self._meta = {
-            'api_path': f'/api/v2/users/{self.user.id}/table_preferences',
-        }
+        if isinstance(self.user, int):
+            self._meta = {
+                'api_path': f'/api/v2/users/{self.user}/table_preferences',
+            }
+        else:
+            self._meta = {
+                'api_path': f'/api/v2/users/{self.user.id}/table_preferences',
+            }
         super().__init__(server_config, **kwargs)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):

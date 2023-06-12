@@ -1392,7 +1392,7 @@ class EntitySearchMixin:
         entities = []
         for result in results:
             try:
-                entity = type(self)(self._server_config, **result)
+                entity = type(self)(self._server_config, **path_fields, **result)
             except TypeError:
                 # in the event that an entity's init is overwritten
                 # with a positional server_config
