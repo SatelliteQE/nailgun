@@ -2160,11 +2160,13 @@ class GenericTestCase(TestCase):
             (entities.ForemanTask(cfg).summary, 'get'),
             (entities.Organization(**generic).download_debug_certificate, 'get'),
             (entities.Host(**generic).add_puppetclass, 'post'),
+            (entities.Host(**generic).assign_ansible_roles, 'post'),
             (entities.Host(**generic).enc, 'get'),
             (entities.Host(**generic).errata, 'get'),
             (entities.Host(**generic).errata_apply, 'put'),
             (entities.Host(**generic).get_facts, 'get'),
             (entities.Host(**generic).install_content, 'put'),
+            (entities.Host(**generic).list_ansible_roles, 'get'),
             (entities.Host(**generic).list_scparams, 'get'),
             (entities.Host(**generic).module_streams, 'get'),
             (entities.Host(**generic).packages, 'get'),
@@ -2176,7 +2178,9 @@ class GenericTestCase(TestCase):
             (entities.Host(**generic).bulk_traces, 'post'),
             (entities.Host(**generic).bulk_resolve_traces, 'put'),
             (entities.HostGroup(**generic).add_puppetclass, 'post'),
+            (entities.HostGroup(**generic).assign_ansible_roles, 'post'),
             (entities.HostGroup(**generic).clone, 'post'),
+            (entities.HostGroup(**generic).list_ansible_roles, 'get'),
             (entities.HostGroup(**generic).list_scparams, 'get'),
             (entities.HostSubscription(**hostsubscription).add_subscriptions, 'put'),
             (entities.HostSubscription(**hostsubscription).remove_subscriptions, 'put'),
@@ -2901,7 +2905,7 @@ class HostGroupTestCase(TestCase):
         self.read_json_pacther.stop()
         self.read_pacther.stop()
 
-    def test_delete_puppetclass(self):
+    def test_add_func_with_id(self):
         """Check that helper method is sane.
 
         Assert that:
@@ -2909,25 +2913,56 @@ class HostGroupTestCase(TestCase):
         * Method has a correct signature.
         * Method calls `client.*` once.
         * Method passes the right arguments to `client.*` and special
-            argument 'puppetclass_id' removed from data dict.
+            argument 'ansible_role_id' removed from data dict.
         * Method calls `entities._handle_response` once.
         * The result of `_handle_response(…)` is the return value.
-
-
         """
         entity = self.entity
         entity.id = 1
-        self.assertEqual(inspect.getfullargspec(entity.delete_puppetclass), EXPECTED_ARGSPEC)
-        kwargs = {'kwarg': gen_integer(), 'data': {'puppetclass_id': gen_integer()}}
-        with mock.patch.object(entities, '_handle_response') as handlr:
-            with mock.patch.object(client, 'delete') as client_request:
-                response = entity.delete_puppetclass(**kwargs)
-        self.assertEqual(client_request.call_count, 1)
-        self.assertEqual(len(client_request.call_args[0]), 1)
-        self.assertNotIn('puppetclass_id', client_request.call_args[1]['data'])
-        self.assertEqual(client_request.call_args[1], kwargs)
-        self.assertEqual(handlr.call_count, 1)
-        self.assertEqual(handlr.return_value, response)
+        func_param_dict = {entity.add_ansible_role: 'ansible_role_id'}
+        for func in func_param_dict.keys():
+            self.assertEqual(inspect.getfullargspec(func), EXPECTED_ARGSPEC)
+            kwargs = {'kwarg': gen_integer(), 'data': {func_param_dict[func]: gen_integer()}}
+            with mock.patch.object(entities, '_handle_response') as handlr:
+                with mock.patch.object(client, 'put') as client_request:
+                    response = func(**kwargs)
+            self.assertEqual(client_request.call_count, 1)
+            self.assertEqual(len(client_request.call_args[0]), 1)
+            self.assertNotIn(func_param_dict[func], client_request.call_args[1]['data'])
+            self.assertEqual(client_request.call_args[1], kwargs)
+            self.assertEqual(handlr.call_count, 1)
+            self.assertEqual(handlr.return_value, response)
+
+    def test_delete_func_with_id(self):
+        """Check that helper method is sane.
+
+        Assert that:
+
+        * Method has a correct signature.
+        * Method calls `client.*` once.
+        * Method passes the right arguments to `client.*` and special
+            argument 'puppetclass_id/ansible_role_id' removed from data dict.
+        * Method calls `entities._handle_response` once.
+        * The result of `_handle_response(…)` is the return value.
+        """
+        entity = self.entity
+        entity.id = 1
+        func_param_dict = {
+            entity.delete_puppetclass: 'puppetclass_id',
+            entity.remove_ansible_role: 'ansible_role_id',
+        }
+        for func in func_param_dict.keys():
+            self.assertEqual(inspect.getfullargspec(func), EXPECTED_ARGSPEC)
+            kwargs = {'kwarg': gen_integer(), 'data': {func_param_dict[func]: gen_integer()}}
+            with mock.patch.object(entities, '_handle_response') as handlr:
+                with mock.patch.object(client, 'delete') as client_request:
+                    response = func(**kwargs)
+            self.assertEqual(client_request.call_count, 1)
+            self.assertEqual(len(client_request.call_args[0]), 1)
+            self.assertNotIn(func_param_dict[func], client_request.call_args[1]['data'])
+            self.assertEqual(client_request.call_args[1], kwargs)
+            self.assertEqual(handlr.call_count, 1)
+            self.assertEqual(handlr.return_value, response)
 
     def test_clone_hostgroup(self):
         """Test for :meth:`nailgun.entities.HostGroup.clone`
@@ -3053,7 +3088,7 @@ class HostTestCase(TestCase):
                 self.assertNotIn('content_facet_attributes', read.call_args[0][1])
                 self.assertIn('content_facet_attributes', read.call_args[0][2])
 
-    def test_delete_puppetclass(self):
+    def test_add_func_with_id(self):
         """Check that helper method is sane.
 
         Assert that:
@@ -3061,23 +3096,54 @@ class HostTestCase(TestCase):
         * Method has a correct signature.
         * Method calls `client.*` once.
         * Method passes the right arguments to `client.*` and special
-            argument 'puppetclass_id' removed from data dict.
+            argument 'ansible_role_id' removed from data dict.
         * Method calls `entities._handle_response` once.
         * The result of `_handle_response(…)` is the return value.
-
         """
         entity = entities.Host(self.cfg, id=1)
-        self.assertEqual(inspect.getfullargspec(entity.delete_puppetclass), EXPECTED_ARGSPEC)
-        kwargs = {'kwarg': gen_integer(), 'data': {'puppetclass_id': gen_integer()}}
-        with mock.patch.object(entities, '_handle_response') as handlr:
-            with mock.patch.object(client, 'delete') as client_request:
-                response = entity.delete_puppetclass(**kwargs)
-        self.assertEqual(client_request.call_count, 1)
-        self.assertEqual(len(client_request.call_args[0]), 1)
-        self.assertNotIn('puppetclass_id', client_request.call_args[1]['data'])
-        self.assertEqual(client_request.call_args[1], kwargs)
-        self.assertEqual(handlr.call_count, 1)
-        self.assertEqual(handlr.return_value, response)
+        func_param_dict = {entity.add_ansible_role: 'ansible_role_id'}
+        for func in func_param_dict.keys():
+            self.assertEqual(inspect.getfullargspec(func), EXPECTED_ARGSPEC)
+            kwargs = {'kwarg': gen_integer(), 'data': {func_param_dict[func]: gen_integer()}}
+            with mock.patch.object(entities, '_handle_response') as handlr:
+                with mock.patch.object(client, 'put') as client_request:
+                    response = func(**kwargs)
+            self.assertEqual(client_request.call_count, 1)
+            self.assertEqual(len(client_request.call_args[0]), 1)
+            self.assertNotIn(func_param_dict[func], client_request.call_args[1]['data'])
+            self.assertEqual(client_request.call_args[1], kwargs)
+            self.assertEqual(handlr.call_count, 1)
+            self.assertEqual(handlr.return_value, response)
+
+    def test_delete_func_with_id(self):
+        """Check that helper method is sane.
+
+        Assert that:
+
+        * Method has a correct signature.
+        * Method calls `client.*` once.
+        * Method passes the right arguments to `client.*` and special
+            argument 'puppetclass_id/ansible_role_id' removed from data dict.
+        * Method calls `entities._handle_response` once.
+        * The result of `_handle_response(…)` is the return value.
+        """
+        entity = entities.Host(self.cfg, id=1)
+        func_param_dict = {
+            entity.delete_puppetclass: 'puppetclass_id',
+            entity.remove_ansible_role: 'ansible_role_id',
+        }
+        for func in func_param_dict.keys():
+            self.assertEqual(inspect.getfullargspec(func), EXPECTED_ARGSPEC)
+            kwargs = {'kwarg': gen_integer(), 'data': {func_param_dict[func]: gen_integer()}}
+            with mock.patch.object(entities, '_handle_response') as handlr:
+                with mock.patch.object(client, 'delete') as client_request:
+                    response = func(**kwargs)
+            self.assertEqual(client_request.call_count, 1)
+            self.assertEqual(len(client_request.call_args[0]), 1)
+            self.assertNotIn(func_param_dict[func], client_request.call_args[1]['data'])
+            self.assertEqual(client_request.call_args[1], kwargs)
+            self.assertEqual(handlr.call_count, 1)
+            self.assertEqual(handlr.return_value, response)
 
     def test_disassociate(self):
         """Disassociate host"""

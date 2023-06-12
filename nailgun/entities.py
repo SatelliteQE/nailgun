@@ -8648,7 +8648,14 @@ class AnsiblePlaybooks(Entity):
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
-class AnsibleRoles(Entity, EntityReadMixin, EntitySearchMixin):
+class AnsibleRoles(
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
     """A representation of Ansible Roles entity."""
 
     def __init__(self, server_config=None, **kwargs):
