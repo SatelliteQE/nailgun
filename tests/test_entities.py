@@ -2206,9 +2206,15 @@ class GenericTestCase(TestCase):
             (entities.Template(**generic).exports, 'post'),
             (entities.VirtWhoConfig(**generic).deploy_script, 'get'),
         )
+        capsule = {'server_config': cfg, 'id': 1}
         repo_set = {'server_config': cfg, 'id': 1, 'product': 2}
         snapshot = {'server_config': cfg, 'id': 'snapshot-1', 'host': 1}
         cls.intelligent_methods_requests = (
+            (
+                entities.Capsule(**capsule).content_delete_lifecycle_environment,
+                'delete',
+                {'environment_id': 2},
+            ),
             (entities.RepositorySet(**repo_set).available_repositories, 'get', {'product_id': 2}),
             (entities.RepositorySet(**repo_set).disable, 'put', {'product_id': 2}),
             (entities.RepositorySet(**repo_set).enable, 'put', {'product_id': 2}),
