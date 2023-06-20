@@ -6990,7 +6990,6 @@ class RHCloud(Entity):
         kwargs['data'] = {}
         if data := _payload(self.get_fields(), self.get_values()):
             kwargs['data'] = data
-        # kwargs['data'].update(_payload(self.get_fields(), self.get_values()))
         response = client.post(self.path('enable_connector'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
