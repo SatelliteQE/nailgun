@@ -6971,8 +6971,8 @@ class RHCloud(Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'organization': entity_fields.OneToManyField(Organization),
-            'location': entity_fields.OneToManyField(Location),
+            'organization': entity_fields.OneToOneField(Organization),
+            'location': entity_fields.OneToOneField(Location),
         }
         super().__init__(server_config, **kwargs)
         self._meta = {'api_path': 'api/v2/rh_cloud'}
@@ -6987,6 +6987,10 @@ class RHCloud(Entity):
         """Function to enable RH Cloud connector"""
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
+        kwargs['data'] = {}
+        if data := _payload(self.get_fields(), self.get_values()):
+            kwargs['data'] = data
+        # kwargs['data'].update(_payload(self.get_fields(), self.get_values()))
         response = client.post(self.path('enable_connector'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
