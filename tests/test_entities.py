@@ -163,6 +163,7 @@ class InitTestCase(TestCase):
                 entities.Report,
                 entities.Repository,
                 entities.RepositorySet,
+                entities.RHCloud,
                 entities.Role,
                 entities.RoleLDAPGroups,
                 entities.ScapContents,
@@ -377,6 +378,7 @@ class PathTestCase(TestCase):
             (entities.ForemanTask, 'bulk_resume'),
             (entities.ForemanTask, 'bulk_search'),
             (entities.ForemanTask, 'summary'),
+            (entities.RHCloud, 'enable_connector'),
             (entities.Host, 'bulk/install_content'),
             (entities.Template, 'imports'),
             (entities.Template, 'exports'),
@@ -2196,12 +2198,18 @@ class GenericTestCase(TestCase):
             (entities.Template(**generic).exports, 'post'),
             (entities.VirtWhoConfig(**generic).deploy_script, 'get'),
         )
+        plain_taxonomy = {'server_config': cfg, 'organization': 1, 'location': 2}
         repo_set = {'server_config': cfg, 'id': 1, 'product': 2}
         snapshot = {'server_config': cfg, 'id': 'snapshot-1', 'host': 1}
         cls.intelligent_methods_requests = (
             (entities.RepositorySet(**repo_set).available_repositories, 'get', {'product_id': 2}),
             (entities.RepositorySet(**repo_set).disable, 'put', {'product_id': 2}),
             (entities.RepositorySet(**repo_set).enable, 'put', {'product_id': 2}),
+            (
+                entities.RHCloud(**plain_taxonomy).enable_connector,
+                'post',
+                {'organization_id': 1, 'location_id': 2},
+            ),
             (entities.Snapshot(**snapshot).revert, 'put', {}),
         )
 
