@@ -2193,7 +2193,6 @@ class GenericTestCase(TestCase):
             (entities.Repository(**generic).module_streams, 'get'),
             (entities.Repository(**generic).remove_content, 'put'),
             (entities.Repository(**generic).sync, 'post'),
-            (entities.RHCloud(**generic).enable_connector, 'post'),
             (entities.ScapContents(**generic).xml, 'get'),
             (entities.SmartProxy(**generic).import_puppetclasses, 'post'),
             (entities.SmartProxy(**generic).refresh, 'put'),
@@ -2203,12 +2202,18 @@ class GenericTestCase(TestCase):
             (entities.Template(**generic).exports, 'post'),
             (entities.VirtWhoConfig(**generic).deploy_script, 'get'),
         )
+        plain_taxonomy = {'server_config': cfg, 'organization': 1, 'location': 2}
         repo_set = {'server_config': cfg, 'id': 1, 'product': 2}
         snapshot = {'server_config': cfg, 'id': 'snapshot-1', 'host': 1}
         cls.intelligent_methods_requests = (
             (entities.RepositorySet(**repo_set).available_repositories, 'get', {'product_id': 2}),
             (entities.RepositorySet(**repo_set).disable, 'put', {'product_id': 2}),
             (entities.RepositorySet(**repo_set).enable, 'put', {'product_id': 2}),
+            (
+                entities.RHCloud(**plain_taxonomy).enable_connector,
+                'post',
+                {'organization_id': 1, 'location_id': 2},
+            ),
             (entities.Snapshot(**snapshot).revert, 'put', {}),
         )
 

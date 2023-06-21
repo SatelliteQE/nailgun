@@ -6979,7 +6979,7 @@ class RHCloud(Entity):
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``."""
-        if which in ("enable_connector"):
+        if which in ("enable_connector",):
             return f'{super().path(which="base")}/{which}'
         return super().path(which)
 
@@ -8567,7 +8567,7 @@ class AnsibleRoles(Entity):
         ``super`` is called otherwise.
 
         """
-        if which in ("sync"):
+        if which in ("sync",):
             return f'{super().path(which="base")}/{which}'
         return super().path(which)
 
