@@ -6993,6 +6993,34 @@ class RHCIDeployment(
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
+class RHCloud(Entity):
+    """A representation of a RHCloud entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'organization': entity_fields.OneToOneField(Organization),
+            'location': entity_fields.OneToOneField(Location),
+        }
+        super().__init__(server_config, **kwargs)
+        self._meta = {'api_path': 'api/v2/rh_cloud'}
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``."""
+        if which in ("enable_connector",):
+            return f'{super().path(which="base")}/{which}'
+        return super().path(which)
+
+    def enable_connector(self, synchronous=True, timeout=None, **kwargs):
+        """Function to enable RH Cloud connector"""
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        kwargs['data'] = {}
+        if data := _payload(self.get_fields(), self.get_values()):
+            kwargs['data'] = data
+        response = client.post(self.path('enable_connector'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+
 class RoleLDAPGroups(Entity):
     """A representation of a Role LDAP Groups entity."""
 
@@ -8566,7 +8594,7 @@ class AnsibleRoles(Entity):
         ``super`` is called otherwise.
 
         """
-        if which in ("sync"):
+        if which in ("sync",):
             return f'{super().path(which="base")}/{which}'
         return super().path(which)
 
