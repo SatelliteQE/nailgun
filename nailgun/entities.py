@@ -35,6 +35,7 @@ from packaging.version import Version
 from nailgun import client
 from nailgun import entity_fields
 from nailgun.entity_mixins import _get_entity_ids
+from nailgun.entity_mixins import _payload
 from nailgun.entity_mixins import _poll_task
 from nailgun.entity_mixins import Entity
 from nailgun.entity_mixins import EntityCreateMixin
