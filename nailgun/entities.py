@@ -4893,7 +4893,7 @@ class Host(
         :param timeout: Maximum number of seconds to wait until timing out.
             Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
         :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all content decoded.
+        :returns: Ansible task id
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
 
