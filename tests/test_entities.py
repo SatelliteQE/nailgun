@@ -215,6 +215,7 @@ class InitTestCase(TestCase):
                 (entities.SSHKey, {'user': 1}),
                 (entities.SyncPlan, {'organization': 1}),
                 (entities.TemplateInput, {'template': 1}),
+                (entities.TablePreferences, {'user': 1}),
             ]
         )
         for entity, params in entities_:
@@ -2878,6 +2879,52 @@ class JobTemplateTestCase(TestCase):
         self.assertIsInstance(template_input.template, entities.JobTemplate)
         self.assertEqual(template_input.id, self.template_input_data['id'])
         self.assertEqual(template_input.template.id, self.template_input_data['template'])
+
+
+class TablePreferencesTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.TablePreferences`."""
+
+    def setUp(self):
+        self.sc = config.ServerConfig('some url')
+
+    def test_read(self):
+        user_id = gen_integer(min_value=1)
+        user = entities.User(self.sc, id=user_id)
+        entity = entities.TablePreferences(self.sc, user=user)
+        self.assertEqual(entity.user.id, user_id)
+        self.assertIn(f'/{user_id}/', entity._meta['api_path'])
+        read_json_patcher = mock.patch.object(entity, 'read_json')
+        read_json = read_json_patcher.start()
+        table_id = gen_integer(min_value=1)
+        read_json.return_value = {
+            'id': table_id,
+            'name': 'testname',
+            'columns': ['testcol'],
+            'created_at': '2023-06-01 12:38:05 UTC',
+            'updated_at': '2023-06-01 12:38:05 UTC',
+        }
+        res = entity.read()
+        read_json_patcher.stop()
+        self.assertEqual(read_json.call_count, 1)
+        self.assertEqual(res.name, 'testname')
+        self.assertEqual(res.id, table_id)
+        self.assertEqual(res.columns, ['testcol'])
+
+    def test_search(self):
+        user_id = gen_integer(min_value=1)
+        user = entities.User(self.sc, id=user_id)
+        ret = {
+            'total': 1,
+            'page': 1,
+            'results': [{'id': 1, 'name': 'testname', 'columns': ['testcol']}],
+        }
+        entity = entities.TablePreferences(self.sc, user=user)
+        with mock.patch.object(entity, 'search_json', return_value=ret):
+            res = entity.search()
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].name, 'testname')
+        self.assertEqual(res[0].id, 1)
+        self.assertEqual(res[0].columns, ['testcol'])
 
 
 class HostGroupTestCase(TestCase):

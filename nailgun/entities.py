@@ -8754,3 +8754,55 @@ class AnsibleRoles(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('sync'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
+
+
+class TablePreferences(
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
+    """A representation of a Table Preference entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        _check_for_value('user', kwargs)
+        self._fields = {
+            'name': entity_fields.StringField(),
+            'columns': entity_fields.ListField(),
+            'created_at': entity_fields.DateTimeField(),
+            'updated_at': entity_fields.DateTimeField(),
+        }
+        self._path_fields = {
+            'user': entity_fields.OneToOneField(User),
+        }
+        self._fields.update(self._path_fields)
+        self.user = kwargs.get('user')
+        if isinstance(self.user, int):
+            self._meta = {
+                'api_path': f'/api/v2/users/{self.user}/table_preferences',
+            }
+        else:
+            self._meta = {
+                'api_path': f'/api/v2/users/{self.user.id}/table_preferences',
+            }
+        super().__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Ignore path related fields as they're never returned by the server
+        and are only added to entity to be able to use proper path.
+        """
+        entity = entity or self.entity_with_parent(user=self.user)
+        if ignore is None:
+            ignore = set()
+        ignore.add('user')
+        return super().read(entity, attrs, ignore, params)
+
+    def search(self, fields=None, query=None, filters=None):
+        """List/search for TablePreferences.
+        Field 'user' is only used for path and is not returned.
+        """
+        return super().search(
+            fields=fields, query=query, filters=filters, path_fields={'user': self.user}
+        )
