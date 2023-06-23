@@ -328,6 +328,7 @@ class PathTestCase(TestCase):
             (entities.Host, 'smart_class_parameters'),
             (entities.Host, 'ansible_roles'),
             (entities.Host, 'assign_ansible_roles'),
+            (entities.Host, 'play_roles'),
             (entities.HostGroup, 'clone'),
             (entities.HostGroup, 'puppetclass_ids'),
             (entities.HostGroup, 'rebuild_config'),
@@ -3092,6 +3093,22 @@ class HostTestCase(TestCase):
         self.assertEqual(len(put.call_args[0]), 1)  # post called with 1 positional argument
         self.assertEqual(len(put.call_args[1]), 0)  # post called with no keyword argument
         self.assertEqual(put.call_args[0][0], 'foo/api/v2/hosts/42/disassociate')
+
+    def test_play_ansible_roles(self):
+        """Play Ansible roles"""
+        cfg = config.ServerConfig(url='foo')
+        host = entities.Host(cfg, id=42)
+        exp_ret = mock.MagicMock()
+        exp_ret.status = ACCEPTED
+        exp_ret.content = {'bar': 'baz', 'task_id': 43}
+        with mock.patch.object(client, 'post', return_value=exp_ret) as post:
+            res = host.play_ansible_roles()
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(len(post.call_args), 2)
+        self.assertEqual(len(post.call_args[0]), 1)  # post called with 1 positional argument
+        self.assertEqual(len(post.call_args[1]), 0)  # post called with no keyword argument
+        self.assertEqual(post.call_args[0][0], 'foo/api/v2/hosts/42/play_roles')
+        self.assertEqual(res, 43)
 
 
 class PuppetClassTestCase(TestCase):
