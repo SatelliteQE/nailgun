@@ -2655,6 +2655,7 @@ class ContentView(
             'name': entity_fields.StringField(
                 required=True, str_type='alpha', length=(6, 12), unique=True
             ),
+            'needs_publish': entity_fields.BooleanField(),
             'next_version': entity_fields.IntegerField(),
             'organization': entity_fields.OneToOneField(
                 Organization,
@@ -2892,8 +2893,6 @@ class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
         if 'data' not in kwargs:
             # data is required
             kwargs['data'] = dict()
-        if 'component_ids' not in kwargs['data']:
-            kwargs['data']['components'] = [_payload(self.get_fields(), self.get_values())]
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('add'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)

@@ -2550,6 +2550,7 @@ class ContentViewTestCase(TestCase):
             "label": "my_CV",
             "last_published": '2018-11-23 11:51:30 UTC',
             "name": "my CV",
+            "needs_publish": True,
             "next_version": "3.0",
             "organization_id": 1,
             "repositories": [
