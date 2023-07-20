@@ -4531,6 +4531,7 @@ class Host(
             'errata/applicability',
             'facts',
             'packages',
+            'play_roles',
             'power',
             'puppetclass_ids',
             'smart_class_parameters',
@@ -4753,6 +4754,25 @@ class Host(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('ansible_roles'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def play_ansible_roles(self, synchronous=True, timeout=None, **kwargs):
+        """Play all assigned ansible roles on a Host
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: Ansible task id
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('play_roles'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)['task_id']
 
     def list_provisioning_templates(self, synchronous=True, timeout=None, **kwargs):
         """List all Provisioning templates assigned to a Host
