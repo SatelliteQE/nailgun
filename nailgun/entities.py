@@ -3696,6 +3696,25 @@ class Host(
             'traces_status': entity_fields.IntegerField(min_val=-1, max_val=2),
             'traces_status_label': entity_fields.StringField(),
             'uuid': entity_fields.StringField(),
+            'pxe_loader': entity_fields.StringField(
+                choices=(
+                    'PXELinux BIOS',
+                    'PXELinux UEFI',
+                    'Grub UEFI',
+                    'Grub2 BIOS'
+                    'Grub2 ELF'
+                    'Grub2 UEFI'
+                    'Grub2 UEFI SecureBoot'
+                    'Grub2 UEFI HTTP'
+                    'Grub2 UEFI HTTPS'
+                    'Grub2 UEFI HTTPS SecureBoot'
+                    'iPXE Embedded'
+                    'iPXE UEFI HTTP'
+                    'iPXE Chain BIOS'
+                    'iPXE Chain UEFI',
+                ),
+                default='PXELinux BIOS',
+            ),
         }
         self._owner_type = None  # actual ``owner_type`` value
         self._meta = {'api_path': 'api/v2/hosts'}
