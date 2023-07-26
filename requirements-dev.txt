@@ -3,7 +3,6 @@ mock
 unittest2 ; python_version < '3.4'
 
 # For `pre-commit`
-flake8
 pre-commit
 
 # For `make docs-html` and `make docs-clean`
@@ -17,3 +16,7 @@ twine
 
 # For code coverage
 codecov==2.1.13
+coverage[toml]
+
+# For linting
+ruff
