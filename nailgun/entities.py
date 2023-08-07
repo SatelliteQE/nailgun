@@ -1309,7 +1309,7 @@ class DiscoveryRule(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1381129>`_.
 
         """
-        return type(self)(
+        return DiscoveryRule(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
