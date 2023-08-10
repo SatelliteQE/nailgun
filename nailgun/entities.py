@@ -20,30 +20,29 @@ makes use of a work-around notes so in its docstring.
 workings of entity classes.
 
 """
-import hashlib
-import os.path
 from datetime import datetime
 from functools import lru_cache
-from http.client import ACCEPTED
-from http.client import NO_CONTENT
-from urllib.parse import urljoin  # noqa:F0401,E0611
+import hashlib
+from http.client import ACCEPTED, NO_CONTENT
+import os.path
+from urllib.parse import urljoin
 
-from fauxfactory import gen_alphanumeric
-from fauxfactory import gen_choice
+from fauxfactory import gen_alphanumeric, gen_choice
 from packaging.version import Version
 
-from nailgun import client
-from nailgun import entity_fields
-from nailgun.entity_mixins import _get_entity_ids
-from nailgun.entity_mixins import _payload
-from nailgun.entity_mixins import _poll_task
-from nailgun.entity_mixins import Entity
-from nailgun.entity_mixins import EntityCreateMixin
-from nailgun.entity_mixins import EntityDeleteMixin
-from nailgun.entity_mixins import EntityReadMixin
-from nailgun.entity_mixins import EntitySearchMixin
-from nailgun.entity_mixins import EntityUpdateMixin
-from nailgun.entity_mixins import to_json_serializable  # noqa: F401
+from nailgun import client, entity_fields
+from nailgun.entity_mixins import (
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+    _get_entity_ids,
+    _payload,
+    _poll_task,
+    to_json_serializable,  # noqa: F401
+)
 
 # The size of this file is a direct reflection of the size of Satellite's API.
 # This file's size has already been significantly cut down through the use of
@@ -195,7 +194,7 @@ def _get_version(server_config):
     return getattr(server_config, 'version', Version('1!0'))
 
 
-@lru_cache()
+@lru_cache
 def _feature_list(server_config, smart_proxy_id=1):
     """Get list of features enabled on capsule"""
     smart_proxy = SmartProxy(server_config, id=smart_proxy_id).read_json()
@@ -1519,7 +1518,10 @@ class DiscoveryRule(
         if attr not in ignore:
             # We cannot call `self.update_json([])`, as an ID might not be
             # present on self. However, `attrs` is guaranteed to have an ID.
-            attrs[attr] = DiscoveryRule(self._server_config, id=attrs['id'],).update_json(
+            attrs[attr] = DiscoveryRule(
+                self._server_config,
+                id=attrs['id'],
+            ).update_json(
                 []
             )[attr]
         return super().read(entity, attrs, ignore, params)
@@ -1943,7 +1945,7 @@ class JobTemplate(
             )
             for entity_id in _get_entity_ids('template_inputs', attrs)
         ]
-        setattr(entity, 'template_inputs', referenced_entities)
+        entity.template_inputs = referenced_entities
         return entity
 
 
@@ -2520,9 +2522,7 @@ class ContentViewFilterRule(
         if ignore is None:
             ignore = set()
         ignore.add('content_view_filter')
-        ignore.update(
-            [field_name for field_name in entity.get_fields().keys() if field_name not in attrs]
-        )
+        ignore.update([field_name for field_name in entity.get_fields() if field_name not in attrs])
         return super().read(entity, attrs, ignore, params)
 
     def create_payload(self):
@@ -2890,7 +2890,7 @@ class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         if 'data' not in kwargs:
             # data is required
-            kwargs['data'] = dict()
+            kwargs['data'] = {}
         if 'component_ids' not in kwargs['data']:
             kwargs['data']['components'] = [_payload(self.get_fields(), self.get_values())]
         kwargs.update(self._server_config.get_client_kwargs())
@@ -2914,7 +2914,7 @@ class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         if 'data' not in kwargs:
             # data is required
-            kwargs['data'] = dict()
+            kwargs['data'] = {}
         if 'data' in kwargs and 'component_ids' not in kwargs['data']:
             kwargs['data']['component_ids'] = [self.id]
         kwargs.update(self._server_config.get_client_kwargs())
@@ -3970,7 +3970,7 @@ class Host(
             attrs.pop('_owner_type')
         return attrs
 
-    def create_missing(self):
+    def create_missing(self):  # noqa: PLR0912, PLR0915 - TODO: Refactor this?
         """Create a bogus managed host.
 
         The exact set of attributes that are required varies depending on
@@ -4976,7 +4976,7 @@ class Interface(
         if attrs['type'] != 'virtual':
             ignore.add('attached_to')
             ignore.add('tag')
-        if attrs['type'] != 'bridge' and attrs['type'] != 'bond':
+        if attrs['type'] not in ('bridge', 'bond'):
             ignore.add('attached_devices')
         return super().read(entity, attrs, ignore, params)
 
@@ -5754,9 +5754,7 @@ class OverrideValue(
         self._fields = {
             'match': entity_fields.StringField(required=True),
             'value': entity_fields.StringField(required=True),
-            'smart_class_parameter': entity_fields.OneToOneField(
-                SmartClassParameters, parent=True
-            ),
+            'smart_class_parameter': entity_fields.OneToOneField(SmartClassParameters, parent=True),
             'omit': entity_fields.BooleanField(),
         }
         super().__init__(server_config, **kwargs)
@@ -6180,10 +6178,7 @@ class PuppetClass(
         while Puppet Class entity returns dictionary with lists of subclasses
         split by main puppet class.
         """
-        flattened_results = []
-        for key in results.keys():
-            for item in results[key]:
-                flattened_results.append(item)
+        flattened_results = [item for sublist in results.values() for item in sublist]
         return super().search_normalize(flattened_results)
 
     def path(self, which=None):
@@ -6699,8 +6694,8 @@ class Repository(
 
         It expects either a list of uploads or upload_ids (but not both).
 
-        :param content_type: content type (‘deb’, ‘docker_manifest’, ‘file’, ‘ostree’,
-                ‘rpm’, ‘srpm’)
+        :param content_type: content type (`deb`, `docker_manifest`, `file`, `ostree`,
+                `rpm`, `srpm`)
         :param uploads: Array of uploads to be imported
         :param upload_ids: Array of upload ids to be imported
         :param synchronous: What should happen if the server returns an HTTP
@@ -6845,7 +6840,7 @@ class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
 
         """
         if 'data' not in kwargs:
-            kwargs['data'] = dict()
+            kwargs['data'] = {}
             kwargs['data']['product_id'] = self.product.id
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
@@ -6869,7 +6864,7 @@ class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
 
         """
         if 'data' not in kwargs:
-            kwargs['data'] = dict()
+            kwargs['data'] = {}
             kwargs['data']['product_id'] = self.product.id
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
@@ -6891,7 +6886,7 @@ class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
 
         """
         if 'data' not in kwargs:
-            kwargs['data'] = dict()
+            kwargs['data'] = {}
             kwargs['data']['product_id'] = self.product.id
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
