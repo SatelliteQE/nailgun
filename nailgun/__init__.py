@@ -16,5 +16,4 @@ If this is your first time working with NailGun, please read several of the
 """
 from logging import basicConfig
 
-
 basicConfig()
