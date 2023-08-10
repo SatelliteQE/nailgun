@@ -15,13 +15,12 @@ Each function is modified with the following behaviours:
     http://docs.python-requests.org/en/latest/api/#main-interface
 
 """
-import logging
 from json import dumps
+import logging
 from warnings import simplefilter
 
 import requests
 import urllib3
-
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +86,7 @@ def _set_content_type(kwargs):
 
 def _truncate_data(data, max_len=500):
     """Truncate data to a max length"""
-    if isinstance(data, (str, bytes)):
+    if isinstance(data, str | bytes):
         if len(data) > max_len:
             return f"{data[:max_len - 3]}..."
         return data
@@ -127,7 +126,7 @@ def _log_response(response):
 
     """
     message = f'Received HTTP {response.status_code} response: {response.text}'
-    if response.status_code >= 400:  # pragma: no cover
+    if not response.ok:
         logger.warning(message)
     else:
         logger.debug(message)
