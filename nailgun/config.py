@@ -8,8 +8,7 @@ presenting that information.
 
 """
 import json
-from os.path import isfile
-from os.path import join
+from os.path import isfile, join
 from threading import Lock
 
 from packaging.version import parse
@@ -114,7 +113,7 @@ class BaseServerConfig:
         attrs = vars(self).copy()
         if "version" in attrs:
             attrs["version"] = str(attrs.pop("version"))
-        kv_pairs = ", ".join(f"{key}={repr(value)}" for key, value in attrs.items())
+        kv_pairs = ", ".join(f"{key}={value!r}" for key, value in attrs.items())
         return f"{self.__module__}.{type(self).__name__}({kv_pairs})"
 
     @classmethod
@@ -201,9 +200,7 @@ class BaseServerConfig:
 
         # Where is the file we're writing to?
         if path is None:
-            path = join(
-                BaseDirectory.save_config_path(self._xdg_config_dir), self._xdg_config_file
-            )
+            path = join(BaseDirectory.save_config_path(self._xdg_config_dir), self._xdg_config_file)
         self._file_lock.acquire()
 
         try:

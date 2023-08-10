@@ -1,26 +1,21 @@
 """Tests for :mod:`nailgun.entities`."""
+from datetime import date, datetime
+from http.client import ACCEPTED, NO_CONTENT
 import inspect
 import json
 import os
-from datetime import date
-from datetime import datetime
-from http.client import ACCEPTED
-from http.client import NO_CONTENT
-from unittest import mock
-from unittest import TestCase
+from unittest import TestCase, mock
 
-from fauxfactory import gen_alpha
-from fauxfactory import gen_integer
-from fauxfactory import gen_string
+from fauxfactory import gen_alpha, gen_integer, gen_string
 
-from nailgun import client
-from nailgun import config
-from nailgun import entities
-from nailgun.entity_mixins import EntityCreateMixin
-from nailgun.entity_mixins import EntityReadMixin
-from nailgun.entity_mixins import EntitySearchMixin
-from nailgun.entity_mixins import EntityUpdateMixin
-from nailgun.entity_mixins import NoSuchPathError
+from nailgun import client, config, entities
+from nailgun.entity_mixins import (
+    EntityCreateMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+    NoSuchPathError,
+)
 
 _BUILTIN_OPEN = 'builtins.open'
 # For inspection comparison, a tuple matching the expected func arg spec
@@ -37,6 +32,9 @@ EXPECTED_ARGSPEC_TIMEOUT = (
 )
 # The size of this file is a direct reflection of the size of module
 # `nailgun.entities` and the Satellite API.
+
+# Due to the length of the with statements, nested is preferred over combined
+# ruff: noqa: SIM117
 
 
 def make_entity(cls, **kwargs):
@@ -242,9 +240,8 @@ class InitTestCase(TestCase):
             entities.SyncPlan,
             entities.TemplateInput,
         ):
-            with self.subTest():
-                with self.assertRaises(TypeError):
-                    entity(self.cfg)
+            with self.subTest(), self.assertRaises(TypeError):
+                entity(self.cfg)
 
 
 class PathTestCase(TestCase):
@@ -427,9 +424,8 @@ class PathTestCase(TestCase):
             (entities.VirtWhoConfig, 'deploy_script'),
             (entities.VirtWhoConfig, 'configs'),
         ):
-            with self.subTest((entity, which)):
-                with self.assertRaises(NoSuchPathError):
-                    entity(self.cfg).path(which=which)
+            with self.subTest((entity, which)), self.assertRaises(NoSuchPathError):
+                entity(self.cfg).path(which=which)
 
     def test_arfreport(self):
         """Test :meth:`nailgun.entities.ArfReport.path`.
@@ -1436,13 +1432,12 @@ class ReadTestCase(TestCase):
         Assert that entity`s predefined values of ``ignore`` are always
         correctly passed on.
         """
-        with mock.patch.object(EntityReadMixin, 'read') as read:
-            with mock.patch.object(
-                EntityReadMixin,
-                'read_json',
-                return_value={'host': 3},
-            ):
-                entities.Snapshot(self.cfg, id=2, host=3).read()
+        with mock.patch.object(EntityReadMixin, 'read') as read, mock.patch.object(
+            EntityReadMixin,
+            'read_json',
+            return_value={'host': 3},
+        ):
+            entities.Snapshot(self.cfg, id=2, host=3).read()
         # `call_args` is a two-tuple of (positional, keyword) args.
         self.assertEqual({'host'}, read.call_args[0][2])
 
@@ -1456,22 +1451,20 @@ class ReadTestCase(TestCase):
             EntityReadMixin,
             'read',
             return_value=entities.Host(self.cfg, id=2),
+        ), mock.patch.object(
+            EntityReadMixin,
+            'read_json',
+            return_value={
+                'interfaces': [{'id': 2}, {'id': 3}],
+                'parameters': None,
+                'puppet_proxy': None,
+            },
+        ), mock.patch.object(
+            entities,
+            '_feature_list',
+            return_value={'Puppet'},
         ):
-            with mock.patch.object(
-                EntityReadMixin,
-                'read_json',
-                return_value={
-                    'interfaces': [{'id': 2}, {'id': 3}],
-                    'parameters': None,
-                    'puppet_proxy': None,
-                },
-            ):
-                with mock.patch.object(
-                    entities,
-                    '_feature_list',
-                    return_value={'Puppet'},
-                ):
-                    host = entities.Host(self.cfg, id=2).read()
+            host = entities.Host(self.cfg, id=2).read()
         self.assertTrue(hasattr(host, 'interface'))
         self.assertTrue(isinstance(host.interface, list))
         for interface in host.interface:
@@ -1804,7 +1797,6 @@ class UpdateTestCase(TestCase):
         )
         for entity in entities_:
             with self.subTest(entity):
-
                 # Call update()
                 with mock.patch.object(entity, 'update_json') as update_json:
                     with mock.patch.object(entity, 'read') as read:
@@ -2356,11 +2348,10 @@ class ForemanTaskTestCase(TestCase):
             {'search': gen_string('alpha')},
             {'task_ids': self.foreman_task.id, 'search': gen_string('alpha')},
         ):
-            with self.subTest(kwargs):
-                with mock.patch.object(client, 'post') as post:
-                    self.foreman_task.bulk_resume(**kwargs)
-                    self.assertEqual(post.call_count, 1)
-                    self.assertEqual(post.mock_calls[2][1][0].ACCEPTED, 202)
+            with self.subTest(kwargs), mock.patch.object(client, 'post') as post:
+                self.foreman_task.bulk_resume(**kwargs)
+                self.assertEqual(post.call_count, 1)
+                self.assertEqual(post.mock_calls[2][1][0].ACCEPTED, 202)
 
     def test_bulk_cancel(self):
         """Call :meth:`nailgun.entities.ForemanTask.bulk_cancel`."""
@@ -2370,11 +2361,10 @@ class ForemanTaskTestCase(TestCase):
             {'search': gen_string('alpha')},
             {'task_ids': self.foreman_task.id, 'search': gen_string('alpha')},
         ):
-            with self.subTest(kwargs):
-                with mock.patch.object(client, 'post') as post:
-                    self.foreman_task.bulk_cancel(**kwargs)
-                    self.assertEqual(post.call_count, 1)
-                    self.assertEqual(post.mock_calls[2][1][0].ACCEPTED, 202)
+            with self.subTest(kwargs), mock.patch.object(client, 'post') as post:
+                self.foreman_task.bulk_cancel(**kwargs)
+                self.assertEqual(post.call_count, 1)
+                self.assertEqual(post.mock_calls[2][1][0].ACCEPTED, 202)
 
 
 class ContentUploadTestCase(TestCase):
@@ -2451,15 +2441,14 @@ class ContentUploadTestCase(TestCase):
         with mock.patch.object(
             entities.ContentUpload,
             'create',
-        ) as create:
-            with mock.patch.object(
-                entities.Repository,
-                'import_uploads',
-                return_value={'status': 'success'},
-            ) as import_uploads:
-                mock_open = mock.mock_open(read_data=gen_string('alpha').encode('ascii'))
-                with mock.patch(_BUILTIN_OPEN, mock_open, create=True):
-                    response = self.content_upload.upload(filepath, filename)
+        ) as create, mock.patch.object(
+            entities.Repository,
+            'import_uploads',
+            return_value={'status': 'success'},
+        ) as import_uploads:
+            mock_open = mock.mock_open(read_data=gen_string('alpha').encode('ascii'))
+            with mock.patch(_BUILTIN_OPEN, mock_open, create=True):
+                response = self.content_upload.upload(filepath, filename)
         self.assertEqual(import_uploads.call_count, 1)
         self.assertEqual(create.call_count, 1)
         self.assertEqual(import_uploads.return_value, response)
@@ -2477,15 +2466,14 @@ class ContentUploadTestCase(TestCase):
         with mock.patch.object(
             entities.ContentUpload,
             'create',
-        ) as create:
-            with mock.patch.object(
-                entities.Repository,
-                'import_uploads',
-                return_value={'status': 'success'},
-            ) as import_uploads:
-                mock_open = mock.mock_open(read_data=gen_string('alpha').encode('ascii'))
-                with mock.patch(_BUILTIN_OPEN, mock_open, create=True):
-                    response = self.content_upload.upload(filepath)
+        ) as create, mock.patch.object(
+            entities.Repository,
+            'import_uploads',
+            return_value={'status': 'success'},
+        ) as import_uploads:
+            mock_open = mock.mock_open(read_data=gen_string('alpha').encode('ascii'))
+            with mock.patch(_BUILTIN_OPEN, mock_open, create=True):
+                response = self.content_upload.upload(filepath)
         self.assertEqual(import_uploads.call_count, 1)
         self.assertEqual(create.call_count, 1)
         self.assertEqual(import_uploads.return_value, response)
@@ -2580,9 +2568,7 @@ class ContentViewTestCase(TestCase):
             response = self.cv.search()
         self.assertEqual(handlr.call_count, 1)
         self.assertEqual(type(response[0]), entities.ContentView)
-        self.assertEqual(
-            type(response[0].content_view_component[0]), entities.ContentViewComponent
-        )
+        self.assertEqual(type(response[0].content_view_component[0]), entities.ContentViewComponent)
 
 
 class ContentViewComponentTestCase(TestCase):
@@ -2805,19 +2791,19 @@ class TemplateInputTestCase(TestCase):
         self.cfg = config.ServerConfig('some url')
         self.job_template = entities.JobTemplate(self.cfg, id=2)
         self.entity = entities.TemplateInput(self.cfg, id=1, template=self.job_template)
-        self.data = dict(
-            id=1,
-            description=None,
-            fact_name=None,
-            input_type='user',
-            name='my new template input',
-            options=None,
-            puppet_class_name=None,
-            puppet_parameter_name=None,
-            required=False,
-            template_id=self.job_template.id,
-            variable_name=None,
-        )
+        self.data = {
+            'id': 1,
+            'description': None,
+            'fact_name': None,
+            'input_type': 'user',
+            'name': 'my new template input',
+            'options': None,
+            'puppet_class_name': None,
+            'puppet_parameter_name': None,
+            'required': False,
+            'template_id': self.job_template.id,
+            'variable_name': None,
+        }
         self.read_json_patcher = mock.patch.object(EntityReadMixin, 'read_json')
         self.read_json = self.read_json_patcher.start()
         self.read_json.return_value = self.data.copy()
@@ -2829,7 +2815,7 @@ class TemplateInputTestCase(TestCase):
     def test_read(self):
         entity = self.entity.read()
         self.read_json.assert_called_once()
-        self.assertEqual(self.data, {key: getattr(entity, key) for key in self.data.keys()})
+        self.assertEqual(self.data, {key: getattr(entity, key) for key in self.data})
         self.assertIsInstance(entity.template, entities.JobTemplate)
         self.assertEqual(entity.template.id, self.job_template.id)
 
@@ -2842,22 +2828,22 @@ class JobTemplateTestCase(TestCase):
         self.entity = entities.JobTemplate(self.cfg, id=1)
         self.read_json_patcher = mock.patch.object(EntityReadMixin, 'read_json')
         self.read_json = self.read_json_patcher.start()
-        self.template_input_data = dict(id=1, template=1)
-        self.data = dict(
-            id=1,
-            audit_comment=None,
-            description_format=None,
-            effective_user=None,
-            job_category='Commands',
-            location=[],
-            locked=False,
-            name='my new job template',
-            organization=[],
-            provider_type=None,
-            snippet=False,
-            template='rm -rf /',
-            template_inputs=[self.template_input_data],
-        )
+        self.template_input_data = {'id': 1, 'template': 1}
+        self.data = {
+            'id': 1,
+            'audit_comment': None,
+            'description_format': None,
+            'effective_user': None,
+            'job_category': 'Commands',
+            'location': [],
+            'locked': False,
+            'name': 'my new job template',
+            'organization': [],
+            'provider_type': None,
+            'snippet': False,
+            'template': 'rm -rf /',
+            'template_inputs': [self.template_input_data],
+        }
         self.read_json.return_value = self.data.copy()
         del self.data['template_inputs']
 
@@ -2867,7 +2853,7 @@ class JobTemplateTestCase(TestCase):
     def test_read(self):
         entity = self.entity.read()
         self.read_json.assert_called_once()
-        self.assertEqual(self.data, {key: getattr(entity, key) for key in self.data.keys()})
+        self.assertEqual(self.data, {key: getattr(entity, key) for key in self.data})
         self.assertEqual(len(entity.template_inputs), 1)
         template_input = entity.template_inputs[0]
         self.assertIsInstance(template_input, entities.TemplateInput)
@@ -3180,13 +3166,12 @@ class RepositoryTestCase(TestCase):
 
         """
         kwargs = {'kwarg': gen_integer()}
-        with mock.patch.object(client, 'post') as post:
-            with mock.patch.object(
-                entities,
-                '_handle_response',
-                return_value={'status': 'success'},
-            ) as handler:
-                response = self.repo.upload_content(**kwargs)
+        with mock.patch.object(client, 'post') as post, mock.patch.object(
+            entities,
+            '_handle_response',
+            return_value={'status': 'success'},
+        ) as handler:
+            response = self.repo.upload_content(**kwargs)
         self.assertEqual(post.call_count, 1)
         self.assertEqual(len(post.call_args[0]), 1)
         self.assertEqual(post.call_args[1], kwargs)
@@ -3201,14 +3186,12 @@ class RepositoryTestCase(TestCase):
 
         """
         kwargs = {'kwarg': gen_integer()}
-        with mock.patch.object(client, 'post') as post:
-            with mock.patch.object(
-                entities,
-                '_handle_response',
-                return_value={'status': 'failure'},
-            ) as handler:
-                with self.assertRaises(entities.APIResponseError):
-                    self.repo.upload_content(**kwargs)
+        with mock.patch.object(client, 'post') as post, mock.patch.object(
+            entities,
+            '_handle_response',
+            return_value={'status': 'failure'},
+        ) as handler, self.assertRaises(entities.APIResponseError):
+            self.repo.upload_content(**kwargs)
         self.assertEqual(post.call_count, 1)
         self.assertEqual(len(post.call_args[0]), 1)
         self.assertEqual(post.call_args[1], kwargs)
@@ -3232,13 +3215,12 @@ class RepositoryTestCase(TestCase):
                 'checksum': gen_string('numeric'),
             }
         ]
-        with mock.patch.object(client, 'put') as put:
-            with mock.patch.object(
-                entities,
-                '_handle_response',
-                return_value={'status': 'success'},
-            ) as handler:
-                response = self.repo.import_uploads(uploads=uploads, **kwargs)
+        with mock.patch.object(client, 'put') as put, mock.patch.object(
+            entities,
+            '_handle_response',
+            return_value={'status': 'success'},
+        ) as handler:
+            response = self.repo.import_uploads(uploads=uploads, **kwargs)
         self.assertEqual(put.call_count, 1)
         self.assertEqual(len(put.call_args[0]), 2)
         self.assertEqual(put.call_args[1], kwargs)
@@ -3256,13 +3238,12 @@ class RepositoryTestCase(TestCase):
         """
         kwargs = {'kwarg': gen_integer()}
         upload_ids = [gen_string('numeric')]
-        with mock.patch.object(client, 'put') as put:
-            with mock.patch.object(
-                entities,
-                '_handle_response',
-                return_value={'status': 'success'},
-            ) as handler:
-                response = self.repo.import_uploads(upload_ids=upload_ids, **kwargs)
+        with mock.patch.object(client, 'put') as put, mock.patch.object(
+            entities,
+            '_handle_response',
+            return_value={'status': 'success'},
+        ) as handler:
+            response = self.repo.import_uploads(upload_ids=upload_ids, **kwargs)
         self.assertEqual(put.call_count, 1)
         self.assertEqual(len(put.call_args[0]), 2)
         self.assertEqual(put.call_args[1], kwargs)
