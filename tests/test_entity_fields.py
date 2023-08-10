@@ -1,7 +1,7 @@
 """Unit tests for :mod:`nailgun.entity_fields`."""
 import datetime
-import socket
 from random import randint
+import socket
 from unittest import TestCase
 from urllib.parse import urlparse
 
