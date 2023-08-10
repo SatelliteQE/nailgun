@@ -1,19 +1,18 @@
 """Tests for :mod:`nailgun.entity_mixins`."""
 import http.client as http_client
-from unittest import mock
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from fauxfactory import gen_integer
 from requests.exceptions import HTTPError
 
-from nailgun import client
-from nailgun import config
-from nailgun import entity_mixins
-from nailgun.entity_fields import IntegerField
-from nailgun.entity_fields import ListField
-from nailgun.entity_fields import OneToManyField
-from nailgun.entity_fields import OneToOneField
-from nailgun.entity_fields import StringField
+from nailgun import client, config, entity_mixins
+from nailgun.entity_fields import (
+    IntegerField,
+    ListField,
+    OneToManyField,
+    OneToOneField,
+    StringField,
+)
 
 # The size of this module is a direct reflection of the size of module
 # `nailgun.entity_mixins`. It would be good to split that module up, then split
@@ -26,6 +25,15 @@ from nailgun.entity_fields import StringField
 # 3. Tests for public methods.
 #
 # 1. Entity definitions. ------------------------------------------------- {{{1
+
+# Due to the length of the with statements, nested is preferred over combined
+# ruff: noqa: SIM117
+
+# Tests use a unused nailgun and tests imports
+# ruff: noqa: F401
+
+# Cannot use ast.literal_eval because ServerConfig isn't a basic type
+# ruff: noqa: S307
 
 
 class SampleEntity(entity_mixins.Entity):
@@ -155,7 +163,7 @@ class MakeEntitiesFromIdsTestCase(TestCase):
 
     def test_pass_in_emtpy_iterable(self):
         """Let the ``entity_objs_and_ids`` argument be an empty iterable."""
-        for iterable in ([], tuple()):
+        for iterable in ([], ()):
             self.assertEqual(
                 entity_mixins._make_entities_from_ids(SampleEntity, iterable, self.cfg),
                 [],
@@ -409,7 +417,6 @@ class EntityTestCase(TestCase):
         # Testing List nested objects
         mary.list = [alice]
         self.assertNotEqual(mary, mary_clone)
-        # noqa
         mary_clone.list = [alice_clone]
         self.assertEqual(mary, mary_clone)
 
@@ -470,8 +477,8 @@ class EntityTestCase(TestCase):
             config.ServerConfig.get()
         except (KeyError, config.ConfigFileError):
             self.cfg.save()
-        import nailgun  # noqa
-        import tests  # noqa
+        import nailgun
+        import tests
 
         self.assertEqual(repr(eval(repr(entity))), target)
 
@@ -490,8 +497,8 @@ class EntityTestCase(TestCase):
             config.ServerConfig.get()
         except (KeyError, config.ConfigFileError):
             self.cfg.save()
-        import nailgun  # noqa
-        import tests  # noqa
+        import nailgun
+        import tests
 
         self.assertEqual(repr(eval(repr(entity))), target)
 
@@ -514,8 +521,8 @@ class EntityTestCase(TestCase):
             config.ServerConfig.get()
         except (KeyError, config.ConfigFileError):
             self.cfg.save()
-        import nailgun  # noqa
-        import tests  # noqa
+        import nailgun
+        import tests
 
         self.assertEqual(repr(eval(repr(entity))), target)
 
@@ -958,9 +965,8 @@ class EntityDeleteMixinTestCase(TestCase):
             entity_mixins.EntityDeleteMixin,
             'delete_raw',
             return_value=response,
-        ):
-            with self.assertRaises(HTTPError):
-                self.entity.delete()
+        ), self.assertRaises(HTTPError):
+            self.entity.delete()
 
     def test_delete_v2(self):
         """What happens if the server returns an HTTP ACCEPTED status code?"""
@@ -971,9 +977,8 @@ class EntityDeleteMixinTestCase(TestCase):
             entity_mixins.EntityDeleteMixin,
             'delete_raw',
             return_value=response,
-        ) as delete_raw:
-            with mock.patch.object(entity_mixins, '_poll_task') as poll_task:
-                self.entity.delete()
+        ) as delete_raw, mock.patch.object(entity_mixins, '_poll_task') as poll_task:
+            self.entity.delete()
         self.assertEqual(delete_raw.call_count, 1)
         self.assertEqual(poll_task.call_count, 1)
         self.assertEqual(
@@ -989,9 +994,8 @@ class EntityDeleteMixinTestCase(TestCase):
             entity_mixins.EntityDeleteMixin,
             'delete_raw',
             return_value=response,
-        ):
-            with mock.patch.object(entity_mixins, '_poll_task') as poll_task:
-                self.assertEqual(self.entity.delete(), None)
+        ), mock.patch.object(entity_mixins, '_poll_task') as poll_task:
+            self.assertEqual(self.entity.delete(), None)
         self.assertEqual(poll_task.call_count, 0)
 
     def test_delete_v4(self):
@@ -1016,9 +1020,8 @@ class EntityDeleteMixinTestCase(TestCase):
             entity_mixins.EntityDeleteMixin,
             'delete_raw',
             return_value=response,
-        ):
-            with mock.patch.object(entity_mixins, '_poll_task') as poll_task:
-                self.assertEqual(self.entity.delete(), None)
+        ), mock.patch.object(entity_mixins, '_poll_task') as poll_task:
+            self.assertEqual(self.entity.delete(), None)
         self.assertEqual(poll_task.call_count, 0)
 
     def test_delete_v6(self):
@@ -1033,9 +1036,8 @@ class EntityDeleteMixinTestCase(TestCase):
             entity_mixins.EntityDeleteMixin,
             'delete_raw',
             return_value=response,
-        ):
-            with mock.patch.object(entity_mixins, '_poll_task') as poll_task:
-                self.assertEqual(self.entity.delete(), None)
+        ), mock.patch.object(entity_mixins, '_poll_task') as poll_task:
+            self.assertEqual(self.entity.delete(), None)
         self.assertEqual(poll_task.call_count, 0)
 
 
@@ -1227,12 +1229,11 @@ class EntitySearchMixinTestCase(TestCase):
 
         """
         for filter_ in ({'one': 'foo'}, {'many': 'bar'}):
-            with self.subTest(filter_):
-                with self.assertRaises(NotImplementedError):
-                    entity_mixins.EntitySearchMixin.search_filter(
-                        [EntityWithSearch2(self.cfg)],
-                        filter_,
-                    )
+            with self.subTest(filter_), self.assertRaises(NotImplementedError):
+                entity_mixins.EntitySearchMixin.search_filter(
+                    [EntityWithSearch2(self.cfg)],
+                    filter_,
+                )
 
     def test_search_filter_v3(self):
         """Test :meth:`nailgun.entity_mixins.EntitySearchMixin.search_filter`.

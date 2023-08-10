@@ -2,20 +2,18 @@
 import builtins
 import json
 from unittest import TestCase
-from unittest.mock import call
-from unittest.mock import mock_open
-from unittest.mock import patch
+from unittest.mock import call, mock_open, patch
 
-from packaging.version import InvalidVersion
-from packaging.version import parse
+from packaging.version import InvalidVersion, parse
 
-from nailgun.config import _get_config_file_path
-from nailgun.config import BaseServerConfig
-from nailgun.config import ConfigFileError
-from nailgun.config import ServerConfig
+from nailgun.config import (
+    BaseServerConfig,
+    ConfigFileError,
+    ServerConfig,
+    _get_config_file_path,
+)
 
-
-FILE_PATH = '/tmp/bogus.json'
+FILE_PATH = '/tmp/bogus.json'  # noqa: S108
 CONFIGS = {
     'default': {'url': 'http://example.com'},
     'Ask Aak': {'url': 'bogus value', 'auth': ['username', 'password']},
@@ -29,6 +27,12 @@ CONFIGS2.update(
         'Admiral Gial Ackbar': {'url': 'bogus', 'auth': [], 'verify': False},
     }
 )
+
+# Tests use an unused nailgun import
+# ruff: noqa: F401
+
+# Cannot use ast.literal_eval because ServerConfig isn't a basic type
+# ruff: noqa: S307
 
 
 def _convert_bsc_attrs(bsc_attrs):
@@ -195,7 +199,7 @@ class ServerConfigTestCase(TestCase):
         Assert that the ``auth`` attribute is a tuple.
 
         """
-        for label in CONFIGS.keys():
+        for label in CONFIGS:
             open_ = mock_open(read_data=json.dumps(CONFIGS))
             with patch.object(builtins, 'open', open_):
                 server_config = ServerConfig.get(label, FILE_PATH)
@@ -215,7 +219,7 @@ class ReprTestCase(TestCase):
         """
         target = "nailgun.config.BaseServerConfig(url='bogus')"
         self.assertEqual(target, repr(BaseServerConfig('bogus')))
-        import nailgun  # noqa
+        import nailgun
 
         self.assertEqual(target, repr(eval(repr(BaseServerConfig('bogus')))))
 
@@ -231,7 +235,7 @@ class ReprTestCase(TestCase):
             "nailgun.config.BaseServerConfig(auth='flam', url='flim')",
         )
         self.assertIn(repr(BaseServerConfig('flim', auth='flam')), targets)
-        import nailgun  # noqa
+        import nailgun
 
         self.assertIn(repr(eval(repr(BaseServerConfig('flim', auth='flam')))), targets)
 
@@ -256,7 +260,7 @@ class ReprTestCase(TestCase):
         """
         target = "nailgun.config.ServerConfig(url='bogus')"
         self.assertEqual(target, repr(ServerConfig('bogus')))
-        import nailgun  # noqa
+        import nailgun
 
         self.assertEqual(target, repr(eval(repr(ServerConfig('bogus')))))
 
@@ -272,7 +276,7 @@ class ReprTestCase(TestCase):
             "nailgun.config.ServerConfig(auth='flam', url='flim')",
         )
         self.assertIn(repr(ServerConfig('flim', auth='flam')), targets)
-        import nailgun  # noqa
+        import nailgun
 
         self.assertIn(repr(eval(repr(ServerConfig('flim', auth='flam')))), targets)
 
@@ -301,7 +305,7 @@ class ReprTestCase(TestCase):
             "nailgun.config.ServerConfig(verify='flub', url='flim')",
         )
         self.assertIn(repr(ServerConfig('flim', verify='flub')), targets)
-        import nailgun  # noqa
+        import nailgun
 
         self.assertIn(repr(eval(repr(ServerConfig('flim', verify='flub')))), targets)
 
