@@ -1,10 +1,9 @@
 """Unit tests for :mod:`nailgun.client`."""
 import inspect
-from unittest import mock
-from unittest import TestCase
+from unittest import TestCase, mock
 
-import requests
 from fauxfactory import gen_alpha
+import requests
 
 from nailgun import client
 

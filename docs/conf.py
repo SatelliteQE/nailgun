@@ -9,7 +9,6 @@ import sys
 
 from packaging.version import Version
 
-
 # Add the NailGun root directory to the system path. This allows references
 # such as :mod:`nailgun.client` to be processed correctly.
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))

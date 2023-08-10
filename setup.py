@@ -7,9 +7,7 @@ For more information, see:
 * https://docs.python.org/distutils/sourcedist.html
 
 """
-from setuptools import find_packages
-from setuptools import setup
-
+from setuptools import find_packages, setup
 
 with open('README.rst') as handle:
     LONG_DESCRIPTION = handle.read()
