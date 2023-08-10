@@ -1,23 +1,19 @@
 """Defines a set of mixins that provide tools for interacting with entities."""
 import _thread as thread
+from collections.abc import Iterable
+import contextlib
+from datetime import date, datetime
 import http.client as http_client
 import json as std_json
 import threading
 import time
-from collections.abc import Iterable
-from datetime import date
-from datetime import datetime
 from urllib.parse import urljoin
 
 from fauxfactory import gen_choice
 from inflection import pluralize
 
-from nailgun import client
-from nailgun import config
-from nailgun.entity_fields import IntegerField
-from nailgun.entity_fields import ListField
-from nailgun.entity_fields import OneToManyField
-from nailgun.entity_fields import OneToOneField
+from nailgun import client, config
+from nailgun.entity_fields import IntegerField, ListField, OneToManyField, OneToOneField
 
 # This module contains very extensive docstrings, so this module is easier to
 # understand than its size suggests. That said, it could be useful to split
@@ -120,10 +116,10 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None):
             if task_info['state'] in ('paused', 'stopped'):
                 break
             time.sleep(poll_rate)
-    except KeyboardInterrupt:  # pragma: no cover
+    except KeyboardInterrupt:
         # raise_task_timeout will raise a KeyboardInterrupt when the timeout
         # expires. Catch the exception and raise TaskTimedOutError
-        raise TaskTimedOutError(
+        raise TaskTimedOutError(  # noqa: TRY200 - Not raising from KeyBoardInterrupt
             f"Timed out polling task {task_id}. Task information: {task_info}", task_id
         )
     finally:
@@ -535,7 +531,7 @@ class Entity:
 
     def __repr__(self):
         kv_pairs = ", ".join(
-            f"{key}={repr(value)}"
+            f"{key}={value!r}"
             for key, value in self.get_values().items()
             if not key.startswith("_")
         )
@@ -713,7 +709,6 @@ class EntityDeleteMixin:
             and hasattr(response, 'content')
             and not response.content.strip()
         ):
-
             # "The server successfully processed the request, but is not
             # returning any content. Usually used as a response to a successful
             # delete request."
@@ -1291,20 +1286,17 @@ class EntitySearchMixin:
             attrs = {}
             for field_name, field in fields.items():
                 if isinstance(field, OneToOneField):
-                    try:
+                    with contextlib.suppress(MissingValueError):
                         attrs[field_name] = _get_entity_id(field_name, result)
-                    except MissingValueError:
-                        pass
+
                 elif isinstance(field, OneToManyField):
-                    try:
+                    with contextlib.suppress(MissingValueError):
                         attrs[field_name] = _get_entity_ids(field_name, result)
-                    except MissingValueError:
-                        pass
+
                 else:
-                    try:
+                    with contextlib.suppress(KeyError):
                         attrs[field_name] = result[field_name]
-                    except KeyError:
-                        pass
+
             normalized.append(attrs)
         return normalized
 
@@ -1437,7 +1429,7 @@ class EntitySearchMixin:
                 f'Valid filters are {fields.keys()}, but received {filters.keys()} instead.'
             )
         for field_name in filters:
-            if isinstance(fields[field_name], (OneToOneField, OneToManyField)):
+            if isinstance(fields[field_name], OneToOneField | OneToManyField):
                 raise NotImplementedError(
                     'Search results cannot (yet?) be locally filtered by '
                     f'`OneToOneField`s and `OneToManyField`s. '
@@ -1447,9 +1439,7 @@ class EntitySearchMixin:
         # The arguments are sane. Filter away!
         filtered = [entity.read() for entity in entities]  # don't alter inputs
         for field_name, field_value in filters.items():
-            filtered = [
-                entity for entity in filtered if getattr(entity, field_name) == field_value
-            ]
+            filtered = [entity for entity in filtered if getattr(entity, field_name) == field_value]
         return filtered
 
 
@@ -1466,7 +1456,7 @@ def to_json_serializable(obj):
 
     if isinstance(obj, dict):
         return {k: to_json_serializable(v) for k, v in obj.items()}
-    elif isinstance(obj, (list, tuple)):
+    elif isinstance(obj, list | tuple):
         return [to_json_serializable(v) for v in obj]
     elif isinstance(obj, datetime):
         return obj.strftime('%Y-%m-%d %H:%M:%S')

@@ -12,6 +12,7 @@ like so::
 """
 import json
 from pprint import pprint
+import sys
 
 import requests
 
@@ -66,11 +67,11 @@ def get_organization_id(server_config, label):
     response.raise_for_status()
     decoded = response.json()
     if decoded['subtotal'] != 1:
-        print(
+        pprint(
             f'Expected to find one organization, but instead found {decoded["subtotal"]}. '
             f'Search results: {decoded["results"]}'
         )
-        exit(1)
+        sys.exit(1)
     return decoded['results'][0]['id']
 
 
