@@ -226,6 +226,7 @@ class ActivationKey(
                 Organization,
                 required=True,
             ),
+            'organization_id': entity_fields.IntegerField(),
             'purpose_usage': entity_fields.StringField(),
             'purpose_role': entity_fields.StringField(),
             'purpose_addons': entity_fields.ListField(),
