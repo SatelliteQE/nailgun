@@ -274,6 +274,13 @@ class ActivationKey(
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
+    def update_payload(self, fields=None):
+        """Always include organization_id."""
+        payload = super().update_payload(fields)
+        # organization is required for the AK update call
+        payload['organization_id'] = self.organization.id
+        return payload
+
     def add_host_collection(self, synchronous=True, timeout=None, **kwargs):
         """Helper for associating host collection with activation key.
 
