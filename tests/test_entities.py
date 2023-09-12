@@ -2685,6 +2685,26 @@ class ContentViewComponentTestCase(TestCase):
         self.assertEqual(handlr.call_count, 1)
 
 
+class ActivationKeyTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.ActivationKey`."""
+
+    def test_creation_and_update(self):
+        """Check template combinations as json or entity is set on correct
+        attribute template_combinations_attributes ( check #333)
+        """
+        cfg = config.ServerConfig(url='foo')
+        activation_key = entities.ActivationKey(cfg, name='test_ak', organization=42)
+        expected_dct = {
+            'name': 'test_ak',
+            'organization_id': 42,
+        }
+        self.assertEqual(expected_dct, activation_key.create_payload())
+        # Testing update
+        activation_key.name = 'test_ak_new'
+        expected_dct['name'] = 'test_ak_new'
+        self.assertEqual(expected_dct, activation_key.update_payload())
+
+
 class ReportTemplateTestCase(TestCase):
     """Tests for :class:`nailgun.entities.ReportTemplate`."""
 
