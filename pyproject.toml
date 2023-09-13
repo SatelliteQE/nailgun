@@ -35,7 +35,7 @@ select = [
     "C", # complexity
     "C4", # flake8-comprehensions
     "COM818", # Trailing comma on bare tuple prohibited
-    # "D", # docstrings
+    "D", # docstrings
     "E", # pycodestyle
     "F", # pyflakes/autoflake
     "G", # flake8-logging-format
