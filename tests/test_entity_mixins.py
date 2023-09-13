@@ -37,7 +37,7 @@ from nailgun.entity_fields import (
 
 
 class SampleEntity(entity_mixins.Entity):
-    """Sample entity to be used in the tests"""
+    """Sample entity to be used in the tests."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
@@ -54,7 +54,6 @@ class SampleEntityTwo(entity_mixins.Entity):
 
     This class has a :class:`nailgun.entity_fields.OneToManyField` called
     "one_to_many" pointing to :class:`tests.test_entity_mixins.SampleEntity`.
-
     """
 
     def __init__(self, server_config=None, **kwargs):
@@ -70,7 +69,6 @@ class SampleEntityThree(entity_mixins.Entity):
 
     This class has a :class:`nailgun.entity_fields.ListField` called "list"
     containing instances of :class:`tests.test_entity_mixins.SampleEntity`.
-
     """
 
     def __init__(self, server_config=None, **kwargs):
@@ -208,7 +206,7 @@ class PollTaskTestCase(TestCase):
         self.cfg = config.ServerConfig('bogus url')
 
     def test__poll_task_failure(self):
-        """What happens when a foreman task completes but does not succeed?
+        """Check what happens when a foreman task completes but does not succeed.
 
         Assert that a :class:`nailgun.entity_mixins.TaskFailedError` exception
         is raised.
@@ -222,7 +220,7 @@ class PollTaskTestCase(TestCase):
                         entity_mixins._poll_task(gen_integer(), self.cfg)
 
     def test__poll_task_success(self):
-        """What happens when a foreman task completes and does succeed?
+        """Check what happens when a foreman task completes and does succeed.
 
         Assert that the server's response is returned.
 
@@ -237,9 +235,7 @@ class PollTaskTestCase(TestCase):
                     )
 
     def test__poll_task_timeout(self):
-        """What happens when a foreman task timesout?
-        Assert that the task is still running.
-        """
+        """Assert that the task is still running after timeout."""
         with self.assertRaises(entity_mixins.TaskTimedOutError):
             with mock.patch.object(client, 'get') as get:
                 get.return_value.json.return_value = {'state': 'running', 'result': 'pending'}
@@ -305,8 +301,9 @@ class EntityTestCase(TestCase):
             )
 
     def test_entity_get_values_v2(self):
-        """Test :meth:`nailgun.entity_mixins.Entity.get_values`, ensure
-        ``_path_fields`` are never returned.
+        """Test :meth:`nailgun.entity_mixins.Entity.get_values`.
+
+        ensure ``_path_fields`` are never returned.
         """
         for values in (
             {},
@@ -357,7 +354,7 @@ class EntityTestCase(TestCase):
             SampleEntityTwo(self.cfg, one_to_many=1)
 
     def test_eq_none(self):
-        """Test method ``nailgun.entity_mixins.Entity.__eq__`` against None
+        """Test method ``nailgun.entity_mixins.Entity.__eq__`` against None.
 
         Assert that ``__eq__`` returns False when compared to None.
 
@@ -421,12 +418,12 @@ class EntityTestCase(TestCase):
         self.assertEqual(mary, mary_clone)
 
     def test_compare_to_null(self):
-        """Assert entity comparison to None"""
+        """Assert entity comparison to None."""
         alice = SampleEntity(self.cfg, id=1, name='Alice', unique='a')
         self.assertFalse(alice.compare(None))
 
     def test_compare(self):
-        """Assert compare take only not unique fields into account"""
+        """Assert compare take only not unique fields into account."""
         alice = SampleEntity(self.cfg, id=1, name='Alice', unique='a')
         alice_2 = SampleEntity(self.cfg, id=2, name='Alice', unique='b')
         self.assertTrue(
@@ -439,12 +436,12 @@ class EntityTestCase(TestCase):
         )
 
     def test_compare_with_filter(self):
-        """Assert compare can filter fields based on callable"""
+        """Assert compare can filter fields based on callable."""
         alice = SampleEntity(self.cfg, id=1, name='Alice', unique='a')
         alice_2 = SampleEntity(self.cfg, id=2, name='Alice', unique='a')
 
         def filter_example(fields_name, _):
-            """Filter function to avoid comparison only on id"""
+            """Filter function to avoid comparison only on id."""
             return fields_name != 'id'
 
         self.assertTrue(
@@ -575,7 +572,7 @@ class EntityCreateMixinTestCase(TestCase):
         self.assertEqual(entity.int_default, 5)
 
     def test_create_raw_v1(self):
-        """What happens if the ``create_missing`` arg is not specified?
+        """Check what happens if the ``create_missing`` arg is not specified.
 
         :meth:`nailgun.entity_mixins.EntityCreateMixin.create_raw` should
         default to :data:`nailgun.entity_mixins.CREATE_MISSING`. We do not set
@@ -592,7 +589,7 @@ class EntityCreateMixinTestCase(TestCase):
         self.assertEqual(post.call_count, 1)
 
     def test_create_raw_v2(self):
-        """What happens if the ``create_missing`` arg is ``True``?"""
+        """Check what happens if the ``create_missing`` arg is ``True``."""
         with mock.patch.object(self.entity, 'create_missing') as c_missing:
             with mock.patch.object(self.entity, 'create_payload') as c_payload:
                 with mock.patch.object(client, 'post') as post:
@@ -602,7 +599,7 @@ class EntityCreateMixinTestCase(TestCase):
         self.assertEqual(post.call_count, 1)
 
     def test_create_raw_v3(self):
-        """What happens if the ``create_missing`` arg is ``False``?"""
+        """Check what happens if the ``create_missing`` arg is ``False``."""
         with mock.patch.object(self.entity, 'create_missing') as c_missing:
             with mock.patch.object(self.entity, 'create_payload') as c_payload:
                 with mock.patch.object(client, 'post') as post:
@@ -958,7 +955,7 @@ class EntityDeleteMixinTestCase(TestCase):
         )
 
     def test_delete_v1(self):
-        """What happens if the server returns an error HTTP status code?"""
+        """Check what happens if the server returns an error HTTP status code."""
         response = mock.Mock()
         response.raise_for_status.side_effect = HTTPError('oh no!')
         with mock.patch.object(
@@ -969,7 +966,7 @@ class EntityDeleteMixinTestCase(TestCase):
             self.entity.delete()
 
     def test_delete_v2(self):
-        """What happens if the server returns an HTTP ACCEPTED status code?"""
+        """Check what happens if the server returns an HTTP ACCEPTED status code."""
         response = mock.Mock()
         response.status_code = http_client.ACCEPTED
         response.json.return_value = {'id': gen_integer()}
@@ -987,7 +984,7 @@ class EntityDeleteMixinTestCase(TestCase):
         )
 
     def test_delete_v3(self):
-        """What happens if the server returns an HTTP NO_CONTENT status?"""
+        """Check what happens if the server returns an HTTP NO_CONTENT status."""
         response = mock.Mock()
         response.status_code = http_client.NO_CONTENT
         with mock.patch.object(
@@ -999,7 +996,7 @@ class EntityDeleteMixinTestCase(TestCase):
         self.assertEqual(poll_task.call_count, 0)
 
     def test_delete_v4(self):
-        """What happens if the server returns some other stuccess status?"""
+        """Check what happens if the server returns some other stuccess status."""
         response = mock.Mock()
         response.json.return_value = gen_integer()
         with mock.patch.object(
@@ -1010,9 +1007,7 @@ class EntityDeleteMixinTestCase(TestCase):
             self.assertEqual(self.entity.delete(), response.json.return_value)
 
     def test_delete_v5(self):
-        """
-        What happens if the server returns an HTTP OK status and empty content?
-        """
+        """Check what happens if the server returns an HTTP OK status and empty content."""
         response = mock.Mock()
         response.status_code = http_client.OK
         response.content = ''
@@ -1025,10 +1020,7 @@ class EntityDeleteMixinTestCase(TestCase):
         self.assertEqual(poll_task.call_count, 0)
 
     def test_delete_v6(self):
-        """
-        What happens if the server returns an HTTP OK status and blank only
-        content?
-        """
+        """Assert delete works when receiving an OK response with no content."""
         response = mock.Mock()
         response.status_code = http_client.OK
         response.content = ' '

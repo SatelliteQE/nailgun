@@ -30,7 +30,7 @@ class ContentTypeIsJsonTestCase(TestCase):
             self.assertFalse(client._content_type_is_json(kwargs))
 
     def test_false_with_no_headers(self):
-        """If no headers passed should return None"""
+        """If no headers passed should return None."""
         self.assertFalse(client._content_type_is_json({}))
 
 
@@ -63,6 +63,7 @@ class ClientTestCase(TestCase):
     """Tests for functions in :mod:`nailgun.client`."""
 
     def setUp(self):
+        """Set up some common variables."""
         self.bogus_url = gen_alpha()
         self.mock_response = mock.Mock(status_code=200)
 
