@@ -43,7 +43,7 @@ CREATE_MISSING = False
 
 
 def call_entity_method_with_timeout(entity_callable, timeout=300, **kwargs):
-    """Call Entity callable with a custom timeout
+    """Call Entity callable with a custom timeout.
 
     :param entity_callable, the entity method object to call
     :param timeout: the time to wait for the method call to finish
@@ -91,7 +91,6 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None, must_succee
     import. Placing the implementation of
     :meth:`nailgun.entities.ForemanTask.poll` here allows both that method and
     the mixins in this module to use the same logic.
-
     """
     if poll_rate is None:
         poll_rate = TASK_POLL_RATE
@@ -146,7 +145,6 @@ def _make_entity_from_id(entity_cls, entity_obj_or_id, server_config):
         object or an entity ID.
     :returns: An ``entity_cls`` object.
     :rtype: nailgun.entity_mixins.Entity
-
     """
     if isinstance(entity_obj_or_id, entity_cls):
         return entity_obj_or_id
@@ -161,7 +159,6 @@ def _make_entities_from_ids(entity_cls, entity_objs_and_ids, server_config):
         :class:`nailgun.entity_mixins.Entity` objects and/or entity IDs. All of
         the entities in this iterable should be of type ``entity_cls``.
     :returns: A list of ``entity_cls`` objects.
-
     """
     return [
         _make_entity_from_id(entity_cls, entity_or_id, server_config)
@@ -200,7 +197,6 @@ def _payload(fields, values):
     :param values: A value like what is returned by
         :meth:`nailgun.entity_mixins.Entity.get_values`.
     :returns: A dict mapping field names to field values.
-
     """
     for field_name, field in fields.items():
         if field_name in values:
@@ -211,7 +207,7 @@ def _payload(fields, values):
             elif isinstance(field, ListField):
 
                 def parse(obj):
-                    """parse obj payload if it is an Entity"""
+                    """Parse obj payload if it is an Entity."""
                     if isinstance(obj, Entity):
                         return _payload(obj.get_fields(), obj.get_values())
                     return obj
@@ -230,7 +226,6 @@ def _get_server_config():
         ``None``, or whatever is returned by
         :meth:`nailgun.config.ServerConfig.get` otherwise.
     :rtype: nailgun.config.ServerConfig
-
     """
     if DEFAULT_SERVER_CONFIG is not None:
         return DEFAULT_SERVER_CONFIG
@@ -253,7 +248,6 @@ def _get_entity_id(field_name, attrs):
     :param field_name: A string. The name of a field.
     :param attrs: A dict. A JSON payload as returned from a server.
     :returns: Either an entity ID or None.
-
     """
     field_name_id = f'{field_name}_id'
     if field_name in attrs:
@@ -289,7 +283,6 @@ def _get_entity_ids(field_name, attrs):
     :param field_name: A string. The name of a field.
     :param attrs: A dict. A JSON payload as returned from a server.
     :returns: An iterable of entity IDs.
-
     """
     field_name_ids = f'{field_name}_ids'
     plural_field_name = pluralize(field_name)
@@ -392,7 +385,6 @@ class Entity:
         non-existent field.
     :raises nailgun.entity_mixins.BadValueError: If an inappropriate value is
         assigned to a field.
-
     """
 
     def __init__(self, server_config=None, **kwargs):
@@ -530,6 +522,7 @@ class Entity:
         return attrs
 
     def __repr__(self):
+        """Return a string representation of the current object."""
         kv_pairs = ", ".join(
             f"{key}={value!r}"
             for key, value in self.get_values().items()
@@ -538,7 +531,9 @@ class Entity:
         return f'{self.__module__}.{type(self).__name__}({kv_pairs})'
 
     def to_json(self):
-        r"""Create a JSON encoded string with Entity properties. Ex:
+        r"""Create a JSON encoded string with Entity properties.
+
+        Ex:
 
         >>> from nailgun import entities, config
         >>> kwargs = {
@@ -555,6 +550,7 @@ class Entity:
 
     def to_json_dict(self, filter_fcn=None):
         """Create a dict with Entity properties for json encoding.
+
         It can be overridden by subclasses for each standard serialization
         doesn't work. By default it call _to_json_dict on OneToOne fields
         and build a list calling the same method on each OneToMany object's
@@ -591,8 +587,9 @@ class Entity:
         return json_dct
 
     def __eq__(self, other):
-        """Compare two entities based on their properties. Even nested
-        objects are considered for equality
+        """Compare two entities based on their properties.
+
+        Even nested objects are considered for equality.
 
         :param other: entity to compare self to
         :return: boolean indicating if entities are equal or not
@@ -602,7 +599,8 @@ class Entity:
         return self.to_json_dict() == other.to_json_dict()
 
     def compare(self, other, filter_fcn=None):
-        """Returns True if properties can be compared in terms of eq.
+        """Return True if properties can be compared in terms of eq.
+
         Entity's Fields can be filtered accordingly to 'filter_fcn'.
         This callable receives field's name as first parameter and field itself
         as second parameter.
@@ -610,7 +608,7 @@ class Entity:
         comparison and False otherwise. If not provided field's marked as
         unique will not be compared by default. 'id' and 'name' are examples of
         unique fields commonly ignored. Check Entities fields for fields marked
-        with 'unique=True'
+        with 'unique=True'.
 
 
         :param other: entity to compare
@@ -622,7 +620,7 @@ class Entity:
         if filter_fcn is None:
 
             def filter_unique(_, field):
-                """Filter function for unique fields"""
+                """Filter function for unique fields."""
                 return not field.unique
 
             filter_fcn = filter_unique
@@ -630,7 +628,7 @@ class Entity:
         return self.to_json_dict(filter_fcn) == other.to_json_dict(filter_fcn)
 
     def entity_with_parent(self, **parent):
-        """Returns modified entity by adding parent entity
+        """Return modified entity by adding parent entity.
 
         :parent dict: optional, The key/value pair of base entity else fetch from the fields
         """
@@ -651,7 +649,7 @@ class Entity:
 
 
 class EntityDeleteMixin:
-    """This mixin provides the ability to delete an entity.
+    """Provide the ability to delete an entity.
 
     The methods provided by this class work together. The call tree looks like
     this::
@@ -664,7 +662,6 @@ class EntityDeleteMixin:
         Make an HTTP DELETE request to the server.
     :meth:`delete`
         Check the server's response for errors and decode the response.
-
     """
 
     def delete_raw(self):
@@ -698,7 +695,6 @@ class EntityDeleteMixin:
             out.
 
         """
-
         response = self.delete_raw()
         response.raise_for_status()
 
@@ -717,7 +713,7 @@ class EntityDeleteMixin:
 
 
 class EntityReadMixin:
-    """This mixin provides the ability to read an entity.
+    """Provide the ability to read an entity.
 
     The methods provided by this class work together. The call tree looks like
     this::
@@ -736,7 +732,6 @@ class EntityReadMixin:
         server.
 
     See the individual methods for more detailed information.
-
     """
 
     def read_raw(self, params=None):
@@ -849,7 +844,7 @@ class EntityReadMixin:
 
 
 class EntityCreateMixin:
-    """This mixin provides the ability to create an entity.
+    """Provide the ability to create an entity.
 
     The methods provided by this class work together. The call tree looks like
     this::
@@ -878,7 +873,6 @@ class EntityCreateMixin:
         server.
 
     See the individual methods for more detailed information.
-
     """
 
     def create_missing(self):
@@ -985,7 +979,7 @@ class EntityCreateMixin:
 
 
 class EntityUpdateMixin:
-    """This mixin provides the ability to update an entity.
+    """Provide the ability to update an entity.
 
     The methods provided by this class work together. The call tree looks
     like this::
@@ -1007,7 +1001,6 @@ class EntityUpdateMixin:
         the created entity and populate its fields.
 
     See the individual methods for more detailed information.
-
     """
 
     def update_payload(self, fields=None):
@@ -1084,7 +1077,7 @@ class EntityUpdateMixin:
 
 
 class EntitySearchMixin:
-    """This mixin provides the ability to search for entities.
+    """Provide the ability to search for entities.
 
     The methods provided by this class work together. The call tree looks like
     this::
@@ -1113,7 +1106,6 @@ class EntitySearchMixin:
         Read all ``entities`` and locally filter them.
 
     See the individual methods for more detailed information.
-
     """
 
     def search_payload(self, fields=None, query=None):
@@ -1444,12 +1436,11 @@ class EntitySearchMixin:
 
 
 def to_json_serializable(obj):
-    """Transforms obj into a json serializable object.
+    """Transform obj into a json serializable object.
 
     :param obj: entity or any json serializable object
 
     :return: serializable object
-
     """
     if isinstance(obj, Entity):
         return obj.to_json_dict()
