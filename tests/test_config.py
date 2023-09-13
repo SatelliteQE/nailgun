@@ -44,7 +44,6 @@ def _convert_bsc_attrs(bsc_attrs):
         :class:`nailgun.config.BaseServerConfig`.
     :returns: A dict of attributes as is returned by
         ``vars(BaseServerConfig(bsc_attrs))``.
-
     """
     if 'version' in bsc_attrs:
         bsc_attrs = bsc_attrs.copy()  # shadow the passed in dict
@@ -69,6 +68,7 @@ class BaseServerConfigTestCase(TestCase):
 
     def test_init_invalid(self):
         """Test instantiating :class: `nailgun.config.BaseServerConfig`.
+
         Assert that configs with invalid versions do not load.
         """
         with self.assertRaises(InvalidVersion):
@@ -171,7 +171,7 @@ class ServerConfigTestCase(TestCase):
             )
 
     def test_raise_config_file_error(self):
-        """Should raise error if path not found"""
+        """Should raise error if path not found."""
         with self.assertRaises(ConfigFileError):
             _get_config_file_path('foo', 'bar')
 

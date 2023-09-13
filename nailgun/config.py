@@ -21,7 +21,6 @@ class ConfigFileError(Exception):
     .. WARNING:: This class will likely be moved to a separate Python package
         in a future release of NailGun. Be careful about making references to
         this class, as those references will likely need to be changed.
-
     """
 
 
@@ -40,7 +39,6 @@ def _get_config_file_path(xdg_config_dir, xdg_config_file):
     :returns: A ``str`` path to a configuration file.
     :raises nailgun.config.ConfigFileError: When no configuration file can be
         found.
-
     """
     for config_dir in BaseDirectory.load_config_paths(xdg_config_dir):
         path = join(config_dir, xdg_config_file)
@@ -91,7 +89,6 @@ class BaseServerConfig:
     .. WARNING:: This class will likely be moved to a separate Python package
         in a future release of NailGun. Be careful about making references to
         this class, as those references will likely need to be changed.
-
     """
 
     # Used to lock access to the configuration file when performing certain
@@ -110,6 +107,7 @@ class BaseServerConfig:
             self.version = parse(version)
 
     def __repr__(self):
+        """Return a string representation of the object."""
         attrs = vars(self).copy()
         if "version" in attrs:
             attrs["version"] = str(attrs.pop("version"))
@@ -228,7 +226,6 @@ class ServerConfig(BaseServerConfig):
 
     :param verify: A boolean. Should SSL be verified when communicating with
         the server? No instance attribute is created if no value is provided.
-
     """
 
     # It's OK that this class has only one public method. This class is
