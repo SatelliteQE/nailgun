@@ -38,7 +38,7 @@ EXPECTED_ARGSPEC_TIMEOUT = (
 
 
 def make_entity(cls, **kwargs):
-    """Helper function to create entity with dummy ServerConfig"""
+    """Create entity with dummy ServerConfig."""
     cfg = config.ServerConfig(url='https://foo.bar', verify=False, auth=('foo', 'bar'))
     return cls(cfg, **kwargs)
 
@@ -48,7 +48,6 @@ def _get_required_field_names(entity):
 
     :param nailgun.entity_mixins.Entity entity: This entity is inspected.
     :returns: A set in the form ``{'field_name_1', 'field_name_2', …}``.
-
     """
     return {
         field_name for field_name, field in entity.get_fields().items() if field.required is True
@@ -69,7 +68,6 @@ class InitTestCase(TestCase):
 
     The tests in this class are a sanity check. They simply check to see if you
     can instantiate each entity.
-
     """
 
     @classmethod
@@ -82,7 +80,6 @@ class InitTestCase(TestCase):
 
         Assert that the returned object is an instance of the class that
         produced it.
-
         """
         entities_ = [
             (entity, {})
@@ -224,7 +221,6 @@ class InitTestCase(TestCase):
 
         Assert that ``TypeError`` is raised if the required extra parameters
         are not provided.
-
         """
         for entity in (
             entities.ContentViewComponent,
@@ -395,7 +391,6 @@ class PathTestCase(TestCase):
         """Trigger :class:`nailgun.entity_mixins.NoSuchPathError` exceptions.
 
         Do this by calling ``entity().path(which=…)``.
-
         """
         for entity, which in (
             (entities.ActivationKey, 'releases'),
@@ -429,9 +424,10 @@ class PathTestCase(TestCase):
 
     def test_arfreport(self):
         """Test :meth:`nailgun.entities.ArfReport.path`.
+
         Assert that the following return appropriate paths:
         * ``ArfReport(id=…).path()``
-        * ``ArfReport(id=…).path('download_html')``
+        * ``ArfReport(id=…).path('download_html')``.
         """
         self.assertIn('compliance/arf_reports/1', entities.ArfReport(self.cfg, id=1).path())
         for which in ['download_html']:
@@ -443,7 +439,7 @@ class PathTestCase(TestCase):
             self.assertRegex(path, fr'{which}$')
 
     def test_os_default_template(self):
-        """Test ``nailgun.entities.OSDefaultTemplate.path``
+        """Test ``nailgun.entities.OSDefaultTemplate.path``.
 
         Assert that the following return appropriate paths:
 
@@ -461,7 +457,6 @@ class PathTestCase(TestCase):
 
         * ``ExternalUserGroup(id=…,usergroup=…).path()``
         * ``ExternalUserGroup(id=…,usergroup=…).path('refresh')``
-
         """
         self.assertIn(
             'usergroups/1/external_usergroups/2',
@@ -485,7 +480,6 @@ class PathTestCase(TestCase):
         * ``RepositorySet(id=…).path('available_repositories')``
         * ``RepositorySet(id=…).path('disable')``
         * ``RepositorySet(id=…).path('enable')``
-
         """
         self.assertIn(
             '/repository_sets/2', entities.RepositorySet(self.cfg, id=2, product=1).path()
@@ -506,7 +500,6 @@ class PathTestCase(TestCase):
 
         * ``Snapshot(id=…).path()``
         * ``Snapshot(id=…).path('revert')``
-
         """
         self.assertIn(
             'hosts/1/snapshots/snapshot-2',
@@ -529,7 +522,6 @@ class PathTestCase(TestCase):
         * ``SyncPlan(id=…).path()``
         * ``SyncPlan(id=…).path('add_products')``
         * ``SyncPlan(id=…).path('remove_products')``
-
         """
         self.assertIn(
             'organizations/1/sync_plans/2',
@@ -553,7 +545,6 @@ class PathTestCase(TestCase):
         * ``Subscription(organization=…).path('manifest_history')``
         * ``Subscription(organization=…).path('refresh_manifest')``
         * ``Subscription(organization=…).path('upload')``
-
         """
         sub = entities.Subscription(self.cfg, organization=gen_integer(1, 100))
         for which in ('delete_manifest', 'manifest_history', 'refresh_manifest', 'upload'):
@@ -569,7 +560,6 @@ class PathTestCase(TestCase):
 
         * ``Capsule().path('content_lifecycle_environments')``
         * ``Capsule().path('content_sync')``
-
         """
         capsule = entities.Capsule(self.cfg, id=gen_integer(1, 100))
         for which in ('content_lifecycle_environments', 'content_sync'):
@@ -586,7 +576,6 @@ class PathTestCase(TestCase):
 
         * ``HostSubscription(host=…).path('add_subscriptions')``
         * ``HostSubscription(host=…).path('remove_subscriptions')``
-
         """
         sub = entities.HostSubscription(self.cfg, host=gen_integer(1, 100))
         for which in ('add_subscriptions', 'remove_subscriptions'):
@@ -647,7 +636,6 @@ class CreatePayloadTestCase(TestCase):
     This class attempts to find such issues by creating an entity, calling
     :meth:`nailgun.entity_mixins.EntityCreateMixin.create_payload` and
     asserting that a ``dict`` is returned.
-
     """
 
     @classmethod
@@ -850,7 +838,7 @@ class CreateMissingTestCase(TestCase):
         )
 
     def test_auth_source_ldap_v1(self):
-        """Test ``AuthSourceLDAP(onthefly_register=False).create_missing()``"""
+        """Test ``AuthSourceLDAP(onthefly_register=False).create_missing()``."""
         entity = entities.AuthSourceLDAP(self.cfg, onthefly_register=False)
         with mock.patch.object(EntityCreateMixin, 'create_missing'):
             entity.create_missing()
@@ -864,7 +852,7 @@ class CreateMissingTestCase(TestCase):
         self.assertTrue(set(self.AS_LDAP_FIELDS).issubset(entity.get_values()))
 
     def test_auth_source_ldap_v3(self):
-        """Does ``AuthSourceLDAP.create_missing`` overwrite fields?"""
+        """Check if ``AuthSourceLDAP.create_missing`` overwrite fields."""
         attrs = {field: i for i, field in enumerate(self.AS_LDAP_FIELDS)}
         attrs.update({'onthefly_register': True})
         entity = entities.AuthSourceLDAP(self.cfg, **attrs)
@@ -968,7 +956,7 @@ class CreateMissingTestCase(TestCase):
         self.assertTrue(entity.name.islower())
 
     def test_external_usergroup(self):
-        """Test ``ExternalUserGroup()``"""
+        """Test ``ExternalUserGroup()``."""
         entity = entities.ExternalUserGroup(self.cfg, usergroup=1)
         with mock.patch.object(EntityCreateMixin, 'create_missing'):
             entity.create_missing()
@@ -999,7 +987,7 @@ class CreateMissingTestCase(TestCase):
         )
 
     def test_host_v2(self):
-        """Test ``Host()`` with providing all the optional entities unlinked"""
+        """Test ``Host()`` with providing all the optional entities unlinked."""
         org = entities.Organization(self.cfg, id=1)
         loc = entities.Location(self.cfg, id=1)
         domain = entities.Domain(
@@ -1060,6 +1048,7 @@ class CreateMissingTestCase(TestCase):
 
     def test_host_v3(self):
         """Test ``Host()`` providing optional entities with id only.
+
         Check that additional read was called for that entities.
         """
         optional = {
@@ -1107,7 +1096,7 @@ class CreateMissingTestCase(TestCase):
         self.assertEqual(entity.prior, search.return_value[0])
 
     def test_lifecycle_environment_v3(self):
-        """What happens when the "Library" lifecycle env cannot be found?"""
+        """Check what happens when the "Library" lifecycle env cannot be found."""
         entity = entities.LifecycleEnvironment(
             self.cfg,
             name='not Library',
@@ -1150,7 +1139,6 @@ class ReadTestCase(TestCase):
         for the ``entity`` argument. Assert that these entities pass their
         server configuration objects to the child entities that they create and
         pass in to the ``entity`` argument.
-
         """
         for entity in (
             entities.ContentViewFilterRule(
@@ -1189,7 +1177,6 @@ class ReadTestCase(TestCase):
 
         This test is only appropriate for entities that override the ``read``
         method in order to fiddle with the ``attrs`` argument.
-
         """
         for entity in (
             # entities.DiscoveryRule,  # see test_discovery_rule
@@ -1216,7 +1203,6 @@ class ReadTestCase(TestCase):
 
         This test is only appropriate for entities that override the ``read``
         method in order to fiddle with the ``attrs`` argument.
-
         """
         # test_data is a single-use variable. We use it anyway for formatting
         # purposes.
@@ -1238,7 +1224,6 @@ class ReadTestCase(TestCase):
 
         Assert that the returned attributes are renamed to be more regular
         before calling ``read()``.
-
         """
         # test_data is a single-use variable. We use it anyway for formatting
         # purposes.
@@ -1270,7 +1255,6 @@ class ReadTestCase(TestCase):
         """Call ``read`` on a variety of entities.``.
 
         Assert that the ``ignore`` argument is correctly passed on.
-
         """
         for entity, ignored_attrs in (
             (entities.AzureRMComputeResource, {'secret_key'}),
@@ -1311,7 +1295,6 @@ class ReadTestCase(TestCase):
         """Call :meth:`nailgun.entities.AuthSourceLDAP.read`.
 
         Assert that the entity ignores the 'account_password' field.
-
         """
         with mock.patch.object(EntityUpdateMixin, 'update_json') as u_json:
             with mock.patch.object(EntityReadMixin, 'read') as read:
@@ -1325,7 +1308,6 @@ class ReadTestCase(TestCase):
 
         Assert that entity`s predefined values of ``ignore`` are always
         correctly passed on.
-
         """
         for input_ignore, actual_ignore in (
             (None, {'password'}),
@@ -1475,7 +1457,6 @@ class ReadTestCase(TestCase):
         """Call :meth:`nailgun.entities.DiscoveryRule.read`.
 
         Ensure that the ``max_count`` attribute is fetched.
-
         """
         with mock.patch.object(EntityUpdateMixin, 'update_json') as u_json:
             u_json.return_value = {'max_count': 'max_count'}
@@ -1488,11 +1469,9 @@ class ReadTestCase(TestCase):
         self.assertEqual(u_json.call_args, mock.call([]))
 
     def test_product_with_sync_plan(self):
-        """Call :meth:`nailgun.entities.Product.read` for a product with sync
-        plan assigned.
+        """Call :meth:`nailgun.entities.Product.read` for a product with sync plan assigned.
 
         Ensure that the sync plan entity was correctly fetched.
-
         """
         sync_plan = entities.SyncPlan(self.cfg, id=1, organization=1)
         product = entities.Product(self.cfg, id=1, organization=1)
@@ -1511,7 +1490,6 @@ class ReadTestCase(TestCase):
         """Call :meth:`nailgun.entities.HostGroup.read`.
 
         Assert that the entity ignores the ``root_pass`` field.
-
         """
         with mock.patch.object(EntityReadMixin, 'read') as read:
             with mock.patch.object(EntityReadMixin, 'read_json'):
@@ -1521,6 +1499,7 @@ class ReadTestCase(TestCase):
 
     def test_http_proxy_ignore_arg(self):
         """Call :meth:`nailgun.entities.HTTPProxy.read`.
+
         Assert that the entity ignores the ``password, organization and location`` field.
         """
         with mock.patch.object(EntityReadMixin, 'read') as read:
@@ -1532,11 +1511,9 @@ class ReadTestCase(TestCase):
         self.assertIn('location', read.call_args[0][2])
 
     def test_usergroup_with_external_usergroup(self):
-        """Call :meth:`nailgun.entities.ExternalUserGroup.read` for a usergroup with external
-        usergroup assigned.
+        """Call :meth:`nailgun.entities.ExternalUserGroup.read` with external usergroup assigned.
 
         Ensure that the external usergroup entity was correctly fetched.
-
         """
         with mock.patch.object(EntityReadMixin, 'read') as read:
             with mock.patch.object(EntityReadMixin, 'read_json'):
@@ -1549,7 +1526,6 @@ class ReadTestCase(TestCase):
         """Call :meth:`nailgun.entities.Subnet.read`.
 
         Ensure that the ``from_`` attribute is successfully set.
-
         """
         with mock.patch.object(EntityReadMixin, 'read_json') as read_json:
             read_json.return_value = {'from': 'foo'}
@@ -1561,9 +1537,7 @@ class ReadTestCase(TestCase):
 
 
 class SearchTestCase(TestCase):
-    """Tests for
-    :meth:`nailgun.entity_mixins.EntitySearchMixin.search`.
-    """
+    """Tests for :meth:`nailgun.entity_mixins.EntitySearchMixin.search`."""
 
     @classmethod
     def setUpClass(cls):
@@ -1571,11 +1545,9 @@ class SearchTestCase(TestCase):
         cls.cfg = config.ServerConfig('http://example.com')
 
     def test_product_with_sync_plan(self):
-        """Call :meth:`nailgun.entities.Product.search` for a product with sync
-        plan assigned.
+        """Call :meth:`nailgun.entities.Product.search` for a product with sync plan assigned.
 
         Ensure that the sync plan entity was correctly fetched.
-
         """
         with mock.patch.object(EntitySearchMixin, 'search_json') as search_json:
             # Synplan set
@@ -1619,11 +1591,9 @@ class SearchTestCase(TestCase):
             self.assertIsNone(result[0].sync_plan)
 
     def test_host_with_image(self):
-        """Call :meth:`nailgun.entities.Host.search` for a host with image
-        assigned.
+        """Call :meth:`nailgun.entities.Host.search` for a host with image assigned.
 
         Ensure that the image entity was correctly fetched.
-
         """
         with mock.patch.object(EntitySearchMixin, 'search_json') as search_json:
             # Image is set
@@ -1662,9 +1632,7 @@ class SearchTestCase(TestCase):
 
 
 class SearchNormalizeTestCase(TestCase):
-    """Tests for
-    :meth:`nailgun.entity_mixins.EntitySearchMixin.search_normalize`.
-    """
+    """Tests for :meth:`nailgun.entity_mixins.EntitySearchMixin.search_normalize`."""
 
     @classmethod
     def setUpClass(cls):
@@ -1729,8 +1697,7 @@ class SearchNormalizeTestCase(TestCase):
                 self.assertEqual(args['host_id'], 3)
 
     def test_host_with_image(self):
-        """Call :meth:`nailgun.entities.Host.read` for a host with image
-        assigned.
+        """Call :meth:`nailgun.entities.Host.read` for a host with image assigned.
 
         Ensure that the image entity was correctly fetched.
         """
@@ -1837,9 +1804,7 @@ class SearchPayloadTestCase(TestCase):
                 self.assertIsInstance(entity(self.cfg, **params).search_payload(), dict)
 
     def test_content_view_filter_rule(self):
-        """errata_id field should be Errata ID when sent to the server,
-        not DB ID.
-        """
+        """errata_id field should be Errata ID when sent to the server, not DB ID."""
         errata_kwargs = {
             "id": 1,
             "uuid": "1a321570-cd30-4622-abff-2290b47ef814",
@@ -1991,7 +1956,6 @@ class UpdatePayloadTestCase(TestCase):
 
         The field should be renamed from ``search_`` to ``search`` when
         ``update_payload`` is called.
-
         """
         payload = entities.DiscoveryRule(
             self.cfg,
@@ -2005,7 +1969,6 @@ class UpdatePayloadTestCase(TestCase):
 
         The field should be renamed from ``path_`` to ``path`` when
         ``update_payload`` is called.
-
         """
         payload = entities.Image(
             self.cfg,
@@ -2018,13 +1981,13 @@ class UpdatePayloadTestCase(TestCase):
 
         The field should be renamed from ``path_`` to ``path`` when
         ``update_payload`` is called.
-
         """
         payload = entities.Media(self.cfg, path_='foo').update_payload()
         self.assertNotIn('path_', payload['medium'])
         self.assertIn('path', payload['medium'])
 
     def test_hostcollection_updatable_fields(self):
+        """Check whether ``HostCollection`` updates its ``updatable_fields`` field."""
         org1 = entities.Organization(self.cfg, name='org1')
         org2 = entities.Organization(self.cfg, name='org2')
         host_collection = entities.HostCollection(self.cfg, name='oldname', organization=org1)
@@ -2061,7 +2024,9 @@ class UpdatePayloadTestCase(TestCase):
         self.assertIn('redhat_repository_url', payload)
 
     def test_os_default_template(self):
-        """Check, that ``os_default_template`` serves ``template_kind_id`` and
+        """Test ``update_payload`` for ``OSDefaultTemplate``.
+
+        Check, that ``os_default_template`` serves ``template_kind_id`` and
         ``provisioning_template_id`` only wrapped in sub dict
         See: `Redmine #21169`_.
 
@@ -2083,7 +2048,6 @@ class UpdatePayloadTestCase(TestCase):
 
         The field should be renamed from ``from_`` to ``from`` when
         ``update_payload`` is called.
-
         """
         payload = entities.Subnet(
             self.cfg,
@@ -2111,7 +2075,6 @@ class GenericTestCase(TestCase):
                 entity_obj3.method1, 'get',
                 entity_obj3.method2, 'put',
             )
-
         """
         cfg = config.ServerConfig('http://example.com')
         generic = {'server_config': cfg, 'id': 1}
@@ -2227,7 +2190,6 @@ class GenericTestCase(TestCase):
         * Each method passes the right arguments to `client.*`.
         * Each method calls `entities._handle_response` once.
         * The result of `_handle_response(…)` is the return value.
-
         """
         for method, request in self.methods_requests:
             with self.subTest((method, request)):
@@ -2251,7 +2213,6 @@ class GenericTestCase(TestCase):
         * Each method passes the right arguments to `client.*`.
         * Each method calls `entities._handle_response` once.
         * The result of `_handle_response(…)` is the return value.
-
         """
         for method, request, data in self.intelligent_methods_requests:
             with self.subTest((method, request)):
@@ -2290,10 +2251,10 @@ class ForemanStatusTestCase(TestCase):
 
 
 class FileTestCase(TestCase):
-    """Class with entity File tests"""
+    """Class with entity File tests."""
 
     def test_to_json(self):
-        """Check json serialisation on nested entities"""
+        """Check json serialisation on nested entities."""
         file_kwargs = {
             'id': 1,
             'name': 'test_file.txt',
@@ -2385,7 +2346,6 @@ class ContentUploadTestCase(TestCase):
         Make the (mock) server return a "success" status. Make the same
         assertions as for
         :meth:`tests.test_entities.GenericTestCase.test_generic`.
-
         """
         with mock.patch.object(client, 'post') as post:
             self.content_upload.create()
@@ -2398,7 +2358,6 @@ class ContentUploadTestCase(TestCase):
         Make the (mock) server return a "success" status. Make the same
         assertions as for
         :meth:`tests.test_entities.GenericTestCase.test_generic`.
-
         """
         with mock.patch.object(client, 'delete') as delete:
             with mock.patch.object(client, 'post') as post:
@@ -2415,7 +2374,6 @@ class ContentUploadTestCase(TestCase):
         Make the (mock) server return a "success" status. Make the same
         assertions as for
         :meth:`tests.test_entities.GenericTestCase.test_generic`.
-
         """
         with mock.patch.object(client, 'post') as post:
             with mock.patch.object(client, 'put') as put:
@@ -2434,7 +2392,6 @@ class ContentUploadTestCase(TestCase):
         Make the (mock) server return a "success" status. Make the same
         assertions as for
         :meth:`tests.test_entities.GenericTestCase.test_generic`.
-
         """
         filename = gen_string('alpha')
         filepath = os.path.join(gen_string('alpha'), filename)
@@ -2459,7 +2416,6 @@ class ContentUploadTestCase(TestCase):
         Make the (mock) server return a "success" status. Make the same
         assertions as for
         :meth:`tests.test_entities.GenericTestCase.test_generic`.
-
         """
         filename = gen_string('alpha')
         filepath = os.path.join(gen_string('alpha'), filename)
@@ -2483,6 +2439,7 @@ class ContentViewTestCase(TestCase):
     """Tests for :class:`nailgun.entities.ContentView`."""
 
     def setUp(self):
+        """Set common attributes for all tests."""
         self.server_config = config.ServerConfig('http://example.com')
         self.cv = entities.ContentView(
             self.server_config,
@@ -2576,7 +2533,6 @@ class ContentViewComponentTestCase(TestCase):
 
     def setUp(self):
         """Set a server configuration at ``self.cfg``."""
-
         self.server_config = config.ServerConfig('http://example.com')
         self.ccv = entities.ContentView(
             self.server_config,
@@ -2630,6 +2586,7 @@ class ContentViewComponentTestCase(TestCase):
         self.read_json_pacther = mock.patch.object(self.cvc, 'read_json')
 
     def test_path(self):
+        """Check that path is correctly constructed."""
         for which in ['add', 'remove']:
             path = self.cvc.path(which=which)
             self.assertIn(
@@ -2645,7 +2602,6 @@ class ContentViewComponentTestCase(TestCase):
         * Method has a correct signature.
         * Method calls `client.*` once.
         * Method calls `entities._handle_response` once.
-
 
         """
         self.assertEqual(inspect.getfullargspec(self.cvc.add), EXPECTED_ARGSPEC)
@@ -2666,7 +2622,6 @@ class ContentViewComponentTestCase(TestCase):
         * Method calls `client.*` once.
         * Method calls `entities._handle_response` once.
 
-
         """
         self.assertEqual(inspect.getfullargspec(self.cvc.remove), EXPECTED_ARGSPEC)
         return_dict = {'results': self.common_return_value}
@@ -2682,8 +2637,9 @@ class ReportTemplateTestCase(TestCase):
     """Tests for :class:`nailgun.entities.ReportTemplate`."""
 
     def test_creation_and_update(self):
-        """Check template combinations as json or entity is set on correct
-        attribute template_combinations_attributes ( check #333)
+        """Check template combinations as json or entity is set on correct attribute.
+
+        template_combinations_attributes ( check #333).
         """
         cfg = config.ServerConfig(url='foo')
         report_template = entities.ReportTemplate(cfg, name='cfg', default=False, template='cat')
@@ -2701,7 +2657,7 @@ class ReportTemplateTestCase(TestCase):
         self.assertEqual(expected_dct, report_template.update_payload())
 
     def test_generate(self):
-        """Generate template"""
+        """Generate template."""
         cfg = config.ServerConfig(url='foo')
         report_template = entities.ReportTemplate(cfg, id=42)
         with mock.patch.object(client, 'post') as post:
@@ -2714,7 +2670,7 @@ class ReportTemplateTestCase(TestCase):
         self.assertEqual(post.call_args[1], {'data': {'input_values': {'hosts': 'whatever'}}})
 
     def test_schedule(self):
-        """Schedule template"""
+        """Schedule template."""
         cfg = config.ServerConfig(url='foo')
         report_template = entities.ReportTemplate(cfg, id=43)
         with mock.patch.object(client, 'post') as post:
@@ -2727,7 +2683,7 @@ class ReportTemplateTestCase(TestCase):
         self.assertEqual(post.call_args[1], {'data': {'input_values': {'hosts': 'whatever'}}})
 
     def test_report_data(self):
-        """Schedule template"""
+        """Schedule template."""
         cfg = config.ServerConfig(url='foo')
         report_template = entities.ReportTemplate(cfg, id=44)
         with mock.patch.object(client, 'get') as get_response:
@@ -2746,8 +2702,9 @@ class ProvisioningTemplateTestCase(TestCase):
     """Tests for :class:`nailgun.entities.ProvisioningTemplate`."""
 
     def test_creation_and_update(self):
-        """Check template combinations as json or entity is set on correct
-        attribute template_combinations_attributes ( check #333)
+        """Check template combinations as json or entity is set on correct attribute.
+
+        template_combinations_attributes ( check #333).
         """
         cfg = config.ServerConfig(url='foo')
         env = entities.Environment(cfg, id=2, name='env')
@@ -2788,6 +2745,7 @@ class TemplateInputTestCase(TestCase):
     """Tests for :class:`nailgun.entities.TemplateInput`."""
 
     def setUp(self):
+        """Set common attributes for all tests."""
         self.cfg = config.ServerConfig('some url')
         self.job_template = entities.JobTemplate(self.cfg, id=2)
         self.entity = entities.TemplateInput(self.cfg, id=1, template=self.job_template)
@@ -2810,9 +2768,11 @@ class TemplateInputTestCase(TestCase):
         del self.data['template_id']
 
     def tearDown(self):
+        """Stop patching ``self.entity.read_json``."""
         self.read_json_patcher.stop()
 
     def test_read(self):
+        """Check that ``read`` is sane."""
         entity = self.entity.read()
         self.read_json.assert_called_once()
         self.assertEqual(self.data, {key: getattr(entity, key) for key in self.data})
@@ -2824,6 +2784,7 @@ class JobTemplateTestCase(TestCase):
     """Tests for :class:`nailgun.entities.JobTemplate`."""
 
     def setUp(self):
+        """Set common attributes for all tests."""
         self.cfg = config.ServerConfig('some url')
         self.entity = entities.JobTemplate(self.cfg, id=1)
         self.read_json_patcher = mock.patch.object(EntityReadMixin, 'read_json')
@@ -2848,9 +2809,11 @@ class JobTemplateTestCase(TestCase):
         del self.data['template_inputs']
 
     def tearDown(self):
+        """Stop patching ``self.entity.read_json``."""
         self.read_json_patcher.stop()
 
     def test_read(self):
+        """Check that ``read`` is sane."""
         entity = self.entity.read()
         self.read_json.assert_called_once()
         self.assertEqual(self.data, {key: getattr(entity, key) for key in self.data})
@@ -2866,6 +2829,7 @@ class HostGroupTestCase(TestCase):
     """Tests for :class:`nailgun.entities.HostGroup`."""
 
     def setUp(self):
+        """Set common attributes for all tests."""
         self.entity = entities.HostGroup(config.ServerConfig('some url'))
         self.read_json_pacther = mock.patch.object(self.entity, 'read_json')
         self.read_pacther = mock.patch.object(EntityReadMixin, 'read')
@@ -2930,8 +2894,9 @@ class HostGroupTestCase(TestCase):
         self.assertEqual(handlr.return_value, response)
 
     def test_clone_hostgroup(self):
-        """Test for :meth:`nailgun.entities.HostGroup.clone`
-        Assert that the method is called one with correct argumets
+        """Test for :meth:`nailgun.entities.HostGroup.clone`.
+
+        Assert that the method is called one with correct argumets.
         """
         entity = self.entity
         entity.id = 1
@@ -2947,8 +2912,9 @@ class HostGroupTestCase(TestCase):
         self.assertEqual(handler.return_value, response)
 
     def test_rebuild_config(self):
-        """Test for :meth:`nailgun.entities.HostGroup.rebuild_config`
-        Assert that the method is called one with correct arguments
+        """Test for :meth:`nailgun.entities.HostGroup.rebuild_config`.
+
+        Assert that the method is called one with correct arguments.
         """
         entity = self.entity
         entity.id = 1
@@ -2972,8 +2938,7 @@ class HostTestCase(TestCase):
         self.cfg = config.ServerConfig('http://example.com')
 
     def test_init_with_owner_type(self):
-        """Assert ``owner`` attribute is an entity of correct type, according
-        to ``owner_type`` field value"""
+        """Assert ``owner`` attribute is type correct, according to ``owner_type`` field value."""
         for owner_type, entity in (('User', entities.User), ('Usergroup', entities.UserGroup)):
             host = entities.Host(
                 self.cfg,
@@ -2984,9 +2949,7 @@ class HostTestCase(TestCase):
             self.assertTrue(isinstance(host.owner, entity))
 
     def test_update_owner_type(self):
-        """Ensure that in case ``owner_type`` value changes, ``owner`` changes
-        it's type accordingly.
-        """
+        """Ensure that when ``owner_type`` value changes, ``owner`` correctly changes its type."""
         host = entities.Host(
             self.cfg,
             id=gen_integer(min_value=1),
@@ -3019,9 +2982,7 @@ class HostTestCase(TestCase):
         self.assertFalse('_owner_type' in result)
 
     def test_init_with_owner(self):
-        """Assert that both ``id`` or ``entity`` can be passed as a value for
-        ``owner`` attribute.
-        """
+        """Assert both ``id`` or ``entity`` can be passed as a value for ``owner`` attribute."""
         owner_id = gen_integer(min_value=1)
         owner_entity = entities.UserGroup(
             self.cfg,
@@ -3038,9 +2999,7 @@ class HostTestCase(TestCase):
             self.assertEqual(owner_id, host.owner.id)
 
     def test_no_facet_attributes(self):
-        """Assert that ``content_facet_attributes`` attribute is ignored when
-        ``content_facet_attributes`` attribute is not returned for host
-        """
+        """Assert that ``content_facet_attributes`` is ignored when not returned for host."""
         with mock.patch.object(EntityReadMixin, 'read') as read:
             with mock.patch.object(entities, '_feature_list', return_value={'Puppet'}):
                 entities.Host(self.cfg).read(
@@ -3080,7 +3039,7 @@ class HostTestCase(TestCase):
         self.assertEqual(handlr.return_value, response)
 
     def test_disassociate(self):
-        """Disassociate host"""
+        """Disassociate host."""
         cfg = config.ServerConfig(url='foo')
         host = entities.Host(cfg, id=42)
         with mock.patch.object(client, 'put') as put:
@@ -3092,7 +3051,7 @@ class HostTestCase(TestCase):
         self.assertEqual(put.call_args[0][0], 'foo/api/v2/hosts/42/disassociate')
 
     def test_read_template(self):
-        """Read a provision template"""
+        """Read a provision template."""
         entity = entities.Host(self.cfg, id=1)
         kwargs = {'data': {'template_kind': gen_alpha()}}
         with mock.patch.object(entities, '_handle_response') as handler:
@@ -3105,7 +3064,7 @@ class HostTestCase(TestCase):
         self.assertEqual(handler.return_value, response)
 
     def test_play_ansible_roles(self):
-        """Play Ansible roles"""
+        """Play Ansible roles."""
         cfg = config.ServerConfig(url='foo')
         host = entities.Host(cfg, id=42)
         exp_ret = mock.MagicMock()
@@ -3133,6 +3092,7 @@ class PuppetClassTestCase(TestCase):
 
     def test_search_normalize(self):
         """Call :meth:`nailgun.entities.PuppetClass.search_normalize`.
+
         Assert that returned value is a list and contains all subdictionaries.
         """
         with mock.patch.object(EntitySearchMixin, 'search_normalize') as s_n:
@@ -3163,7 +3123,6 @@ class RepositoryTestCase(TestCase):
         Make the (mock) server return a "success" status. Make the same
         assertions as for
         :meth:`tests.test_entities.GenericTestCase.test_generic`.
-
         """
         kwargs = {'kwarg': gen_integer()}
         with mock.patch.object(client, 'post') as post, mock.patch.object(
@@ -3183,7 +3142,6 @@ class RepositoryTestCase(TestCase):
 
         Assert that :class:`nailgun.entities.APIResponseError` is raised when
         the (mock) server fails to return a "success" status.
-
         """
         kwargs = {'kwarg': gen_integer()}
         with mock.patch.object(client, 'post') as post, mock.patch.object(
@@ -3198,13 +3156,11 @@ class RepositoryTestCase(TestCase):
         self.assertEqual(handler.call_count, 1)
 
     def test_import_uploads_uploads(self):
-        """Call :meth:`nailgun.entities.Repository.import_uploads` with
-        the `uploads` parameter.
+        """Call :meth:`nailgun.entities.Repository.import_uploads` with the `uploads` parameter.
 
         Make the (mock) server return a "success" status. Make the same
         assertions as for
         :meth:`tests.test_entities.GenericTestCase.test_generic`.
-
         """
         kwargs = {'kwarg': gen_integer()}
         uploads = [
@@ -3228,13 +3184,11 @@ class RepositoryTestCase(TestCase):
         self.assertEqual(handler.return_value, response)
 
     def test_import_uploads_upload_ids(self):
-        """Call :meth:`nailgun.entities.Repository.import_uploads` with
-        the `upload_ids` parameter.
+        """Call :meth:`nailgun.entities.Repository.import_uploads` with the `upload_ids` parameter.
 
         Make the (mock) server return a "success" status. Make the same
         assertions as for
         :meth:`tests.test_entities.GenericTestCase.test_generic`.
-
         """
         kwargs = {'kwarg': gen_integer()}
         upload_ids = [gen_string('numeric')]
@@ -3251,8 +3205,9 @@ class RepositoryTestCase(TestCase):
         self.assertEqual(handler.return_value, response)
 
     def test_files(self):
-        """Test for :meth:`nailgun.entities.Repository.files`
-        Assert that the method is called one with correct arguments
+        """Test for :meth:`nailgun.entities.Repository.files`.
+
+        Assert that the method is called one with correct arguments.
         """
         self.assertEqual(inspect.getfullargspec(self.repo.files), EXPECTED_ARGSPEC)
         kwargs = {'kwarg': gen_integer(), 'data': {'name': gen_string('utf8', 5)}}
@@ -3293,9 +3248,10 @@ class SmartProxyTestCase(TestCase):
 
     def test_import_puppetclasses(self):
         """Call :meth:`nailgun.entities.SmartProxy.import_puppetclasses`.
+
         Assert that
         * ``environment`` parameter is not sent to requests,
-        * proper path is built
+        * proper path is built.
         """
         params = [{}, {'environment': 2}, {'environment': self.env}]
         for param in params:
@@ -3344,7 +3300,6 @@ class SubscriptionTestCase(TestCase):
 
         It would be ideal if these method could be refactored such that this
         unit test could be dropped.
-
         """
         cfg = config.ServerConfig('http://example.com')
         generic = {'server_config': cfg, 'id': 1}
@@ -3404,7 +3359,7 @@ class GetOrgTestCase(TestCase):
             self.assertEqual(search.call_count, 1)
 
     def test_to_json(self):
-        """json serialization"""
+        """Json serialization."""
         kwargs = {
             'id': 1,
             'description': 'some description',
@@ -3417,10 +3372,10 @@ class GetOrgTestCase(TestCase):
 
 
 class PackageTestCase(TestCase):
-    """Class with entity Package tests"""
+    """Class with entity Package tests."""
 
     def test_to_json(self):
-        """Check json serialisation on nested entities"""
+        """Check json serialisation on nested entities."""
         package_kwargs = {
             'nvrea': 'sclo-git25-1.0-2.el7.x86_64',
             'checksum': ('751e639a0b8add0adc0c5cf0bf77693b3197b17533037ce2e7b9daa618898b99'),
@@ -3444,10 +3399,10 @@ class PackageTestCase(TestCase):
 
 
 class SrpmsTestCase(TestCase):
-    """Class with entity Srpms tests"""
+    """Class with entity Srpms tests."""
 
     def test_to_json(self):
-        """Check json serialisation on nested entities"""
+        """Check json serialisation on nested entities."""
         package_kwargs = {
             "arch": "src",
             "checksum": "bc69f30e1a33cff127e44c6caeabc7eb9c2f92ea21a2e6590edcf3e0ebfc87e3",
@@ -3470,10 +3425,10 @@ class SrpmsTestCase(TestCase):
 
 
 class PackageGroupTestCase(TestCase):
-    """Class with entity Package Group tests"""
+    """Class with entity Package Group tests."""
 
     def test_to_json(self):
-        """Check json serialisation on nested entities"""
+        """Check json serialisation on nested entities."""
         pkg_group_kwargs = {
             'description': None,
             'id': 3,
@@ -3487,10 +3442,10 @@ class PackageGroupTestCase(TestCase):
 
 
 class ModuleStreamTestCase(TestCase):
-    """Class with entity Module Stream tests"""
+    """Class with entity Module Stream tests."""
 
     def test_to_json(self):
-        """Check json serialisation on nested entities"""
+        """Check json serialisation on nested entities."""
         module_stream_kwargs = {
             "id": 3,
             "name": "walrus",
@@ -3526,7 +3481,7 @@ class HandleResponseTestCase(TestCase):
         )
 
     def test_json_content(self):
-        """Give the response JSON content type"""
+        """Give the response JSON content type."""
         response = mock.Mock()
         response.headers = {'content-type': 'application/json; charset=utf-8'}
         self.assertEqual(
@@ -3568,7 +3523,6 @@ class HandleResponseTestCase(TestCase):
 
         * Do not pass the ``synchronous`` argument.
         * Pass ``synchronous=False``.
-
         """
         response = mock.Mock()
         response.status_code = ACCEPTED
@@ -3588,7 +3542,6 @@ class HandleResponseTestCase(TestCase):
         """Give the response an HTTP "ACCEPTED" status code.
 
         Pass ``synchronous=True`` as an argument.
-
         """
         response = mock.Mock()
         response.status_code = ACCEPTED
@@ -3619,7 +3572,6 @@ class VersionTestCase(TestCase):
 
         Assert that ``read_json``, ``_get_org`` and ``read`` are all called
         once, and that the second is called with the correct arguments.
-
         """
         for entity in (entities.ContentView, entities.Product):
             with self.subTest(entity):
@@ -3636,15 +3588,15 @@ class VersionTestCase(TestCase):
 
 
 class JsonSerializableTestCase(TestCase):
-    """Test regarding Json serializable on different object"""
+    """Test regarding Json serializable on different object."""
 
     def test_regular_objects(self):
-        """Checking regular objects transformation"""
+        """Checking regular objects transformation."""
         lst = [[1, 0.3], {'name': 'foo'}]
         self.assertEqual(lst, entities.to_json_serializable(lst))
 
     def test_entities(self):
-        """Testing nested entities serialization"""
+        """Testing nested entities serialization."""
         package_kwargs = {
             'nvrea': 'sclo-git25-1.0-2.el7.x86_64',
             'checksum': ('751e639a0b8add0adc0c5cf0bf77693b3197b17533037ce2e7b9daa618898b99'),
@@ -3679,7 +3631,7 @@ class JsonSerializableTestCase(TestCase):
         self.assertListEqual(expected, entities.to_json_serializable(to_be_transformed))
 
     def test_nested_entities(self):
-        """Check nested entities serialization"""
+        """Check nested entities serialization."""
         env_kwargs = {'id': 1, 'name': 'env'}
         env = make_entity(entities.Environment, **env_kwargs)
 
@@ -3710,13 +3662,12 @@ class JsonSerializableTestCase(TestCase):
         self.assertDictEqual(cfg_kwargs, entities.to_json_serializable(cfg_template))
 
     def test_date_field(self):
-        """Check date field serialization"""
-
+        """Check date field serialization."""
         errata = make_entity(entities.Errata, issued=date(2016, 9, 20))
         self.assertDictEqual({'issued': '2016-09-20'}, entities.to_json_serializable(errata))
 
     def test_boolean_datetime_float(self):
-        """Check serialization for boolean, datetime and float fields"""
+        """Check serialization for boolean, datetime and float fields."""
         kwargs = {'pending': True, 'progress': 0.25, 'started_at': datetime(2016, 11, 20, 1, 2, 3)}
         task = make_entity(entities.ForemanTask, **kwargs)
         kwargs['started_at'] = '2016-11-20 01:02:03'
@@ -3724,16 +3675,16 @@ class JsonSerializableTestCase(TestCase):
 
 
 class VirtWhoConfigTestCase(TestCase):
-    """
-    Tests for :class:`nailgun.entities.VirtWhoConfig`
-    """
+    """Tests for :class:`nailgun.entities.VirtWhoConfig`."""
 
     @classmethod
     def setUpClass(cls):
+        """Set ``self.server`` and ``self.cfg``."""
         cls.server = 'sat.example.com'
         cls.cfg = config.ServerConfig(f'http://{cls.server}/')
 
     def test_create(self):
+        """Test create payload."""
         org = entities.Organization(self.cfg, name='vhorg', id=2)
         vh = entities.VirtWhoConfig(
             server_config=self.cfg,
@@ -3770,6 +3721,7 @@ class VirtWhoConfigTestCase(TestCase):
         self.assertDictEqual(expected_dict, vh.create_payload())
 
     def test_update(self):
+        """Test update payload."""
         org = entities.Organization(self.cfg, name='vhorg', id=2)
         vh = entities.VirtWhoConfig(
             server_config=self.cfg,
@@ -3806,7 +3758,6 @@ class VirtWhoConfigTestCase(TestCase):
         slightly different set of mocks. Test the following:
 
         * :meth:`nailgun.entities.VirtWhoConfig.get_organization_configs`
-
         """
         cfg = config.ServerConfig('http://example.com')
         generic = {'server_config': cfg, 'id': 1}
@@ -3830,10 +3781,11 @@ class JobInvocationTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        """Set a common ServerConfig."""
         cls.cfg = config.ServerConfig('http://example.com')
 
     def test_required_param(self):
-        """Check required parameters"""
+        """Check required parameters."""
         data_list = [
             {'inputs': 'ls', 'search_query': 'foo'},
             {'feature': 'foo', 'inputs': 'ls'},
@@ -3846,9 +3798,7 @@ class JobInvocationTestCase(TestCase):
                 entities.JobInvocation(self.cfg).run(data=data)
 
     def test_non_sync_run(self):
-        """Run job asynchronously with valid parameters and check that correct
-        post request is sent
-        """
+        """Run job asynchronously with valid parameters and check that correct request is sent."""
         with mock.patch.object(client, 'post') as post:
             entities.JobInvocation(self.cfg).run(
                 synchronous=False,
@@ -3863,7 +3813,7 @@ class JobInvocationTestCase(TestCase):
         self.assertEqual(len(post.call_args[0]), 1)
 
     def test_sync_run(self):
-        """Check that sync run will result in ForemanTask poll"""
+        """Check that sync run will result in ForemanTask poll."""
         with mock.patch.object(entities, '_poll_task') as poll_task:
             with mock.patch.object(client, 'post'):
                 entities.JobInvocation(self.cfg).run(

@@ -55,7 +55,6 @@ def get_organization_id(server_config, label):
     :param label: A string label that will be used when searching. Every
         organization should have a unique label.
     :returns: An organization ID. (Typically an integer.)
-
     """
     response = requests.get(
         f'{server_config["url"]}/katello/api/v2/organizations',

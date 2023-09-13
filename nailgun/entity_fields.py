@@ -51,7 +51,7 @@ _SENTINEL = object()
 
 
 class Field:
-    """Base class to implement other fields
+    """Base class to implement other fields.
 
     Record this field's attributes.
 
@@ -76,7 +76,7 @@ class Field:
 
 
 class BooleanField(Field):
-    """Field that represents a boolean"""
+    """Field that represents a boolean."""
 
     def gen_value(self):
         """Return a value suitable for a :class:`BooleanField`."""
@@ -85,7 +85,7 @@ class BooleanField(Field):
 
 
 class EmailField(Field):
-    """Field that represents an email"""
+    """Field that represents an email."""
 
     def gen_value(self):
         """Return a value suitable for a :class:`EmailField`."""
@@ -94,7 +94,7 @@ class EmailField(Field):
 
 
 class FloatField(Field):
-    """Field that represents a float"""
+    """Field that represents a float."""
 
     def gen_value(self):
         """Return a value suitable for a :class:`FloatField`."""
@@ -135,7 +135,6 @@ class StringField(Field):
         (e.g. ``'utf8'``) or a tuple of string types. This argument is passed
         through to FauxFactory's ``gen_string`` method, so this method accepts
         all string types which that method does.
-
     """
 
     def __init__(self, length=(1, 30), str_type=('utf8',), *args, **kwargs):
@@ -159,7 +158,7 @@ class StringField(Field):
 
 
 class DateField(Field):
-    """Field that represents a date"""
+    """Field that represents a date."""
 
     def __init__(self, min_date=None, max_date=None, *args, **kwargs):
         # If ``None`` is passed then ``FauxFactory`` will deal with it.
@@ -173,7 +172,7 @@ class DateField(Field):
 
 
 class DateTimeField(Field):
-    """Field that represents a datetime"""
+    """Field that represents a datetime."""
 
     def __init__(self, min_date=None, max_date=None, *args, **kwargs):
         # If ``None`` is passed then ``FauxFactory`` will deal with it.
@@ -196,7 +195,7 @@ class DictField(Field):
 
 
 class IPAddressField(StringField):
-    """Field that represents an IP address"""
+    """Field that represents an IP address."""
 
     def gen_value(self):
         """Return a value suitable for a :class:`IPAddressField`."""
@@ -204,7 +203,7 @@ class IPAddressField(StringField):
 
 
 class NetmaskField(StringField):
-    """Field that represents an netmask"""
+    """Field that represents an netmask."""
 
     def gen_value(self):
         """Return a value suitable for a :class:`NetmaskField`."""
@@ -212,11 +211,11 @@ class NetmaskField(StringField):
 
 
 class ListField(Field):
-    """Field that represents a list of strings"""
+    """Field that represents a list of strings."""
 
 
 class MACAddressField(StringField):
-    """Field that represents a MAC address"""
+    """Field that represents a MAC address."""
 
     def gen_value(self):
         """Return a value suitable for a :class:`MACAddressField`."""
@@ -230,7 +229,6 @@ class OneToOneField(Field):
 
     :param nailgun.entity_mixins.Entity entity: The entity to which this field
         points.
-
     """
 
     def __init__(self, entity, *args, **kwargs):
@@ -247,7 +245,6 @@ class OneToManyField(Field):
 
     :param nailgun.entity_mixins.Entity entity: The entities to which this
         field points.
-
     """
 
     def __init__(self, entity, *args, **kwargs):
@@ -260,7 +257,7 @@ class OneToManyField(Field):
 
 
 class URLField(StringField):
-    """Field that represents an URL
+    """Field that represents an URL.
 
     :param str scheme: The URL scheme can be one of ['http', 'https', 'ftp']
     """
