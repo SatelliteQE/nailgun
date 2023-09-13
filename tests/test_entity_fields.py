@@ -21,7 +21,6 @@ class GenValueTestCase(TestCase):
 
     Classes with complex ``gen_value`` implementations are broken out into
     separate test cases.
-
     """
 
     def test_one_to_one_field(self):
