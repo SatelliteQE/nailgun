@@ -58,7 +58,6 @@ def _content_type_is_json(kwargs):
     :param kwargs: A ``dict``. The keyword args supplied to :func:`request` or
         one of the convenience functions like it.
     :returns: ``True`` or ``False``
-
     """
     if 'headers' in kwargs and 'content-type' in kwargs['headers']:
         return kwargs['headers']['content-type'].lower() == 'application/json'
@@ -75,7 +74,6 @@ def _set_content_type(kwargs):
     :param kwargs: A ``dict``. The keyword args supplied to :func:`request` or
         one of the convenience functions like it.
     :return: Nothing. ``kwargs`` is modified in-place.
-
     """
     if 'files' in kwargs:
         return  # requests will automatically set the content-type
@@ -85,7 +83,7 @@ def _set_content_type(kwargs):
 
 
 def _truncate_data(data, max_len=500):
-    """Truncate data to a max length"""
+    """Truncate data to a max length."""
     if isinstance(data, str | bytes):
         if len(data) > max_len:
             return f"{data[:max_len - 3]}..."
@@ -103,7 +101,6 @@ def _log_request(method, url, kwargs, data=None, params=None):
     one can pass to ``requests.request``.
 
     :return: Nothing is returned.
-
     """
     logger.debug(
         'Making HTTP %s request to %s with %s, %s and %s.',
@@ -123,7 +120,6 @@ def _log_response(response):
     the object returned is logged.
 
     :return: Nothing is returned.
-
     """
     message = f'Received HTTP {response.status_code} response: {response.text}'
     if not response.ok:
@@ -133,7 +129,7 @@ def _log_response(response):
 
 
 def request(method, url, **kwargs):
-    """A wrapper for ``requests.request``."""
+    """Wrap ``requests.request``."""
     _set_content_type(kwargs)
     if _content_type_is_json(kwargs) and kwargs.get('data') is not None:
         kwargs['data'] = dumps(kwargs['data'])
@@ -144,7 +140,7 @@ def request(method, url, **kwargs):
 
 
 def head(url, **kwargs):
-    """A wrapper for ``requests.head``."""
+    """Wrap ``requests.head``."""
     _set_content_type(kwargs)
     if _content_type_is_json(kwargs) and kwargs.get('data') is not None:
         kwargs['data'] = dumps(kwargs['data'])
@@ -155,7 +151,7 @@ def head(url, **kwargs):
 
 
 def get(url, params=None, **kwargs):
-    """A wrapper for ``requests.get``."""
+    """Wrap ``requests.get``."""
     _set_content_type(kwargs)
     if _content_type_is_json(kwargs) and kwargs.get('data') is not None:
         kwargs['data'] = dumps(kwargs['data'])
@@ -166,7 +162,7 @@ def get(url, params=None, **kwargs):
 
 
 def post(url, data=None, json=None, **kwargs):
-    """A wrapper for ``requests.post``."""
+    """Wrap ``requests.post``."""
     _set_content_type(kwargs)
     if _content_type_is_json(kwargs) and data is not None:
         data = dumps(data)
@@ -177,7 +173,7 @@ def post(url, data=None, json=None, **kwargs):
 
 
 def put(url, data=None, **kwargs):
-    """A wrapper for ``requests.put``. Sends a PUT request."""
+    """Wrap ``requests.put``. Sends a PUT request."""
     _set_content_type(kwargs)
     if _content_type_is_json(kwargs) and data is not None:
         data = dumps(data)
@@ -188,7 +184,7 @@ def put(url, data=None, **kwargs):
 
 
 def patch(url, data=None, **kwargs):
-    """A wrapper for ``requests.patch``. Sends a PATCH request."""
+    """Wrap ``requests.patch``. Sends a PATCH request."""
     _set_content_type(kwargs)
     if _content_type_is_json(kwargs) and data is not None:
         data = dumps(data)
@@ -199,7 +195,7 @@ def patch(url, data=None, **kwargs):
 
 
 def delete(url, **kwargs):
-    """A wrapper for ``requests.delete``. Sends a DELETE request."""
+    """Wrap ``requests.delete``. Sends a DELETE request."""
     _set_content_type(kwargs)
     if _content_type_is_json(kwargs) and kwargs.get('data') is not None:
         kwargs['data'] = dumps(kwargs['data'])
