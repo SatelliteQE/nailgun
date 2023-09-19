@@ -1,5 +1,8 @@
 # configuration for pre-commit git hooks
 
+ci:
+  autofix_prs: false  # disable autofixing PRs
+
 repos:
 - repo: https://github.com/psf/black
   rev: 23.3.0
