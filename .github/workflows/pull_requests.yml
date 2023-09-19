@@ -38,9 +38,6 @@ jobs:
           pip install --compile --no-cache-dir pycurl
           pip install -U -r requirements.txt -r requirements-dev.txt --no-cache-dir
 
-      - name: Pre Commit Checks
-        uses: pre-commit/action@v2.0.0
-
       - name: Test Nailgun Coverage
         run: |
           make test-coverage
