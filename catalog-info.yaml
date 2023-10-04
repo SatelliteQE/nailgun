@@ -1,0 +1,22 @@
+# Catalog entry for Backstage [backstage.io]
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: nailgun
+  title: Nailgun
+  description: Why use a hammer when you can use a nailgun.
+  links:
+    - title: Documentation
+      url: https://nailgun.readthedocs.io/en/latest/
+  tags:
+    - python
+    - rh-satellite
+    - interaction-library
+  namespace: quality-community   
+  annotations:
+    github.com/project-slug: SatelliteQE/nailgun
+    backstage.io/techdocs-ref: https://nailgun.readthedocs.io/en/latest/
+spec:
+  type: library
+  owner: group:redhat/satellite-qe
+  lifecycle: preproduction
