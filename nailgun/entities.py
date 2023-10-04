@@ -4421,44 +4421,6 @@ class Host(
         response = client.put(self.path('errata/applicability'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def errata_apply(self, synchronous=True, timeout=None, **kwargs):
-        """Schedule errata for installation.
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all content decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.put(self.path('errata/apply'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-    def install_content(self, synchronous=True, timeout=None, **kwargs):
-        """Install content on one or more hosts.
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all content decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.put(self.path('bulk/install_content'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
     def bulk_add_subscriptions(self, synchronous=True, timeout=None, **kwargs):
         """Add subscriptions to one or more hosts.
 
@@ -4655,14 +4617,10 @@ class Host(
 
         The format of the returned path depends on the value of ``which``:
 
-        bulk/install_content
-            /api/hosts/:host_id/bulk/install_content
         errata
             /api/hosts/:host_id/errata
         power
             /api/hosts/:host_id/power
-        errata/apply
-            /api/hosts/:host_id/errata/apply
         puppetclass_ids
             /api/hosts/:host_id/puppetclass_ids
         smart_class_parameters
@@ -4685,7 +4643,6 @@ class Host(
             'disassociate',
             'enc',
             'errata',
-            'errata/apply',
             'errata/applicability',
             'facts',
             'packages',
@@ -4702,7 +4659,6 @@ class Host(
         ):
             return f'{super().path(which="self")}/{which}'
         elif which in (
-            'bulk/install_content',
             'bulk/add_subscriptions',
             'bulk/remove_subscriptions',
             'bulk/available_incremental_updates',
