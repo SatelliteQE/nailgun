@@ -837,6 +837,10 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
             ),
             'organization': entity_fields.OneToManyField(Organization),
             'url': entity_fields.StringField(required=True),
+            'hosts_count': entity_fields.IntegerField(),
+            'download_policy': entity_fields.StringField(),
+            'supported_pulp_types': entity_fields.StringField(),
+            'lifecycle_environments': entity_fields.StringField(),
         }
         self._meta = {
             'api_path': 'katello/api/capsules',
@@ -943,6 +947,42 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
         response = client.get(self.path('content_sync'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
+    def content_counts(self, synchronous=True, timeout=None, **kwargs):
+        """List content counts for the capsule.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('content_counts'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def content_update_counts(self, synchronous=True, timeout=None, **kwargs):
+        """Update content counts for the capsule.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('content_update_counts'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
 
@@ -952,7 +992,10 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
             /capsules/<id>/content/lifecycle_environments
         content_sync
             /capsules/<id>/content/sync
-
+        content_counts
+            /capsules/<id>/content/counts
+        content_update_counts
+            /capsules/<id>/content/update_counts
 
         ``super`` is called otherwise.
 

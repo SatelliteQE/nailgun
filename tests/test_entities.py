@@ -564,7 +564,12 @@ class PathTestCase(TestCase):
         * ``Capsule().path('content_sync')``
         """
         capsule = entities.Capsule(self.cfg, id=gen_integer(1, 100))
-        for which in ('content_lifecycle_environments', 'content_sync'):
+        for which in (
+            'content_lifecycle_environments',
+            'content_sync',
+            'content_counts',
+            'content_update_counts',
+        ):
             with self.subTest(which):
                 path = capsule.path(which)
                 which_parts = which.split("_", 1)
@@ -2102,6 +2107,8 @@ class GenericTestCase(TestCase):
             (entities.Capsule(**generic).content_get_sync, 'get'),
             (entities.Capsule(**generic).content_lifecycle_environments, 'get'),
             (entities.Capsule(**generic).content_sync, 'post'),
+            (entities.Capsule(**generic).content_counts, 'get'),
+            (entities.Capsule(**generic).content_update_counts, 'post'),
             (entities.Role(**generic).clone, 'post'),
             (entities.ProvisioningTemplate(**generic).build_pxe_default, 'post'),
             (entities.ProvisioningTemplate(**generic).clone, 'post'),
