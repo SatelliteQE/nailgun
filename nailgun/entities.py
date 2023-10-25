@@ -2395,18 +2395,30 @@ class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearc
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
+            'ansible_collection_count': entity_fields.IntegerField(),
+            'ansible_collection_repository_count': entity_fields.IntegerField(),
+            'docker_manifest_count': entity_fields.IntegerField(),
+            'docker_manifest_list_count': entity_fields.IntegerField(),
+            'docker_repository_count': entity_fields.IntegerField(),
+            'docker_tag_count': entity_fields.IntegerField(),
+            'component_view_count': entity_fields.IntegerField(),
             'content_view': entity_fields.OneToOneField(ContentView),
             'description': entity_fields.StringField(),
             'environment': entity_fields.OneToManyField(LifecycleEnvironment),
             'errata_counts': entity_fields.DictField(),
             'file_count': entity_fields.IntegerField(),
+            'file_repository_count': entity_fields.IntegerField(),
             'filters_applied': entity_fields.BooleanField(),
             'major': entity_fields.IntegerField(),
             'minor': entity_fields.IntegerField(),
             'module_stream_count': entity_fields.IntegerField(),
+            'name': entity_fields.StringField(),
             'package_count': entity_fields.IntegerField(),
+            'package_group_count': entity_fields.IntegerField(),
             'repository': entity_fields.OneToManyField(Repository),
+            'srpm_count': entity_fields.IntegerField(),
             'version': entity_fields.StringField(),
+            'yum_repository_count': entity_fields.IntegerField(),
         }
         self._meta = {
             'api_path': 'katello/api/v2/content_view_versions',
