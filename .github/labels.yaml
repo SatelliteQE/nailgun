@@ -1,0 +1,8 @@
+---
+supported-branch-labels:
+  - 'CherryPick'
+  - '6.15.z'
+  - '6.14.z'
+  - '6.13.z'
+  - '6.12.z'
+
