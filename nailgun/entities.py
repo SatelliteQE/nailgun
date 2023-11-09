@@ -8082,7 +8082,7 @@ class TailoringFile(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1381129>`_.
 
         """
-        return type(self)(
+        return TailoringFile(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -8530,7 +8530,7 @@ class ScapContents(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1381129>`_.
 
         """
-        return type(self)(
+        return ScapContents(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -8649,7 +8649,7 @@ class Webhooks(
         """
         self._fields['event'] = entity_fields.StringField(required=True, choices=self.get_events())
 
-        return type(self)(
+        return Webhooks(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
