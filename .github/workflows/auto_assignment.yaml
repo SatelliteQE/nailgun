@@ -15,7 +15,7 @@ jobs:
     if: "!contains(github.event.pull_request.labels.*.name, 'Auto_Cherry_Picked')"
     runs-on: ubuntu-latest
     steps:
-      - uses: kentaro-m/auto-assign-action@v1.2.4
+      - uses: kentaro-m/auto-assign-action@v1.2.6
         with:
           repo-token: "${{ secrets.CHERRYPICK_PAT || github.token }}"
           configuration-path: ".github/auto_assign.yml"
