@@ -360,6 +360,7 @@ class PathTestCase(TestCase):
         """Execute ``entity().path(which=…)``."""
         for entity, which in (
             (entities.AlternateContentSource, 'bulk/refresh'),
+            (entities.AlternateContentSource, 'bulk/refresh_all'),
             (entities.AlternateContentSource, 'bulk/destroy'),
             (entities.AnsibleRoles, 'sync'),
             (entities.AnsiblePlaybooks, 'sync'),
