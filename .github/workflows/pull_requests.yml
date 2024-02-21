@@ -38,9 +38,8 @@ jobs:
           pip install --compile --no-cache-dir pycurl
           pip install -U -r requirements.txt -r requirements-dev.txt --no-cache-dir
 
-      - name: Test Nailgun Coverage
-        run: |
-          make test-coverage
+      - name: Run Tests
+        run: make test
 
       - name: Make Docs
         run: |
@@ -56,7 +55,3 @@ jobs:
         if: failure()
         run: git diff
 
-      - name: Upload Codecov Coverage
-        uses: codecov/codecov-action@v1.0.13
-        with:
-          fail_ci_if_error: true
