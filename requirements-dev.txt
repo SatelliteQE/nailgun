@@ -14,9 +14,5 @@ wheel
 # For `make publish`
 twine
 
-# For code coverage
-codecov==2.1.13
-coverage[toml]
-
 # For linting
 ruff
