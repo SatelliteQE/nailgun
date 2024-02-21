@@ -5,7 +5,6 @@ help:
 	@echo "Please use \`make <target>' where <target> is one of:"
 	@echo "  help           to show this message"
 	@echo "  test           to run unit tests"
-	@echo "  test-coverage  to run unit tests and measure test coverage"
 	@echo "  docs-html      to generate HTML documentation"
 	@echo "  docs-clean     to remove documentation"
 	@echo "  package        to generate installable Python packages"
@@ -21,9 +20,6 @@ docs-clean:
 test:
 	python $(TEST_OPTIONS)
 
-test-coverage:
-	coverage run --source nailgun $(TEST_OPTIONS)
-
 package:
 	./setup.py sdist bdist_wheel --universal
 
@@ -33,4 +29,4 @@ package-clean:
 publish: package
 	twine upload dist/*
 
-.PHONY: help docs-html docs-clean test test-coverage package package-clean publish
+.PHONY: help docs-html docs-clean test package package-clean publish
