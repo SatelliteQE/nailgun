@@ -117,6 +117,3 @@ combine-as-imports = true
 [tool.ruff.mccabe]
 max-complexity = 25
 
-[tool.coverage.run]
-omit = ["tests/*"]
-include = ["nailgun/*.py"]
