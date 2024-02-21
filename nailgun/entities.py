@@ -523,6 +523,8 @@ class AlternateContentSource(
             /katello/api/alternate_content_sources/:id/refresh
         bulk_refresh
             /katello/api/alternate_content_sources/bulk/refresh
+        bulk_refresh_all
+            /katello/api/alternate_content_sources/bulk/refresh_all
         bulk_destroy
             /katello/api/alternate_content_sources/bulk/destroy
         """
@@ -530,6 +532,7 @@ class AlternateContentSource(
             return f'{super().path(which="self")}/{which}'
         elif which in (
             'bulk/refresh',
+            'bulk/refresh_all',
             'bulk/destroy',
         ):
             return f'{super().path(which="base")}/{which}'
@@ -552,6 +555,24 @@ class AlternateContentSource(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('refresh'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def bulk_refresh_all(self, synchronous=True, timeout=None, **kwargs):
+        """Refresh all ACSes present.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('bulk/refresh_all'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def bulk_refresh(self, synchronous=True, timeout=None, **kwargs):
