@@ -568,6 +568,7 @@ class PathTestCase(TestCase):
             'content_sync',
             'content_counts',
             'content_update_counts',
+            'content_reclaim_space',
         ):
             with self.subTest(which):
                 path = capsule.path(which)
@@ -2108,6 +2109,7 @@ class GenericTestCase(TestCase):
             (entities.Capsule(**generic).content_sync, 'post'),
             (entities.Capsule(**generic).content_counts, 'get'),
             (entities.Capsule(**generic).content_update_counts, 'post'),
+            (entities.Capsule(**generic).content_reclaim_space, 'post'),
             (entities.Role(**generic).clone, 'post'),
             (entities.ProvisioningTemplate(**generic).build_pxe_default, 'post'),
             (entities.ProvisioningTemplate(**generic).clone, 'post'),
