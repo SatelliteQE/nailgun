@@ -40,7 +40,7 @@ jobs:
           pip install -U -r requirements.txt -r requirements-dev.txt --no-cache-dir
 
       - name: Pre Commit Checks
-        uses: pre-commit/action@v3.0.0
+        uses: pre-commit/action@v3.0.1
 
       - name: Make Docs
         run: |
