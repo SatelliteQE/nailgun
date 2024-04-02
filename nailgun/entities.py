@@ -8876,3 +8876,17 @@ class TablePreferences(
         return super().search(
             fields=fields, query=query, filters=filters, path_fields={'user': self.user}
         )
+
+
+class NotificationRecipients(Entity, EntityReadMixin):
+    """A representation of /notification_recipients endpoint."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'notifications': entity_fields.ListField(),
+        }
+        self._meta = {
+            'api_path': '/notification_recipients',
+            'read_type': 'base',
+        }
+        super().__init__(server_config, **kwargs)
