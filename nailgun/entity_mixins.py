@@ -11,6 +11,7 @@ from urllib.parse import urljoin
 
 from fauxfactory import gen_choice
 from inflection import pluralize
+from requests.exceptions import HTTPError, JSONDecodeError
 
 from nailgun import client, config
 from nailgun.entity_fields import IntegerField, ListField, OneToManyField, OneToOneField
@@ -947,7 +948,12 @@ class EntityCreateMixin:
 
         """
         response = self.create_raw(create_missing)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except HTTPError as e:
+            with contextlib.suppress(JSONDecodeError):
+                e.args += (response.json(),)
+            raise e
         return response.json()
 
     def create(self, create_missing=None):
