@@ -3993,3 +3993,34 @@ class ScapContentsTestCase(TestCase):
             _get_required_field_names(entity),
             set(entity.get_values().keys()),
         )
+
+
+class NotificationRecipientsTestCase(TestCase):
+    """Tests for :class:`nailgun.entities.NotificationRecipients`."""
+
+    def test_to_json(self):
+        """Check json serialisation on nested entities."""
+        notifications_kwargs = {
+            "notifications": [
+                {
+                    "id": 28,
+                    "seen": False,
+                    "level": "info",
+                    "text": "The fastest guide to configuring Red Hat Satellite ever",
+                    "created_at": "2024-03-20T17:24:33.596Z",
+                    "group": "Community",
+                    "actions": {
+                        "links": [
+                            {
+                                "href": "https://www.redhat.com/en/blog/fastest-guide-configuring-red-hat-satellite-ever",
+                                "title": "Open",
+                                "external": True,
+                            }
+                        ]
+                    },
+                }
+            ]
+        }
+        cfg = config.ServerConfig(url='https://foo.bar', verify=False, auth=('foo', 'bar'))
+        notifications = entities.NotificationRecipients(cfg, **notifications_kwargs)
+        self.assertDictEqual(notifications_kwargs, json.loads(notifications.to_json()))
