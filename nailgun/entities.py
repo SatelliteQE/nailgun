@@ -1022,6 +1022,24 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
         response = client.post(self.path('content_reclaim_space'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
+    def content_verify_checksum(self, synchronous=True, timeout=None, **kwargs):
+        """Check for missing or corrupted artifacts, and attempt to redownload them.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('content_verify_checksum'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
 
@@ -1037,7 +1055,8 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
             /capsules/<id>/content/update_counts
         content_reclaim_space
             /capsules/<id>/content/reclaim_space
-
+        content_verify_checksum
+            /capsules/<id>/content/verify_checksum
         ``super`` is called otherwise.
 
         """
@@ -2596,11 +2615,13 @@ class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearc
             /content_view_versions/incremental_update
         promote
             /content_view_versions/<id>/promote
+        verify_checksum
+            /content_view_versions/<id>/verify_checksum
 
         ``super`` is called otherwise.
 
         """
-        if which in ("incremental_update", "promote"):
+        if which in ("incremental_update", "promote", "verify_checksum"):
             prefix = "base" if which == "incremental_update" else "self"
             return f"{super().path(prefix)}/{which}"
         return super().path(which)
@@ -2641,6 +2662,25 @@ class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearc
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('promote'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def verify_checksum(self, synchronous=True, timeout=None, **kwargs):
+        """Verify checksum of repository contents in the content view version.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('verify_checksum'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
