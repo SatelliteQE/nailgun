@@ -310,6 +310,7 @@ class PathTestCase(TestCase):
             (entities.ContentView, 'copy'),
             (entities.ContentView, 'publish'),
             (entities.ContentViewVersion, 'promote'),
+            (entities.ContentViewVersion, 'verify_checksum'),
             (entities.DiscoveredHost, 'auto_provision'),
             (entities.DiscoveredHost, 'refresh_facts'),
             (entities.DiscoveredHost, 'reboot'),
@@ -398,6 +399,7 @@ class PathTestCase(TestCase):
             (entities.ContentView, 'content_view_versions'),
             (entities.ContentView, 'publish'),
             (entities.ContentViewVersion, 'promote'),
+            (entities.ContentViewVersion, 'verify_checksum'),
             (entities.ForemanTask, 'self'),
             (entities.HostGroup, 'rebuild_config'),
             (entities.Organization, 'products'),
@@ -569,6 +571,7 @@ class PathTestCase(TestCase):
             'content_counts',
             'content_update_counts',
             'content_reclaim_space',
+            'content_verify_checksum',
         ):
             with self.subTest(which):
                 path = capsule.path(which)
@@ -2110,6 +2113,7 @@ class GenericTestCase(TestCase):
             (entities.Capsule(**generic).content_counts, 'get'),
             (entities.Capsule(**generic).content_update_counts, 'post'),
             (entities.Capsule(**generic).content_reclaim_space, 'post'),
+            (entities.Capsule(**generic).content_verify_checksum, 'post'),
             (entities.Role(**generic).clone, 'post'),
             (entities.ProvisioningTemplate(**generic).build_pxe_default, 'post'),
             (entities.ProvisioningTemplate(**generic).clone, 'post'),
@@ -2118,6 +2122,7 @@ class GenericTestCase(TestCase):
             (entities.ContentView(**generic).publish, 'post'),
             (entities.ContentViewVersion(**generic).incremental_update, 'post'),
             (entities.ContentViewVersion(**generic).promote, 'post'),
+            (entities.ContentViewVersion(**generic).verify_checksum, 'post'),
             (entities.DiscoveredHost(cfg).facts, 'post'),
             (entities.DiscoveredHost(**generic).refresh_facts, 'put'),
             (entities.DiscoveredHost(**generic).reboot, 'put'),
