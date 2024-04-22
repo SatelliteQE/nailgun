@@ -1057,6 +1057,7 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
             /capsules/<id>/content/reclaim_space
         content_verify_checksum
             /capsules/<id>/content/verify_checksum
+
         ``super`` is called otherwise.
 
         """
@@ -6336,11 +6337,13 @@ class ProductBulkAction(Entity):
             /products/bulk/sync_plan
         http_proxy
             /products/bulk/http_proxy
+        verify_checksum
+            /products/bulk/verify_checksum
 
         ``super`` is called otherwise.
 
         """
-        if which in ("destroy", "sync", "sync_plan", "http_proxy"):
+        if which in ("destroy", "sync", "sync_plan", "http_proxy", "verify_checksum"):
             return f'{super().path(which="base")}/{which}'
         return super().path(which)
 
@@ -6418,6 +6421,25 @@ class ProductBulkAction(Entity):
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('sync_plan'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def verify_checksum(self, synchronous=True, timeout=None, **kwargs):
+        """Verify checksum for one or more products.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('verify_checksum'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
@@ -6868,6 +6890,8 @@ class Repository(
             /repositories/<id>/remove_content
         sync
             /repositories/<id>/sync
+        verify_checksum
+            /repositories/<id>/verify_checksum
         upload_content
             /repositories/<id>/upload_content
         import_uploads
@@ -6883,6 +6907,7 @@ class Repository(
             'module_streams',
             'remove_content',
             'sync',
+            'verify_checksum',
             'import_uploads',
             'upload_content',
         ):
@@ -6951,6 +6976,25 @@ class Repository(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('sync'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def verify_checksum(self, synchronous=True, timeout=None, **kwargs):
+        """Verify checksum of repository contents.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('verify_checksum'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def upload_content(self, synchronous=True, timeout=None, **kwargs):
