@@ -1831,6 +1831,84 @@ class JobInvocation(Entity, EntityReadMixin, EntitySearchMixin):
         self._meta = {'api_path': 'api/job_invocations'}
         super().__init__(server_config, **kwargs)
 
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        cancel
+            /api/job_invocations/<id>/cancel
+        rerun
+            /api/job_invocations/<id>/rerun
+        outputs
+            /api/job_invocations/<id>/outputs
+
+        ``super`` is called otherwise.
+        """
+        if which in (
+            'cancel',
+            'rerun',
+            'outputs',
+        ):
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
+
+    def cancel(self, synchronous=True, timeout=None, **kwargs):
+        """Cancel JobInvocation running on the host.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('cancel'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def rerun(self, synchronous=True, timeout=None, **kwargs):
+        """Rerun JobInvocation which already ran on the host.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('rerun'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def outputs(self, synchronous=True, timeout=None, **kwargs):
+        """Get output of JobInvocation running on the host.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('outputs'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
     def run(self, synchronous=True, **kwargs):
         """Run an existing job template.
 
