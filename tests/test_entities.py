@@ -2338,7 +2338,7 @@ class ContentUploadTestCase(TestCase):
             server_config,
             id=gen_integer(min_value=1),
         )
-        self.content_upload = entities.ContentUpload(server_config, repository=repo)
+        self.content_upload = entities.ContentUpload(server_config=server_config, repository=repo)
 
     def test_content_upload_create(self):
         """Test ``nailgun.entities.ContentUpload.create``.
