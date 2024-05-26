@@ -30,7 +30,7 @@ save some of our work for later re-use::
     ...     auth=('admin', 'changeme'),      # Use these credentials…
     ...     url='https://sat1.example.com',  # …to talk to this server.
     ... )  # More options are available, e.g. disabling SSL verification.
-    >>> org = Organization(server_config, name='junk org').create()
+    >>> org = Organization(server_config=server_config, name='junk org').create()
     >>> org.name == 'junk org'  # Access all attrs likewise, e.g. `org.label`
     True
     >>> org.delete()
