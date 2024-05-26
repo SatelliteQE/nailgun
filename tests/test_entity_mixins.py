@@ -46,7 +46,7 @@ class SampleEntity(entity_mixins.Entity):
             'unique': StringField(unique=True),
         }
         self._meta = {'api_path': 'foo'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class SampleEntityTwo(entity_mixins.Entity):
@@ -58,7 +58,7 @@ class SampleEntityTwo(entity_mixins.Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {'one_to_many': OneToManyField(SampleEntity)}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class SampleEntityThree(entity_mixins.Entity):
@@ -73,7 +73,7 @@ class SampleEntityThree(entity_mixins.Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {'one_to_one': OneToOneField(SampleEntityTwo), 'list': ListField()}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class EntityWithCreate(entity_mixins.Entity, entity_mixins.EntityCreateMixin):
@@ -81,7 +81,7 @@ class EntityWithCreate(entity_mixins.Entity, entity_mixins.EntityCreateMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._meta = {'api_path': ''}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class EntityWithRead(entity_mixins.Entity, entity_mixins.EntityReadMixin):
@@ -89,7 +89,7 @@ class EntityWithRead(entity_mixins.Entity, entity_mixins.EntityReadMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._meta = {'api_path': ''}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class EntityWithUpdate(entity_mixins.Entity, entity_mixins.EntityUpdateMixin):
@@ -97,7 +97,7 @@ class EntityWithUpdate(entity_mixins.Entity, entity_mixins.EntityUpdateMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._meta = {'api_path': ''}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class EntityWithDelete(entity_mixins.Entity, entity_mixins.EntityDeleteMixin):
@@ -105,7 +105,7 @@ class EntityWithDelete(entity_mixins.Entity, entity_mixins.EntityDeleteMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._meta = {'api_path': ''}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class EntityWithSearch(entity_mixins.Entity, entity_mixins.EntitySearchMixin):
@@ -113,7 +113,7 @@ class EntityWithSearch(entity_mixins.Entity, entity_mixins.EntitySearchMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._meta = {'api_path': ''}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class EntityWithSearch2(EntityWithSearch):
@@ -124,7 +124,7 @@ class EntityWithSearch2(EntityWithSearch):
             'one': OneToOneField(SampleEntity),
             'many': OneToManyField(SampleEntity),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 # 2. Tests for private methods. ------------------------------------------ {{{1
@@ -548,7 +548,7 @@ class EntityCreateMixinTestCase(TestCase):
                     'many': OneToManyField(SampleEntity, required=True),
                     'one': OneToOneField(SampleEntity, required=True),
                 }
-                super().__init__(server_config, **kwargs)
+                super().__init__(server_config=server_config, **kwargs)
 
         cfg = config.ServerConfig('example.com')
         entity = FKEntityWithCreate(cfg)
@@ -667,7 +667,7 @@ class EntityReadMixinTestCase(TestCase):
                     'one': OneToOneField(SampleEntity),
                 }
                 self._meta = {'api_path': ''}
-                super().__init__(server_config, **kwargs)
+                super().__init__(server_config=server_config, **kwargs)
 
         cls.test_entity = TestEntity
 
@@ -830,7 +830,7 @@ class EntityUpdateMixinTestCase(TestCase):
 
             def __init__(self, server_config=None, **kwargs):
                 self._fields = {'one': IntegerField(), 'two': IntegerField()}
-                super().__init__(server_config, **kwargs)
+                super().__init__(server_config=server_config, **kwargs)
 
         cfg = config.ServerConfig('url')
         args_list = (
@@ -876,7 +876,7 @@ class EntityUpdateMixinTestCase(TestCase):
 
             def __init__(self, server_config=None, **kwargs):
                 self._fields = {'other': OneToOneField(SampleEntity)}
-                super().__init__(server_config, **kwargs)
+                super().__init__(server_config=server_config, **kwargs)
 
         cfg = config.ServerConfig('url')
         entities = [TestEntity(cfg, other=None), TestEntity(cfg)]

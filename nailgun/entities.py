@@ -53,7 +53,7 @@ from nailgun.entity_mixins import (
 # NailGun aims to be like a traditional database ORM and allow uses of the dot
 # operator such as these:
 #
-#     product = Product(server_config, id=5).read()
+#     product = Product(server_config=server_config, id=5).read()
 #     product.name
 #     product.organization.id
 #
@@ -116,7 +116,9 @@ def _handle_response(response, server_config, synchronous=False, timeout=None):
     """
     response.raise_for_status()
     if synchronous is True and response.status_code == ACCEPTED:
-        return ForemanTask(server_config, id=response.json()['id']).poll(timeout=timeout)
+        return ForemanTask(server_config=server_config, id=response.json()['id']).poll(
+            timeout=timeout
+        )
     if response.status_code == NO_CONTENT:
         return
     if 'application/json' in response.headers.get('content-type', '').lower():
@@ -193,7 +195,7 @@ def _get_version(server_config):
 @lru_cache
 def _feature_list(server_config, smart_proxy_id=1):
     """Get list of features enabled on capsule."""
-    smart_proxy = SmartProxy(server_config, id=smart_proxy_id).read_json()
+    smart_proxy = SmartProxy(server_config=server_config, id=smart_proxy_id).read_json()
     return [feature['name'] for feature in smart_proxy['features']]
 
 
@@ -232,7 +234,7 @@ class ActivationKey(
         self._meta = {
             'api_path': 'katello/api/v2/activation_keys',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -474,7 +476,7 @@ class AlternateContentSource(
         self._meta = {
             'api_path': 'katello/api/alternate_content_sources',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Handle read values dependencies."""
@@ -611,7 +613,7 @@ class Architecture(
         self._meta = {
             'api_path': 'api/v2/architectures',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -655,7 +657,7 @@ class ArfReport(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearchMixin):
         self._meta = {
             'api_path': 'api/compliance/arf_reports',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -713,7 +715,7 @@ class Audit(Entity, EntityReadMixin, EntitySearchMixin):
         self._meta = {
             'api_path': 'api/v2/audits',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class AuthSourceLDAP(
@@ -758,7 +760,7 @@ class AuthSourceLDAP(
         self._meta = {
             'api_path': 'api/v2/auth_source_ldaps',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_missing(self):
         """Possibly set several extra instance attributes.
@@ -820,7 +822,7 @@ class Bookmark(
             'query': entity_fields.StringField(required=True),
         }
         self._meta = {'api_path': 'api/v2/bookmarks'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
@@ -841,7 +843,7 @@ class Capsule(Entity, EntityReadMixin, EntitySearchMixin):
         self._meta = {
             'api_path': 'katello/api/capsules',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def content_add_lifecycle_environment(self, synchronous=True, timeout=None, **kwargs):
         """Associate lifecycle environment with capsule.
@@ -980,7 +982,7 @@ class CommonParameter(
         self._meta = {
             'api_path': 'api/v2/common_parameters',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class ComputeAttribute(
@@ -1004,7 +1006,7 @@ class ComputeAttribute(
         self._meta = {
             'api_path': 'api/v2/compute_attributes',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class ComputeProfile(
@@ -1027,7 +1029,7 @@ class ComputeProfile(
         self._meta = {
             'api_path': 'api/v2/compute_profiles',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class AbstractComputeResource(
@@ -1084,7 +1086,7 @@ class AbstractComputeResource(
         self._meta = {
             'api_path': 'api/v2/compute_resources',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -1277,7 +1279,7 @@ class DiscoveredHost(
         self._meta = {
             'api_path': '/api/v2/discovered_hosts',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -1475,7 +1477,7 @@ class DiscoveryRule(
         self._meta = {
             'api_path': '/api/v2/discovery_rules',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -1499,7 +1501,7 @@ class DiscoveryRule(
 
         """
         return type(self)(
-            self._server_config,
+            server_config=self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
 
@@ -1522,11 +1524,9 @@ class DiscoveryRule(
             # We cannot call `self.update_json([])`, as an ID might not be
             # present on self. However, `attrs` is guaranteed to have an ID.
             attrs[attr] = DiscoveryRule(
-                self._server_config,
+                server_config=self._server_config,
                 id=attrs['id'],
-            ).update_json(
-                []
-            )[attr]
+            ).update_json([])[attr]
         return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
@@ -1577,7 +1577,7 @@ class ExternalUserGroup(
             ),
             'auth_source': entity_fields.OneToOneField(AuthSourceLDAP, required=True),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {
             'api_path': f'{self.usergroup.path()}/external_usergroups',
         }
@@ -1639,7 +1639,7 @@ class KatelloStatus(Entity, EntityReadMixin):
             'api_path': 'katello/api/v2/status',
             'read_type': 'base',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class LibvirtComputeResource(AbstractComputeResource):
@@ -1653,7 +1653,7 @@ class LibvirtComputeResource(AbstractComputeResource):
             ),
             'set_console_password': entity_fields.BooleanField(),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._fields['provider'].default = 'Libvirt'
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'Libvirt'
@@ -1670,7 +1670,7 @@ class OVirtComputeResource(AbstractComputeResource):
             'datacenter': entity_fields.StringField(),
             'ovirt_quota': entity_fields.StringField(),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._fields['provider'].default = 'Ovirt'
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'OVirt'
@@ -1693,7 +1693,7 @@ class VMWareComputeResource(AbstractComputeResource):
             'set_console_password': entity_fields.BooleanField(),
             'user': entity_fields.StringField(),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._fields['provider'].default = 'Vmware'
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'VMware'
@@ -1714,7 +1714,7 @@ class GCEComputeResource(AbstractComputeResource):
             'key_path': entity_fields.StringField(required=True),
             'zone': entity_fields.StringField(),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._fields['provider'].default = 'GCE'
         self._fields['provider'].required = True
         self._fields['provider_friendly_name'].default = 'GCE'
@@ -1738,7 +1738,7 @@ class AzureRMComputeResource(AbstractComputeResource):
             'secret_key': entity_fields.StringField(required=True),
             'region': entity_fields.StringField(required=True),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         # Remove 'url' field as not required for AzureRM
         del self._fields['url']
         self._fields['provider'].default = 'AzureRm'
@@ -1772,7 +1772,7 @@ class ConfigGroup(
         self._meta = {
             'api_path': 'foreman_puppet/api/config_groups',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class TemplateInput(
@@ -1801,7 +1801,7 @@ class TemplateInput(
             'template': entity_fields.OneToOneField(JobTemplate, required=True, parent=True),
             'variable_name': entity_fields.StringField(),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {
             'api_path': f'/api/v2/templates/{self.template.id}/template_inputs',
         }
@@ -1836,7 +1836,7 @@ class JobInvocation(Entity, EntityReadMixin, EntitySearchMixin):
             'total': entity_fields.IntegerField(),
         }
         self._meta = {'api_path': 'api/job_invocations'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -1986,7 +1986,7 @@ class JobTemplate(
             'template_inputs': entity_fields.OneToManyField(TemplateInput),
         }
         self._meta = {'api_path': 'api/v2/job_templates'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict."""
@@ -2057,7 +2057,7 @@ class ProvisioningTemplate(
         self._meta = {
             'api_path': 'api/v2/provisioning_templates',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_missing(self):
         """Customize the process of auto-generating instance attributes.
@@ -2070,7 +2070,7 @@ class ProvisioningTemplate(
         """
         super().create_missing()
         if getattr(self, 'snippet', None) is False and not hasattr(self, 'template_kind'):
-            self.template_kind = TemplateKind(self._server_config, id=1)
+            self.template_kind = TemplateKind(server_config=self._server_config, id=1)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -2188,7 +2188,7 @@ class ReportTemplate(
         self._meta = {
             'api_path': 'api/v2/report_templates',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -2335,7 +2335,7 @@ class ContentCredential(
         self._meta = {
             'api_path': 'katello/api/v2/content_credentials',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class ContentUpload(
@@ -2352,7 +2352,7 @@ class ContentUpload(
             'repository': entity_fields.OneToOneField(Repository, required=True, parent=True),
             'size': entity_fields.IntegerField(required=True, min_val=self.content_chunk_size),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         # a ContentUpload does not have an id field, only an upload_id
         self._fields.pop('id')
         self._meta = {
@@ -2501,7 +2501,7 @@ class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearc
         self._meta = {
             'api_path': 'katello/api/v2/content_view_versions',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -2591,7 +2591,7 @@ class ContentViewFilterRule(
             'architecture': entity_fields.StringField(),
             'module_stream': entity_fields.OneToManyField(ModuleStream),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {
             "api_path": f'{self.content_view_filter.path("self")}/rules',
         }
@@ -2676,14 +2676,14 @@ class AbstractContentViewFilter(
         self._meta = {
             'api_path': 'katello/api/v2/content_view_filters',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class ErratumContentViewFilter(AbstractContentViewFilter):
     """A representation of a Content View Filter of type "erratum"."""
 
     def __init__(self, server_config=None, **kwargs):
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._fields['type'].default = 'erratum'
 
 
@@ -2693,7 +2693,7 @@ class ModuleStreamContentViewFilter(AbstractContentViewFilter):
     def __init__(self, server_config=None, **kwargs):
         # Add the `original_module_streams` field to what's provided by parent class.
         self._fields = {'original_module_streams': entity_fields.BooleanField()}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._fields['type'].default = 'modulemd'
 
 
@@ -2701,7 +2701,7 @@ class PackageGroupContentViewFilter(AbstractContentViewFilter):
     """A representation of a Content View Filter of type "package_group"."""
 
     def __init__(self, server_config=None, **kwargs):
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._fields['type'].default = 'package_group'
 
 
@@ -2711,7 +2711,7 @@ class RPMContentViewFilter(AbstractContentViewFilter):
     def __init__(self, server_config=None, **kwargs):
         # Add the `original_packages` field to what's provided by parent class.
         self._fields = {'original_packages': entity_fields.BooleanField()}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._fields['type'].default = 'rpm'
 
 
@@ -2719,7 +2719,7 @@ class DockerContentViewFilter(AbstractContentViewFilter):
     """A representation of a Content View Filter of type "docker"."""
 
     def __init__(self, server_config=None, **kwargs):
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._fields['type'].default = 'docker'
 
 
@@ -2760,7 +2760,7 @@ class ContentView(
         self._meta = {
             'api_path': 'katello/api/v2/content_views',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Fetch an attribute missing from the server's response.
@@ -2777,7 +2777,7 @@ class ContentView(
         ignore.add('content_view_component')
         if entity is None:
             try:
-                entity = type(self)(self._server_config)
+                entity = type(self)(server_config=self._server_config)
             except TypeError:
                 # in the event that an entity's init is overwritten
                 # with a positional server_config
@@ -2788,7 +2788,7 @@ class ContentView(
         if 'content_view_components' in attrs and attrs['content_view_components']:
             result.content_view_component = [
                 ContentViewComponent(
-                    self._server_config,
+                    server_config=self._server_config,
                     composite_content_view=result.id,
                     id=content_view_component['id'],
                 )
@@ -2819,7 +2819,7 @@ class ContentView(
             if content_view_components:
                 entity.content_view_component = [
                     ContentViewComponent(
-                        self._server_config,
+                        server_config=self._server_config,
                         composite_content_view=result['id'],
                         id=cvc_id,
                     )
@@ -2930,7 +2930,7 @@ class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
             'content_view_version': entity_fields.OneToOneField(ContentViewVersion),
             'latest': entity_fields.BooleanField(),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {
             'api_path': f'{self.composite_content_view.path()}/content_view_components',
         }
@@ -3036,7 +3036,7 @@ class Domain(
             'organization': entity_fields.OneToManyField(Organization),
         }
         self._meta = {'api_path': 'api/v2/domains'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_missing(self):
         """Customize the process of auto-generating instance attributes.
@@ -3067,7 +3067,7 @@ class Domain(
 
         """
         return type(self)(
-            self._server_config,
+            server_config=self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
 
@@ -3122,7 +3122,7 @@ class Environment(
         self._meta = {
             'api_path': 'foreman_puppet/api/environments',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -3210,7 +3210,7 @@ class Errata(Entity, EntityReadMixin, EntitySearchMixin):
             'updated': entity_fields.DateField(),
         }
         self._meta = {'api_path': '/katello/api/v2/errata'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def compare(self, synchronous=True, timeout=None, **kwargs):
         """Compare errata from different content view versions.
@@ -3274,7 +3274,7 @@ class File(Entity, EntityReadMixin, EntitySearchMixin):
             'repository': entity_fields.OneToOneField(Repository),
         }
         self._meta = {'api_path': 'katello/api/v2/files'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class Filter(
@@ -3298,7 +3298,7 @@ class Filter(
             'unlimited': entity_fields.BooleanField(),
         }
         self._meta = {'api_path': 'api/v2/filters'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -3336,7 +3336,7 @@ class ForemanStatus(Entity, EntityReadMixin):
             'api_path': 'api/v2/status',
             'read_type': 'base',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
@@ -3360,7 +3360,7 @@ class ForemanTask(Entity, EntityReadMixin, EntitySearchMixin):
         self._meta = {
             'api_path': 'foreman_tasks/api/tasks',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -3474,7 +3474,7 @@ class GPGKey(ContentCredential):
     """A representation of a GPG Key entity."""
 
     def __init__(self, server_config=None, **kwargs):
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class HostCollectionErrata(Entity):
@@ -3490,7 +3490,7 @@ class HostCollectionErrata(Entity):
                 'host_collections/:host_collection_id/errata'
             ),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class HostCollectionPackage(Entity):
@@ -3507,7 +3507,7 @@ class HostCollectionPackage(Entity):
                 'host_collections/:host_collection_id/packages'
             ),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class HostCollection(
@@ -3544,7 +3544,7 @@ class HostCollection(
         self._meta = {
             'api_path': 'katello/api/v2/host_collections',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Rename ``system_ids`` to ``system_uuids``."""
@@ -3561,7 +3561,7 @@ class HostCollection(
 
         """
         return type(self)(
-            self._server_config,
+            server_config=self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
 
@@ -3631,7 +3631,7 @@ class HostGroup(
             }
         )
         self._meta = {'api_path': 'api/v2/hostgroups'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
@@ -3641,7 +3641,7 @@ class HostGroup(
 
         """
         return type(self)(
-            self._server_config,
+            server_config=self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
 
@@ -3925,7 +3925,7 @@ class HostPackage(Entity):
             'host': entity_fields.OneToOneField(Host, required=True),
             'packages': entity_fields.ListField(),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {
             'api_path': f'{self.host.path()}/packages',
         }
@@ -3942,7 +3942,7 @@ class HostSubscription(Entity):
             'subscriptions': entity_fields.DictField(),
             'value': entity_fields.StringField(),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {
             'api_path': f'{self.host.path()}/subscriptions',
         }
@@ -4106,7 +4106,7 @@ class Host(
         }
         self._owner_type = None  # actual ``owner_type`` value
         self._meta = {'api_path': 'api/v2/hosts'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
         # See https://github.com/SatelliteQE/nailgun/issues/258
         if (
@@ -4135,14 +4135,14 @@ class Host(
             self._fields['owner'] = entity_fields.OneToOneField(User)
             if hasattr(self, 'owner'):
                 self.owner = User(
-                    self._server_config,
+                    server_config=self._server_config,
                     id=self.owner.id if isinstance(self.owner, Entity) else self.owner,
                 )
         elif value == 'Usergroup':
             self._fields['owner'] = entity_fields.OneToOneField(UserGroup)
             if hasattr(self, 'owner'):
                 self.owner = UserGroup(
-                    self._server_config,
+                    server_config=self._server_config,
                     id=self.owner.id if isinstance(self.owner, Entity) else self.owner,
                 )
 
@@ -4189,7 +4189,7 @@ class Host(
         # Flesh out the dependency graph shown in the docstring.
         if not hasattr(self, 'domain'):
             self.domain = Domain(
-                self._server_config,
+                server_config=self._server_config,
                 location=[self.location],
                 organization=[self.organization],
             ).create(True)
@@ -4205,7 +4205,7 @@ class Host(
         if 'Puppet' in _feature_list(self._server_config):
             if not hasattr(self, 'environment'):
                 self.environment = Environment(
-                    self._server_config,
+                    server_config=self._server_config,
                     location=[self.location],
                     organization=[self.organization],
                 ).create(True)
@@ -4221,16 +4221,16 @@ class Host(
                     self.environment.organization.append(self.organization)
                     self.environment.update(['organization'])
         if not hasattr(self, 'architecture'):
-            self.architecture = Architecture(self._server_config).create(True)
+            self.architecture = Architecture(server_config=self._server_config).create(True)
         if not hasattr(self, 'ptable'):
             self.ptable = PartitionTable(
-                self._server_config,
+                server_config=self._server_config,
                 location=[self.location],
                 organization=[self.organization],
             ).create(True)
         if not hasattr(self, 'operatingsystem'):
             self.operatingsystem = OperatingSystem(
-                self._server_config,
+                server_config=self._server_config,
                 architecture=[self.architecture],
                 ptable=[self.ptable],
             ).create(True)
@@ -4245,7 +4245,7 @@ class Host(
                 self.operatingsystem.update(['ptable'])
         if not hasattr(self, 'medium'):
             self.medium = Media(
-                self._server_config,
+                server_config=self._server_config,
                 operatingsystem=[self.operatingsystem],
                 location=[self.location],
                 organization=[self.organization],
@@ -4281,7 +4281,7 @@ class Host(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1449749>`_.
         """
         return type(self)(
-            self._server_config,
+            server_config=self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
 
@@ -4670,7 +4670,7 @@ class Host(
         if 'interfaces' in attrs and attrs['interfaces']:
             result.interface = [
                 Interface(
-                    self._server_config,
+                    server_config=self._server_config,
                     host=result.id,
                     id=interface['id'],
                 )
@@ -5063,7 +5063,7 @@ class Image(
             'username': entity_fields.StringField(required=True),
             'uuid': entity_fields.StringField(required=True),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {
             "api_path": f'{self.compute_resource.path("self")}/images',
         }
@@ -5159,7 +5159,7 @@ class Interface(
             'username': entity_fields.StringField(),  # for 'bmc' type
             'execution': entity_fields.BooleanField(),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {
             'api_path': f'{self.host.path()}/interfaces',
         }
@@ -5242,7 +5242,7 @@ class LifecycleEnvironment(
         self._meta = {
             'api_path': 'katello/api/v2/environments',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_missing(self):
         """Automatically populate additional instance attributes.
@@ -5299,7 +5299,7 @@ class HTTPProxy(
             'cacert': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'api/v2/http_proxies'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
@@ -5358,7 +5358,7 @@ class Location(
             'user': entity_fields.OneToManyField(User),
         }
         self._meta = {'api_path': 'api/v2/locations'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -5377,7 +5377,7 @@ class Location(
 
         """
         attrs = self.create_json(create_missing)
-        return type(self)(self._server_config, id=attrs['id']).read()
+        return type(self)(server_config=self._server_config, id=attrs['id']).read()
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Work around a bug in the server's response.
@@ -5433,7 +5433,7 @@ class Media(
             'os_family': entity_fields.StringField(choices=_OPERATING_SYSTEMS),
         }
         self._meta = {'api_path': 'api/v2/media'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict and rename ``path_``.
@@ -5455,7 +5455,7 @@ class Media(
 
         """
         return type(self)(
-            self._server_config,
+            server_config=self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
 
@@ -5498,7 +5498,7 @@ class Model(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, Entit
             'vendor_class': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'api/v2/models'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class OperatingSystem(
@@ -5551,7 +5551,7 @@ class OperatingSystem(
         self._meta = {
             'api_path': 'api/v2/operatingsystems',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -5586,7 +5586,7 @@ class OperatingSystemParameter(Entity, EntityCreateMixin, EntityDeleteMixin, Ent
             ),
             'value': entity_fields.StringField(required=True),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {
             "api_path": f'{self.operatingsystem.path("self")}/parameters',
         }
@@ -5657,7 +5657,7 @@ class Organization(
         self._meta = {
             'api_path': 'katello/api/organizations',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -5720,7 +5720,7 @@ class Organization(
 
         """
         return type(self)(
-            self._server_config,
+            server_config=self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
 
@@ -5943,7 +5943,7 @@ class OSDefaultTemplate(
             'provisioning_template': entity_fields.OneToOneField(ProvisioningTemplate),
             'template_kind': entity_fields.OneToOneField(TemplateKind),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {
             "api_path": f'{self.operatingsystem.path("self")}/os_default_templates',
         }
@@ -5983,7 +5983,7 @@ class OverrideValue(
             'smart_class_parameter': entity_fields.OneToOneField(SmartClassParameters, parent=True),
             'omit': entity_fields.BooleanField(),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         # Create an override value for a specific smart class parameter
         if hasattr(self, 'smart_class_parameter'):
             partial_path = self.smart_class_parameter.path('self')
@@ -6055,7 +6055,7 @@ class Parameter(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, E
             'subnet': entity_fields.OneToOneField(Subnet),
         }
         self._fields.update(self._path_fields)
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         if not any(getattr(self, attr, None) for attr in self._path_fields):
             raise TypeError(f'Must provide value for any of "{self._path_fields.keys()}" fields.')
 
@@ -6092,7 +6092,7 @@ class Permission(Entity, EntityReadMixin, EntitySearchMixin):
         self._meta = {
             'api_path': 'api/v2/permissions',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class Ping(Entity, EntitySearchMixin):
@@ -6102,7 +6102,7 @@ class Ping(Entity, EntitySearchMixin):
         self._meta = {
             'api_path': 'katello/api/v2/ping',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class Product(
@@ -6130,7 +6130,7 @@ class Product(
         self._meta = {
             'api_path': 'katello/api/v2/products',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -6241,7 +6241,7 @@ class ProductBulkAction(Entity):
         self._meta = {
             'api_path': '/katello/api/products/bulk',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -6371,7 +6371,7 @@ class PartitionTable(
             'os_family': entity_fields.StringField(choices=_OPERATING_SYSTEMS),
         }
         self._meta = {'api_path': 'api/v2/ptables'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class PuppetClass(
@@ -6395,7 +6395,7 @@ class PuppetClass(
         self._meta = {
             'api_path': 'foreman_puppet/api/puppetclasses',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def search_normalize(self, results):
         """Flatten results.
@@ -6455,7 +6455,7 @@ class PackageGroup(Entity, EntityReadMixin, EntitySearchMixin):
             'uuid': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'katello/api/v2/package_groups'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class Package(Entity, EntityReadMixin, EntitySearchMixin):
@@ -6478,7 +6478,7 @@ class Package(Entity, EntityReadMixin, EntitySearchMixin):
             'version': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'katello/api/v2/packages'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class ModuleStream(Entity, EntityReadMixin, EntitySearchMixin):
@@ -6497,7 +6497,7 @@ class ModuleStream(Entity, EntityReadMixin, EntitySearchMixin):
             'module_spec': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'katello/api/v2/module_streams'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class CompliancePolicies(
@@ -6531,7 +6531,7 @@ class CompliancePolicies(
             'organization': entity_fields.OneToManyField(Organization),
         }
         self._meta = {'api_path': 'api/v2/compliance/policies'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def update(self, fields=None):
         """Fetch a complete set of attributes for this entity.
@@ -6571,7 +6571,7 @@ class Realm(
             ),
         }
         self._meta = {'api_path': 'api/v2/realms'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
@@ -6581,7 +6581,7 @@ class Realm(
 
         """
         return type(self)(
-            self._server_config,
+            server_config=self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
 
@@ -6599,7 +6599,7 @@ class RecurringLogic(Entity, EntityReadMixin):
             'task_group_id': entity_fields.IntegerField(),
         }
         self._meta = {'api_path': 'foreman_tasks/api/recurring_logics'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def cancel(self, synchronous=True, timeout=None, **kwargs):
         """Cancel a recurring logic.
@@ -6664,7 +6664,7 @@ class RegistrationCommand(Entity, EntityCreateMixin, EntityReadMixin):
         }
 
         self._meta = {'api_path': '/api/registration_commands'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -6698,7 +6698,7 @@ class Report(Entity):
             'reported_at': entity_fields.DateTimeField(required=True),
         }
         self._meta = {'api_path': 'api/v2/reports'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class Repository(
@@ -6769,7 +6769,7 @@ class Repository(
         self._meta = {
             'api_path': 'katello/api/v2/repositories',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -7060,7 +7060,7 @@ class RepositorySet(Entity, EntityReadMixin, EntitySearchMixin):
             ),
             'vendor': entity_fields.StringField(required=True),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {
             'api_path': 'katello/api/v2/repository_sets',
         }
@@ -7199,7 +7199,7 @@ class RHCIDeployment(
         self._meta = {
             'api_path': 'fusor/api/v21/deployments',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Normalize the data returned by the server.
@@ -7269,7 +7269,7 @@ class RHCloud(Entity):
             'organization': entity_fields.OneToOneField(Organization),
             'location': entity_fields.OneToOneField(Location),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {'api_path': 'api/v2/rh_cloud'}
 
     def path(self, which=None):
@@ -7301,7 +7301,7 @@ class RoleLDAPGroups(Entity):
         self._meta = {
             'api_path': 'katello/api/v2/roles/:role_id/ldap_groups',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class Role(
@@ -7329,7 +7329,7 @@ class Role(
         self._meta = {
             'api_path': 'api/v2/roles',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -7394,7 +7394,7 @@ class Setting(Entity, EntityReadMixin, EntitySearchMixin, EntityUpdateMixin):
         self._meta = {
             'api_path': 'api/v2/settings',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Read setting from server.
@@ -7439,7 +7439,7 @@ class SmartProxy(
         self._meta = {
             'api_path': 'api/v2/smart_proxies',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -7559,7 +7559,7 @@ class SmartClassParameters(Entity, EntityReadMixin, EntitySearchMixin, EntityUpd
         self._meta = {
             'api_path': 'foreman_puppet/api/smart_class_parameters',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Do not read the ``hidden_value`` attribute."""
@@ -7602,7 +7602,7 @@ class Snapshot(
             'description': entity_fields.StringField(required=False),
             'host': entity_fields.OneToOneField(Host, required=True, parent=True),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {
             'api_path': f'{self.host.path("self")}/snapshots',
         }
@@ -7674,7 +7674,7 @@ class SSHKey(Entity, EntityCreateMixin, EntityDeleteMixin, EntityReadMixin, Enti
             ),
             'key': entity_fields.StringField(required=True, str_type='alphanumeric', unique=True),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {'api_path': f'{self.user.path()}/ssh_keys'}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -7714,7 +7714,7 @@ class Status(Entity):
         self._meta = {
             'api_path': 'katello/api/v2/status',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class Subnet(
@@ -7773,7 +7773,7 @@ class Subnet(
             'vlanid': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'api/v2/subnets'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -7837,7 +7837,7 @@ class Subscription(Entity, EntityReadMixin, EntitySearchMixin):
         self._meta = {
             'api_path': 'katello/api/v2/subscriptions',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -7869,7 +7869,7 @@ class Subscription(Entity, EntityReadMixin, EntitySearchMixin):
 
         """
         return Subscription(
-            self._server_config,
+            server_config=self._server_config,
             organization=payload['organization_id'],
         ).path(which)
 
@@ -8018,7 +8018,7 @@ class SyncPlan(
             'sync_date': entity_fields.DateTimeField(required=True),
             'foreman_tasks_recurring_logic': entity_fields.OneToOneField(RecurringLogic),
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
         self._meta = {'api_path': f'{self.organization.path()}/sync_plans'}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -8151,7 +8151,7 @@ class TailoringFile(
             with open(kwargs['scap_file']) as input_file:
                 kwargs['scap_file'] = input_file.read()
         self._meta = {'api_path': 'api/v2/compliance/tailoring_files'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
@@ -8161,7 +8161,7 @@ class TailoringFile(
 
         """
         return type(self)(
-            self._server_config,
+            server_config=self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
 
@@ -8194,7 +8194,7 @@ class Template(Entity):
         self._meta = {
             'api_path': 'api/v2/templates',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -8263,7 +8263,7 @@ class TemplateCombination(Entity, EntityDeleteMixin, EntityReadMixin):
         self._meta = {
             'api_path': 'api/v2/template_combinations',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class TemplateKind(Entity, EntityReadMixin, EntitySearchMixin):
@@ -8280,7 +8280,7 @@ class TemplateKind(Entity, EntityReadMixin, EntitySearchMixin):
             'api_path': 'api/v2/template_kinds',
             'num_created_by_default': 8,
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class UserGroup(
@@ -8304,7 +8304,7 @@ class UserGroup(
             'usergroup': entity_fields.OneToManyField(UserGroup),
         }
         self._meta = {'api_path': 'api/v2/usergroups'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -8332,7 +8332,7 @@ class UserGroup(
 
         """
         return type(self)(
-            self._server_config,
+            server_config=self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
 
@@ -8379,7 +8379,7 @@ class User(
             'admin': entity_fields.BooleanField(),
             'auth_source': entity_fields.OneToOneField(
                 AuthSourceLDAP,
-                default=AuthSourceLDAP(server_config, id=1),
+                default=AuthSourceLDAP(server_config=server_config, id=1),
                 required=True,
             ),
             'auth_source_name': entity_fields.StringField(),
@@ -8402,7 +8402,7 @@ class User(
         self._meta = {
             'api_path': 'api/v2/users',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
@@ -8485,7 +8485,7 @@ class VirtWhoConfig(
         self._meta = {
             'api_path': 'foreman_virt_who_configure/api/v2/configs',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -8599,7 +8599,7 @@ class ScapContents(
         self._meta = {
             'api_path': 'api/compliance/scap_contents',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create(self, create_missing=None):
         """Do extra work to fetch a complete set of attributes for this entity.
@@ -8609,7 +8609,7 @@ class ScapContents(
 
         """
         return type(self)(
-            self._server_config,
+            server_config=self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
 
@@ -8680,7 +8680,7 @@ class Srpms(Entity, EntityReadMixin, EntitySearchMixin):
             'version': entity_fields.StringField(),
         }
         self._meta = {'api_path': 'katello/api/v2/srpms'}
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class Webhooks(
@@ -8716,7 +8716,7 @@ class Webhooks(
         self._meta = {
             'api_path': 'api/webhooks',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def create(self, create_missing=None):
         """Override creation of Webhooks.
@@ -8728,7 +8728,7 @@ class Webhooks(
         self._fields['event'] = entity_fields.StringField(required=True, choices=self.get_events())
 
         return type(self)(
-            self._server_config,
+            server_config=self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
 
@@ -8790,7 +8790,7 @@ class AnsiblePlaybooks(Entity):
         self._meta = {
             'api_path': '/ansible/api/ansible_playbooks',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -8862,7 +8862,7 @@ class AnsibleRoles(
         self._meta = {
             'api_path': '/ansible/api/ansible_roles',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
@@ -8932,7 +8932,7 @@ class TablePreferences(
             self._meta = {
                 'api_path': f'/api/v2/users/{self.user.id}/table_preferences',
             }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Read table preferences from server.
@@ -8967,4 +8967,4 @@ class NotificationRecipients(Entity, EntityReadMixin):
             'api_path': '/notification_recipients',
             'read_type': 'base',
         }
-        super().__init__(server_config, **kwargs)
+        super().__init__(server_config=server_config, **kwargs)
