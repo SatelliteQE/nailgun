@@ -148,7 +148,7 @@ def _make_entity_from_id(entity_cls, entity_obj_or_id, server_config):
     """
     if isinstance(entity_obj_or_id, entity_cls):
         return entity_obj_or_id
-    return entity_cls(server_config, id=entity_obj_or_id)
+    return entity_cls(server_config=server_config, id=entity_obj_or_id)
 
 
 def _make_entities_from_ids(entity_cls, entity_objs_and_ids, server_config):
@@ -345,7 +345,7 @@ class Entity:
     ...             'subordinate': OneToManyField('User'),
     ...         }
     ...         self._meta = {'api_path': 'api/users'}
-    ...         return super(User, self).__init__(server_config, **kwargs)
+    ...         return super(User, self).__init__(server_config=server_config, **kwargs)
     ...
     >>> user = User(
     ...     name='Alice',
@@ -371,12 +371,12 @@ class Entity:
     a server. The solution is to provide a :class:`nailgun.config.ServerConfig`
     when instantiating a new entity.
 
-    1. If the ``server_config`` argument is specified, then that is used.
+    1. If the ``server_config`` kwarg is specified, then that is used.
     2. Otherwise, if :data:`nailgun.entity_mixins.DEFAULT_SERVER_CONFIG` is
        set, then that is used.
     3. Otherwise, call :meth:`nailgun.config.ServerConfig.get`.
 
-    An entity's server configuration is stored as a private instance variaable
+    An entity's server configuration is stored as a private instance variable
     and is used by mixin methods, such as
     :meth:`nailgun.entity_mixins.Entity.path`. For more information on server
     configuration objects, see :class:`nailgun.config.BaseServerConfig`.
@@ -640,8 +640,9 @@ class Entity:
             else:
                 raise ValueError(f'The parent is not set for the entity {self}')
         try:
-            entity = type(self)(self._server_config, **parent)
+            entity = type(self)(server_config=self._server_config, **parent)
         except TypeError:
+            # FIXME Why allow this?
             # in the event that an entity's init is overwritten
             # with a positional server_config
             entity = type(self)(**parent)
@@ -809,8 +810,9 @@ class EntityReadMixin:
         """
         if entity is None:
             try:
-                entity = type(self)(self._server_config)
+                entity = type(self)(server_config=self._server_config)
             except TypeError:
+                # FIXME: Why?
                 # in the event that an entity's init is overwritten
                 # with a positional server_config
                 entity = type(self)()
@@ -829,13 +831,13 @@ class EntityReadMixin:
                     referenced_entity = None
                 else:
                     referenced_entity = field.entity(
-                        self._server_config,
+                        server_config=self._server_config,
                         id=entity_id,
                     )
                 setattr(entity, field_name, referenced_entity)
             elif isinstance(field, OneToManyField):
                 referenced_entities = [
-                    field.entity(self._server_config, id=entity_id)
+                    field.entity(server_config=self._server_config, id=entity_id)
                     for entity_id in _get_entity_ids(field_name, attrs)
                 ]
                 setattr(entity, field_name, referenced_entities)
@@ -1377,8 +1379,9 @@ class EntitySearchMixin:
         entities = []
         for result in results:
             try:
-                entity = type(self)(self._server_config, **path_fields, **result)
+                entity = type(self)(server_config=self._server_config, **path_fields, **result)
             except TypeError:
+                # FIXME Why?
                 # in the event that an entity's init is overwritten
                 # with a positional server_config
                 entity = type(self)(**path_fields, **result)
