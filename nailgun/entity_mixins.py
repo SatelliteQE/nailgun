@@ -594,7 +594,7 @@ class Entity:
         :param other: entity to compare self to
         :return: boolean indicating if entities are equal or not
         """
-        if not isinstance(other, type(self)):
+        if not isinstance(other, type(self)) and not isinstance(self, type(other)):
             return False
         return self.to_json_dict() == other.to_json_dict()
 
