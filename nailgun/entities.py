@@ -1491,7 +1491,7 @@ class DiscoveryRule(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1381129>`_.
 
         """
-        return DiscoveryRule(
+        return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -3047,7 +3047,7 @@ class Domain(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1219654>`_.
 
         """
-        return Domain(
+        return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -3541,7 +3541,7 @@ class HostCollection(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1654383>`_.
 
         """
-        return HostCollection(
+        return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -3621,7 +3621,7 @@ class HostGroup(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1235377>`_.
 
         """
-        return HostGroup(
+        return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -4173,7 +4173,7 @@ class Host(
         For more information, see `Bugzilla #1449749
         <https://bugzilla.redhat.com/show_bug.cgi?id=1449749>`_.
         """
-        return Host(
+        return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -5230,7 +5230,7 @@ class Location(
 
         """
         attrs = self.create_json(create_missing)
-        return Location(self._server_config, id=attrs['id']).read()
+        return type(self)(self._server_config, id=attrs['id']).read()
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Work around a bug in the server's response.
@@ -5307,7 +5307,7 @@ class Media(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1219653>`_.
 
         """
-        return Media(
+        return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -5572,7 +5572,7 @@ class Organization(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1230873>`_.
 
         """
-        return Organization(
+        return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -6433,7 +6433,7 @@ class Realm(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1232855>`_.
 
         """
-        return Realm(
+        return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -8013,7 +8013,7 @@ class TailoringFile(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1381129>`_.
 
         """
-        return TailoringFile(
+        return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -8184,7 +8184,7 @@ class UserGroup(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1301658>`_.
 
         """
-        return UserGroup(
+        return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -8461,7 +8461,7 @@ class ScapContents(
         <https://bugzilla.redhat.com/show_bug.cgi?id=1381129>`_.
 
         """
-        return ScapContents(
+        return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
@@ -8580,7 +8580,7 @@ class Webhooks(
         """
         self._fields['event'] = entity_fields.StringField(required=True, choices=self.get_events())
 
-        return Webhooks(
+        return type(self)(
             self._server_config,
             id=self.create_json(create_missing)['id'],
         ).read()
