@@ -28,7 +28,7 @@ jobs:
     steps:
       - id: find-prt-comment
         name: Find the prt comment
-        uses: peter-evans/find-comment@v2
+        uses: peter-evans/find-comment@v3
         with:
           issue-number: ${{ github.event.number }}
           body-includes: "trigger: test-robottelo"
@@ -45,7 +45,7 @@ jobs:
 
       - name: Wait for other status checks to Pass
         id: waitforstatuschecks
-        uses: lewagon/wait-on-check-action@v1.3.3
+        uses: lewagon/wait-on-check-action@v1.3.4
         with:
           ref: ${{ github.head_ref }}
           repo-token: ${{ secrets.CHERRYPICK_PAT }}
@@ -103,7 +103,7 @@ jobs:
 
       - id: automerge
         name: Auto merge of cherry-picked PRs.
-        uses: "pascalgn/automerge-action@v0.15.5"
+        uses: pascalgn/automerge-action@v0.16.3
         if: steps.waitforstatuschecks.outputs.status == 'success'
         env:
           GITHUB_TOKEN: "${{ secrets.CHERRYPICK_PAT }}"

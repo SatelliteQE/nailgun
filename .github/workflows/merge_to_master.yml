@@ -18,12 +18,12 @@ jobs:
         python-version: ['3.10', '3.11']
     steps:
       - name: Checkout Nailgun
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
       - name: Set Up Python-${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -40,7 +40,7 @@ jobs:
           pip install -U -r requirements.txt -r requirements-dev.txt --no-cache-dir
 
       - name: Pre Commit Checks
-        uses: pre-commit/action@v2.0.0
+        uses: pre-commit/action@v3.0.1
 
       - name: Make Docs
         run: |
@@ -62,7 +62,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Setup python 3.10
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - name: Install pypa/build
