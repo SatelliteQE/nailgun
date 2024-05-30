@@ -3,8 +3,7 @@ name: auto_cherry_pick_commits
 
 on:
   pull_request_target:
-    types:
-      - closed
+    types: [closed, labeled]
 
 # Github & Parent PR Env vars
 env:
@@ -16,13 +15,14 @@ jobs:
 
   # Pre-Requisites for Auto Cherrypicking
   find-the-parent-prt-comment:
+    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'CherryPick')
     name: Find & Save last PRT comment of Parent PR
     runs-on: ubuntu-latest
     outputs:
       prt_comment: ${{steps.fc.outputs.comment-body}}
     steps:
       - name: Find Comment
-        uses: peter-evans/find-comment@v2
+        uses: peter-evans/find-comment@v3
         id: fc
         with:
           issue-number: ${{ env.number }}
@@ -39,8 +39,13 @@ jobs:
         label: ${{ github.event.pull_request.labels.*.name }}
 
     steps:
+      # Needed to avoid out-of-memory error
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 10
       ## Nailgun Repo Checkout
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         if: ${{ startsWith(matrix.label, '6.') && matrix.label != github.base_ref }}
         with:
           fetch-depth: 0
@@ -70,7 +75,7 @@ jobs:
 
       - name: is autoMerging enabled for Auto CherryPicked PRs ?
         if: ${{ always() && steps.cherrypick.outcome == 'success' && contains(github.event.pull_request.labels.*.name, 'AutoMerge_Cherry_Picked') }}
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.CHERRYPICK_PAT }}
           script: |
