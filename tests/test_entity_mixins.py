@@ -3,7 +3,7 @@ import http.client as http_client
 from unittest import TestCase, mock
 
 from fauxfactory import gen_integer
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError, JSONDecodeError
 
 from nailgun import client, config, entity_mixins
 from nailgun.entity_fields import (
@@ -620,6 +620,27 @@ class EntityCreateMixinTestCase(TestCase):
             self.assertEqual(create_raw.call_args[0][0], create_missing)
             self.assertEqual(response.raise_for_status.call_count, 1)
             self.assertEqual(response.json.call_count, 1)
+
+    def test_create_json_with_exception(self):
+        """Check what happens if the server returns an error HTTP status code for :meth:`nailgun.entity_mixins.EntityCreateMixin.create_json`."""
+        for valid_json in (True, False):
+            response = mock.Mock()
+            return_value = {"a": "b"}
+            response.raise_for_status.side_effect = HTTPError("foo")
+            if valid_json:
+                response.json.return_value = return_value
+            else:
+                response.json.side_effect = JSONDecodeError("msg", "foo", 2)
+            with mock.patch.object(
+                self.entity, 'create_raw', return_value=response
+            ), self.assertRaises(HTTPError) as error:
+                self.entity.create_json()
+            self.assertEqual(response.raise_for_status.call_count, 1)
+            self.assertEqual(response.json.call_count, 1)
+            if valid_json:
+                self.assertEqual(error.exception.args[1], return_value)
+            else:
+                self.assertEqual(len(error.exception.args), 1)
 
     def test_create(self):
         """Test :meth:`nailgun.entity_mixins.EntityCreateMixin.create`."""
