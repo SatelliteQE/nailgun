@@ -6878,6 +6878,8 @@ class Repository(
 
         The format of the returned path depends on the value of ``which``:
 
+        docker_manifests
+            /repositories/<id>/docker_manifests
         errata
             /repositories/<id>/errata
         files
@@ -6901,6 +6903,7 @@ class Repository(
 
         """
         if which in (
+            'docker_manifests',
             'errata',
             'files',
             'packages',
@@ -6939,6 +6942,25 @@ class Repository(
         if getattr(self, 'content_type', '') == 'docker':
             self._fields['docker_upstream_name'].required = True
         super().create_missing()
+
+    def docker_manifests(self, synchronous=True, timeout=None, **kwargs):
+        """List docker manifests inside repository.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('docker_manifests'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
     def errata(self, synchronous=True, timeout=None, **kwargs):
         """List errata inside repository.
