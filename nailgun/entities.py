@@ -5400,11 +5400,20 @@ class OperatingSystem(
                 default='MD5',
             ),
             'title': entity_fields.StringField(),
+            'os_parameters_attributes': entity_fields.ListField(),
         }
         self._meta = {
             'api_path': 'api/v2/operatingsystems',
         }
         super().__init__(server_config=server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Fetch as many attributes as possible for this entity."""
+        if attrs is None:
+            attrs = self.read_json()
+        if 'parameters' in attrs:
+            attrs['os_parameters_attributes'] = attrs.pop('parameters')
+        return super().read(entity, attrs, ignore, params)
 
     def create_payload(self):
         """Wrap submitted data within an extra dict.
