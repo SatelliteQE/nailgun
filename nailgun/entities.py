@@ -4203,6 +4203,7 @@ class Host(
             'puppetclass': entity_fields.OneToManyField(PuppetClass),
             'puppet_proxy': entity_fields.OneToOneField(SmartProxy),
             'realm': entity_fields.OneToOneField(Realm),
+            'reported_data': entity_fields.DictField(),
             'root_pass': entity_fields.StringField(length=(8, 30), str_type='alpha'),
             'subnet': entity_fields.OneToOneField(Subnet),
             'token': entity_fields.StringField(),
@@ -4714,13 +4715,12 @@ class Host(
             attrs['host_parameters_attributes'] = attrs.pop('parameters')
         else:
             ignore.add('host_parameters_attributes')
-        if 'content_facet_attributes' not in attrs:
-            ignore.add('content_facet_attributes')
         if 'traces_status' not in attrs and 'traces_status_label' not in attrs:
             ignore.add('traces_status')
             ignore.add('traces_status_label')
-        if 'token' not in attrs:
-            ignore.add('token')
+        for optional_attr in ['content_facet_attributes', 'token', 'reported_data']:
+            if optional_attr not in attrs:
+                ignore.add(optional_attr)
         ignore.add('compute_attributes')
         ignore.add('interfaces_attributes')
         ignore.add('root_pass')
