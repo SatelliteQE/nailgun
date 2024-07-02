@@ -6856,7 +6856,7 @@ class Repository(
             ),
             'content_counts': entity_fields.DictField(),
             'content_type': entity_fields.StringField(
-                choices=('puppet', 'yum', 'file', 'docker', 'ostree'),
+                choices=('puppet', 'yum', 'file', 'docker', 'ostree', 'deb'),
                 default='yum',
                 required=True,
             ),
@@ -6898,12 +6898,17 @@ class Repository(
                 choices=('global_default_http_proxy', 'none', 'use_selected_http_proxy')
             ),
             'http_proxy_id': entity_fields.IntegerField(),
+            'deb_releases': entity_fields.StringField(),
+            'deb_components': entity_fields.StringField(),
+            'deb_architectures': entity_fields.StringField(),
         }
         if self._fields['content_type'].choices == 'yum':
             self._fields['download_policy'].required = True
         self._meta = {
             'api_path': 'katello/api/v2/repositories',
         }
+        if kwargs.get('content_type') == 'deb':
+            self._fields['deb_releases'].default = 'stable'
         super().__init__(server_config=server_config, **kwargs)
 
     def path(self, which=None):
