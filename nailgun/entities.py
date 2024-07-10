@@ -5143,6 +5143,7 @@ class Image(
             'user_data': entity_fields.BooleanField(),
             'username': entity_fields.StringField(required=True),
             'uuid': entity_fields.StringField(required=True),
+            'password': entity_fields.StringField(required=True),
         }
         super().__init__(server_config=server_config, **kwargs)
         self._meta = {
