@@ -5102,6 +5102,7 @@ class Image(
             'user_data': entity_fields.BooleanField(),
             'username': entity_fields.StringField(required=True),
             'uuid': entity_fields.StringField(required=True),
+            'password': entity_fields.StringField(),
         }
         super().__init__(server_config=server_config, **kwargs)
         self._meta = {
@@ -5137,6 +5138,7 @@ class Image(
         entity = entity or self.entity_with_parent()
         if ignore is None:
             ignore = set()
+        ignore.add('password')
         ignore.add('compute_resource')
         ignore.add('user_data')
         return super().read(entity, attrs, ignore, params)
