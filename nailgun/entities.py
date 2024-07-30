@@ -2618,11 +2618,13 @@ class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearc
             /content_view_versions/<id>/promote
         verify_checksum
             /content_view_versions/<id>/verify_checksum
+        republish_repositories
+            /content_view_versions/<id>/republish_repositories
 
         ``super`` is called otherwise.
 
         """
-        if which in ("incremental_update", "promote", "verify_checksum"):
+        if which in ("incremental_update", "promote", "verify_checksum", "republish_repositories"):
             prefix = "base" if which == "incremental_update" else "self"
             return f"{super().path(prefix)}/{which}"
         return super().path(which)
@@ -2682,6 +2684,25 @@ class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearc
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('verify_checksum'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def republish_repositories(self, synchronous=True, timeout=None, **kwargs):
+        """Force a republish of the version's repositories' metadata.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('republish_repositories'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
@@ -6839,6 +6860,7 @@ class Repository(
                 default='yum',
                 required=True,
             ),
+            'is_container_push': entity_fields.BooleanField(default=False),
             'container_repository_name': entity_fields.StringField(),
             # Just setting `str_type='alpha'` will fail with this error:
             # {"docker_upstream_name":["must be a valid docker name"]}}
@@ -6971,6 +6993,25 @@ class Repository(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('docker_manifests'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def delete_with_args(self, synchronous=True, timeout=None, **kwargs):
+        """Delete a repository, and respect args passed to it.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.delete(self.path(), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def errata(self, synchronous=True, timeout=None, **kwargs):
