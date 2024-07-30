@@ -345,7 +345,6 @@ class PathTestCase(TestCase):
             (entities.Product, 'sync'),
             (entities.PuppetClass, 'smart_class_parameters'),
             (entities.Repository, 'docker_manifests'),
-            (entities.Repository, 'delete_with_args'),
             (entities.Repository, 'errata'),
             (entities.Repository, 'packages'),
             (entities.Repository, 'remove_content'),
