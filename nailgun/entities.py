@@ -2687,7 +2687,7 @@ class ContentViewVersion(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearc
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def republish_repositories(self, synchronous=True, timeout=None, **kwargs):
-        """Force a republish of the version's repositories' metadata.
+        """Force a republish of the version's repositories metadata.
 
         :param synchronous: What should happen if the server returns an HTTP
             202 (accepted) status code? Wait for the task to complete if
