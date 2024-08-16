@@ -14,6 +14,7 @@ If this is your first time working with NailGun, please read several of the
 :doc:`/examples` before the documentation here.
 
 """
+
 from logging import basicConfig
 
 basicConfig()

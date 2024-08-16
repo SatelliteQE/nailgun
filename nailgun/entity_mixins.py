@@ -1,4 +1,5 @@
 """Defines a set of mixins that provide tools for interacting with entities."""
+
 import _thread as thread
 from collections.abc import Iterable
 import contextlib
