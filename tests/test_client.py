@@ -1,4 +1,5 @@
 """Unit tests for :mod:`nailgun.client`."""
+
 import inspect
 from unittest import TestCase, mock
 

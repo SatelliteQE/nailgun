@@ -1,4 +1,5 @@
 """Tests for :mod:`nailgun.entity_mixins`."""
+
 import http.client as http_client
 from unittest import TestCase, mock
 
@@ -631,9 +632,10 @@ class EntityCreateMixinTestCase(TestCase):
                 response.json.return_value = return_value
             else:
                 response.json.side_effect = JSONDecodeError("msg", "foo", 2)
-            with mock.patch.object(
-                self.entity, 'create_raw', return_value=response
-            ), self.assertRaises(HTTPError) as error:
+            with (
+                mock.patch.object(self.entity, 'create_raw', return_value=response),
+                self.assertRaises(HTTPError) as error,
+            ):
                 self.entity.create_json()
             self.assertEqual(response.raise_for_status.call_count, 1)
             self.assertEqual(response.json.call_count, 1)
@@ -979,11 +981,14 @@ class EntityDeleteMixinTestCase(TestCase):
         """Check what happens if the server returns an error HTTP status code."""
         response = mock.Mock()
         response.raise_for_status.side_effect = HTTPError('oh no!')
-        with mock.patch.object(
-            entity_mixins.EntityDeleteMixin,
-            'delete_raw',
-            return_value=response,
-        ), self.assertRaises(HTTPError):
+        with (
+            mock.patch.object(
+                entity_mixins.EntityDeleteMixin,
+                'delete_raw',
+                return_value=response,
+            ),
+            self.assertRaises(HTTPError),
+        ):
             self.entity.delete()
 
     def test_delete_v2(self):
@@ -991,11 +996,14 @@ class EntityDeleteMixinTestCase(TestCase):
         response = mock.Mock()
         response.status_code = http_client.ACCEPTED
         response.json.return_value = {'id': gen_integer()}
-        with mock.patch.object(
-            entity_mixins.EntityDeleteMixin,
-            'delete_raw',
-            return_value=response,
-        ) as delete_raw, mock.patch.object(entity_mixins, '_poll_task') as poll_task:
+        with (
+            mock.patch.object(
+                entity_mixins.EntityDeleteMixin,
+                'delete_raw',
+                return_value=response,
+            ) as delete_raw,
+            mock.patch.object(entity_mixins, '_poll_task') as poll_task,
+        ):
             self.entity.delete()
         self.assertEqual(delete_raw.call_count, 1)
         self.assertEqual(poll_task.call_count, 1)
@@ -1008,11 +1016,14 @@ class EntityDeleteMixinTestCase(TestCase):
         """Check what happens if the server returns an HTTP NO_CONTENT status."""
         response = mock.Mock()
         response.status_code = http_client.NO_CONTENT
-        with mock.patch.object(
-            entity_mixins.EntityDeleteMixin,
-            'delete_raw',
-            return_value=response,
-        ), mock.patch.object(entity_mixins, '_poll_task') as poll_task:
+        with (
+            mock.patch.object(
+                entity_mixins.EntityDeleteMixin,
+                'delete_raw',
+                return_value=response,
+            ),
+            mock.patch.object(entity_mixins, '_poll_task') as poll_task,
+        ):
             self.assertEqual(self.entity.delete(), None)
         self.assertEqual(poll_task.call_count, 0)
 
@@ -1032,11 +1043,14 @@ class EntityDeleteMixinTestCase(TestCase):
         response = mock.Mock()
         response.status_code = http_client.OK
         response.content = ''
-        with mock.patch.object(
-            entity_mixins.EntityDeleteMixin,
-            'delete_raw',
-            return_value=response,
-        ), mock.patch.object(entity_mixins, '_poll_task') as poll_task:
+        with (
+            mock.patch.object(
+                entity_mixins.EntityDeleteMixin,
+                'delete_raw',
+                return_value=response,
+            ),
+            mock.patch.object(entity_mixins, '_poll_task') as poll_task,
+        ):
             self.assertEqual(self.entity.delete(), None)
         self.assertEqual(poll_task.call_count, 0)
 
@@ -1045,11 +1059,14 @@ class EntityDeleteMixinTestCase(TestCase):
         response = mock.Mock()
         response.status_code = http_client.OK
         response.content = ' '
-        with mock.patch.object(
-            entity_mixins.EntityDeleteMixin,
-            'delete_raw',
-            return_value=response,
-        ), mock.patch.object(entity_mixins, '_poll_task') as poll_task:
+        with (
+            mock.patch.object(
+                entity_mixins.EntityDeleteMixin,
+                'delete_raw',
+                return_value=response,
+            ),
+            mock.patch.object(entity_mixins, '_poll_task') as poll_task,
+        ):
             self.assertEqual(self.entity.delete(), None)
         self.assertEqual(poll_task.call_count, 0)
 
