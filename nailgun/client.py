@@ -15,6 +15,7 @@ Each function is modified with the following behaviours:
     http://docs.python-requests.org/en/latest/api/#main-interface
 
 """
+
 from json import dumps
 import logging
 from warnings import simplefilter

@@ -1,4 +1,5 @@
 """Tests for :mod:`nailgun.entities`."""
+
 from datetime import date, datetime
 from http.client import ACCEPTED, NO_CONTENT
 import inspect
@@ -1279,8 +1280,9 @@ class ReadTestCase(TestCase):
             ),
         ):
             with self.subTest(entity):
-                with mock.patch.object(EntityReadMixin, 'read') as read, mock.patch.object(
-                    EntityReadMixin, 'read_json'
+                with (
+                    mock.patch.object(EntityReadMixin, 'read') as read,
+                    mock.patch.object(EntityReadMixin, 'read_json'),
                 ):
                     with mock.patch.object(
                         entities,
@@ -1414,10 +1416,13 @@ class ReadTestCase(TestCase):
         Assert that entity`s predefined values of ``ignore`` are always
         correctly passed on.
         """
-        with mock.patch.object(EntityReadMixin, 'read') as read, mock.patch.object(
-            EntityReadMixin,
-            'read_json',
-            return_value={'host': 3},
+        with (
+            mock.patch.object(EntityReadMixin, 'read') as read,
+            mock.patch.object(
+                EntityReadMixin,
+                'read_json',
+                return_value={'host': 3},
+            ),
         ):
             entities.Snapshot(self.cfg, id=2, host=3).read()
         # `call_args` is a two-tuple of (positional, keyword) args.
@@ -1429,22 +1434,26 @@ class ReadTestCase(TestCase):
         Assert that host will have interfaces initialized and assigned
         correctly.
         """
-        with mock.patch.object(
-            EntityReadMixin,
-            'read',
-            return_value=entities.Host(self.cfg, id=2),
-        ), mock.patch.object(
-            EntityReadMixin,
-            'read_json',
-            return_value={
-                'interfaces': [{'id': 2}, {'id': 3}],
-                'parameters': None,
-                'puppet_proxy': None,
-            },
-        ), mock.patch.object(
-            entities,
-            '_feature_list',
-            return_value={'Puppet'},
+        with (
+            mock.patch.object(
+                EntityReadMixin,
+                'read',
+                return_value=entities.Host(self.cfg, id=2),
+            ),
+            mock.patch.object(
+                EntityReadMixin,
+                'read_json',
+                return_value={
+                    'interfaces': [{'id': 2}, {'id': 3}],
+                    'parameters': None,
+                    'puppet_proxy': None,
+                },
+            ),
+            mock.patch.object(
+                entities,
+                '_feature_list',
+                return_value={'Puppet'},
+            ),
         ):
             host = entities.Host(self.cfg, id=2).read()
         self.assertTrue(hasattr(host, 'interface'))
@@ -2395,14 +2404,17 @@ class ContentUploadTestCase(TestCase):
         """
         filename = gen_string('alpha')
         filepath = os.path.join(gen_string('alpha'), filename)
-        with mock.patch.object(
-            entities.ContentUpload,
-            'create',
-        ) as create, mock.patch.object(
-            entities.Repository,
-            'import_uploads',
-            return_value={'status': 'success'},
-        ) as import_uploads:
+        with (
+            mock.patch.object(
+                entities.ContentUpload,
+                'create',
+            ) as create,
+            mock.patch.object(
+                entities.Repository,
+                'import_uploads',
+                return_value={'status': 'success'},
+            ) as import_uploads,
+        ):
             mock_open = mock.mock_open(read_data=gen_string('alpha').encode('ascii'))
             with mock.patch(_BUILTIN_OPEN, mock_open, create=True):
                 response = self.content_upload.upload(filepath, filename)
@@ -2419,14 +2431,17 @@ class ContentUploadTestCase(TestCase):
         """
         filename = gen_string('alpha')
         filepath = os.path.join(gen_string('alpha'), filename)
-        with mock.patch.object(
-            entities.ContentUpload,
-            'create',
-        ) as create, mock.patch.object(
-            entities.Repository,
-            'import_uploads',
-            return_value={'status': 'success'},
-        ) as import_uploads:
+        with (
+            mock.patch.object(
+                entities.ContentUpload,
+                'create',
+            ) as create,
+            mock.patch.object(
+                entities.Repository,
+                'import_uploads',
+                return_value={'status': 'success'},
+            ) as import_uploads,
+        ):
             mock_open = mock.mock_open(read_data=gen_string('alpha').encode('ascii'))
             with mock.patch(_BUILTIN_OPEN, mock_open, create=True):
                 response = self.content_upload.upload(filepath)
@@ -3125,11 +3140,14 @@ class RepositoryTestCase(TestCase):
         :meth:`tests.test_entities.GenericTestCase.test_generic`.
         """
         kwargs = {'kwarg': gen_integer()}
-        with mock.patch.object(client, 'post') as post, mock.patch.object(
-            entities,
-            '_handle_response',
-            return_value={'status': 'success'},
-        ) as handler:
+        with (
+            mock.patch.object(client, 'post') as post,
+            mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'status': 'success'},
+            ) as handler,
+        ):
             response = self.repo.upload_content(**kwargs)
         self.assertEqual(post.call_count, 1)
         self.assertEqual(len(post.call_args[0]), 1)
@@ -3144,11 +3162,15 @@ class RepositoryTestCase(TestCase):
         the (mock) server fails to return a "success" status.
         """
         kwargs = {'kwarg': gen_integer()}
-        with mock.patch.object(client, 'post') as post, mock.patch.object(
-            entities,
-            '_handle_response',
-            return_value={'status': 'failure'},
-        ) as handler, self.assertRaises(entities.APIResponseError):
+        with (
+            mock.patch.object(client, 'post') as post,
+            mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'status': 'failure'},
+            ) as handler,
+            self.assertRaises(entities.APIResponseError),
+        ):
             self.repo.upload_content(**kwargs)
         self.assertEqual(post.call_count, 1)
         self.assertEqual(len(post.call_args[0]), 1)
@@ -3171,11 +3193,14 @@ class RepositoryTestCase(TestCase):
                 'checksum': gen_string('numeric'),
             }
         ]
-        with mock.patch.object(client, 'put') as put, mock.patch.object(
-            entities,
-            '_handle_response',
-            return_value={'status': 'success'},
-        ) as handler:
+        with (
+            mock.patch.object(client, 'put') as put,
+            mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'status': 'success'},
+            ) as handler,
+        ):
             response = self.repo.import_uploads(uploads=uploads, **kwargs)
         self.assertEqual(put.call_count, 1)
         self.assertEqual(len(put.call_args[0]), 2)
@@ -3192,11 +3217,14 @@ class RepositoryTestCase(TestCase):
         """
         kwargs = {'kwarg': gen_integer()}
         upload_ids = [gen_string('numeric')]
-        with mock.patch.object(client, 'put') as put, mock.patch.object(
-            entities,
-            '_handle_response',
-            return_value={'status': 'success'},
-        ) as handler:
+        with (
+            mock.patch.object(client, 'put') as put,
+            mock.patch.object(
+                entities,
+                '_handle_response',
+                return_value={'status': 'success'},
+            ) as handler,
+        ):
             response = self.repo.import_uploads(upload_ids=upload_ids, **kwargs)
         self.assertEqual(put.call_count, 1)
         self.assertEqual(len(put.call_args[0]), 2)

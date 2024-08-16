@@ -7,6 +7,7 @@ server. :class:`nailgun.config.ServerConfig` eases the task of managing and
 presenting that information.
 
 """
+
 import json
 from os.path import isfile, join
 from threading import Lock
