@@ -18,6 +18,7 @@ still legal, so they will often return nonsense UTF-8 values, which is
 unpleasant to work with manually.
 
 """
+
 import random
 
 from fauxfactory import (

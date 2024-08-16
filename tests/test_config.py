@@ -1,4 +1,5 @@
 """Unit tests for :mod:`nailgun.config`."""
+
 import builtins
 import json
 from unittest import TestCase
