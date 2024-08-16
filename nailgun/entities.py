@@ -20,6 +20,7 @@ makes use of a work-around notes so in its docstring.
 workings of entity classes.
 
 """
+
 from datetime import datetime
 from functools import lru_cache
 import hashlib
@@ -2931,7 +2932,7 @@ class ContentView(
                 if self._server_config:
                     entity._server_config = self._server_config
         result = super().read(entity, attrs, ignore, params)
-        if 'content_view_components' in attrs and attrs['content_view_components']:
+        if attrs.get('content_view_components'):
             result.content_view_component = [
                 ContentViewComponent(
                     server_config=self._server_config,
@@ -4775,7 +4776,7 @@ class Host(
             )
         else:
             result.image = None
-        if 'interfaces' in attrs and attrs['interfaces']:
+        if attrs.get('interfaces'):
             result.interface = [
                 Interface(
                     server_config=self._server_config,
