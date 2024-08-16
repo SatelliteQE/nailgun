@@ -1,4 +1,5 @@
 """Unit tests for :mod:`nailgun.entity_fields`."""
+
 import datetime
 from random import randint
 import socket
