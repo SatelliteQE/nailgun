@@ -93,6 +93,7 @@ class InitTestCase(TestCase):
                 entities.ActivationKey,
                 entities.AlternateContentSource,
                 entities.AnsibleRoles,
+                entities.AnsibleVariable,
                 entities.AnsiblePlaybooks,
                 entities.Architecture,
                 entities.ArfReport,
