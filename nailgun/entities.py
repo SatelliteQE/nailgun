@@ -9257,6 +9257,47 @@ class AnsibleRoles(
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
+class AnsibleVariable(
+    Entity,
+    EntityCreateMixin,
+    EntityReadMixin,
+    EntityDeleteMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
+    """A representation of a Ansible Variable entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'variable': entity_fields.StringField(required=True),
+            'ansible_role_id': entity_fields.IntegerField(required=True),
+            'default_value': entity_fields.StringField(),
+            'override_value_order': entity_fields.StringField(),
+            'description': entity_fields.StringField(),
+            'validator_type': entity_fields.ListField(),
+            'validator_rule': entity_fields.StringField(),
+            'variable_type': entity_fields.StringField(
+                default='string',
+                choices=(
+                    'string',
+                    'boolean',
+                    'integer',
+                    'real',
+                    'array',
+                    'hash',
+                    'yaml',
+                    'json',
+                ),
+            ),
+            'merge_overrides': entity_fields.BooleanField(),
+            'merge_default': entity_fields.BooleanField(),
+            'avoid_duplicates': entity_fields.BooleanField(),
+            'override': entity_fields.BooleanField(),
+        }
+        self._meta = {'api_path': 'ansible/api/ansible_variables'}
+        super().__init__(server_config=server_config, **kwargs)
+
+
 class TablePreferences(
     Entity,
     EntityCreateMixin,
