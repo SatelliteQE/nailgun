@@ -120,7 +120,7 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None, must_succee
     except KeyboardInterrupt:
         # raise_task_timeout will raise a KeyboardInterrupt when the timeout
         # expires. Catch the exception and raise TaskTimedOutError
-        raise TaskTimedOutError(  # noqa: TRY200 - Not raising from KeyBoardInterrupt
+        raise TaskTimedOutError(  # noqa: B904 - Not raising from KeyBoardInterrupt
             f"Timed out polling task {task_id}. Task information: {task_info}", task_id
         )
     finally:
