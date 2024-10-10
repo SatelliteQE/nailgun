@@ -120,7 +120,7 @@ jobs:
 
       - name: Add the prt comment for running the sanity tests
         id: add-parent-prt-comment
-        uses: thollander/actions-comment-pull-request@v2
+        uses: thollander/actions-comment-pull-request@v3
         with:
           message: |
             trigger: test-robottelo
@@ -191,7 +191,7 @@ jobs:
 
       - name: Add the prt comment for running the sanity tests
         id: add-parent-prt-comment
-        uses: thollander/actions-comment-pull-request@v2
+        uses: thollander/actions-comment-pull-request@v3
         with:
           message: |
             trigger: test-robottelo
