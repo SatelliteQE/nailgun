@@ -44,6 +44,20 @@ DEFAULT_SERVER_CONFIG = None
 CREATE_MISSING = False
 
 
+def raise_for_status_add_to_exception(response):
+    """Add error message from response to exception.
+
+    :param response, a ``requests.response`` object.
+    :raises: ``requests.exceptions.HTTPError`` if the response has an HTTP 4XX or 5XX status code.
+    """
+    try:
+        response.raise_for_status()
+    except HTTPError as e:
+        with contextlib.suppress(JSONDecodeError):
+            e.args += (response.json(),)
+        raise e
+
+
 def call_entity_method_with_timeout(entity_callable, timeout=300, **kwargs):
     """Call Entity callable with a custom timeout.
 
@@ -112,7 +126,7 @@ def _poll_task(task_id, server_config, poll_rate=None, timeout=None, must_succee
         timer.start()
         while True:
             response = client.get(path, **server_config.get_client_kwargs())
-            response.raise_for_status()
+            raise_for_status_add_to_exception(response)
             task_info = response.json()
             if task_info['state'] in ('paused', 'stopped'):
                 break
@@ -699,7 +713,7 @@ class EntityDeleteMixin:
 
         """
         response = self.delete_raw()
-        response.raise_for_status()
+        raise_for_status_add_to_exception(response)
 
         if synchronous is True and response.status_code == http_client.ACCEPTED:
             return _poll_task(response.json()['id'], self._server_config, timeout=timeout)
@@ -764,7 +778,7 @@ class EntityReadMixin:
 
         """
         response = self.read_raw(params=params)
-        response.raise_for_status()
+        raise_for_status_add_to_exception(response)
         return response.json()
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
@@ -951,12 +965,8 @@ class EntityCreateMixin:
 
         """
         response = self.create_raw(create_missing)
-        try:
-            response.raise_for_status()
-        except HTTPError as e:
-            with contextlib.suppress(JSONDecodeError):
-                e.args += (response.json(),)
-            raise e
+        raise_for_status_add_to_exception(response)
+
         return response.json()
 
     def create(self, create_missing=None):
@@ -1060,7 +1070,7 @@ class EntityUpdateMixin:
 
         """
         response = self.update_raw(fields)
-        response.raise_for_status()
+        raise_for_status_add_to_exception(response)
         return response.json()
 
     def update(self, fields=None):
@@ -1237,7 +1247,7 @@ class EntitySearchMixin:
 
         """
         response = self.search_raw(fields, query)
-        response.raise_for_status()
+        raise_for_status_add_to_exception(response)
         return response.json()
 
     def search_normalize(self, results):
