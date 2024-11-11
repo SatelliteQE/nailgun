@@ -6938,6 +6938,8 @@ class Repository(
 
         docker_manifests
             /repositories/<id>/docker_manifests
+        docker_manifest_lists
+            /repositories/<id>/docker_manifest_lists
         errata
             /repositories/<id>/errata
         files
@@ -6962,6 +6964,7 @@ class Repository(
         """
         if which in (
             'docker_manifests',
+            'docker_manifest_lists',
             'errata',
             'files',
             'packages',
@@ -7018,6 +7021,25 @@ class Repository(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('docker_manifests'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def docker_manifest_lists(self, synchronous=True, timeout=None, **kwargs):
+        """List docker manifest lists inside repository.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('docker_manifest_lists'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def delete_with_args(self, synchronous=True, timeout=None, **kwargs):
