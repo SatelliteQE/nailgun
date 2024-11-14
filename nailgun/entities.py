@@ -6811,7 +6811,7 @@ class RegistrationCommand(Entity, EntityCreateMixin, EntityReadMixin):
             'jwt_expiration': entity_fields.IntegerField(default=4),
             'repo': entity_fields.StringField(default=''),
             'repo_gpg_key_url': entity_fields.URLField(default=''),
-            'packages': entity_fields.ListField(default=[]),
+            'packages': entity_fields.StringField(),
             'update_packages': entity_fields.BooleanField(default=False),
             'force': entity_fields.BooleanField(default=False),
             'ignore_subman_errors': entity_fields.BooleanField(default=False),
