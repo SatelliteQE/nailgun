@@ -31,6 +31,7 @@ select = [
     "B014", # Exception handler with duplicate exception
     "B023", # Function definition does not bind loop variable {name}
     "B026", # Star-arg unpacking after a keyword argument is strongly discouraged
+    "B904", # Use raise from to specify exception cause
     "BLE001", # Using bare except clauses is prohibited
     "C", # complexity
     "C4", # flake8-comprehensions
@@ -74,7 +75,6 @@ select = [
     "T100", # Trace found: {name} used
     "T20", # flake8-print
     "TRY004", # Prefer TypeError exception for invalid type
-    "TRY200", # Use raise from to specify exception cause
     "TRY302", # Remove exception handler; error is immediately re-raised
     "PLR0911", # Too many return statements ({returns} > {max_returns})
     "PLR0912", # Too many branches ({branches} > {max_branches})
