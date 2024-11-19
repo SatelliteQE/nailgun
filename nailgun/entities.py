@@ -3468,6 +3468,118 @@ class Filter(
         return {'filter': super().update_payload(fields)}
 
 
+class FlatpakRemoteRepository(
+    Entity,
+    EntityReadMixin,
+    EntitySearchMixin,
+):
+    """A representation of a Flatpak remote repository entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'flatpak_remote_id': entity_fields.IntegerField(required=True),
+            'name': entity_fields.StringField(),
+            'label': entity_fields.StringField(),
+        }
+        self._meta = {
+            'api_path': 'katello/api/flatpak_remote_repositories',
+        }
+        super().__init__(server_config=server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        mirror
+            /katello/api/flatpak_remote_repositories/:id/mirror
+        """
+        if which == "mirror":
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
+
+    def mirror(self, product_id, synchronous=True, timeout=None, **kwargs):
+        """Mirror a flatpak remote repository.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        if 'data' not in kwargs:
+            kwargs['data'] = {}
+        if 'product_id' not in kwargs['data']:
+            kwargs['data']['product_id'] = product_id
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('mirror'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+
+class FlatpakRemote(
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
+    """A representation of a Flatpak remote entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(
+                required=True, str_type='alpha', length=(6, 12), unique=True
+            ),
+            'url': entity_fields.URLField(required=True),
+            'organization': entity_fields.OneToOneField(Organization, required=True),
+            'description': entity_fields.StringField(),
+            'username': entity_fields.StringField(),
+            'token': entity_fields.StringField(),
+            'registry_url': entity_fields.StringField(),
+            'seeded': entity_fields.BooleanField(),
+        }
+        self._meta = {
+            'api_path': 'katello/api/flatpak_remotes',
+        }
+        super().__init__(server_config=server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        scan
+            /katello/api/flatpak_remote/:id/scan
+        """
+        if which == "scan":
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
+
+    def scan(self, synchronous=True, timeout=None, **kwargs):
+        """Scan a flatpak remote.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('scan'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+
 class ForemanStatus(Entity, EntityReadMixin):
     """A representation of the Foreman Status entity."""
 
