@@ -6815,6 +6815,7 @@ class RegistrationCommand(Entity, EntityCreateMixin, EntityReadMixin):
             'update_packages': entity_fields.BooleanField(default=False),
             'force': entity_fields.BooleanField(default=False),
             'ignore_subman_errors': entity_fields.BooleanField(default=False),
+            'repo_data': entity_fields.ListField(),
         }
 
         self._meta = {'api_path': '/api/registration_commands'}
