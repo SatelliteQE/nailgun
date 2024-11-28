@@ -227,7 +227,6 @@ class ActivationKey(
             ),
             'purpose_usage': entity_fields.StringField(),
             'purpose_role': entity_fields.StringField(),
-            'purpose_addons': entity_fields.ListField(),
             'release_version': entity_fields.StringField(),
             'service_level': entity_fields.StringField(),
             'unlimited_hosts': entity_fields.BooleanField(),
