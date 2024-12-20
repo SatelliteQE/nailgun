@@ -3540,7 +3540,6 @@ class FlatpakRemote(
             'organization': entity_fields.OneToOneField(Organization, required=True),
             'description': entity_fields.StringField(),
             'username': entity_fields.StringField(),
-            'token': entity_fields.StringField(),
             'registry_url': entity_fields.StringField(),
             'seeded': entity_fields.BooleanField(),
         }
