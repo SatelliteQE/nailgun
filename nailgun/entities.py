@@ -6901,7 +6901,7 @@ class RecurringLogic(Entity, EntityReadMixin):
 
 
 class RegistrationCommand(Entity, EntityCreateMixin, EntityReadMixin):
-    """A representation of a Role entity."""
+    """A representation of a Registration Command entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
@@ -6951,6 +6951,20 @@ class RegistrationCommand(Entity, EntityCreateMixin, EntityReadMixin):
         if attrs is None:
             attrs = self.read_json()
         return attrs['registration_command']
+
+
+class RegistrationTokens(Entity, EntityCreateMixin, EntityReadMixin):
+    """A representation of a Registration Token entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'organization': entity_fields.OneToOneField(Organization, required=True),
+            'location': entity_fields.OneToOneField(Location, required=True),
+            'search': entity_fields.StringField(default=''),
+        }
+
+        self._meta = {'api_path': '/api/registration_tokens'}
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class Report(Entity):
