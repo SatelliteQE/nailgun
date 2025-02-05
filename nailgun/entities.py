@@ -6926,6 +6926,7 @@ class RegistrationCommand(Entity, EntityCreateMixin, EntityReadMixin):
             'force': entity_fields.BooleanField(default=False),
             'ignore_subman_errors': entity_fields.BooleanField(default=False),
             'repo_data': entity_fields.ListField(),
+            'download_utility': entity_fields.StringField(default='curl', choices=('curl', 'wget')),
         }
 
         self._meta = {'api_path': '/api/registration_commands'}
