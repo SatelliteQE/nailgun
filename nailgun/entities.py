@@ -7033,6 +7033,7 @@ class Repository(
             'deb_releases': entity_fields.StringField(),
             'deb_components': entity_fields.StringField(),
             'deb_architectures': entity_fields.StringField(),
+            'download_concurrency': entity_fields.IntegerField(),
         }
         if self._fields['content_type'].choices == 'yum':
             self._fields['download_policy'].required = True
@@ -7103,6 +7104,7 @@ class Repository(
         ignore.add('organization')
         ignore.add('upstream_password')
         ignore.add('mirror_on_sync')
+        ignore.add('download_concurrency')
         return super().read(entity, attrs, ignore, params)
 
     def create_missing(self):
