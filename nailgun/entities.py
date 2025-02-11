@@ -7669,7 +7669,7 @@ class RHCloud(Entity):
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``."""
-        if which in ("enable_connector",):
+        if which in ("enable_connector", "advisor_engine_config"):
             return f'{super().path(which="base")}/{which}'
         return super().path(which)
 
@@ -7681,6 +7681,13 @@ class RHCloud(Entity):
         if data := _payload(self.get_fields(), self.get_values()):
             kwargs['data'] = data
         response = client.post(self.path('enable_connector'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def advisor_engine_config(self, synchronous=True, timeout=None, **kwargs):
+        """Get advisor engine configuration information."""
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('advisor_engine_config'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
