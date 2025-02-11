@@ -6904,7 +6904,7 @@ class RecurringLogic(Entity, EntityReadMixin):
 
 
 class RegistrationCommand(Entity, EntityCreateMixin, EntityReadMixin):
-    """A representation of a Role entity."""
+    """A representation of a Registration Command entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
@@ -6955,6 +6955,35 @@ class RegistrationCommand(Entity, EntityCreateMixin, EntityReadMixin):
         if attrs is None:
             attrs = self.read_json()
         return attrs['registration_command']
+
+
+class RegistrationTokens(Entity, EntityDeleteMixin):
+    """A representation of Registration Token entity."""
+
+    def __init__(self, server_config=None, user=None, **kwargs):
+        self._fields = {
+            'location': entity_fields.OneToManyField(Location),
+            'organization': entity_fields.OneToManyField(Organization),
+        }
+        api_path = f'api/users/{user}/registration_tokens' if user else 'api/registration_tokens'
+        self._meta = {'api_path': api_path}
+        super().__init__(server_config=server_config, **kwargs)
+
+    def invalidate(self, synchronous=True, timeout=None, **kwargs):
+        """Invalidate tokens for a single user."""
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.delete(self.path(), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def invalidate_multiple(self, synchronous=True, timeout=None, search=None, **kwargs):
+        """Invalidate tokens for multiple users."""
+        kwargs = kwargs.copy()
+        if search:
+            kwargs['params'] = {'search': search}
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.delete(self.path(), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class Report(Entity):
