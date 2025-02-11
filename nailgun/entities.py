@@ -3706,6 +3706,7 @@ class HostGroup(
             ),
             'realm': entity_fields.OneToOneField(Realm),
             'subnet': entity_fields.OneToOneField(Subnet),
+            'subnet6': entity_fields.OneToOneField(Subnet),
             'group_parameters_attributes': entity_fields.ListField(),
         }
 
@@ -4166,6 +4167,7 @@ class Host(
             'reported_data': entity_fields.DictField(),
             'root_pass': entity_fields.StringField(length=(8, 30), str_type='alpha'),
             'subnet': entity_fields.OneToOneField(Subnet),
+            'subnet6': entity_fields.OneToOneField(Subnet),
             'token': entity_fields.StringField(),
             'traces_status': entity_fields.IntegerField(min_val=-1, max_val=2),
             'traces_status_label': entity_fields.StringField(),
@@ -5213,6 +5215,7 @@ class Interface(
             'provider': entity_fields.StringField(),  # for 'bmc' type
             'provision': entity_fields.BooleanField(),
             'subnet': entity_fields.OneToOneField(Subnet),
+            'subnet6': entity_fields.OneToOneField(Subnet),
             'tag': entity_fields.StringField(),  # for 'virtual' type
             'type': entity_fields.StringField(
                 choices=('interface', 'bmc', 'bond', 'bridge'), default='interface', required=True
