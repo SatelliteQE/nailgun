@@ -5557,12 +5557,17 @@ class HTTPProxy(
         For more information, see `Bugzilla #1779642
         <https://bugzilla.redhat.com/show_bug.cgi?id=1779642>`_.
         """
+        if attrs is None:
+            attrs = self.read_json()
         if ignore is None:
             ignore = set()
         ignore.add('password')
         ignore.add('organization')
         ignore.add('location')
         ignore.add('cacert')
+        # Workaround for SAT-30769
+        if 'content_default_http_proxy' not in attrs:
+            ignore.add('content_default_http_proxy')
         return super().read(entity, attrs, ignore, params)
 
 
