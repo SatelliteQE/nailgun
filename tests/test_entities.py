@@ -395,6 +395,7 @@ class PathTestCase(TestCase):
             (entities.ForemanTask, 'bulk_search'),
             (entities.ForemanTask, 'summary'),
             (entities.RHCloud, 'enable_connector'),
+            (entities.RHCloud, 'advisor_engine_config'),
             (entities.Template, 'imports'),
             (entities.Template, 'exports'),
         ):
@@ -2225,6 +2226,7 @@ class GenericTestCase(TestCase):
                 'post',
                 {'organization_id': 1, 'location_id': 2},
             ),
+            (entities.RHCloud(**plain_taxonomy).advisor_engine_config, 'get', {}),
             (entities.Snapshot(**snapshot).revert, 'put', {}),
         )
 
