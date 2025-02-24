@@ -1284,7 +1284,10 @@ class ReadTestCase(TestCase):
                 {'discovery', 'remote_execution_proxy', 'subnet_parameters_attributes'},
             ),
             (entities.Subscription, {'organization'}),
-            (entities.Repository, {'organization', 'upstream_password', 'mirror_on_sync'}),
+            (
+                entities.Repository,
+                {'organization', 'upstream_password', 'mirror_on_sync', 'download_concurrency'},
+            ),
             (entities.User, {'password'}),
             (entities.ScapContents, {'scap_file'}),
             (entities.TailoringFile, {'scap_file'}),
