@@ -5002,6 +5002,7 @@ class Host(
         ):
             return f'{super().path(which="self")}/{which}'
         elif which in (
+            'bootc_images',
             'bulk/add_subscriptions',
             'bulk/remove_subscriptions',
             'bulk/available_incremental_updates',
@@ -5010,8 +5011,8 @@ class Host(
             'bulk/destroy',
         ):
             return f'{super().path(which="base")}/{which}'
-        elif which in ('upload_facts', 'bootc_images'):
-            return f'{super().path(which="base")}/{which}'
+        elif which in ('upload_facts',):
+            return f'{super().path(which="base")}/facts'
         return super().path(which)
 
     def add_puppetclass(self, synchronous=True, timeout=None, **kwargs):
