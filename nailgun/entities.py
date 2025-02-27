@@ -4313,6 +4313,7 @@ class Host(
             'interface': entity_fields.OneToManyField(Interface),
             'interfaces_attributes': entity_fields.DictField(),
             'ip': entity_fields.StringField(),
+            'ip6': entity_fields.StringField(),
             'location': entity_fields.OneToOneField(Location, required=True),
             'mac': entity_fields.MACAddressField(),
             'managed': entity_fields.BooleanField(),
