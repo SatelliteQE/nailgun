@@ -1456,7 +1456,7 @@ class ReadTestCase(TestCase):
         ):
             entities.Snapshot(self.cfg, id=2, host=3).read()
         # `call_args` is a two-tuple of (positional, keyword) args.
-        self.assertEqual({'host'}, read.call_args[0][2])
+        self.assertEqual({'quiesce', 'include_ram', 'host'}, read.call_args[0][2])
 
     def test_host_with_interface(self):
         """Call :meth:`nailgun.entities.Host.read`.

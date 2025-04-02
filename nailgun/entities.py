@@ -8025,6 +8025,8 @@ class Snapshot(
             'name': entity_fields.StringField(required=True),
             'description': entity_fields.StringField(required=False),
             'host': entity_fields.OneToOneField(Host, required=True, parent=True),
+            'include_ram': entity_fields.BooleanField(required=False),
+            'quiesce': entity_fields.BooleanField(required=False),
         }
         super().__init__(server_config=server_config, **kwargs)
         self._meta = {
@@ -8063,6 +8065,8 @@ class Snapshot(
         if ignore is None:
             ignore = set()
         ignore.add('host')
+        ignore.add('include_ram')
+        ignore.add('quiesce')
         return super().read(entity, attrs, ignore, params)
 
     def search_normalize(self, results):
