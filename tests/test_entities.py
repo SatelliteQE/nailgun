@@ -117,6 +117,7 @@ class InitTestCase(TestCase):
                 entities.DiscoveryRule,
                 entities.DockerContentViewFilter,
                 entities.Domain,
+                entities.EC2ComputeResource,
                 entities.Environment,
                 entities.Errata,
                 entities.ErratumContentViewFilter,
