@@ -6195,6 +6195,32 @@ class Organization(
         response = client.post(self.path('rh_cloud/inventory_sync'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
+    def rh_cloud_fetch_last_report_log(self):
+        """Fetch latest report log.
+
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = {'headers': {'Accept': 'application/json'}}  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        url = f'{self._server_config.url}/foreman_inventory_upload/{self.id}/reports/last'
+        return client.get(url, **kwargs).json()
+
+    def rh_cloud_fetch_last_upload_log(self):
+        """Fetch latest report log.
+
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = {'headers': {'Accept': 'application/json'}}  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        url = f'{self._server_config.url}/foreman_inventory_upload/{self.id}/uploads/last'
+        return client.get(url, **kwargs).json()
+
 
 class OSDefaultTemplate(
     Entity,
