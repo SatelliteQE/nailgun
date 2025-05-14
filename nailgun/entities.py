@@ -2900,6 +2900,7 @@ class ContentView(
                 required=True,
             ),
             'repository': entity_fields.OneToManyField(Repository),
+            'rolling': entity_fields.BooleanField(),
             'solve_dependencies': entity_fields.BooleanField(),
             'version': entity_fields.OneToManyField(ContentViewVersion),
         }

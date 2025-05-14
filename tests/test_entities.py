@@ -2558,6 +2558,7 @@ class ContentViewTestCase(TestCase):
                     "id": 3,
                 }
             ],
+            "rolling": False,
             "versions": [
                 {
                     "id": 4,
