@@ -2985,6 +2985,8 @@ class ContentView(
             /content_views/<id>/content_view_versions
         publish
             /content_views/<id>/publish
+        remove
+            /content_views/<id>/remove
 
         ``super`` is called otherwise.
 
@@ -2993,6 +2995,7 @@ class ContentView(
             'content_view_versions',
             'copy',
             'publish',
+            'remove',
         ):
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
@@ -3016,6 +3019,42 @@ class ContentView(
             kwargs['data']['id'] = self.id
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('publish'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def remove_version(self, versions, synchronous=True, timeout=None):
+        """Remove published content view Version(s) from this content view.
+
+        Also remove the CV from the Version's environment(s), including Library.
+
+        :param versions: ContentViewVersion (entity) or ID (int) to remove.
+            can also pass a list of entities, or a list of IDs.
+        """
+        content_view = self.read()
+        matched_versions = []
+        environment_ids = set()
+        # Normalize into a list of ids; from a single entity/:id, or a list.
+        if isinstance(versions, list):
+            version_ids = [v.id if hasattr(v, 'id') else int(v) for v in versions]
+        else:
+            version_ids = [versions.id if hasattr(versions, 'id') else int(versions)]
+        # Match the Version ID from CV to the provided Versions
+        for vid in version_ids:
+            matched_versions = [v for v in content_view.version if v.id == vid]
+            for version in matched_versions:
+                v = version.read()
+                environment_ids.update(env.id for env in v.environment)
+        if not matched_versions:
+            raise ValueError(
+                f'No Version(s) or :id(s) provided: {versions} ,'
+                f' matched the published Versions of the Content-View[id:{content_view.id}]: {content_view.version}'
+            )
+        environment_ids = list(environment_ids)
+        # PUT request: `remove` these CVV-ids and ENV-ids from this CV.
+        response = client.put(
+            f'{self.path("remove")}',
+            json={'content_view_version_ids': version_ids, 'environment_ids': environment_ids},
+            **self._server_config.get_client_kwargs(),
+        )
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def copy(self, synchronous=True, timeout=None, **kwargs):
