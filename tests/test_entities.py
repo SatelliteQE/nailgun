@@ -2889,6 +2889,7 @@ class JobTemplateTestCase(TestCase):
         }
         self.read_json.return_value = self.data.copy()
         del self.data['template_inputs']
+        del self.data['audit_comment']
 
     def tearDown(self):
         """Stop patching ``self.entity.read_json``."""

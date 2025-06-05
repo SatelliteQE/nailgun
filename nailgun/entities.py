@@ -2120,6 +2120,7 @@ class JobTemplate(
         if ignore is None:
             ignore = set()
         ignore.add('template_inputs')
+        ignore.add('audit_comment')
         entity = super().read(entity=entity, attrs=attrs, ignore=ignore, params=params)
         referenced_entities = [
             TemplateInput(
