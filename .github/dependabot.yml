@@ -15,8 +15,6 @@ updates:
       - "CherryPick"
       - "dependencies"
       - "6.15.z"
-      - "6.14.z"
-      - "6.13.z"
 
   # Maintain dependencies for our GitHub Actions
   - package-ecosystem: "github-actions"
@@ -29,5 +27,3 @@ updates:
       - "CherryPick"
       - "dependencies"
       - "6.15.z"
-      - "6.14.z"
-      - "6.13.z"
