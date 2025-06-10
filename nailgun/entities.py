@@ -1857,6 +1857,33 @@ class AzureRMComputeResource(AbstractComputeResource):
         return super().read(entity, attrs, ignore, params)
 
 
+class EC2ComputeResource(AbstractComputeResource):
+    """A representation for compute resources with EC2 provider."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'user': entity_fields.StringField(required=True),
+            'password': entity_fields.StringField(required=True),
+            'region': entity_fields.StringField(required=True),
+        }
+        super().__init__(server_config=server_config, **kwargs)
+        del self._fields['url']
+        self._fields['provider'].default = 'EC2'
+        self._fields['provider'].required = True
+        self._fields['provider_friendly_name'].default = 'EC2'
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Make sure, ``secret_key`` is in the ignore list for read."""
+        if ignore is None:
+            ignore = set()
+        ignore.add('secret_key')
+        ignore.add('password')
+        if attrs is None:
+            attrs = self.read_json()
+        attrs['user'] = attrs.pop('access_key', None)
+        return super().read(entity, attrs, ignore, params)
+
+
 class ConfigGroup(
     Entity,
     EntityCreateMixin,
