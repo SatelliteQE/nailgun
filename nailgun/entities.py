@@ -6603,7 +6603,7 @@ class Product(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('sync'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
+        return _handle_response(response, self._server_config, synchronous, timeout=timeout)
 
 
 class ProductBulkAction(Entity):
