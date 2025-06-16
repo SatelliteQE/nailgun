@@ -73,7 +73,7 @@ def call_entity_method_with_timeout(entity_callable, timeout=300, **kwargs):
     original_task_timeout = TASK_TIMEOUT
     TASK_TIMEOUT = timeout
     try:
-        entity_callable(**kwargs)
+        entity_callable(timeout=timeout, **kwargs)
     finally:
         TASK_TIMEOUT = original_task_timeout
 
