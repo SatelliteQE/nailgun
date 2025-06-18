@@ -7950,9 +7950,10 @@ class SmartProxy(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'download_policy': entity_fields.StringField(
-                choices=('background', 'immediate', 'on_demand'),
+                choices=('on_demand', 'immediate', 'inherit', 'streamed'),
                 default='on_demand',
             ),
+            'http_proxy': entity_fields.OneToOneField(HTTPProxy),
             'name': entity_fields.StringField(
                 required=True, str_type='alpha', length=(6, 12), unique=True
             ),
@@ -8038,6 +8039,7 @@ class SmartProxy(
         if ignore is None:
             ignore = set()
         ignore.add('download_policy')
+        ignore.add('http_proxy')
         return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
