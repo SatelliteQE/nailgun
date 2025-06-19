@@ -1288,7 +1288,7 @@ class ReadTestCase(TestCase):
             (entities.AzureRMComputeResource, {'secret_key'}),
             (entities.Errata, {'content_view_version', 'environment', 'repository'}),
             (entities.OVirtComputeResource, {'password'}),
-            (entities.SmartProxy, {'download_policy'}),
+            (entities.SmartProxy, {'download_policy', 'http_proxy'}),
             (entities.SmartClassParameters, {'hidden_value'}),
             (
                 entities.Subnet,
