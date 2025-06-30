@@ -2,6 +2,7 @@
 
 import builtins
 import json
+import tempfile
 from unittest import TestCase
 from unittest.mock import call, mock_open, patch
 
@@ -14,7 +15,7 @@ from nailgun.config import (
     _get_config_file_path,
 )
 
-FILE_PATH = '/tmp/bogus.json'  # noqa: S108
+FILE_PATH = tempfile.NamedTemporaryFile(suffix='.json', delete=False).name
 CONFIGS = {
     'default': {'url': 'http://example.com'},
     'Ask Aak': {'url': 'bogus value', 'auth': ['username', 'password']},
