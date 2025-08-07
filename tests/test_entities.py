@@ -2875,6 +2875,7 @@ class JobTemplateTestCase(TestCase):
         self.data = {
             'id': 1,
             'audit_comment': None,
+            'description': None,
             'description_format': None,
             'effective_user': None,
             'job_category': 'Commands',
