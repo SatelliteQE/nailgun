@@ -2058,6 +2058,7 @@ class JobTemplate(
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
             'audit_comment': entity_fields.StringField(),
+            'description': entity_fields.StringField(),
             'description_format': entity_fields.StringField(),
             'effective_user': entity_fields.DictField(),
             'job_category': entity_fields.StringField(),
