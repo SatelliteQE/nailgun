@@ -4987,8 +4987,8 @@ class Host(
         # the given host, but only if it does not have Puppet proxy assigned.
         if (
             'Puppet' not in _feature_list(self._server_config)
-            or 'puppetclasses' not in attrs
-            and not attrs['puppet_proxy']
+            or ('puppetclasses' not in attrs
+            and not attrs['puppet_proxy'])
         ):
             ignore.add('puppetclass')
         result = super().read(entity, attrs, ignore, params)
