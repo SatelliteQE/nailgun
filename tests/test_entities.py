@@ -2997,15 +2997,15 @@ class HostGroupTestCase(TestCase):
         entity = self.entity
         entity.id = 1
         func_param_dict = {entity.add_ansible_role: 'ansible_role_id'}
-        for func in func_param_dict:
+        for func, param in func_param_dict.items():
             self.assertEqual(inspect.getfullargspec(func), EXPECTED_ARGSPEC)
-            kwargs = {'kwarg': gen_integer(), 'data': {func_param_dict[func]: gen_integer()}}
+            kwargs = {'kwarg': gen_integer(), 'data': {param: gen_integer()}}
             with mock.patch.object(entities, '_handle_response') as handlr:
                 with mock.patch.object(client, 'put') as client_request:
                     response = func(**kwargs)
             self.assertEqual(client_request.call_count, 1)
             self.assertEqual(len(client_request.call_args[0]), 1)
-            self.assertNotIn(func_param_dict[func], client_request.call_args[1]['data'])
+            self.assertNotIn(param, client_request.call_args[1]['data'])
             self.assertEqual(client_request.call_args[1], kwargs)
             self.assertEqual(handlr.call_count, 1)
             self.assertEqual(handlr.return_value, response)
@@ -3028,15 +3028,15 @@ class HostGroupTestCase(TestCase):
             entity.delete_puppetclass: 'puppetclass_id',
             entity.remove_ansible_role: 'ansible_role_id',
         }
-        for func in func_param_dict:
+        for func, param in func_param_dict.items():
             self.assertEqual(inspect.getfullargspec(func), EXPECTED_ARGSPEC)
-            kwargs = {'kwarg': gen_integer(), 'data': {func_param_dict[func]: gen_integer()}}
+            kwargs = {'kwarg': gen_integer(), 'data': {param: gen_integer()}}
             with mock.patch.object(entities, '_handle_response') as handlr:
                 with mock.patch.object(client, 'delete') as client_request:
                     response = func(**kwargs)
             self.assertEqual(client_request.call_count, 1)
             self.assertEqual(len(client_request.call_args[0]), 1)
-            self.assertNotIn(func_param_dict[func], client_request.call_args[1]['data'])
+            self.assertNotIn(param, client_request.call_args[1]['data'])
             self.assertEqual(client_request.call_args[1], kwargs)
             self.assertEqual(handlr.call_count, 1)
             self.assertEqual(handlr.return_value, response)
@@ -3174,15 +3174,15 @@ class HostTestCase(TestCase):
         """
         entity = entities.Host(self.cfg, id=1)
         func_param_dict = {entity.add_ansible_role: 'ansible_role_id'}
-        for func in func_param_dict:
+        for func, param in func_param_dict.items():
             self.assertEqual(inspect.getfullargspec(func), EXPECTED_ARGSPEC)
-            kwargs = {'kwarg': gen_integer(), 'data': {func_param_dict[func]: gen_integer()}}
+            kwargs = {'kwarg': gen_integer(), 'data': {param: gen_integer()}}
             with mock.patch.object(entities, '_handle_response') as handlr:
                 with mock.patch.object(client, 'put') as client_request:
                     response = func(**kwargs)
             self.assertEqual(client_request.call_count, 1)
             self.assertEqual(len(client_request.call_args[0]), 1)
-            self.assertNotIn(func_param_dict[func], client_request.call_args[1]['data'])
+            self.assertNotIn(param, client_request.call_args[1]['data'])
             self.assertEqual(client_request.call_args[1], kwargs)
             self.assertEqual(handlr.call_count, 1)
             self.assertEqual(handlr.return_value, response)
@@ -3204,15 +3204,15 @@ class HostTestCase(TestCase):
             entity.delete_puppetclass: 'puppetclass_id',
             entity.remove_ansible_role: 'ansible_role_id',
         }
-        for func in func_param_dict:
+        for func, param in func_param_dict.items():
             self.assertEqual(inspect.getfullargspec(func), EXPECTED_ARGSPEC)
-            kwargs = {'kwarg': gen_integer(), 'data': {func_param_dict[func]: gen_integer()}}
+            kwargs = {'kwarg': gen_integer(), 'data': {param: gen_integer()}}
             with mock.patch.object(entities, '_handle_response') as handlr:
                 with mock.patch.object(client, 'delete') as client_request:
                     response = func(**kwargs)
             self.assertEqual(client_request.call_count, 1)
             self.assertEqual(len(client_request.call_args[0]), 1)
-            self.assertNotIn(func_param_dict[func], client_request.call_args[1]['data'])
+            self.assertNotIn(param, client_request.call_args[1]['data'])
             self.assertEqual(client_request.call_args[1], kwargs)
             self.assertEqual(handlr.call_count, 1)
             self.assertEqual(handlr.return_value, response)
