@@ -614,6 +614,12 @@ class Entity:
             return False
         return self.to_json_dict() == other.to_json_dict()
 
+    def __hash__(self):
+        """Return hash based on entity type and id if available."""
+        if getattr(self, 'id', None) is not None:
+            return hash((type(self), self.id))
+        return hash(type(self))
+
     def compare(self, other, filter_fcn=None):
         """Return True if properties can be compared in terms of eq.
 
