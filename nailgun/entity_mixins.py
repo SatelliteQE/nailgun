@@ -616,7 +616,7 @@ class Entity:
 
     def __hash__(self):
         """Return hash based on entity type and id if available."""
-        if hasattr(self, 'id') and self.id is not None:
+        if getattr(self, 'id', None) is not None:
             return hash((type(self), self.id))
         return hash(type(self))
 
