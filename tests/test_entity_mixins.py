@@ -475,8 +475,8 @@ class EntityTestCase(TestCase):
             config.ServerConfig.get()
         except (KeyError, config.ConfigFileError):
             self.cfg.save()
-        import nailgun  # noqa: PLC0415
-        import tests  # noqa: PLC0415
+        import nailgun
+        import tests
 
         self.assertEqual(repr(eval(repr(entity))), target)
 
@@ -495,8 +495,8 @@ class EntityTestCase(TestCase):
             config.ServerConfig.get()
         except (KeyError, config.ConfigFileError):
             self.cfg.save()
-        import nailgun  # noqa: PLC0415
-        import tests  # noqa: PLC0415
+        import nailgun
+        import tests
 
         self.assertEqual(repr(eval(repr(entity))), target)
 
@@ -519,8 +519,8 @@ class EntityTestCase(TestCase):
             config.ServerConfig.get()
         except (KeyError, config.ConfigFileError):
             self.cfg.save()
-        import nailgun  # noqa: PLC0415
-        import tests  # noqa: PLC0415
+        import nailgun
+        import tests
 
         self.assertEqual(repr(eval(repr(entity))), target)
 
