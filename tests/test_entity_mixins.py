@@ -34,7 +34,6 @@ from nailgun.entity_fields import (
 # ruff: noqa: F401
 
 # Cannot use ast.literal_eval because ServerConfig isn't a basic type
-# ruff: noqa: S307
 
 
 class SampleEntity(entity_mixins.Entity):
@@ -475,8 +474,8 @@ class EntityTestCase(TestCase):
             config.ServerConfig.get()
         except (KeyError, config.ConfigFileError):
             self.cfg.save()
-        import nailgun
-        import tests
+        import nailgun  # noqa: PLC0415
+        import tests  # noqa: PLC0415
 
         self.assertEqual(repr(eval(repr(entity))), target)
 
@@ -495,8 +494,8 @@ class EntityTestCase(TestCase):
             config.ServerConfig.get()
         except (KeyError, config.ConfigFileError):
             self.cfg.save()
-        import nailgun
-        import tests
+        import nailgun  # noqa: PLC0415
+        import tests  # noqa: PLC0415
 
         self.assertEqual(repr(eval(repr(entity))), target)
 
@@ -519,8 +518,8 @@ class EntityTestCase(TestCase):
             config.ServerConfig.get()
         except (KeyError, config.ConfigFileError):
             self.cfg.save()
-        import nailgun
-        import tests
+        import nailgun  # noqa: PLC0415
+        import tests  # noqa: PLC0415
 
         self.assertEqual(repr(eval(repr(entity))), target)
 
