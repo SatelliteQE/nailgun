@@ -34,7 +34,6 @@ CONFIGS2.update(
 # ruff: noqa: F401
 
 # Cannot use ast.literal_eval because ServerConfig isn't a basic type
-# ruff: noqa: S307
 
 
 def _convert_bsc_attrs(bsc_attrs):

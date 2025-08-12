@@ -34,7 +34,6 @@ from nailgun.entity_fields import (
 # ruff: noqa: F401
 
 # Cannot use ast.literal_eval because ServerConfig isn't a basic type
-# ruff: noqa: S307
 
 
 class SampleEntity(entity_mixins.Entity):
