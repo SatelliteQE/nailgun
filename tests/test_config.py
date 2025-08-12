@@ -221,7 +221,7 @@ class ReprTestCase(TestCase):
         """
         target = "nailgun.config.BaseServerConfig(url='bogus')"
         self.assertEqual(target, repr(BaseServerConfig('bogus')))
-        import nailgun
+        import nailgun  # noqa: PLC0415
 
         self.assertEqual(target, repr(eval(repr(BaseServerConfig('bogus')))))
 
@@ -237,7 +237,7 @@ class ReprTestCase(TestCase):
             "nailgun.config.BaseServerConfig(auth='flam', url='flim')",
         )
         self.assertIn(repr(BaseServerConfig('flim', auth='flam')), targets)
-        import nailgun
+        import nailgun  # noqa: PLC0415
 
         self.assertIn(repr(eval(repr(BaseServerConfig('flim', auth='flam')))), targets)
 
@@ -262,7 +262,7 @@ class ReprTestCase(TestCase):
         """
         target = "nailgun.config.ServerConfig(url='bogus')"
         self.assertEqual(target, repr(ServerConfig('bogus')))
-        import nailgun
+        import nailgun  # noqa: PLC0415
 
         self.assertEqual(target, repr(eval(repr(ServerConfig('bogus')))))
 
@@ -278,7 +278,7 @@ class ReprTestCase(TestCase):
             "nailgun.config.ServerConfig(auth='flam', url='flim')",
         )
         self.assertIn(repr(ServerConfig('flim', auth='flam')), targets)
-        import nailgun
+        import nailgun  # noqa: PLC0415
 
         self.assertIn(repr(eval(repr(ServerConfig('flim', auth='flam')))), targets)
 
@@ -307,7 +307,7 @@ class ReprTestCase(TestCase):
             "nailgun.config.ServerConfig(verify='flub', url='flim')",
         )
         self.assertIn(repr(ServerConfig('flim', verify='flub')), targets)
-        import nailgun
+        import nailgun  # noqa: PLC0415
 
         self.assertIn(repr(eval(repr(ServerConfig('flim', verify='flub')))), targets)
 
