@@ -3554,6 +3554,7 @@ class FlatpakRemoteRepository(
         self._fields = {
             'flatpak_remote_id': entity_fields.IntegerField(required=True),
             'name': entity_fields.StringField(),
+            'application_name': entity_fields.StringField(),
             'label': entity_fields.StringField(),
         }
         self._meta = {
