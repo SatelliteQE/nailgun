@@ -128,7 +128,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets._REPO_ADMIN_TOKEN }}
 
       - name: add the no-cherrypick label
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets._REPO_ADMIN_TOKEN }}
           script: |
@@ -200,7 +200,7 @@ jobs:
 
 
       - name: add the no-cherrypick label
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets._REPO_ADMIN_TOKEN }}
           script: |
