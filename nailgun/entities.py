@@ -2362,7 +2362,7 @@ class ReportTemplate(
         ``super`` is called otherwise.
 
         """
-        if which in ("clone", "generate", "schedule_report", "report_data"):
+        if which in ("clone", "generate", "schedule_report", "report_data", "export"):
             prefix = "self"
             return f"{super().path(prefix)}/{which}"
         return super().path(which)
@@ -2441,6 +2441,24 @@ class ReportTemplate(
         if job_id:
             temp_path = f'{temp_path}/{job_id}'
         response = client.get(temp_path, **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def export(self, synchronous=True, timeout=None, **kwargs):
+        """Export a report template to ERB.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('export'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
