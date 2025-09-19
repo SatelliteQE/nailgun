@@ -3280,12 +3280,10 @@ class ContentViewEnvironment(
         }
         super().__init__(server_config=server_config, **kwargs)
 
-    def list_content_view_environments(self, synchronous=True, timeout=None, **kwargs):
+    def list_content_view_environments(self, params=None, synchronous=True, timeout=None, **kwargs):
         """Get the list of content view environments, passing along any query parameters."""
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
-        if 'params' in kwargs:
-            params = kwargs.pop('params')
         url = f'{self._server_config.url}/{self._meta["api_path"]}'
         response = client.get(url, params=params, **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
