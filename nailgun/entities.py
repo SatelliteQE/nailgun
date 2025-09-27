@@ -3180,6 +3180,42 @@ class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
+class ContentViewEnvironment(
+    Entity,
+):
+    """A representation of a Content View Environments entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'organization_id': entity_fields.IntegerField(),
+            'label': entity_fields.StringField(),
+            'lifecycle_environment_id': entity_fields.IntegerField(),
+            'content_view_id': entity_fields.IntegerField(),
+            'activation_key_id': entity_fields.IntegerField(),
+            'host_id': entity_fields.IntegerField(),
+            'search': entity_fields.StringField(),
+            'page': entity_fields.IntegerField(),
+            'per_page': entity_fields.IntegerField(),
+            'order': entity_fields.StringField(),
+            'full_result': entity_fields.BooleanField(),
+            'sort_by': entity_fields.StringField(),
+            'sort_order': entity_fields.StringField(),
+        }
+        self._meta = {
+            'api_path': 'katello/api/content_view_environments',
+            'read_type': 'base',
+        }
+        super().__init__(server_config=server_config, **kwargs)
+
+    def list_content_view_environments(self, params=None, synchronous=True, timeout=None, **kwargs):
+        """Get the list of content view environments, passing along any query parameters."""
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        url = f'{self._server_config.url}/{self._meta["api_path"]}'
+        response = client.get(url, params=params, **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+
 class Domain(
     Entity,
     EntityCreateMixin,
