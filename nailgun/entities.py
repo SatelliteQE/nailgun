@@ -3564,13 +3564,9 @@ class Filter(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'location': entity_fields.OneToManyField(Location),
-            'organization': entity_fields.OneToManyField(Organization),
             'permission': entity_fields.OneToManyField(Permission),
             'role': entity_fields.OneToOneField(Role, required=True),
             'search': entity_fields.StringField(),
-            'override': entity_fields.BooleanField(),
-            'unlimited': entity_fields.BooleanField(),
         }
         self._meta = {'api_path': 'api/v2/filters'}
         super().__init__(server_config=server_config, **kwargs)
@@ -3583,14 +3579,6 @@ class Filter(
 
         """
         return {'filter': super().create_payload()}
-
-    def read(self, entity=None, attrs=None, ignore=None, params=None):
-        """Deal with different named data returned from the server."""
-        if attrs is None:
-            attrs = self.read_json()
-        attrs['override'] = attrs.pop('override?')
-        attrs['unlimited'] = attrs.pop('unlimited?')
-        return super().read(entity, attrs, ignore, params)
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
