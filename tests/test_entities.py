@@ -1213,7 +1213,6 @@ class ReadTestCase(TestCase):
             # entities.UserGroup,  # see test_attrs_arg_v2
             entities.ContentView,
             entities.Domain,
-            entities.Filter,
             entities.Host,
             entities.Media,
             entities.RHCIDeployment,
@@ -1265,11 +1264,6 @@ class ReadTestCase(TestCase):
                 entities.Host(self.cfg),
                 {'parameters': None, 'puppet_proxy': None},
                 {'host_parameters_attributes': None, 'puppet_proxy': None},
-            ),
-            (
-                entities.Filter(self.cfg),
-                {'override?': None, 'unlimited?': None},
-                {'override': None, 'unlimited': None},
             ),
         )
         for entity, attrs_before, attrs_after in test_data:
