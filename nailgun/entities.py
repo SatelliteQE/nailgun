@@ -212,7 +212,6 @@ class ActivationKey(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'auto_attach': entity_fields.BooleanField(),
             'content_view': entity_fields.OneToOneField(ContentView),
             'description': entity_fields.StringField(),
             'environment': entity_fields.OneToOneField(LifecycleEnvironment),
