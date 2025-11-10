@@ -212,7 +212,6 @@ class ActivationKey(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'auto_attach': entity_fields.BooleanField(),
             'content_view': entity_fields.OneToOneField(ContentView),
             'description': entity_fields.StringField(),
             'environment': entity_fields.OneToOneField(LifecycleEnvironment),
@@ -3261,6 +3260,42 @@ class ContentViewComponent(Entity, EntityReadMixin, EntityUpdateMixin):
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
+class ContentViewEnvironment(
+    Entity,
+):
+    """A representation of a Content View Environments entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'organization_id': entity_fields.IntegerField(),
+            'label': entity_fields.StringField(),
+            'lifecycle_environment_id': entity_fields.IntegerField(),
+            'content_view_id': entity_fields.IntegerField(),
+            'activation_key_id': entity_fields.IntegerField(),
+            'host_id': entity_fields.IntegerField(),
+            'search': entity_fields.StringField(),
+            'page': entity_fields.IntegerField(),
+            'per_page': entity_fields.IntegerField(),
+            'order': entity_fields.StringField(),
+            'full_result': entity_fields.BooleanField(),
+            'sort_by': entity_fields.StringField(),
+            'sort_order': entity_fields.StringField(),
+        }
+        self._meta = {
+            'api_path': 'katello/api/content_view_environments',
+            'read_type': 'base',
+        }
+        super().__init__(server_config=server_config, **kwargs)
+
+    def list_content_view_environments(self, params=None, synchronous=True, timeout=None, **kwargs):
+        """Get the list of content view environments, passing along any query parameters."""
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        url = f'{self._server_config.url}/{self._meta["api_path"]}'
+        response = client.get(url, params=params, **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+
 class Domain(
     Entity,
     EntityCreateMixin,
@@ -3536,13 +3571,9 @@ class Filter(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'location': entity_fields.OneToManyField(Location),
-            'organization': entity_fields.OneToManyField(Organization),
             'permission': entity_fields.OneToManyField(Permission),
             'role': entity_fields.OneToOneField(Role, required=True),
             'search': entity_fields.StringField(),
-            'override': entity_fields.BooleanField(),
-            'unlimited': entity_fields.BooleanField(),
         }
         self._meta = {'api_path': 'api/v2/filters'}
         super().__init__(server_config=server_config, **kwargs)
@@ -3555,14 +3586,6 @@ class Filter(
 
         """
         return {'filter': super().create_payload()}
-
-    def read(self, entity=None, attrs=None, ignore=None, params=None):
-        """Deal with different named data returned from the server."""
-        if attrs is None:
-            attrs = self.read_json()
-        attrs['override'] = attrs.pop('override?')
-        attrs['unlimited'] = attrs.pop('unlimited?')
-        return super().read(entity, attrs, ignore, params)
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
