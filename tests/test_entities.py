@@ -197,7 +197,6 @@ class InitTestCase(TestCase):
                 (entities.ContentViewFilterRule, {'content_view_filter': 1}),
                 (entities.ExternalUserGroup, {'usergroup': 1}),
                 (entities.HostPackage, {'host': 1}),
-                (entities.HostSubscription, {'host': 1}),
                 (entities.Interface, {'host': 1}),
                 (entities.Image, {'compute_resource': 1}),
                 (entities.OperatingSystemParameter, {'operatingsystem': 1}),
@@ -233,7 +232,6 @@ class InitTestCase(TestCase):
             entities.ContentViewFilterRule,
             entities.ExternalUserGroup,
             entities.HostPackage,
-            entities.HostSubscription,
             entities.Image,
             entities.OverrideValue,
             entities.OperatingSystemParameter,
@@ -594,21 +592,6 @@ class PathTestCase(TestCase):
                 which_parts = which.split("_", 1)
                 self.assertIn(f'capsules/{capsule.id}/content/{which_parts[1]}', path)
                 self.assertRegex(path, fr'{which_parts[0]}/{which_parts[1]}$')
-
-    def test_hostsubscription(self):
-        """Test :meth:`nailgun.entities.HostSubscription.path`.
-
-        Assert that the following return appropriate paths:
-
-        * ``HostSubscription(host=…).path('add_subscriptions')``
-        * ``HostSubscription(host=…).path('remove_subscriptions')``
-        """
-        sub = entities.HostSubscription(self.cfg, host=gen_integer(1, 100))
-        for which in ('add_subscriptions', 'remove_subscriptions'):
-            with self.subTest(which):
-                path = sub.path(which)
-                self.assertIn(f'hosts/{sub.host.id}/subscriptions/{which}', path)
-                self.assertRegex(path, fr'{which}$')
 
 
 class CreateTestCase(TestCase):
@@ -2114,7 +2097,6 @@ class GenericTestCase(TestCase):
         generic = {'server_config': cfg, 'id': 1}
         external_usergroup = {'server_config': cfg, 'id': 1, 'usergroup': 2}
         sync_plan = {'server_config': cfg, 'id': 1, 'organization': 2}
-        hostsubscription = {'server_config': cfg, 'host': 1}
         cls.methods_requests = (
             (entities.AbstractComputeResource(**generic).available_flavors, 'get'),
             (entities.AbstractComputeResource(**generic).available_images, 'get'),
@@ -2123,9 +2105,6 @@ class GenericTestCase(TestCase):
             (entities.AbstractComputeResource(**generic).associate, 'put'),
             (entities.AbstractComputeResource(**generic).images, 'get'),
             (entities.ActivationKey(**generic).add_host_collection, 'post'),
-            (entities.ActivationKey(**generic).add_subscriptions, 'put'),
-            (entities.ActivationKey(**generic).remove_subscriptions, 'put'),
-            (entities.ActivationKey(**generic).subscriptions, 'get'),
             (entities.ActivationKey(**generic).content_override, 'put'),
             (entities.ActivationKey(**generic).product_content, 'get'),
             (entities.ActivationKey(**generic).remove_host_collection, 'put'),
@@ -2177,8 +2156,6 @@ class GenericTestCase(TestCase):
             (entities.HostGroup(**generic).clone, 'post'),
             (entities.HostGroup(**generic).list_ansible_roles, 'get'),
             (entities.HostGroup(**generic).list_scparams, 'get'),
-            (entities.HostSubscription(**hostsubscription).add_subscriptions, 'put'),
-            (entities.HostSubscription(**hostsubscription).remove_subscriptions, 'put'),
             (entities.Product(**generic).sync, 'post'),
             (entities.ProductBulkAction(**generic).destroy, 'put'),
             (entities.ProductBulkAction(**generic).sync, 'put'),

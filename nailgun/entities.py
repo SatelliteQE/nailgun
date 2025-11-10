@@ -4240,23 +4240,6 @@ class HostPackage(Entity):
         }
 
 
-class HostSubscription(Entity):
-    """A representation of a Host Subscription entity."""
-
-    def __init__(self, server_config=None, **kwargs):
-        _check_for_value('host', kwargs)
-        self._fields = {
-            'content_label': entity_fields.StringField(),
-            'host': entity_fields.OneToOneField(Host, required=True),
-            'subscriptions': entity_fields.DictField(),
-            'value': entity_fields.StringField(),
-        }
-        super().__init__(server_config=server_config, **kwargs)
-        self._meta = {
-            'api_path': f'{self.host.path()}/subscriptions',
-        }
-
-
 class Host(
     Entity,
     EntityCreateMixin,
