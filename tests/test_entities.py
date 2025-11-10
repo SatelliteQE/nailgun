@@ -294,13 +294,10 @@ class PathTestCase(TestCase):
     def test_id_and_which(self):
         """Execute ``entity(id=…).path(which=…)``."""
         for entity, which in (
-            (entities.ActivationKey, 'add_subscriptions'),
             (entities.ActivationKey, 'content_override'),
             (entities.ActivationKey, 'copy'),
             (entities.ActivationKey, 'host_collections'),
             (entities.ActivationKey, 'releases'),
-            (entities.ActivationKey, 'remove_subscriptions'),
-            (entities.ActivationKey, 'subscriptions'),
             (entities.AbstractComputeResource, 'available_images'),
             (entities.AbstractComputeResource, 'available_zones'),
             (entities.AbstractComputeResource, 'available_flavors'),
