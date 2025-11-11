@@ -240,8 +240,6 @@ class ActivationKey(
 
         The format of the returned path depends on the value of ``which``:
 
-        add_subscriptions
-            /activation_keys/<id>/add_subscriptions
         copy
             /activation_keys/<id>/copy
         content_override
@@ -250,23 +248,16 @@ class ActivationKey(
             /activation_keys/<id>/product_content
         releases
             /activation_keys/<id>/releases
-        remove_subscriptions
-            /activation_keys/<id>/remove_subscriptions
-        subscriptions
-            /activation_keys/<id>/subscriptions
 
         ``super`` is called otherwise.
 
         """
         if which in (
-            'add_subscriptions',
             'content_override',
             'copy',
             'host_collections',
             'product_content',
             'releases',
-            'remove_subscriptions',
-            'subscriptions',
         ):
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
@@ -297,25 +288,6 @@ class ActivationKey(
         response = client.post(self.path('host_collections'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def add_subscriptions(self, synchronous=True, timeout=None, **kwargs):
-        """Add subscriptions to activation key.
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.put(self.path('add_subscriptions'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
     def copy(self, synchronous=True, timeout=None, **kwargs):
         """Copy provided activation key.
 
@@ -335,44 +307,6 @@ class ActivationKey(
             kwargs['data']['id'] = self.id
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.post(self.path('copy'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-    def remove_subscriptions(self, synchronous=True, timeout=None, **kwargs):
-        """Remove subscriptions from an activation key.
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.put(self.path('remove_subscriptions'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-    def subscriptions(self, synchronous=True, timeout=None, **kwargs):
-        """Retrieve subscriptions on an activation key.
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('subscriptions'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def content_override(self, synchronous=True, timeout=None, **kwargs):
@@ -4306,97 +4240,6 @@ class HostPackage(Entity):
         }
 
 
-class HostSubscription(Entity):
-    """A representation of a Host Subscription entity."""
-
-    def __init__(self, server_config=None, **kwargs):
-        _check_for_value('host', kwargs)
-        self._fields = {
-            'content_label': entity_fields.StringField(),
-            'host': entity_fields.OneToOneField(Host, required=True),
-            'subscriptions': entity_fields.DictField(),
-            'value': entity_fields.StringField(),
-        }
-        super().__init__(server_config=server_config, **kwargs)
-        self._meta = {
-            'api_path': f'{self.host.path()}/subscriptions',
-        }
-
-    def path(self, which=None):
-        """Extend ``nailgun.entity_mixins.Entity.path``.
-
-        The format of the returned path depends on the value of ``which``:
-
-        add_subscriptions
-            /hosts/<id>/add_subscriptions
-        remove_subscriptions
-            /hosts/<id>/remove_subscriptions
-
-        ``super`` is called otherwise.
-
-        """
-        if which in ('add_subscriptions', 'remove_subscriptions'):
-            return f'{super().path(which="base")}/{which}'
-        return super().path(which)
-
-    def subscriptions(self, synchronous=True, timeout=None, **kwargs):
-        """Get subscriptions from host.
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('base'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-    def add_subscriptions(self, synchronous=True, timeout=None, **kwargs):
-        """Add subscriptions to host.
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.put(self.path('add_subscriptions'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-    def remove_subscriptions(self, synchronous=True, timeout=None, **kwargs):
-        """Remove subscriptions from host.
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all JSON decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.put(self.path('remove_subscriptions'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-
 class Host(
     Entity,
     EntityCreateMixin,
@@ -4864,44 +4707,6 @@ class Host(
         response = client.put(self.path('errata/applicability'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
-    def bulk_add_subscriptions(self, synchronous=True, timeout=None, **kwargs):
-        """Add subscriptions to one or more hosts.
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all content decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.put(self.path('bulk/add_subscriptions'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-    def bulk_remove_subscriptions(self, synchronous=True, timeout=None, **kwargs):
-        """Remove subscriptions from one or more hosts.
-
-        :param synchronous: What should happen if the server returns an HTTP
-            202 (accepted) status code? Wait for the task to complete if
-            ``True``. Immediately return the server's response otherwise.
-        :param timeout: Maximum number of seconds to wait until timing out.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The server's response, with all content decoded.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()  # shadow the passed-in kwargs
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.put(self.path('bulk/remove_subscriptions'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
     def bulk_available_incremental_updates(self, synchronous=True, timeout=None, **kwargs):
         """Get available_incremental_updates for one or more hosts.
 
@@ -5119,8 +4924,6 @@ class Host(
             return f'{super().path(which="self")}/{which}'
         elif which in (
             'bootc_images',
-            'bulk/add_subscriptions',
-            'bulk/remove_subscriptions',
             'bulk/available_incremental_updates',
             'bulk/traces',
             'bulk/resolve_traces',
