@@ -7874,6 +7874,32 @@ class SmartProxy(
             client.post(path, **kwargs), self._server_config, synchronous, timeout
         )
 
+    def add_autosign_entry(self, certname, **kwargs):
+        """Add an entry to the puppetserver's autosign file.
+
+        :param certname: Name the host is going to register with
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        path = f'{self.path()}/autosign'
+        return _handle_response(
+            client.post(path, data={'id': certname}, **kwargs),
+            self._server_config,
+        )
+
+    def delete_autosign_entry(self, certname, **kwargs):
+        """Delete an entry from the puppetserver's autosign file.
+
+        :param certname: Name of the host to be deleted from the autosign file
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        path = f'{self.path()}/autosign/{certname}'
+        return _handle_response(
+            client.delete(path, **kwargs),
+            self._server_config,
+        )
+
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Ignore ``download_policy`` field as it's never returned by the server.
 
