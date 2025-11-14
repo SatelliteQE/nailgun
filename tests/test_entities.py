@@ -3457,6 +3457,39 @@ class SmartProxyTestCase(TestCase):
                 if 'environment' in param:
                     self.assertIn('/environments', post.call_args[0][0])
 
+    def test_add_autosign_entry(self):
+        """Call :meth:`nailgun.entities.SmartProxy.add_autosign_entry`.
+
+        Assert that
+        * correct fqdn is sent,
+        * proper path is built.
+        """
+        certname = "host.example.com"
+        with self.subTest():
+            with mock.patch.object(client, 'post') as post:
+                self.smart_proxy.add_autosign_entry(certname)
+                self.assertEqual(post.call_count, 1)
+                self.assertIn(f'{self.smart_proxy.path()}/autosign', post.call_args[0][0])
+                self.assertEqual(len(post.call_args[1]), 1)
+                self.assertEqual(post.call_args[1], {'data': {'id': 'host.example.com'}})
+
+    def test_delete_autosign_entry(self):
+        """Call :meth:`nailgun.entities.SmartProxy.add_autosign_entry`.
+
+        Assert that
+        * correct fqdn is sent,
+        * proper path is built.
+        """
+        certname = "host.example.com"
+        with self.subTest():
+            with mock.patch.object(client, 'delete') as delete:
+                self.smart_proxy.delete_autosign_entry(certname)
+                self.assertEqual(delete.call_count, 1)
+                self.assertIn(
+                    f'{self.smart_proxy.path()}/autosign/{certname}', delete.call_args[0][0]
+                )
+                self.assertEqual(len(delete.call_args[1]), 0)
+
 
 class SubscriptionTestCase(TestCase):
     """Tests for :class:`nailgun.entities.Subscription`."""
