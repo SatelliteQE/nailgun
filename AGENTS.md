@@ -7,25 +7,14 @@
 
 ## Project Overview
 
-**NailGun** is a GPL-licensed Python library that facilitates easy usage of the **Satellite 6 / Foreman API**. It provides an ORM-like (Object-Relational Mapping) interface for interacting with Red Hat Satellite and Foreman entities.
+**NailGun** is a GPL-licensed Python library that facilitates easy usage of the **Satellite API**. It provides an ORM-like (Object-Relational Mapping) interface for interacting with Red Hat Satellite entities.
 
 ### Purpose
-- Simplifies API interactions with Satellite 6 / Foreman
+- Simplifies API interactions with Satellite
 - Provides a Pythonic, object-oriented interface for API resources
 - Abstracts away API inconsistencies and implementation details
 - Contains workarounds for known API bugs
 - Reduces verbose boilerplate code compared to raw HTTP requests
-
-### Why NailGun?
-
-The name "NailGun" comes from the philosophy: **Why use a hammer when you can use a nail gun?**
-
-Challenges NailGun solves:
-- **Verbose code**: General-purpose HTTP libraries require extensive boilerplate
-- **Non-RESTful API**: Satellite's API isn't fully RESTful in design
-- **Inconsistent implementation**: API endpoint behaviors vary significantly
-- **Large API surface**: 405+ API paths as of latest count
-- **Complex relationships**: Entity relationships require careful handling
 
 ### Key Features
 - **Entity-based design**: Each Satellite resource is a Python class
@@ -62,11 +51,10 @@ nailgun.entities
 Each module only knows about modules below it in the tree, creating a clean dependency hierarchy.
 
 ### Layer 1: Entity Layer (`entities.py`)
-The top layer where entity classes are defined. Each class represents a Satellite/Foreman resource.
+The top layer where entity classes are defined. Each class represents a Satellite resource.
 
 - **Purpose**: Provide high-level interface for working with Satellite resources
 - **Location**: `nailgun/entities.py` (single large file)
-- **Size**: 9000+ lines (reflects the size of Satellite's API)
 - **Examples**: `Organization`, `Host`, `Repository`, `ActivationKey`, `ContentView`
 - **Usage**: `org = Organization(server_config=cfg, name='MyOrg').create()`
 
@@ -283,7 +271,7 @@ config = ServerConfig(
     url='https://satellite.example.com',
     auth=('admin', 'password'),
     verify=True,  # Verify SSL certificates
-    version='6.15'  # Optional: specify Satellite version for version-specific behavior
+    version='6.18'  # Optional: specify Satellite version for version-specific behavior
 )
 
 # Save configuration to disk (XDG config directory: ~/.config/librobottelo/)
@@ -686,11 +674,11 @@ from packaging.version import Version
 config = ServerConfig(
     url='https://satellite.example.com',
     auth=('admin', 'password'),
-    version='6.13'
+    version='6.18'
 )
 
 # Check version in code
-if config.version >= Version('6.10'):
+if config.version >= Version('6.17'):
     # Use newer API features
     pass
 else:
@@ -700,7 +688,7 @@ else:
 # Entities can check version internally
 class MyEntity(Entity):
     def create(self, create_missing=None):
-        if self._server_config.version < Version('6.12'):
+        if self._server_config.version < Version('6.17'):
             # Apply workaround for older versions
             pass
         return super().create(create_missing)
@@ -897,10 +885,6 @@ def test_example(target_sat):
     # All NailGun methods work
     product.description = 'Updated'
     product = product.update(['description'])
-    
-    # Cleanup
-    product.delete()
-    org.delete()
 ```
 
 ### Common Robottelo Patterns
@@ -1034,11 +1018,6 @@ def test_create_product_with_repo(target_sat):
     # Verify content
     repo = repo.read()
     assert repo.content_counts['rpm'] > 0
-    
-    # Cleanup
-    repo.delete()
-    product.delete()
-    org.delete()
 ```
 
 ---
@@ -1094,9 +1073,8 @@ class Repository(Entity):
         """Sync repository with version-specific handling."""
         version = _get_version(self._server_config)
         
-        if version < Version('6.10'):
+        if version < Version('6.17'):
             # Apply workaround for old version bug
-            # BZ#1234567
             pass
         
         return super().sync(synchronous, timeout, **kwargs)
@@ -1298,13 +1276,13 @@ except HTTPError as e:
 - **Set `required=True`** for fields that are actually required by the API
 - **Use appropriate `str_type`** for StringFields (`'alpha'` for names, `'alphanumeric'` for labels)
 - **Write comprehensive docstrings** in reStructuredText format
+- **Prioritize readability over complexity** - Avoid complex hard to read code
 
 ### DON'T ❌
 
 - **Don't hardcode credentials** - use ServerConfig and save/load
 - **Don't ignore SSL verification in production** - only use `verify=False` for testing
 - **Don't update entities without reading first** - you might overwrite concurrent changes
-- **Don't forget to delete test entities** - use cleanup/teardown or finalizers
 - **Don't use plural entity names** - use `Host` not `Hosts` (strict convention)
 - **Don't access nested attributes without `.read()`** - related entities may not be fully loaded
 - **Don't set `required=False` for actually required fields** - keep API contracts clear
@@ -1326,7 +1304,6 @@ except HTTPError as e:
     - String normalization: Skipped (keeps single quotes)
 
 *   **Linter:** Ruff with extensive rule set
-    - Target Python version: 3.11
     - Run: `ruff check .`
     - Rules: See `pyproject.toml` for complete list
     - Key checks: docstrings (D*), complexity (C*), performance (PERF*), pycodestyle (E*, W*)
@@ -1358,23 +1335,6 @@ except HTTPError as e:
 *   **API Docs**: Auto-generated from docstrings
 *   **Examples**: Located in `docs/examples.rst`
 
-### Version Control and Review Process
-
-*   **Review Process:** Minimum **two ACKs** required for merge
-    - At least one must be from a **Tier 2 reviewer**
-    - All comments must be resolved
-*   **Commit Guidelines:**
-    - Keep commits small and coherent
-    - One commit per issue
-    - Write clear commit messages (follow [conventional commit](https://www.conventionalcommits.org/) format when possible)
-    - Rebasing is encouraged over merging
-*   **PR Requirements:**
-    - Must pass Travis CI checks
-    - Must include unit tests for new entities/functionality
-    - Must provide test results from Satellite API (interactive shell output acceptable)
-    - Should specify applicable branches (master, 6.X.z branches)
-*   **CI/CD**: Travis CI for automated testing, pre-commit.ci for auto-fixes
-
 ### Contributing Guidelines
 
 1. **Code Standards**:
@@ -1393,7 +1353,7 @@ except HTTPError as e:
    - Provide interactive Python shell output or test results in PR description
 
 4. **Version Labels**:
-   - Set appropriate Foreman/Satellite version labels when applicable
+   - Set appropriate Satellite version labels when applicable
 
 ---
 
@@ -1450,7 +1410,7 @@ config = ServerConfig(
     url='https://satellite.example.com',  # Required
     auth=('admin', 'password'),            # Required
     verify=False,                          # SSL verification (default: True)
-    version='6.15'                         # Satellite version (optional)
+    version='6.18'                         # Satellite version (optional)
 )
 
 # Save configuration (to ~/.config/librobottelo/settings.json)
@@ -1509,6 +1469,4 @@ except TaskFailedError as e:
 ---
 
 **Last Updated**: 2025-11-25  
-**Maintainers**: SatelliteQE Team  
-**Python Version**: 3.10, 3.11, 3.12  
-**License**: GPL
+**Maintainers**: SatelliteQE Team
