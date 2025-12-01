@@ -382,7 +382,9 @@ class AlternateContentSource(
             'name': entity_fields.StringField(
                 required=True, str_type='alpha', length=(6, 12), unique=True
             ),
-            'content_type': entity_fields.StringField(choices=('file', 'yum'), default='yum'),
+            'content_type': entity_fields.StringField(
+                choices=('file', 'yum', 'deb'), default='yum'
+            ),
             'alternate_content_source_type': entity_fields.StringField(
                 choices=('custom', 'simplified', 'rhui'), default='custom'
             ),
@@ -405,6 +407,9 @@ class AlternateContentSource(
             'product_ids': entity_fields.ListField(),
             'products': entity_fields.ListField(),
             'last_refresh': entity_fields.DictField(),
+            'deb_releases': entity_fields.StringField(),
+            'deb_components': entity_fields.StringField(),
+            'deb_architectures': entity_fields.StringField(),
         }
         self._meta = {
             'api_path': 'katello/api/alternate_content_sources',
@@ -419,22 +424,22 @@ class AlternateContentSource(
             ignore = set()
 
         # fields depending on the ACS type
-        if 'base_url' not in attrs:
-            ignore.add('base_url')
-        if 'subpaths' not in attrs:
-            ignore.add('subpaths')
-        if 'products' not in attrs:
-            ignore.add('products')
-        if 'verify_ssl' not in attrs:
-            ignore.add('verify_ssl')
-        if 'ssl_ca_cert' not in attrs:
-            ignore.add('ssl_ca_cert')
-        if 'ssl_client_cert' not in attrs:
-            ignore.add('ssl_client_cert')
-        if 'ssl_client_key' not in attrs:
-            ignore.add('ssl_client_key')
-        if 'upstream_username' not in attrs:
-            ignore.add('upstream_username')
+        acs_dependence_fields = [
+            'base_url',
+            'subpaths',
+            'products',
+            'verify_ssl',
+            'ssl_ca_cert',
+            'ssl_client_cert',
+            'ssl_client_key',
+            'upstream_username',
+            'deb_releases',
+            'deb_components',
+            'deb_architectures',
+        ]
+        for field in acs_dependence_fields:
+            if field not in attrs:
+                ignore.add(field)
 
         # returned in non-id fields
         ignore.add('smart_proxy_ids')
