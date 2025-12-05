@@ -2855,6 +2855,60 @@ class DockerContentViewFilter(AbstractContentViewFilter):
         self._fields['type'].default = 'docker'
 
 
+class DockerTag(Entity, EntityReadMixin, EntitySearchMixin):
+    """A representation of a Docker Tag entity.
+
+    Docker tags are read-only entities that represent tags for container images.
+    """
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(),
+            'manifest_schema1': entity_fields.DictField(),
+            'manifest_schema2': entity_fields.DictField(),
+            'manifest': entity_fields.DictField(),
+            'repositories': entity_fields.OneToManyField(Repository),
+            'product': entity_fields.OneToOneField(Product),
+            'environment': entity_fields.OneToOneField(LifecycleEnvironment),
+            'content_view_version': entity_fields.OneToOneField(ContentViewVersion),
+            'upstream_name': entity_fields.StringField(),
+        }
+        self._meta = {'api_path': 'katello/api/docker_tags'}
+        super().__init__(server_config=server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        repositories
+            /katello/api/docker_tags/:id/repositories
+
+        Otherwise, call ``super``.
+        """
+        if which == 'repositories':
+            return f'{super().path(which="self")}/repositories'
+        return super().path(which)
+
+    def repositories(self, synchronous=True, timeout=None, **kwargs):
+        """List repositories for this docker meta tag.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('repositories'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+
 class ContentView(
     Entity,
     EntityCreateMixin,
@@ -7095,6 +7149,8 @@ class Repository(
             /repositories/<id>/docker_manifests
         docker_manifest_lists
             /repositories/<id>/docker_manifest_lists
+        docker_tags
+            /repositories/<id>/docker_tags
         errata
             /repositories/<id>/errata
         files
@@ -7120,6 +7176,7 @@ class Repository(
         if which in (
             'docker_manifests',
             'docker_manifest_lists',
+            'docker_tags',
             'errata',
             'files',
             'packages',
@@ -7196,6 +7253,25 @@ class Repository(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('docker_manifest_lists'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def docker_tags(self, synchronous=True, timeout=None, **kwargs):
+        """List docker tags inside repository.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('docker_tags'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def delete_with_args(self, synchronous=True, timeout=None, **kwargs):
