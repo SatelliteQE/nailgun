@@ -4723,6 +4723,30 @@ class Host(
         response = client.get(self.path('debs'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
+    def transient_packages_containerfile_install_command(
+        self, synchronous=True, timeout=None, **kwargs
+    ):
+        """Generate a containerfile RUN dnf install command for host's transient packages.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests. Can include 'data' with
+            'search' parameter to filter packages.
+        :returns: The server's response, with all content decoded. Contains
+            'command' with the generated dnf install command and optional 'message'.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message (e.g., 404 when no transient packages found).
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(
+            self.path('transient_packages/containerfile_install_command'), **kwargs
+        )
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
     def module_streams(self, synchronous=True, timeout=None, **kwargs):
         """List module_streams available for the host.
 
@@ -4988,6 +5012,8 @@ class Host(
             /api/hosts/:host_id/assign_ansible_roles
         ansible_roles
             /api/hosts/:host_id/ansible_roles
+        transient_packages/containerfile_install_command
+            /api/hosts/:host_id/transient_packages/containerfile_install_command
 
         Otherwise, call ``super``.
 
@@ -5012,6 +5038,7 @@ class Host(
             'traces/resolve',
             'template',
             'templates',
+            'transient_packages/containerfile_install_command',
         ):
             return f'{super().path(which="self")}/{which}'
         elif which in (

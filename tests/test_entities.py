@@ -2144,6 +2144,7 @@ class GenericTestCase(TestCase):
             (entities.Host(**generic).list_scparams, 'get'),
             (entities.Host(**generic).module_streams, 'get'),
             (entities.Host(**generic).packages, 'get'),
+            (entities.Host(**generic).transient_packages_containerfile_install_command, 'get'),
             (entities.Host(**generic).power, 'put'),
             (entities.Host(**generic).upload_facts, 'post'),
             (entities.Host(**generic).traces, 'get'),
@@ -3233,6 +3234,26 @@ class HostTestCase(TestCase):
         self.assertEqual(len(post.call_args[1]), 0)  # post called with no keyword argument
         self.assertEqual(post.call_args[0][0], 'foo/api/v2/hosts/42/play_roles')
         self.assertEqual(res, 43)
+
+    def test_transient_packages_containerfile_install_command(self):
+        """Test generating containerfile install command for transient packages."""
+        cfg = config.ServerConfig(url='foo')
+        host = entities.Host(cfg, id=42)
+        expected_response = {'command': 'RUN dnf install -y package1 package2', 'message': None}
+        kwargs = {'kwarg': gen_integer(), 'data': {'search': 'package_name'}}
+
+        with mock.patch.object(
+            entities, '_handle_response', return_value=expected_response
+        ) as handlr:
+            with mock.patch.object(client, 'get') as get:
+                response = host.transient_packages_containerfile_install_command(**kwargs)
+
+        self.assertEqual(get.call_count, 1)
+        self.assertEqual(len(get.call_args[0]), 1)
+        self.assertEqual(get.call_args[1], kwargs)
+        self.assertIn('transient_packages/containerfile_install_command', get.call_args[0][0])
+        self.assertEqual(handlr.call_count, 1)
+        self.assertEqual(response, expected_response)
 
 
 class PuppetClassTestCase(TestCase):
