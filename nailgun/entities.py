@@ -2827,7 +2827,7 @@ class AbstractContentViewFilter(
             'content_view': entity_fields.OneToOneField(ContentView, required=True),
             'description': entity_fields.StringField(),
             'type': entity_fields.StringField(
-                choices=('erratum', 'package_group', 'rpm', 'modulemd', 'docker'),
+                choices=('erratum', 'erratum_date', 'package_group', 'rpm', 'modulemd', 'docker'),
                 required=True,
             ),
             'inclusion': entity_fields.BooleanField(),
@@ -2850,6 +2850,14 @@ class ErratumContentViewFilter(AbstractContentViewFilter):
     def __init__(self, server_config=None, **kwargs):
         super().__init__(server_config=server_config, **kwargs)
         self._fields['type'].default = 'erratum'
+
+
+class ErratumByDateContentViewFilter(AbstractContentViewFilter):
+    """A representation of a Content View Filter of type "erratum_date"."""
+
+    def __init__(self, server_config=None, **kwargs):
+        super().__init__(server_config=server_config, **kwargs)
+        self._fields['type'].default = 'erratum_date'
 
 
 class ModuleStreamContentViewFilter(AbstractContentViewFilter):
