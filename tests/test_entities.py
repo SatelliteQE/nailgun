@@ -121,6 +121,7 @@ class InitTestCase(TestCase):
                 entities.Environment,
                 entities.Errata,
                 entities.ErratumContentViewFilter,
+                entities.ErratumByDateContentViewFilter,
                 entities.File,
                 entities.Filter,
                 entities.FlatpakRemoteRepository,
