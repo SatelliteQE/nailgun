@@ -1729,6 +1729,8 @@ class VMWareComputeResource(AbstractComputeResource):
             'password': entity_fields.StringField(),
             'set_console_password': entity_fields.BooleanField(),
             'user': entity_fields.StringField(),
+            'display_type': entity_fields.StringField(),
+            'caching_enabled': entity_fields.BooleanField(),
         }
         super().__init__(server_config=server_config, **kwargs)
         self._fields['provider'].default = 'Vmware'
