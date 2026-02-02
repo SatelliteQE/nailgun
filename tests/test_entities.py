@@ -148,6 +148,7 @@ class InitTestCase(TestCase):
                 # entities.OSDefaultTemplate,  # see below
                 entities.OperatingSystem,
                 entities.Organization,
+                entities.OCPVComputeResource,
                 entities.OVirtComputeResource,
                 entities.PackageGroupContentViewFilter,
                 entities.PartitionTable,
@@ -1265,6 +1266,7 @@ class ReadTestCase(TestCase):
         for entity, ignored_attrs in (
             (entities.AzureRMComputeResource, {'secret_key'}),
             (entities.Errata, {'content_view_version', 'environment', 'repository'}),
+            (entities.OCPVComputeResource, {'token', 'ca_cert'}),
             (entities.OVirtComputeResource, {'password'}),
             (entities.SmartProxy, {'download_policy', 'http_proxy'}),
             (entities.SmartClassParameters, {'hidden_value'}),
