@@ -1113,6 +1113,7 @@ class AbstractComputeResource(
                     'Ovirt',
                     'Rackspace',
                     'Vmware',
+                    'Kubevirt',
                 ),
             ),
             'provider_friendly_name': entity_fields.StringField(),
@@ -1717,6 +1718,32 @@ class OVirtComputeResource(AbstractComputeResource):
         if ignore is None:
             ignore = set()
         ignore.add('password')
+        return super().read(entity, attrs, ignore, params)
+
+
+class OCPVComputeResource(AbstractComputeResource):
+    """A representation of a Kubevirt/OpenShift Virtualization Compute Resource entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'hostname': entity_fields.StringField(required=True),
+            'api_port': entity_fields.StringField(required=True),
+            'namespace': entity_fields.StringField(required=True),
+            'token': entity_fields.StringField(required=True),
+            'ca_cert': entity_fields.StringField(required=True),
+        }
+        super().__init__(server_config=server_config, **kwargs)
+        del self._fields['url']
+        self._fields['provider'].default = 'Kubevirt'
+        self._fields['provider'].required = True
+        self._fields['provider_friendly_name'].default = 'OpenShift Virtualization'
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Make sure, ``token`` is in the ignore list for read."""
+        if ignore is None:
+            ignore = set()
+        ignore.add('token')
+        ignore.add('ca_cert')
         return super().read(entity, attrs, ignore, params)
 
 
