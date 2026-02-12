@@ -4942,6 +4942,44 @@ class Host(
         response = client.post(self.path('bulk/available_incremental_updates'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
+    def bulk_applicable_errata(self, synchronous=True, timeout=None, **kwargs):
+        """Fetch applicable errata for one or more hosts.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('bulk/applicable_errata'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def bulk_installable_errata(self, synchronous=True, timeout=None, **kwargs):
+        """Fetch installable errata for one or more hosts.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('bulk/installable_errata'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
     def get_facts(self, synchronous=True, timeout=None, **kwargs):
         """List all fact values of a given host.
 
@@ -5143,6 +5181,8 @@ class Host(
             'bulk/add_subscriptions',
             'bulk/remove_subscriptions',
             'bulk/available_incremental_updates',
+            'bulk/applicable_errata',
+            'bulk/installable_errata',
             'bulk/traces',
             'bulk/resolve_traces',
             'bulk/destroy',
