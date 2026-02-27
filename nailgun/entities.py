@@ -6471,7 +6471,7 @@ class Ping(Entity, EntitySearchMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._meta = {
-            'api_path': 'katello/api/v2/ping',
+            'api_path': 'api/v2/ping',
         }
         super().__init__(server_config=server_config, **kwargs)
 
