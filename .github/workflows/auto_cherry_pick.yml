@@ -67,7 +67,7 @@ jobs:
       - name: Add Parent PR's PRT comment to Auto_Cherry_Picked PR's
         id: add-parent-prt-comment
         if: ${{ always() && steps.cherrypick.outcome == 'success' }}
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           issue: ${{ steps.cherrypick.outputs.number }}
           message: ${{ needs.find-the-parent-prt-comment.outputs.prt_comment }}
