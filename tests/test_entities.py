@@ -2179,6 +2179,8 @@ class GenericTestCase(TestCase):
             (entities.Host(**generic).bulk_destroy, 'put'),
             (entities.Host(**generic).bulk_traces, 'post'),
             (entities.Host(**generic).bulk_resolve_traces, 'put'),
+            (entities.Host(**generic).bulk_applicable_errata, 'post'),
+            (entities.Host(**generic).bulk_installable_errata, 'post'),
             (entities.HostGroup(**generic).add_puppetclass, 'post'),
             (entities.HostGroup(**generic).assign_ansible_roles, 'post'),
             (entities.HostGroup(**generic).clone, 'post'),
