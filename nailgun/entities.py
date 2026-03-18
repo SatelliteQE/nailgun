@@ -1357,6 +1357,19 @@ class AbstractComputeResource(
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
+class ConfigReport(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearchMixin):
+    """A representation of a Report entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'host_name': entity_fields.StringField(required=True),
+            'logs': entity_fields.ListField(),
+            'reported_at': entity_fields.DateTimeField(required=True),
+        }
+        self._meta = {'api_path': 'api/v2/config_reports'}
+        super().__init__(server_config=server_config, **kwargs)
+
+
 class DiscoveredHost(
     Entity,
     EntityCreateMixin,
