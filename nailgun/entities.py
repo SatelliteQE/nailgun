@@ -4738,8 +4738,8 @@ class Host(
     def bulk_manage_notifications(self, synchronous=True, timeout=None, **kwargs):
         """Enable or disable email notifications for the specified set of hosts.
 
-        :param synchronous: If `True`, when the server returns an HTTP
-            202 (accepted) status code, wait for the task to complete `. If false,
+        :param synchronous: If True, when the server returns an HTTP
+            202 (accepted) status code, wait for the task to complete. If false,
             immediately return the server's response.
         :param timeout: Maximum number of seconds to wait until timing out.
             Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
