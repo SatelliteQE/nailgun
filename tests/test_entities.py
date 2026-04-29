@@ -116,10 +116,12 @@ class InitTestCase(TestCase):
                 entities.DiscoveredHost,
                 entities.DiscoveryRule,
                 entities.DockerContentViewFilter,
+                entities.DockerTag,
                 entities.Domain,
                 entities.Environment,
                 entities.Errata,
                 entities.ErratumContentViewFilter,
+                entities.ErratumByDateContentViewFilter,
                 entities.File,
                 entities.Filter,
                 entities.FlatpakRemoteRepository,
@@ -146,6 +148,7 @@ class InitTestCase(TestCase):
                 # entities.OSDefaultTemplate,  # see below
                 entities.OperatingSystem,
                 entities.Organization,
+                entities.OCPVComputeResource,
                 entities.OVirtComputeResource,
                 entities.PackageGroupContentViewFilter,
                 entities.PartitionTable,
@@ -318,6 +321,7 @@ class PathTestCase(TestCase):
             (entities.DiscoveredHost, 'auto_provision'),
             (entities.DiscoveredHost, 'refresh_facts'),
             (entities.DiscoveredHost, 'reboot'),
+            (entities.DockerTag, 'repositories'),
             (entities.Environment, 'smart_class_parameters'),
             (entities.FlatpakRemoteRepository, 'mirror'),
             (entities.FlatpakRemote, 'scan'),
@@ -351,6 +355,7 @@ class PathTestCase(TestCase):
             (entities.PuppetClass, 'smart_class_parameters'),
             (entities.Repository, 'docker_manifests'),
             (entities.Repository, 'docker_manifest_lists'),
+            (entities.Repository, 'docker_tags'),
             (entities.Repository, 'errata'),
             (entities.Repository, 'packages'),
             (entities.Repository, 'remove_content'),
@@ -1261,6 +1266,7 @@ class ReadTestCase(TestCase):
         for entity, ignored_attrs in (
             (entities.AzureRMComputeResource, {'secret_key'}),
             (entities.Errata, {'content_view_version', 'environment', 'repository'}),
+            (entities.OCPVComputeResource, {'token', 'ca_cert'}),
             (entities.OVirtComputeResource, {'password'}),
             (entities.SmartProxy, {'download_policy', 'http_proxy'}),
             (entities.SmartClassParameters, {'hidden_value'}),
@@ -2141,11 +2147,13 @@ class GenericTestCase(TestCase):
             (entities.Host(**generic).list_scparams, 'get'),
             (entities.Host(**generic).module_streams, 'get'),
             (entities.Host(**generic).packages, 'get'),
+            (entities.Host(**generic).transient_packages_containerfile_install_command, 'get'),
             (entities.Host(**generic).power, 'put'),
             (entities.Host(**generic).upload_facts, 'post'),
             (entities.Host(**generic).traces, 'get'),
             (entities.Host(**generic).resolve_traces, 'put'),
             (entities.Host(**generic).bulk_destroy, 'put'),
+            (entities.Host(**generic).bulk_manage_notifications, 'put'),
             (entities.Host(**generic).bulk_traces, 'post'),
             (entities.Host(**generic).bulk_resolve_traces, 'put'),
             (entities.Host(**generic).bulk_applicable_errata, 'post'),
@@ -3230,6 +3238,26 @@ class HostTestCase(TestCase):
         self.assertEqual(len(post.call_args[1]), 0)  # post called with no keyword argument
         self.assertEqual(post.call_args[0][0], 'foo/api/v2/hosts/42/play_roles')
         self.assertEqual(res, 43)
+
+    def test_transient_packages_containerfile_install_command(self):
+        """Test generating containerfile install command for transient packages."""
+        cfg = config.ServerConfig(url='foo')
+        host = entities.Host(cfg, id=42)
+        expected_response = {'command': 'RUN dnf install -y package1 package2', 'message': None}
+        kwargs = {'kwarg': gen_integer(), 'data': {'search': 'package_name'}}
+
+        with mock.patch.object(
+            entities, '_handle_response', return_value=expected_response
+        ) as handlr:
+            with mock.patch.object(client, 'get') as get:
+                response = host.transient_packages_containerfile_install_command(**kwargs)
+
+        self.assertEqual(get.call_count, 1)
+        self.assertEqual(len(get.call_args[0]), 1)
+        self.assertEqual(get.call_args[1], kwargs)
+        self.assertIn('transient_packages/containerfile_install_command', get.call_args[0][0])
+        self.assertEqual(handlr.call_count, 1)
+        self.assertEqual(response, expected_response)
 
 
 class PuppetClassTestCase(TestCase):

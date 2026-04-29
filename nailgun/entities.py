@@ -1118,6 +1118,7 @@ class AbstractComputeResource(
                     'Ovirt',
                     'Rackspace',
                     'Vmware',
+                    'Kubevirt',
                 ),
             ),
             'provider_friendly_name': entity_fields.StringField(),
@@ -1293,6 +1294,19 @@ class AbstractComputeResource(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('associate'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
+
+
+class ConfigReport(Entity, EntityDeleteMixin, EntityReadMixin, EntitySearchMixin):
+    """A representation of a Report entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'host_name': entity_fields.StringField(required=True),
+            'logs': entity_fields.ListField(),
+            'reported_at': entity_fields.DateTimeField(required=True),
+        }
+        self._meta = {'api_path': 'api/v2/config_reports'}
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class DiscoveredHost(
@@ -1722,6 +1736,32 @@ class OVirtComputeResource(AbstractComputeResource):
         if ignore is None:
             ignore = set()
         ignore.add('password')
+        return super().read(entity, attrs, ignore, params)
+
+
+class OCPVComputeResource(AbstractComputeResource):
+    """A representation of a Kubevirt/OpenShift Virtualization Compute Resource entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'hostname': entity_fields.StringField(required=True),
+            'api_port': entity_fields.StringField(required=True),
+            'namespace': entity_fields.StringField(required=True),
+            'token': entity_fields.StringField(required=True),
+            'ca_cert': entity_fields.StringField(required=True),
+        }
+        super().__init__(server_config=server_config, **kwargs)
+        del self._fields['url']
+        self._fields['provider'].default = 'Kubevirt'
+        self._fields['provider'].required = True
+        self._fields['provider_friendly_name'].default = 'OpenShift Virtualization'
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Make sure, ``token`` is in the ignore list for read."""
+        if ignore is None:
+            ignore = set()
+        ignore.add('token')
+        ignore.add('ca_cert')
         return super().read(entity, attrs, ignore, params)
 
 
@@ -2799,7 +2839,7 @@ class AbstractContentViewFilter(
             'content_view': entity_fields.OneToOneField(ContentView, required=True),
             'description': entity_fields.StringField(),
             'type': entity_fields.StringField(
-                choices=('erratum', 'package_group', 'rpm', 'modulemd', 'docker'),
+                choices=('erratum', 'erratum_date', 'package_group', 'rpm', 'modulemd', 'docker'),
                 required=True,
             ),
             'inclusion': entity_fields.BooleanField(),
@@ -2822,6 +2862,14 @@ class ErratumContentViewFilter(AbstractContentViewFilter):
     def __init__(self, server_config=None, **kwargs):
         super().__init__(server_config=server_config, **kwargs)
         self._fields['type'].default = 'erratum'
+
+
+class ErratumByDateContentViewFilter(AbstractContentViewFilter):
+    """A representation of a Content View Filter of type "erratum_date"."""
+
+    def __init__(self, server_config=None, **kwargs):
+        super().__init__(server_config=server_config, **kwargs)
+        self._fields['type'].default = 'erratum_date'
 
 
 class ModuleStreamContentViewFilter(AbstractContentViewFilter):
@@ -2858,6 +2906,60 @@ class DockerContentViewFilter(AbstractContentViewFilter):
     def __init__(self, server_config=None, **kwargs):
         super().__init__(server_config=server_config, **kwargs)
         self._fields['type'].default = 'docker'
+
+
+class DockerTag(Entity, EntityReadMixin, EntitySearchMixin):
+    """A representation of a Docker Tag entity.
+
+    Docker tags are read-only entities that represent tags for container images.
+    """
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(),
+            'manifest_schema1': entity_fields.DictField(),
+            'manifest_schema2': entity_fields.DictField(),
+            'manifest': entity_fields.DictField(),
+            'repositories': entity_fields.OneToManyField(Repository),
+            'product': entity_fields.OneToOneField(Product),
+            'environment': entity_fields.OneToOneField(LifecycleEnvironment),
+            'content_view_version': entity_fields.OneToOneField(ContentViewVersion),
+            'upstream_name': entity_fields.StringField(),
+        }
+        self._meta = {'api_path': 'katello/api/docker_tags'}
+        super().__init__(server_config=server_config, **kwargs)
+
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        repositories
+            /katello/api/docker_tags/:id/repositories
+
+        Otherwise, call ``super``.
+        """
+        if which == 'repositories':
+            return f'{super().path(which="self")}/repositories'
+        return super().path(which)
+
+    def repositories(self, synchronous=True, timeout=None, **kwargs):
+        """List repositories for this docker meta tag.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('repositories'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class ContentView(
@@ -4638,6 +4740,24 @@ class Host(
         response = client.put(self.path('bulk/destroy'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
+    def bulk_manage_notifications(self, synchronous=True, timeout=None, **kwargs):
+        """Enable or disable email notifications for the specified set of hosts.
+
+        :param synchronous: If True, when the server returns an HTTP
+            202 (accepted) status code, wait for the task to complete. If false,
+            immediately return the server's response.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.put(self.path('bulk/manage_notifications'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
     def packages(self, synchronous=True, timeout=None, **kwargs):
         """List packages installed on the host.
 
@@ -4672,6 +4792,30 @@ class Host(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('debs'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def transient_packages_containerfile_install_command(
+        self, synchronous=True, timeout=None, **kwargs
+    ):
+        """Generate a containerfile RUN dnf install command for host's transient packages.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests. Can include 'data' with
+            'search' parameter to filter packages.
+        :returns: The server's response, with all content decoded. Contains
+            'command' with the generated dnf install command and optional 'message'.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message (e.g., 404 when no transient packages found).
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(
+            self.path('transient_packages/containerfile_install_command'), **kwargs
+        )
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def module_streams(self, synchronous=True, timeout=None, **kwargs):
@@ -4939,6 +5083,8 @@ class Host(
             /api/hosts/:host_id/assign_ansible_roles
         ansible_roles
             /api/hosts/:host_id/ansible_roles
+        transient_packages/containerfile_install_command
+            /api/hosts/:host_id/transient_packages/containerfile_install_command
 
         Otherwise, call ``super``.
 
@@ -4963,6 +5109,7 @@ class Host(
             'traces/resolve',
             'template',
             'templates',
+            'transient_packages/containerfile_install_command',
         ):
             return f'{super().path(which="self")}/{which}'
         elif which in (
@@ -4970,6 +5117,7 @@ class Host(
             'bulk/available_incremental_updates',
             'bulk/applicable_errata',
             'bulk/installable_errata',
+            'bulk/manage_notifications',
             'bulk/traces',
             'bulk/resolve_traces',
             'bulk/destroy',
@@ -5880,7 +6028,6 @@ class Organization(
             'subnet': entity_fields.OneToManyField(Subnet),
             'title': entity_fields.StringField(),
             'user': entity_fields.OneToManyField(User),
-            'simple_content_access': entity_fields.BooleanField(),
         }
 
         self._fields.update(
@@ -6361,7 +6508,7 @@ class Ping(Entity, EntitySearchMixin):
 
     def __init__(self, server_config=None, **kwargs):
         self._meta = {
-            'api_path': 'katello/api/v2/ping',
+            'api_path': 'api/v2/ping',
         }
         super().__init__(server_config=server_config, **kwargs)
 
@@ -7100,6 +7247,8 @@ class Repository(
             /repositories/<id>/docker_manifests
         docker_manifest_lists
             /repositories/<id>/docker_manifest_lists
+        docker_tags
+            /repositories/<id>/docker_tags
         errata
             /repositories/<id>/errata
         files
@@ -7125,6 +7274,7 @@ class Repository(
         if which in (
             'docker_manifests',
             'docker_manifest_lists',
+            'docker_tags',
             'errata',
             'files',
             'packages',
@@ -7201,6 +7351,25 @@ class Repository(
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('docker_manifest_lists'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
+    def docker_tags(self, synchronous=True, timeout=None, **kwargs):
+        """List docker tags inside repository.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('docker_tags'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
     def delete_with_args(self, synchronous=True, timeout=None, **kwargs):
