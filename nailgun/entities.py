@@ -275,10 +275,10 @@ class ActivationKey(
     @property
     def content_view(self):
         """Backward-compat: extract the first content view from content_view_environments."""
-        cves = getattr(self, 'content_view_environments', None)
-        if not cves:
+        cvenvs = getattr(self, 'content_view_environments', None)
+        if not cvenvs:
             return None
-        cv_data = cves[0].get('content_view')
+        cv_data = cvenvs[0].get('content_view')
         if not cv_data:
             return None
         return ContentView(server_config=self._server_config, id=cv_data['id'])
@@ -286,10 +286,10 @@ class ActivationKey(
     @property
     def environment(self):
         """Backward-compat: extract the first lifecycle environment from content_view_environments."""
-        cves = getattr(self, 'content_view_environments', None)
-        if not cves:
+        cvenvs = getattr(self, 'content_view_environments', None)
+        if not cvenvs:
             return None
-        lce_data = cves[0].get('lifecycle_environment')
+        lce_data = cvenvs[0].get('lifecycle_environment')
         if not lce_data:
             return None
         return LifecycleEnvironment(server_config=self._server_config, id=lce_data['id'])
