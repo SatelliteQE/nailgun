@@ -6802,6 +6802,38 @@ class PartitionTable(
         self._meta = {'api_path': 'api/v2/ptables'}
         super().__init__(server_config=server_config, **kwargs)
 
+    def path(self, which=None):
+        """Extend ``nailgun.entity_mixins.Entity.path``.
+
+        The format of the returned path depends on the value of ``which``:
+
+        clone
+            /ptables/<id>/clone
+
+        ``super`` is called otherwise.
+        """
+        if which in ('clone',):
+            return f'{super().path(which="self")}/{which}'
+        return super().path(which)
+
+    def clone(self, synchronous=True, timeout=None, **kwargs):
+        """Clone an existing partition table.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all JSON decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.post(self.path('clone'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
 
 class PuppetClass(
     Entity,
