@@ -4118,6 +4118,7 @@ class HostGroup(
         ignore.add('root_pass')
         ignore.add('kickstart_repository')
         ignore.add('compute_resource')
+        ignore.add('content_view_environment_id')
 
         attrs = attrs or self.read_json()
         attrs['parent_id'] = attrs.pop('ancestry')  # either an ID or None

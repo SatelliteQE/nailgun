@@ -3007,7 +3007,12 @@ class HostGroupTestCase(TestCase):
         )
         self.assertSetEqual(
             read.call_args[0][2],  # ignore for EntityReadMixin.read call
-            {'compute_resource', 'kickstart_repository', 'root_pass'},
+            {
+                'compute_resource',
+                'content_view_environment_id',
+                'kickstart_repository',
+                'root_pass',
+            },
         )
         self.read_json_pacther.stop()
         self.read_pacther.stop()
