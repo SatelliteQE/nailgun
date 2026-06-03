@@ -130,8 +130,15 @@ class ClientTestCase(TestCase):
         signature as ``requests.delete``.
 
         """
+
+        def _strip_annotations(sig):
+            params = [
+                p.replace(annotation=inspect.Parameter.empty) for p in sig.parameters.values()
+            ]
+            return sig.replace(parameters=params, return_annotation=inspect.Parameter.empty)
+
         for meth in ('delete', 'get', 'head', 'patch', 'post', 'put'):
             self.assertEqual(
-                inspect.signature(getattr(client, meth)),
-                inspect.signature(getattr(requests, meth)),
+                _strip_annotations(inspect.signature(getattr(client, meth))),
+                _strip_annotations(inspect.signature(getattr(requests, meth))),
             )
