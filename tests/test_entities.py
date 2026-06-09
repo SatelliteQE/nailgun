@@ -2692,6 +2692,42 @@ class ActivationKeyTestCase(TestCase):
         expected_dct['name'] = 'test_ak_new'
         self.assertEqual(expected_dct, activation_key.update_payload())
 
+    def test_content_view_property(self):
+        """content_view property extracts CV from content_view_environments."""
+        cfg = config.ServerConfig(url='foo')
+        ak = entities.ActivationKey(cfg, name='test_ak', organization=42)
+        ak.content_view_environments = [
+            {
+                'content_view': {'id': 10, 'name': 'Default'},
+                'lifecycle_environment': {'id': 20, 'name': 'Library'},
+            }
+        ]
+        cv = ak.content_view
+        self.assertIsInstance(cv, entities.ContentView)
+        self.assertEqual(cv.id, 10)
+
+    def test_environment_property(self):
+        """Environment property extracts LCE from content_view_environments."""
+        cfg = config.ServerConfig(url='foo')
+        ak = entities.ActivationKey(cfg, name='test_ak', organization=42)
+        ak.content_view_environments = [
+            {
+                'content_view': {'id': 10, 'name': 'Default'},
+                'lifecycle_environment': {'id': 20, 'name': 'Library'},
+            }
+        ]
+        lce = ak.environment
+        self.assertIsInstance(lce, entities.LifecycleEnvironment)
+        self.assertEqual(lce.id, 20)
+
+    def test_content_view_property_empty(self):
+        """content_view returns None when content_view_environments is empty."""
+        cfg = config.ServerConfig(url='foo')
+        ak = entities.ActivationKey(cfg, name='test_ak', organization=42)
+        ak.content_view_environments = []
+        self.assertIsNone(ak.content_view)
+        self.assertIsNone(ak.environment)
+
 
 class ReportTemplateTestCase(TestCase):
     """Tests for :class:`nailgun.entities.ReportTemplate`."""
@@ -2971,7 +3007,12 @@ class HostGroupTestCase(TestCase):
         )
         self.assertSetEqual(
             read.call_args[0][2],  # ignore for EntityReadMixin.read call
-            {'compute_resource', 'kickstart_repository', 'root_pass'},
+            {
+                'compute_resource',
+                'content_view_environment_id',
+                'kickstart_repository',
+                'root_pass',
+            },
         )
         self.read_json_pacther.stop()
         self.read_pacther.stop()

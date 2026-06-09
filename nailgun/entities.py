@@ -212,9 +212,8 @@ class ActivationKey(
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'content_view': entity_fields.OneToOneField(ContentView),
+            'content_view_environment_ids': entity_fields.ListField(),
             'description': entity_fields.StringField(),
-            'environment': entity_fields.OneToOneField(LifecycleEnvironment),
             'host_collection': entity_fields.OneToManyField(HostCollection),
             'max_hosts': entity_fields.IntegerField(),
             'name': entity_fields.StringField(
@@ -262,10 +261,42 @@ class ActivationKey(
             return f'{super().path(which="self")}/{which}'
         return super().path(which)
 
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Handle the content_view_environments response format."""
+        if attrs is None:
+            attrs = self.read_json(params=params)
+        if ignore is None:
+            ignore = set()
+        ignore.add('content_view_environment_ids')
+        entity = super().read(entity, attrs, ignore, params)
+        entity.content_view_environments = attrs.get('content_view_environments', [])
+        return entity
+
+    @property
+    def content_view(self):
+        """Backward-compat: extract the first content view from content_view_environments."""
+        cvenvs = getattr(self, 'content_view_environments', None)
+        if not cvenvs:
+            return None
+        cv_data = cvenvs[0].get('content_view')
+        if not cv_data:
+            return None
+        return ContentView(server_config=self._server_config, id=cv_data['id'])
+
+    @property
+    def environment(self):
+        """Backward-compat: extract the first lifecycle environment from content_view_environments."""
+        cvenvs = getattr(self, 'content_view_environments', None)
+        if not cvenvs:
+            return None
+        lce_data = cvenvs[0].get('lifecycle_environment')
+        if not lce_data:
+            return None
+        return LifecycleEnvironment(server_config=self._server_config, id=lce_data['id'])
+
     def update_payload(self, fields=None):
         """Include organization_id in all payloads."""
         payload = super().update_payload(fields)
-        # organization is required for the AK update call
         payload['organization_id'] = self.organization.id
         return payload
 
@@ -4043,6 +4074,7 @@ class HostGroup(
         self._fields.update(
             {
                 'content_view': entity_fields.OneToOneField(ContentView),
+                'content_view_environment_id': entity_fields.IntegerField(),
                 'lifecycle_environment': entity_fields.OneToOneField(LifecycleEnvironment),
             }
         )
@@ -4062,13 +4094,12 @@ class HostGroup(
         ).read()
 
     def create_payload(self):
-        """Wrap submitted data within an extra dict.
-
-        For more information, see `Bugzilla #1151220
-        <https://bugzilla.redhat.com/show_bug.cgi?id=1151220>`_.
-
-        """
-        return {'hostgroup': super().create_payload()}
+        """Wrap submitted data within an extra dict."""
+        payload = super().create_payload()
+        if 'content_view_environment_id' in payload:
+            payload.pop('content_view_id', None)
+            payload.pop('lifecycle_environment_id', None)
+        return {'hostgroup': payload}
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
         """Deal with several bugs.
@@ -4087,6 +4118,7 @@ class HostGroup(
         ignore.add('root_pass')
         ignore.add('kickstart_repository')
         ignore.add('compute_resource')
+        ignore.add('content_view_environment_id')
 
         attrs = attrs or self.read_json()
         attrs['parent_id'] = attrs.pop('ancestry')  # either an ID or None
@@ -4110,7 +4142,11 @@ class HostGroup(
 
     def update_payload(self, fields=None):
         """Wrap submitted data within an extra dict."""
-        return {'hostgroup': super().update_payload(fields)}
+        payload = super().update_payload(fields)
+        if 'content_view_environment_id' in payload:
+            payload.pop('content_view_id', None)
+            payload.pop('lifecycle_environment_id', None)
+        return {'hostgroup': payload}
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``.
