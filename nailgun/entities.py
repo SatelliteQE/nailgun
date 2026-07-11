@@ -5145,6 +5145,7 @@ class Host(
             'smart_class_parameters',
             'module_streams',
             'disassociate',
+            'status',
             'traces',
             'traces/resolve',
             'template',
@@ -5439,6 +5440,33 @@ class Host(
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.get(self.path('templates'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)['templates']
+
+    def read_status(self, synchronous=True, timeout=None, **kwargs):
+        """Fetch and read the status for given host.
+
+        Here is an example of how to use this method::
+            host.read_status(data={'status_type': 'traces'})
+
+        Constructs path:
+           api/hosts/:id/status/:type
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()
+        kwargs.update(self._server_config.get_client_kwargs())
+        status_type = f'{kwargs["data"].pop("status_type")}'
+        path = f'{self.path("status")}/{status_type}'
+        response = client.get(path, **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
 
 
 class Image(
