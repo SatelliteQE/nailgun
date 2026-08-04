@@ -723,6 +723,7 @@ class AuthSourceLDAP(
             'account': entity_fields.StringField(),
             'attr_photo': entity_fields.StringField(),
             'base_dn': entity_fields.StringField(),
+            'cacert': entity_fields.StringField(),
             'groups_base': entity_fields.StringField(),
             'host': entity_fields.StringField(
                 required=True,
