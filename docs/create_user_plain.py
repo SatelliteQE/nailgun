@@ -10,6 +10,7 @@ like so::
     ./create_user_plain.py  # copy this script to the current directory
 
 """
+
 import json
 from pprint import pprint
 import sys
