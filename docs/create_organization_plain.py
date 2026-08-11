@@ -4,6 +4,7 @@
 Use Requests and standard library modules to accomplish this task.
 
 """
+
 import json
 from pprint import pprint
 
