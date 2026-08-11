@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Create an identical user account on a pair of satellites."""
+
 from pprint import pprint
 
 from nailgun.config import ServerConfig
