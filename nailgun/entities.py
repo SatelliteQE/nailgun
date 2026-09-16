@@ -7279,7 +7279,7 @@ class Repository(
             ),
             'content_counts': entity_fields.DictField(),
             'content_type': entity_fields.StringField(
-                choices=('puppet', 'yum', 'file', 'docker', 'ostree', 'deb'),
+                choices=('puppet', 'yum', 'file', 'docker', 'ostree', 'deb', 'python'),
                 default='yum',
                 required=True,
             ),
@@ -7290,7 +7290,7 @@ class Repository(
             'docker_upstream_name': entity_fields.StringField(default='busybox'),
             'include_tags': entity_fields.StringField(),
             'download_policy': entity_fields.StringField(
-                choices=('background', 'immediate', 'on_demand'),
+                choices=('immediate', 'on_demand'),
                 default='immediate',
             ),
             'full_path': entity_fields.StringField(),
@@ -7325,6 +7325,16 @@ class Repository(
             'deb_components': entity_fields.StringField(),
             'deb_architectures': entity_fields.StringField(),
             'download_concurrency': entity_fields.IntegerField(),
+            'generic_remote_options': entity_fields.StringField(),
+            # Python repo generic remote options
+            'includes': entity_fields.ListField(),
+            'excludes': entity_fields.ListField(),
+            'package_types': entity_fields.ListField(),
+            'keep_latest_packages': entity_fields.IntegerField(),
+            # OSTree repo generic remote options
+            'include_refs': entity_fields.ListField(),
+            'exclude_refs': entity_fields.ListField(),
+            'depth': entity_fields.IntegerField(),
         }
         if self._fields['content_type'].choices == 'yum':
             self._fields['download_policy'].required = True
@@ -7399,6 +7409,15 @@ class Repository(
         ignore.add('upstream_password')
         ignore.add('mirror_on_sync')
         ignore.add('download_concurrency')
+        # Generic remote options are sent as top-level params on create/update
+        # but returned as a JSON blob in generic_remote_options on read.
+        ignore.add('includes')
+        ignore.add('excludes')
+        ignore.add('package_types')
+        ignore.add('keep_latest_packages')
+        ignore.add('include_refs')
+        ignore.add('exclude_refs')
+        ignore.add('depth')
         return super().read(entity, attrs, ignore, params)
 
     def create_missing(self):
