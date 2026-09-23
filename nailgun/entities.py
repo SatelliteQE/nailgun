@@ -9727,6 +9727,68 @@ class TablePreferences(
         )
 
 
+class MailNotification(Entity, EntityReadMixin, EntitySearchMixin):
+    """A representation of a Mail Notification entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'name': entity_fields.StringField(),
+            'description': entity_fields.StringField(),
+            'subscription_type': entity_fields.StringField(),
+        }
+        self._meta = {'api_path': 'api/v2/mail_notifications'}
+        super().__init__(server_config=server_config, **kwargs)
+
+
+class UserMailNotification(
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+):
+    """A representation of a User Mail Notification entity.
+
+    This entity represents the association between a user and a mail notification,
+    including settings like interval, subscription type, and whether to skip if empty.
+    """
+
+    def __init__(self, server_config=None, **kwargs):
+        _check_for_value('user', kwargs)
+        self._fields = {
+            'mail_notification': entity_fields.OneToOneField(MailNotification, required=True),
+            'interval': entity_fields.StringField(),
+            'subscription': entity_fields.StringField(),
+            'mail_query': entity_fields.StringField(),
+            'skip_if_empty': entity_fields.BooleanField(),
+        }
+        self._path_fields = {
+            'user': entity_fields.OneToOneField(User),
+        }
+        self._fields.update(self._path_fields)
+        self.user = kwargs.get('user')
+        if isinstance(self.user, int):
+            self._meta = {
+                'api_path': f'/api/v2/users/{self.user}/mail_notifications',
+            }
+        else:
+            self._meta = {
+                'api_path': f'/api/v2/users/{self.user.id}/mail_notifications',
+            }
+        super().__init__(server_config=server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Read user mail notification from server.
+
+        Ignore path related fields as they're never returned by the server
+        and are only added to entity to be able to use proper path.
+        """
+        entity = entity or self.entity_with_parent(user=self.user)
+        if ignore is None:
+            ignore = set()
+        ignore.add('user')
+        return super().read(entity, attrs, ignore, params)
+
+
 class NotificationRecipients(Entity, EntityReadMixin):
     """A representation of /notification_recipients endpoint."""
 
