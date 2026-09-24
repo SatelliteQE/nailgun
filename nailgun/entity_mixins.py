@@ -1,6 +1,7 @@
 """Defines a set of mixins that provide tools for interacting with entities."""
 
 import _thread as thread
+import base64
 from collections.abc import Iterable
 import contextlib
 from datetime import date, datetime
@@ -317,6 +318,180 @@ def _get_entity_ids(field_name, attrs):
             f'Searched for keys named {field_name_ids}, {field_name}, {plural_field_name} '
             f'but available keys are {attrs.keys()}.'
         )
+
+
+def _make_compliance_headers(username='admin', org_id='00001'):
+    """Generate X-RH-IDENTITY header for compliance-backend authentication.
+
+    Helper function for generating compliance-backend auth headers.
+
+    :param username: Username for the identity (default: 'admin')
+    :param org_id: Organization ID (default: '00001')
+    :return: Dict with X-RH-IDENTITY and Accept headers
+
+    TODO: org_id should come from organization context when available.
+    """
+    identity = {
+        'identity': {
+            'org_id': org_id,
+            'type': 'User',
+            'auth_type': 'basic-auth',
+            'user': {
+                'username': username,
+                'email': f'{username}@example.com',
+                'first_name': 'Admin',
+                'last_name': 'User',
+                'is_active': True,
+                'is_org_admin': True,
+                'locale': 'en_US',
+            },
+        }
+    }
+    identity_b64 = base64.b64encode(std_json.dumps(identity).encode()).decode()
+    return {'X-RH-IDENTITY': identity_b64, 'Accept': 'application/json'}
+
+
+class ComplianceBackendMixin:
+    """Mixin for IoP Cloud Compliance entities (compliance-backend API).
+
+    Compliance-backend API differences from standard Satellite API:
+    - Requires X-RH-IDENTITY header (Red Hat Insights authentication)
+    - Responses wrapped in {'data': ...} instead of {'results': ...}
+    - No async task polling (returns results directly)
+
+    NOTE: Currently compliance-backend is deployed standalone on Foreman and requires
+    X-RH-IDENTITY authentication. When integrated into Satellite, update this mixin
+    to use standard Satellite authentication instead.
+    """
+
+    def _get_compliance_headers(self):
+        """Generate X-RH-IDENTITY header for compliance-backend authentication.
+
+        Derives org_id from multiple sources (in priority order):
+        1. Entity's organization.id attribute (if present)
+        2. ServerConfig's org_id attribute (if present)
+        3. Default '00001'
+        """
+        username = self._server_config.auth[0] if hasattr(self._server_config, 'auth') else 'admin'
+
+        # Try to get org_id from entity's organization attribute
+        org_id = None
+        if hasattr(self, 'organization') and self.organization is not None:
+            if hasattr(self.organization, 'id') and self.organization.id is not None:
+                org_id = str(self.organization.id)
+
+        # Fall back to server_config's org_id if available
+        if org_id is None and hasattr(self._server_config, 'org_id'):
+            org_id = str(self._server_config.org_id)
+
+        # Fall back to default
+        if org_id is None:
+            org_id = '00001'
+
+        return _make_compliance_headers(username=username, org_id=org_id)
+
+    @classmethod
+    def get_available_profiles(cls, server_config):
+        """Get available security profiles for policy creation.
+
+        Returns list of dicts with 'id', 'title', 'ref_id'.
+        Use 'id' as profile_id when creating policies.
+        """
+        # Get username from server_config
+        username = (
+            server_config.auth[0]
+            if hasattr(server_config, 'auth') and server_config.auth
+            else 'admin'
+        )
+
+        # Get org_id from server_config if available
+        org_id = str(server_config.org_id) if hasattr(server_config, 'org_id') else '00001'
+
+        kwargs = server_config.get_client_kwargs()
+        kwargs.setdefault('headers', {}).update(
+            _make_compliance_headers(username=username, org_id=org_id)
+        )
+
+        url = f"{server_config.url}/insights_cloud/api/compliance/v2/security_guides/supported_profiles"
+        response = client.get(url, **kwargs)
+        raise_for_status_add_to_exception(response)
+        return response.json()['data']
+
+    # Common overrides for compliance-backend entities
+    def read_raw(self):
+        """Read a Compliance entity."""
+        kwargs = self._server_config.get_client_kwargs()
+        kwargs.setdefault('headers', {}).update(self._get_compliance_headers())
+        return client.get(self.path('self'), **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Provide a wrapper for reading a Compliance entity."""
+        if attrs is None:
+            response = self.read_raw()
+            raise_for_status_add_to_exception(response)
+            attrs = response.json()['data']
+        return super().read(entity, attrs, ignore, params)
+
+    def search_raw(self, fields=None, query=None):
+        """Search for a Compliance entity."""
+        kwargs = self._server_config.get_client_kwargs()
+        kwargs.setdefault('headers', {}).update(self._get_compliance_headers())
+        return client.get(self.path('base'), data=query, **kwargs)
+
+    def search(self, fields=None, query=None, filters=None, path_fields={}):
+        """Provide a wrapper for searching for a Compliance entity."""
+        results = self.search_json(fields, query)['data']
+        results = self.search_normalize(results)
+        entities = []
+        for result in results:
+            try:
+                entity = type(self)(server_config=self._server_config, **path_fields, **result)
+            except TypeError:
+                entity = type(self)(**path_fields, **result)
+            entities.append(entity)
+        if filters is not None:
+            entities = self.search_filter(entities, filters)
+        return entities
+
+    def create_raw(self, create_missing=None):
+        """Create a Compliance entity."""
+        if create_missing is None:
+            create_missing = CREATE_MISSING
+        if create_missing is True:
+            self.create_missing()
+        kwargs = self._server_config.get_client_kwargs()
+        kwargs.setdefault('headers', {}).update(self._get_compliance_headers())
+        return client.post(self.path('base'), self.create_payload(), **kwargs)
+
+    def create_json(self, create_missing=None):
+        """Provide a wrapper for creation of a Compliance entity."""
+        response = self.create_raw(create_missing)
+        raise_for_status_add_to_exception(response)
+        return response.json()['data']
+
+    def update_raw(self, fields=None):
+        """Update a Compliance entity."""
+        kwargs = self._server_config.get_client_kwargs()
+        kwargs.setdefault('headers', {}).update(self._get_compliance_headers())
+        return client.put(self.path('self'), self.update_payload(fields), **kwargs)
+
+    def update_json(self, fields=None):
+        """Provide a wrapper for update of a Compliance entity."""
+        response = self.update_raw(fields)
+        raise_for_status_add_to_exception(response)
+        return response.json()['data']
+
+    def delete_raw(self):
+        """Delete a Compliance entity."""
+        kwargs = self._server_config.get_client_kwargs()
+        kwargs.setdefault('headers', {}).update(self._get_compliance_headers())
+        return client.delete(self.path('self'), **kwargs)
+
+    def delete(self, synchronous=True):
+        """Provide a wrapper for deletion of a Compliance entity."""
+        response = self.delete_raw()
+        raise_for_status_add_to_exception(response)
+        return response.json()['data']
 
 
 # -----------------------------------------------------------------------------

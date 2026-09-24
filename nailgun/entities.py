@@ -33,6 +33,7 @@ from packaging.version import Version
 
 from nailgun import client, entity_fields
 from nailgun.entity_mixins import (
+    ComplianceBackendMixin,
     Entity,
     EntityCreateMixin,
     EntityDeleteMixin,
@@ -7068,6 +7069,88 @@ class CompliancePolicies(
         """
         self.update_json(fields)
         return self.read()
+
+
+class CloudCompliancePolicy(
+    ComplianceBackendMixin,
+    Entity,
+    EntityCreateMixin,
+    EntityDeleteMixin,
+    EntityReadMixin,
+    EntitySearchMixin,
+    EntityUpdateMixin,
+):
+    """IoP Cloud Compliance Policy entity.
+
+    NOTE: This is different from CompliancePolicies (SCAP compliance).
+    - CloudCompliancePolicy = IoP Compliance (compliance-backend API)
+    - CompliancePolicies = Traditional SCAP compliance (Satellite API)
+    """
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'title': entity_fields.StringField(required=True),
+            'description': entity_fields.StringField(),
+            'business_objective': entity_fields.StringField(),
+            'compliance_threshold': entity_fields.FloatField(),
+            'profile_id': entity_fields.StringField(required=False),  # Only for CREATE
+            'ref_id': entity_fields.StringField(required=False),  # Only in responses
+        }
+        self._meta = {'api_path': 'insights_cloud/api/compliance/v2/policies'}
+        super().__init__(server_config=server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Read CloudCompliancePolicy entity."""
+        # Get attrs if not provided
+        if attrs is None:
+            attrs = self.read_json(params=params)
+
+        # Map ref_id to id (compliance API uses ref_id, Entity base expects id)
+        if 'ref_id' in attrs:
+            attrs['id'] = attrs['ref_id']
+
+        # Ignore profile_id (only used for CREATE, not in responses)
+        # Ignore ref_id (mapped to id above)
+        if ignore is None:
+            ignore = set()
+        else:
+            ignore = set(ignore)
+        ignore.add('profile_id')
+        ignore.add('ref_id')
+
+        return super().read(entity, attrs, ignore, params)
+
+
+class CloudComplianceSystem(ComplianceBackendMixin, Entity, EntityReadMixin, EntitySearchMixin):
+    """IoP Cloud Compliance System (Satellite host in compliance context)."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'id': entity_fields.StringField(),
+            'display_name': entity_fields.StringField(),
+            'os_major_version': entity_fields.IntegerField(),
+            'os_minor_version': entity_fields.IntegerField(),
+            'compliance_score': entity_fields.FloatField(),
+        }
+        self._meta = {'api_path': 'insights_cloud/api/compliance/v2/systems'}
+        super().__init__(server_config=server_config, **kwargs)
+
+
+class CloudComplianceReport(
+    ComplianceBackendMixin, Entity, EntityReadMixin, EntitySearchMixin, EntityDeleteMixin
+):
+    """IoP Cloud Compliance Report."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'id': entity_fields.StringField(),
+            'title': entity_fields.StringField(),
+            'test_result_count': entity_fields.IntegerField(),
+            'compliant': entity_fields.IntegerField(),
+            'compliance_score': entity_fields.FloatField(),
+        }
+        self._meta = {'api_path': 'insights_cloud/api/compliance/v2/reports'}
+        super().__init__(server_config=server_config, **kwargs)
 
 
 class Realm(
