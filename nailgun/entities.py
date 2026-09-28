@@ -6113,6 +6113,8 @@ class Organization(
 
         download_debug_certificate
             /organizations/<id>/download_debug_certificate
+        key_algorithms
+            /organizations/<id>/key_algorithms
         simple_content_access/enable
             /organizations/<id>/simple_content_access/enable
         simple_content_access/disable
@@ -6139,6 +6141,7 @@ class Organization(
         """
         if which in (
             'download_debug_certificate',
+            'key_algorithms',
             'simple_content_access/enable',
             'simple_content_access/disable',
             'simple_content_access/eligible',
@@ -6206,6 +6209,25 @@ class Organization(
             payload['redhat_repository_url'] = rh_repo_url
         return payload
 
+    def key_algorithms(self, synchronous=True, timeout=None, **kwargs):
+        """Get available key algorithms for debug certificate generation.
+
+        :param synchronous: What should happen if the server returns an HTTP
+            202 (accepted) status code? Wait for the task to complete if
+            ``True``. Immediately return the server's response otherwise.
+        :param timeout: Maximum number of seconds to wait until timing out.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The server's response, with all content decoded.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
+        kwargs = kwargs.copy()  # shadow the passed-in kwargs
+        kwargs.update(self._server_config.get_client_kwargs())
+        response = client.get(self.path('key_algorithms'), **kwargs)
+        return _handle_response(response, self._server_config, synchronous, timeout)
+
     def download_debug_certificate(self, synchronous=True, timeout=None, **kwargs):
         """Get debug certificate for particular organization.
 
@@ -6214,7 +6236,9 @@ class Organization(
             ``True``. Immediately return the server's response otherwise.
         :param timeout: Maximum number of seconds to wait until timing out.
             Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
+        :param kwargs: Arguments to pass to requests. Can include 'params' with
+            'key_algorithms[]' and 'signature_algorithms[]' to specify the
+            algorithms to use for certificate generation.
         :returns: The server's response, with all content decoded.
         :raises: ``requests.exceptions.HTTPError`` If the server responds with
             an HTTP 4XX or 5XX message.
