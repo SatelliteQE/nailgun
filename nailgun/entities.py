@@ -7989,19 +7989,39 @@ class RHCloud(Entity):
 
     def path(self, which=None):
         """Extend ``nailgun.entity_mixins.Entity.path``."""
-        if which in ("enable_connector", "advisor_engine_config"):
+        if which in ("announce_to_sources", "advisor_engine_config"):
             return f'{super().path(which="base")}/{which}'
         return super().path(which)
 
-    def enable_connector(self, synchronous=True, timeout=None, **kwargs):
-        """Enable RH Cloud connector."""
+    def announce_to_sources(self, instance_id, synchronous=True, timeout=None, **kwargs):
+        """Schedule registration of the RHC instance in Red Hat Sources.
+
+        :param instance_id: RHC instance ID to store as ``rhc_instance_id`` and
+            register with Red Hat Sources. Foremanctl obtains this value from
+            the consumer certificate's common name.
+        :param synchronous: Wait for the announcement task to complete if
+            ``True``. Return the server's response immediately otherwise.
+        :param timeout: Maximum number of seconds to wait for task completion.
+            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
+        :param kwargs: Arguments to pass to requests.
+        :returns: The completed task, or the decoded server response containing
+            the task when ``synchronous=False``.
+        :raises: ``requests.exceptions.HTTPError`` If the server responds with
+            an HTTP 4XX or 5XX message.
+
+        """
         kwargs = kwargs.copy()
         kwargs.update(self._server_config.get_client_kwargs())
-        kwargs['data'] = {}
-        if data := _payload(self.get_fields(), self.get_values()):
-            kwargs['data'] = data
-        response = client.post(self.path('enable_connector'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
+        kwargs['data'] = _payload(self.get_fields(), self.get_values())
+        kwargs['data']['instance_id'] = instance_id
+        response = client.post(self.path('announce_to_sources'), **kwargs)
+        response.raise_for_status()
+        result = response.json()
+        if synchronous is True and response.status_code == ACCEPTED:
+            return ForemanTask(server_config=self._server_config, id=result['task']['id']).poll(
+                timeout=timeout
+            )
+        return result
 
     def advisor_engine_config(self, synchronous=True, timeout=None, **kwargs):
         """Get advisor engine configuration information."""
