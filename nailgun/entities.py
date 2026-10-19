@@ -40,7 +40,6 @@ from nailgun.entity_mixins import (
     EntitySearchMixin,
     EntityUpdateMixin,
     _get_entity_ids,
-    _payload,
     _poll_task,
     to_json_serializable,  # noqa: F401
 )
@@ -7973,61 +7972,6 @@ class RHCIDeployment(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('deploy'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-
-class RHCloud(Entity):
-    """A representation of a RHCloud entity."""
-
-    def __init__(self, server_config=None, **kwargs):
-        self._fields = {
-            'organization': entity_fields.OneToOneField(Organization),
-            'location': entity_fields.OneToOneField(Location),
-        }
-        super().__init__(server_config=server_config, **kwargs)
-        self._meta = {'api_path': 'api/v2/rh_cloud'}
-
-    def path(self, which=None):
-        """Extend ``nailgun.entity_mixins.Entity.path``."""
-        if which in ("announce_to_sources", "advisor_engine_config"):
-            return f'{super().path(which="base")}/{which}'
-        return super().path(which)
-
-    def announce_to_sources(self, instance_id, synchronous=True, timeout=None, **kwargs):
-        """Schedule registration of the RHC instance in Red Hat Sources.
-
-        :param instance_id: RHC instance ID to store as ``rhc_instance_id`` and
-            register with Red Hat Sources. Foremanctl obtains this value from
-            the consumer certificate's common name.
-        :param synchronous: Wait for the announcement task to complete if
-            ``True``. Return the server's response immediately otherwise.
-        :param timeout: Maximum number of seconds to wait for task completion.
-            Defaults to ``nailgun.entity_mixins.TASK_TIMEOUT``.
-        :param kwargs: Arguments to pass to requests.
-        :returns: The completed task, or the decoded server response containing
-            the task when ``synchronous=False``.
-        :raises: ``requests.exceptions.HTTPError`` If the server responds with
-            an HTTP 4XX or 5XX message.
-
-        """
-        kwargs = kwargs.copy()
-        kwargs.update(self._server_config.get_client_kwargs())
-        kwargs['data'] = _payload(self.get_fields(), self.get_values())
-        kwargs['data']['instance_id'] = instance_id
-        response = client.post(self.path('announce_to_sources'), **kwargs)
-        response.raise_for_status()
-        result = response.json()
-        if synchronous is True and response.status_code == ACCEPTED:
-            return ForemanTask(server_config=self._server_config, id=result['task']['id']).poll(
-                timeout=timeout
-            )
-        return result
-
-    def advisor_engine_config(self, synchronous=True, timeout=None, **kwargs):
-        """Get advisor engine configuration information."""
-        kwargs = kwargs.copy()
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('advisor_engine_config'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 

@@ -8,7 +8,6 @@ import os
 from unittest import TestCase, mock
 
 from fauxfactory import gen_alpha, gen_integer, gen_string
-from requests.exceptions import HTTPError
 
 from nailgun import client, config, entities
 from nailgun.entity_mixins import (
@@ -168,7 +167,6 @@ class InitTestCase(TestCase):
                 entities.Report,
                 entities.Repository,
                 entities.RepositorySet,
-                entities.RHCloud,
                 entities.Role,
                 entities.RoleLDAPGroups,
                 entities.ScapContents,
@@ -396,8 +394,6 @@ class PathTestCase(TestCase):
             (entities.ForemanTask, 'bulk_resume'),
             (entities.ForemanTask, 'bulk_search'),
             (entities.ForemanTask, 'summary'),
-            (entities.RHCloud, 'announce_to_sources'),
-            (entities.RHCloud, 'advisor_engine_config'),
             (entities.Template, 'imports'),
             (entities.Template, 'exports'),
         ):
@@ -2204,7 +2200,6 @@ class GenericTestCase(TestCase):
             (entities.Template(**generic).exports, 'post'),
             (entities.VirtWhoConfig(**generic).deploy_script, 'get'),
         )
-        plain_taxonomy = {'server_config': cfg, 'organization': 1, 'location': 2}
         capsule = {'server_config': cfg, 'id': 1}
         repo_set = {'server_config': cfg, 'id': 1, 'product': 2}
         snapshot = {'server_config': cfg, 'id': 'snapshot-1', 'host': 1}
@@ -2217,7 +2212,6 @@ class GenericTestCase(TestCase):
             (entities.RepositorySet(**repo_set).available_repositories, 'get', {'product_id': 2}),
             (entities.RepositorySet(**repo_set).disable, 'put', {'product_id': 2}),
             (entities.RepositorySet(**repo_set).enable, 'put', {'product_id': 2}),
-            (entities.RHCloud(**plain_taxonomy).advisor_engine_config, 'get', {}),
             (entities.Snapshot(**snapshot).revert, 'put', {}),
         )
 
@@ -2266,86 +2260,6 @@ class GenericTestCase(TestCase):
                 self.assertEqual(client_request.call_args[1], kwargs)
                 self.assertEqual(handlr.call_count, 1)
                 self.assertEqual(handlr.return_value, response)
-
-
-class RHCloudTestCase(TestCase):
-    """Tests for :class:`nailgun.entities.RHCloud`."""
-
-    def setUp(self):
-        """Create an RHCloud entity and an accepted announcement response."""
-        self.cfg = config.ServerConfig('http://example.com', auth=('user', 'password'))
-        self.rh_cloud = entities.RHCloud(self.cfg)
-        self.instance_id = gen_string('alpha')
-        self.response = mock.Mock(status_code=ACCEPTED)
-        self.response.json.return_value = {'task': {'id': gen_string('alpha')}}
-
-    def test_announce_to_sources_synchronous(self):
-        """Send the instance ID and poll the nested task with the given timeout."""
-        with (
-            mock.patch.object(client, 'post', return_value=self.response) as post,
-            mock.patch.object(entities, 'ForemanTask') as task,
-        ):
-            result = self.rh_cloud.announce_to_sources(self.instance_id, timeout=90)
-
-        post.assert_called_once_with(
-            'http://example.com/api/v2/rh_cloud/announce_to_sources',
-            data={'instance_id': self.instance_id},
-            **self.cfg.get_client_kwargs(),
-        )
-        task.assert_called_once_with(
-            server_config=self.cfg, id=self.response.json.return_value['task']['id']
-        )
-        task.return_value.poll.assert_called_once_with(timeout=90)
-        self.assertEqual(result, task.return_value.poll.return_value)
-
-    def test_announce_to_sources_asynchronous(self):
-        """Return the complete response without polling when asynchronous."""
-        with (
-            mock.patch.object(client, 'post', return_value=self.response),
-            mock.patch.object(entities, 'ForemanTask') as task,
-        ):
-            result = self.rh_cloud.announce_to_sources(self.instance_id, synchronous=False)
-
-        self.assertEqual(result, self.response.json.return_value)
-        task.assert_not_called()
-
-    def test_announce_to_sources_taxonomy(self):
-        """Include optional taxonomy and forward request options."""
-        rh_cloud = entities.RHCloud(self.cfg, organization=1, location=2)
-        with mock.patch.object(client, 'post', return_value=self.response) as post:
-            rh_cloud.announce_to_sources(
-                self.instance_id, synchronous=False, headers={'X-Test': '1'}
-            )
-
-        post.assert_called_once_with(
-            'http://example.com/api/v2/rh_cloud/announce_to_sources',
-            data={'instance_id': self.instance_id, 'organization_id': 1, 'location_id': 2},
-            headers={'X-Test': '1'},
-            **self.cfg.get_client_kwargs(),
-        )
-
-    def test_announce_to_sources_requires_instance_id(self):
-        """Reject calls missing the required instance ID before making a request."""
-        with mock.patch.object(client, 'post') as post:
-            with self.assertRaises(TypeError):
-                self.rh_cloud.announce_to_sources()
-
-        post.assert_not_called()
-
-    def test_announce_to_sources_http_error(self):
-        """Propagate HTTP errors without decoding or polling the response."""
-        error = HTTPError('Announcement failed')
-        self.response.raise_for_status.side_effect = error
-        with (
-            mock.patch.object(client, 'post', return_value=self.response),
-            mock.patch.object(entities, 'ForemanTask') as task,
-            self.assertRaises(HTTPError) as exc,
-        ):
-            self.rh_cloud.announce_to_sources(self.instance_id)
-
-        self.assertIs(exc.exception, error)
-        self.response.json.assert_not_called()
-        task.assert_not_called()
 
 
 class ForemanStatusTestCase(TestCase):
