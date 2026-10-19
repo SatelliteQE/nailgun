@@ -40,7 +40,6 @@ from nailgun.entity_mixins import (
     EntitySearchMixin,
     EntityUpdateMixin,
     _get_entity_ids,
-    _payload,
     _poll_task,
     to_json_serializable,  # noqa: F401
 )
@@ -7973,41 +7972,6 @@ class RHCIDeployment(
         kwargs = kwargs.copy()  # shadow the passed-in kwargs
         kwargs.update(self._server_config.get_client_kwargs())
         response = client.put(self.path('deploy'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-
-class RHCloud(Entity):
-    """A representation of a RHCloud entity."""
-
-    def __init__(self, server_config=None, **kwargs):
-        self._fields = {
-            'organization': entity_fields.OneToOneField(Organization),
-            'location': entity_fields.OneToOneField(Location),
-        }
-        super().__init__(server_config=server_config, **kwargs)
-        self._meta = {'api_path': 'api/v2/rh_cloud'}
-
-    def path(self, which=None):
-        """Extend ``nailgun.entity_mixins.Entity.path``."""
-        if which in ("enable_connector", "advisor_engine_config"):
-            return f'{super().path(which="base")}/{which}'
-        return super().path(which)
-
-    def enable_connector(self, synchronous=True, timeout=None, **kwargs):
-        """Enable RH Cloud connector."""
-        kwargs = kwargs.copy()
-        kwargs.update(self._server_config.get_client_kwargs())
-        kwargs['data'] = {}
-        if data := _payload(self.get_fields(), self.get_values()):
-            kwargs['data'] = data
-        response = client.post(self.path('enable_connector'), **kwargs)
-        return _handle_response(response, self._server_config, synchronous, timeout)
-
-    def advisor_engine_config(self, synchronous=True, timeout=None, **kwargs):
-        """Get advisor engine configuration information."""
-        kwargs = kwargs.copy()
-        kwargs.update(self._server_config.get_client_kwargs())
-        response = client.get(self.path('advisor_engine_config'), **kwargs)
         return _handle_response(response, self._server_config, synchronous, timeout)
 
 
