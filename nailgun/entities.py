@@ -7082,9 +7082,10 @@ class CloudCompliancePolicy(
 ):
     """IoP Cloud Compliance Policy entity.
 
-    NOTE: This is different from CompliancePolicies (SCAP compliance).
-    - CloudCompliancePolicy = IoP Compliance (compliance-backend API)
-    - CompliancePolicies = Traditional SCAP compliance (Satellite API)
+    These Compliance entities are not currently used - we are waiting for
+        foreman_rh_cloud to implement Compliance controller and routes.
+
+        We need to be able to access the new compliance endpoints with basic auth.
     """
 
     def __init__(self, server_config=None, **kwargs):
@@ -7096,6 +7097,7 @@ class CloudCompliancePolicy(
             'profile_id': entity_fields.StringField(required=False),  # Only for CREATE
             'ref_id': entity_fields.StringField(required=False),  # Only in responses
         }
+        # TODO: Change this to new path once implemented
         self._meta = {'api_path': 'insights_cloud/api/compliance/v2/policies'}
         super().__init__(server_config=server_config, **kwargs)
 
@@ -7132,6 +7134,7 @@ class CloudComplianceSystem(ComplianceBackendMixin, Entity, EntityReadMixin, Ent
             'os_minor_version': entity_fields.IntegerField(),
             'compliance_score': entity_fields.FloatField(),
         }
+        # TODO: Change this to new path once implemented
         self._meta = {'api_path': 'insights_cloud/api/compliance/v2/systems'}
         super().__init__(server_config=server_config, **kwargs)
 
@@ -7149,6 +7152,7 @@ class CloudComplianceReport(
             'compliant': entity_fields.IntegerField(),
             'compliance_score': entity_fields.FloatField(),
         }
+        # TODO: Change this to new path once implemented
         self._meta = {'api_path': 'insights_cloud/api/compliance/v2/reports'}
         super().__init__(server_config=server_config, **kwargs)
 
