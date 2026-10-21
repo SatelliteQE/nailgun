@@ -1663,6 +1663,37 @@ class SearchTestCase(TestCase):
             result = entities.Host(self.cfg, organization=1).search()
             self.assertIsNone(result[0].image)
 
+    def test_user_with_auth_source(self):
+        """Search users with the supported LDAP authentication-source parameter."""
+        auth_source = entities.AuthSourceLDAP(self.cfg, id=17)
+        user = entities.User(self.cfg, auth_source=auth_source)
+
+        with mock.patch.object(client, 'get') as get:
+            get.return_value.json.return_value = {
+                'results': [{'id': 2, 'auth_source_id': 17, 'login': 'ldap-user'}]
+            }
+            users = user.search(query={'per_page': 100})
+
+        get.assert_called_once_with(
+            user.path('base'),
+            data={'auth_source_ldap_id': 17, 'per_page': 100},
+            **self.cfg.get_client_kwargs(),
+        )
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0].id, 2)
+        self.assertEqual(users[0].auth_source.id, 17)
+
+    def test_user_with_internal_auth_source(self):
+        """Search internal users using the supported auth_source scoped search."""
+        user = entities.User(self.cfg, auth_source=1)
+
+        with mock.patch.object(client, 'get') as get:
+            user.search_raw()
+
+        get.assert_called_once()
+        self.assertEqual(get.call_args.args[0], user.path('base'))
+        self.assertEqual(get.call_args.kwargs['data'], {'search': 'auth_source="Internal"'})
+
 
 class SearchNormalizeTestCase(TestCase):
     """Tests for :meth:`nailgun.entity_mixins.EntitySearchMixin.search_normalize`."""
@@ -1836,6 +1867,41 @@ class SearchPayloadTestCase(TestCase):
         for entity, params in entities_:
             with self.subTest():
                 self.assertIsInstance(entity(self.cfg, **params).search_payload(), dict)
+
+    def test_user_auth_source_fields(self):
+        """Respect field selection without adding an authentication-source filter."""
+        user = entities.User(self.cfg, auth_source=17, login='ldap-user')
+
+        self.assertEqual(user.search_payload({'login'}), {'login': 'ldap-user'})
+        self.assertEqual(user.search_payload(set()), {})
+        self.assertEqual(entities.User(self.cfg).search_payload(), {})
+
+    def test_user_auth_source_query_override(self):
+        """Honor raw authentication-source filters without changing caller data."""
+        user = entities.User(self.cfg, auth_source=17)
+        for key in ('auth_source_id', 'auth_source_ldap_id'):
+            query = {key: 23, 'per_page': 100}
+            with self.subTest(key=key):
+                self.assertEqual(
+                    user.search_payload(query=query),
+                    {'auth_source_ldap_id': 23, 'per_page': 100},
+                )
+                self.assertEqual(query, {key: 23, 'per_page': 100})
+                self.assertEqual(user.auth_source.id, 17)
+
+    def test_user_internal_auth_source_with_search(self):
+        """Combine the Internal filter with an existing scoped search."""
+        query = {'search': 'login="admin" or admin=true', 'per_page': 100}
+        user = entities.User(self.cfg, auth_source=1)
+
+        self.assertEqual(
+            user.search_payload(query=query),
+            {
+                'search': '(login="admin" or admin=true) and auth_source="Internal"',
+                'per_page': 100,
+            },
+        )
+        self.assertEqual(query, {'search': 'login="admin" or admin=true', 'per_page': 100})
 
     def test_content_view_filter_rule(self):
         """errata_id field should be Errata ID when sent to the server, not DB ID."""
