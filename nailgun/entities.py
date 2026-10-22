@@ -7104,13 +7104,7 @@ class CloudCompliancePolicy(
     EntitySearchMixin,
     EntityUpdateMixin,
 ):
-    """IoP Cloud Compliance Policy entity.
-
-    These Compliance entities are not currently used - we are waiting for
-        foreman_rh_cloud to implement Compliance controller and routes.
-
-        We need to be able to access the new compliance endpoints with basic auth.
-    """
+    """IoP Cloud Compliance Policy entity."""
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
@@ -7121,7 +7115,6 @@ class CloudCompliancePolicy(
             'profile_id': entity_fields.StringField(required=False),  # Only for CREATE
             'ref_id': entity_fields.StringField(required=False),  # Only in responses
         }
-        # TODO: Change this to new path once implemented
         self._meta = {'api_path': 'insights_cloud/api/compliance/v2/policies'}
         super().__init__(server_config=server_config, **kwargs)
 
@@ -7131,18 +7124,12 @@ class CloudCompliancePolicy(
         if attrs is None:
             attrs = self.read_json(params=params)
 
-        # Map ref_id to id (compliance API uses ref_id, Entity base expects id)
-        if 'ref_id' in attrs:
-            attrs['id'] = attrs['ref_id']
-
         # Ignore profile_id (only used for CREATE, not in responses)
-        # Ignore ref_id (mapped to id above)
         if ignore is None:
             ignore = set()
         else:
             ignore = set(ignore)
         ignore.add('profile_id')
-        ignore.add('ref_id')
 
         return super().read(entity, attrs, ignore, params)
 
@@ -7158,7 +7145,6 @@ class CloudComplianceSystem(ComplianceBackendMixin, Entity, EntityReadMixin, Ent
             'os_minor_version': entity_fields.IntegerField(),
             'compliance_score': entity_fields.FloatField(),
         }
-        # TODO: Change this to new path once implemented
         self._meta = {'api_path': 'insights_cloud/api/compliance/v2/systems'}
         super().__init__(server_config=server_config, **kwargs)
 
@@ -7176,7 +7162,6 @@ class CloudComplianceReport(
             'compliant': entity_fields.IntegerField(),
             'compliance_score': entity_fields.FloatField(),
         }
-        # TODO: Change this to new path once implemented
         self._meta = {'api_path': 'insights_cloud/api/compliance/v2/reports'}
         super().__init__(server_config=server_config, **kwargs)
 

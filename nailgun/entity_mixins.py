@@ -322,17 +322,29 @@ def _get_entity_ids(field_name, attrs):
 class ComplianceBackendMixin:
     """Mixin for IoP Cloud Compliance entities.
 
-    Currently, compliance backend returns {'data': [...]}
-        instead of the standard Satellite {'results': [...]} API format.
-
-    This mixin unwraps the response format.
-        We may want to change/remove it, if compliance-backend ends up conforming.
+    Compliance backend returns {'data': {...}} instead of standard Satellite format.
+    This mixin unwraps responses and handles non-task delete behavior.
     """
+
+    def _unwrap(self, response):
+        """Unwrap {'data': ...} response."""
+        return response.get('data', response)
+
+    def delete(self, synchronous=True, timeout=None):
+        """Delete and unwrap compliance backend response.
+
+        Compliance backend returns 202 with deleted resource data,
+        not a Foreman task to poll.
+        """
+        response = self.delete_raw()
+        raise_for_status_add_to_exception(response)
+        if response.text:
+            return self._unwrap(response.json())
+        return {}
 
     def read_json(self, params=None):
         """Read and unwrap compliance backend response."""
-        response = super().read_json(params)
-        return response.get('data', response)
+        return self._unwrap(super().read_json(params))
 
     def search_json(self, fields=None, query=None):
         """Search and unwrap compliance backend response."""
@@ -344,13 +356,11 @@ class ComplianceBackendMixin:
 
     def create_json(self, create_missing=None):
         """Create and unwrap compliance backend response."""
-        response = super().create_json(create_missing)
-        return response.get('data', response)
+        return self._unwrap(super().create_json(create_missing))
 
     def update_json(self, fields=None):
         """Update and unwrap compliance backend response."""
-        response = super().update_json(fields)
-        return response.get('data', response)
+        return self._unwrap(super().update_json(fields))
 
 
 # -----------------------------------------------------------------------------
