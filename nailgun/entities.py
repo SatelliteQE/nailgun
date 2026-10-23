@@ -9158,6 +9158,28 @@ class User(
         }
         super().__init__(server_config=server_config, **kwargs)
 
+    def search_payload(self, fields=None, query=None):
+        """Translate authentication-source filters into supported API parameters.
+
+        The users collection does not accept ``auth_source_id`` as a filter.
+        Use ``auth_source_ldap_id`` for LDAP sources and scoped search for
+        the Internal source, which is not an LDAP source.
+        """
+        payload = super().search_payload(fields, query)
+        auth_source_id = payload.pop('auth_source_id', None)
+        if auth_source_id is None or 'auth_source_ldap_id' in payload:
+            return payload
+
+        if str(auth_source_id) == '1':
+            source_search = 'auth_source="Internal"'
+            existing_search = payload.get('search')
+            payload['search'] = (
+                f'({existing_search}) and {source_search}' if existing_search else source_search
+            )
+        else:
+            payload['auth_source_ldap_id'] = auth_source_id
+        return payload
+
     def create_payload(self):
         """Wrap submitted data within an extra dict.
 
