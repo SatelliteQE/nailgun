@@ -1824,7 +1824,7 @@ class GCEComputeResource(AbstractComputeResource):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'key_path': entity_fields.StringField(required=True),
+            'key_content': entity_fields.StringField(required=True),
             'zone': entity_fields.StringField(),
         }
         super().__init__(server_config=server_config, **kwargs)
@@ -1833,10 +1833,10 @@ class GCEComputeResource(AbstractComputeResource):
         self._fields['provider_friendly_name'].default = 'GCE'
 
     def read(self, entity=None, attrs=None, ignore=None, params=None):
-        """Make sure, ``key_path`` is in the ignore list for read."""
+        """Make sure, ``key_content`` is in the ignore list for read."""
         if ignore is None:
             ignore = set()
-        ignore.add('key_path')
+        ignore.add('key_content')
         return super().read(entity, attrs, ignore, params)
 
 
