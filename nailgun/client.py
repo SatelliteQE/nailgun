@@ -18,6 +18,7 @@ Each function is modified with the following behaviours:
 
 from json import dumps
 import logging
+import re
 from warnings import simplefilter
 
 import requests
@@ -204,3 +205,55 @@ def delete(url, **kwargs):
     response = requests.delete(url, **kwargs)
     _log_response(response)
     return response
+
+
+def get_session_kwargs(url, username, password, verify=False):
+    """Get session cookies + CSRF token for Rails apps.
+
+    Performs login to get session cookie and fresh CSRF token.
+    Use for APIs that require session auth instead of basic auth.
+
+    :param url: Base URL of the server (e.g. 'https://satellite.example.com')
+    :param username: Login username
+    :param password: Login password
+    :param verify: Verify SSL certificates (default False)
+    :returns: Dict with 'cookies', 'csrf_token', 'verify' keys
+
+    Example::
+        session_kwargs = get_session_kwargs(sat.url, 'admin', 'changeme')
+        response = post(
+            f'{sat.url}/api/endpoint',
+            json=data,
+            cookies=session_kwargs['cookies'],
+            headers={'X-CSRF-Token': session_kwargs['csrf_token']},
+            verify=session_kwargs['verify']
+        )
+    """
+    session = requests.Session()
+
+    # Get initial CSRF token from login page
+    resp = session.get(f'{url}/users/login', verify=verify)
+    csrf_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', resp.text)
+    if not csrf_match:
+        raise ValueError("CSRF token not found in login page")
+    initial_csrf = csrf_match.group(1)
+
+    # Login and follow redirects
+    resp = session.post(
+        f'{url}/users/login',
+        data={
+            'login[login]': username,
+            'login[password]': password,
+            'authenticity_token': initial_csrf,
+        },
+        allow_redirects=True,
+        verify=verify,
+    )
+
+    # Get fresh CSRF token from authenticated page
+    fresh_csrf_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', resp.text)
+    if not fresh_csrf_match:
+        raise ValueError("Fresh CSRF token not found after login")
+    fresh_csrf = fresh_csrf_match.group(1)
+
+    return {'cookies': session.cookies, 'csrf_token': fresh_csrf, 'verify': verify}
