@@ -7134,6 +7134,69 @@ class CloudCompliancePolicy(
         return super().read(entity, attrs, ignore, params)
 
 
+class CloudComplianceSecurityGuide(
+    ComplianceBackendMixin,
+    Entity,
+    EntityReadMixin,
+    EntitySearchMixin,
+):
+    """IoP Cloud Compliance Security Guide entity."""
+
+    def __init__(self, server_config=None, **kwargs):
+        self._fields = {
+            'id': entity_fields.StringField(),
+            'ref_id': entity_fields.StringField(),
+            'title': entity_fields.StringField(),
+            'version': entity_fields.StringField(),
+            'description': entity_fields.StringField(),
+            'os_major_version': entity_fields.IntegerField(),
+            'type': entity_fields.StringField(),
+        }
+        self._meta = {'api_path': 'insights_cloud/api/compliance/v2/security_guides'}
+        super().__init__(server_config=server_config, **kwargs)
+
+
+class CloudComplianceProfile(
+    ComplianceBackendMixin,
+    Entity,
+    EntityReadMixin,
+    EntitySearchMixin,
+):
+    """IoP Cloud Compliance Profile entity (nested under SecurityGuide).
+
+    Example usage:
+        # Get security guide first
+        guide = sat.api.CloudComplianceSecurityGuide(server_config=cfg).search()[0]
+        # List profiles for this guide
+        profiles = sat.api.CloudComplianceProfile(server_config=cfg, security_guide=guide).search()
+    """
+
+    def __init__(self, server_config=None, **kwargs):
+        _check_for_value('security_guide', kwargs)
+        self._fields = {
+            'id': entity_fields.StringField(),
+            'ref_id': entity_fields.StringField(),
+            'title': entity_fields.StringField(),
+            'description': entity_fields.StringField(),
+            'value_overrides': entity_fields.DictField(),
+            'type': entity_fields.StringField(),
+            'security_guide': entity_fields.OneToOneField(
+                CloudComplianceSecurityGuide, required=True, parent=True
+            ),
+        }
+        super().__init__(server_config=server_config, **kwargs)
+        self._meta = {
+            'api_path': f'{self.security_guide.path("self")}/profiles',
+        }
+
+    def search_normalize(self, results):
+        """Append security_guide_id to search results to initialize found profiles."""
+        for profile in results:
+            # Pass parent as OneToOneField expects
+            profile['security_guide'] = {'id': self.security_guide.id}
+        return super().search_normalize(results)
+
+
 class CloudComplianceSystem(ComplianceBackendMixin, Entity, EntityReadMixin, EntitySearchMixin):
     """IoP Cloud Compliance System (Satellite host in compliance context)."""
 
