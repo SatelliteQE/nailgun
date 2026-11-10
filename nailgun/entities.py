@@ -68,7 +68,7 @@ from nailgun.entity_mixins import (
 # touch the product's description.
 
 
-_FAKE_YUM_REPO = 'http://inecas.fedorapeople.org/fakerepos/zoo3/'
+_FAKE_YUM_REPO = 'https://inecas.fedorapeople.org/fakerepos/zoo3/'
 _OPERATING_SYSTEMS = (
     'AIX',
     'Altlinux',
