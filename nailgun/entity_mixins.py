@@ -319,6 +319,50 @@ def _get_entity_ids(field_name, attrs):
         )
 
 
+class ComplianceBackendMixin:
+    """Mixin for IoP Cloud Compliance entities.
+
+    Compliance backend returns {'data': {...}} instead of standard Satellite format.
+    This mixin unwraps responses and handles non-task delete behavior.
+    """
+
+    def _unwrap(self, response):
+        """Unwrap {'data': ...} response."""
+        return response.get('data', response)
+
+    def delete(self, synchronous=True, timeout=None):
+        """Delete and unwrap compliance backend response.
+
+        Compliance backend returns 202 with deleted resource data,
+        not a Foreman task to poll.
+        """
+        response = self.delete_raw()
+        raise_for_status_add_to_exception(response)
+        if response.text:
+            return self._unwrap(response.json())
+        return {}
+
+    def read_json(self, params=None):
+        """Read and unwrap compliance backend response."""
+        return self._unwrap(super().read_json(params))
+
+    def search_json(self, fields=None, query=None):
+        """Search and unwrap compliance backend response."""
+        response = super().search_json(fields, query)
+        # Unwrap {'data': [...], 'meta': {...}} to just the data
+        if isinstance(response, dict) and 'data' in response:
+            return {'results': response['data']}
+        return response
+
+    def create_json(self, create_missing=None):
+        """Create and unwrap compliance backend response."""
+        return self._unwrap(super().create_json(create_missing))
+
+    def update_json(self, fields=None):
+        """Update and unwrap compliance backend response."""
+        return self._unwrap(super().update_json(fields))
+
+
 # -----------------------------------------------------------------------------
 # Definition of parent Entity class and its dependencies.
 # -----------------------------------------------------------------------------
