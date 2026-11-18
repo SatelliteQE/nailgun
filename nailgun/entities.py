@@ -3944,7 +3944,6 @@ class HostCollectionPackage(Entity):
 
     def __init__(self, server_config=None, **kwargs):
         self._fields = {
-            'groups': entity_fields.ListField(),
             'packages': entity_fields.ListField(),
         }
         self._meta = {
@@ -4373,7 +4372,6 @@ class HostPackage(Entity):
     def __init__(self, server_config=None, **kwargs):
         _check_for_value('host', kwargs)
         self._fields = {
-            'groups': entity_fields.ListField(),
             'host': entity_fields.OneToOneField(Host, required=True),
             'packages': entity_fields.ListField(),
         }
