@@ -234,10 +234,12 @@ class ServerConfig(BaseServerConfig):
     _xdg_config_dir = 'nailgun'
     _xdg_config_file = 'server_configs.json'
 
-    def __init__(self, url, auth=None, version=None, verify=None):
+    def __init__(self, url, auth=None, version=None, verify=None, session_kwargs=None):
         super().__init__(url, auth, version)
         if verify is not None:
             self.verify = verify
+        if session_kwargs is not None:
+            self.session_kwargs = session_kwargs
 
     def get_client_kwargs(self):
         """Get kwargs for use with the methods in :mod:`nailgun.client`.
@@ -263,6 +265,17 @@ class ServerConfig(BaseServerConfig):
         config = vars(self).copy()
         config.pop('url')
         config.pop('version', None)
+
+        # For session-based auth, return cookies and CSRF token
+        if config.get('session_kwargs'):
+            session_kwargs = config.pop('session_kwargs')
+            config.pop('auth', None)  # Remove basic auth
+            config['cookies'] = session_kwargs['cookies']
+            # Add CSRF token to headers for write operations
+            if 'headers' not in config:
+                config['headers'] = {}
+            config['headers']['X-CSRF-Token'] = session_kwargs['csrf_token']
+
         return config
 
     @classmethod
